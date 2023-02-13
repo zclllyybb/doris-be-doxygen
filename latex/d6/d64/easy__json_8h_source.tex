@@ -1,0 +1,194 @@
+\hypertarget{easy__json_8h_source}{}\doxysection{easy\+\_\+json.\+h}
+\label{easy__json_8h_source}\index{/Users/dabowang/be\_all/util/easy\_json.h@{/Users/dabowang/be\_all/util/easy\_json.h}}
+\mbox{\hyperlink{easy__json_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <rapidjson/document.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ A\ wrapper\ around\ rapidjson\ Value\ objects,\ to\ simplify\ usage.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ Intended\ solely\ for\ building\ json\ objects,\ not\ writing/parsing.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ Simplifies\ code\ like\ this:}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ rapidjson::Document\ d;}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ rapidjson::Value\ v;}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ v.SetObject();}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ rapidjson::Value\ list;}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ list.SetArray();}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ v.AddMember("{}list"{},\ list,\ d.GetAllocator());}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ v["{}list"{}].PushBack(rapidjson::Value().SetString("{}element"{}),\ d.GetAllocator());}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ To\ this:}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ EasyJson\ ej;}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ ej["{}list"{}][0]\ =\ "{}element"{};}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Client\ code\ should\ build\ objects\ as\ demonstrated\ above,}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ then\ call\ EasyJson::value()\ to\ obtain\ a\ reference\ to\ the}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ built\ rapidjson\ Value.}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Used\ for\ initializing\ EasyJson's\ with\ complex\ types.}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ For\ example:}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ \ EasyJson\ array;}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ \ EasyJson\ nested\ =\ array.PushBack(EasyJson::kObject);}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ \ nested["{}attr"{}]\ =\ "{}val"{};}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ \ //\ array\ =\ [\ \{\ "{}attr"{}:\ "{}val"{}\ \}\ ]}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_easy_json_aa29479fbc9dc3d835ae8e704f6c500db}{ComplexTypeInitializer}}\ \{\ \mbox{\hyperlink{classdoris_1_1_easy_json_aa29479fbc9dc3d835ae8e704f6c500dbad74f4c7c6562dc3f8339a8bba2d28dd0}{kObject}},\ \mbox{\hyperlink{classdoris_1_1_easy_json_aa29479fbc9dc3d835ae8e704f6c500dba8bea8d866d2d9ec8e0dc51be0b7d678c}{kArray}}\ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json_a2cc996db49f71bc200b82d94d28b801c}{EasyJson}}();}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ Initializes\ the\ EasyJson\ object\ with\ the\ given\ type.}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_easy_json_a2cc996db49f71bc200b82d94d28b801c}{EasyJson}}(\mbox{\hyperlink{classdoris_1_1_easy_json_aa29479fbc9dc3d835ae8e704f6c500db}{ComplexTypeInitializer}}\ type);}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json_a1e865985db6f66168f9242a383abb54c}{\string~EasyJson}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ child\ EasyJson\ associated\ with\ key.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ Note:\ this\ method\ can\ mutate\ the\ EasyJson\ object}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ as\ follows:}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ If\ this\ EasyJson's\ underlying\ Value\ is\ not\ an\ object}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ (i.e.\ !this-\/>value().IsObject()),\ then\ its\ Value\ is}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ coerced\ to\ an\ object,\ overwriting\ the\ old\ Value.}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ If\ the\ given\ key\ does\ not\ exist,\ a\ Null-\/valued}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ EasyJson\ associated\ with\ key\ is\ created.}}
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_a2da467a9c07e7bb4ee5003d35f04f60c}{Get}}(\textcolor{keyword}{const}\ std::string\&\ key);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ child\ EasyJson\ at\ index.}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Note:\ this\ method\ can\ mutate\ the\ EasyJson\ object}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ as\ follows:}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ If\ this\ EasyJson's\ underlying\ Value\ is\ not\ an\ array}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ (i.e.\ !this-\/>value().IsArray()),\ then\ its\ Value\ is}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ coerced\ to\ an\ array,\ overwriting\ the\ old\ Value.}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ If\ index\ >=\ this-\/>value().Size(),\ then\ the\ underlying}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ array's\ size\ is\ increased\ to\ index\ +\ 1\ (new\ indices}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ are\ filled\ with\ Null\ values).}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_a2da467a9c07e7bb4ee5003d35f04f60c}{Get}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}});}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ Get(key).}}
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_a2c5a32dbcfe34a8f928e6145cce105a4}{operator[]}}(\textcolor{keyword}{const}\ std::string\&\ key);}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ Get(index).}}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_a2c5a32dbcfe34a8f928e6145cce105a4}{operator[]}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}});}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Sets\ the\ underlying\ Value\ equal\ to\ val.}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ object\ itself.}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ 'val'\ can\ be\ a\ bool,\ int32\_t,\ int64\_t,\ double,}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ char*,\ string,\ or\ ComplexTypeInitializer.}}
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_a472f06cea45b836d149db08353ed986d}{operator=}}(\textcolor{keyword}{const}\ std::string\&\ val);}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_a472f06cea45b836d149db08353ed986d}{operator=}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ val);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Sets\ the\ underlying\ Value\ to\ an\ object.}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ object\ itself.}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ i.e.\ after\ calling\ SetObject(),}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ value().IsObject()\ ==\ true}}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_abd3be8129165483a335bbd5f37293909}{SetObject}}();}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Sets\ the\ underlying\ Value\ to\ an\ array.}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ object\ itself.}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ i.e.\ after\ calling\ SetArray(),}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ value().IsArray()\ ==\ true}}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_afefd6c97541ff95858b2e2a344e137c9}{SetArray}}();}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ Associates\ val\ with\ key.}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ child\ object.}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ If\ this\ EasyJson's\ underlying\ Value\ is\ not\ an\ object}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ (i.e.\ !this-\/>value().IsObject()),\ then\ its\ Value\ is}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//\ coerced\ to\ an\ object,\ overwriting\ the\ old\ Value.}}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ If\ the\ given\ key\ does\ not\ exist,\ a\ new\ child\ entry}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ is\ created\ with\ the\ given\ value.}}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_aae021ae37eecaf4bdedc0e75015ae055}{Set}}(\textcolor{keyword}{const}\ std::string\&\ key,\ \textcolor{keyword}{const}\ std::string\&\ val);}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_afaadb293e4d0b0c4c427a1b3ffe4cfad}{Set}}(\textcolor{keyword}{const}\ std::string\&\ key,\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ val);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Stores\ val\ at\ index.}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ child\ object.}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ If\ this\ EasyJson's\ underlying\ Value\ is\ not\ an\ array}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ (i.e.\ !this-\/>value().IsArray()),\ then\ its\ Value\ is}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ coerced\ to\ an\ array,\ overwriting\ the\ old\ Value.}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ If\ index\ >=\ this-\/>value().Size(),\ then\ the\ underlying}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ array's\ size\ is\ increased\ to\ index\ +\ 1\ (new\ indices}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ are\ filled\ with\ Null\ values).}}
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_ae1d6e4fde313aa8e113cbabfbab9d544}{Set}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}},\ \textcolor{keyword}{const}\ std::string\&\ val);}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_aae021ae37eecaf4bdedc0e75015ae055}{Set}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}},\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ val);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Appends\ val\ to\ the\ underlying\ array.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ new\ child\ object.}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ If\ this\ EasyJson's\ underlying\ Value\ is\ not\ an\ array}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ (i.e.\ !this-\/>value().IsArray()),\ then\ its\ Value\ is}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ coerced\ to\ an\ array,\ overwriting\ the\ old\ Value.}}
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_ade4f73284b43fd82e24f5c38bcc5ff21}{PushBack}}(\textcolor{keyword}{const}\ std::string\&\ val);}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00149\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json}{EasyJson}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_ade4f73284b43fd82e24f5c38bcc5ff21}{PushBack}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ val);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ underlying\ Value.}}
+\DoxyCodeLine{00152\ \ \ \ \ rapidjson::Value\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_a784c3dbd11764fa9b197b7902c350213}{value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1_easy_json_ab3bd660551b8e592c03309e12b7fd7ba}{value\_}};\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ string\ representation\ of\ the\ underlying\ json.}}
+\DoxyCodeLine{00155\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_easy_json_ab501c0471a132aa8b878fdba70425236}{ToString}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ One\ instance\ of\ EasyJsonAllocator\ is\ shared\ among\ a\ root}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ EasyJson\ object\ and\ all\ of\ its\ descendants.\ The\ allocator}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ owns\ the\ underlying\ rapidjson\ Value,\ and\ a\ rapidjson}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ allocator\ (via\ a\ rapidjson::Document).}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator}{EasyJsonAllocator}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_ref_counted}{RefCounted}}<EasyJsonAllocator>\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ rapidjson::Value\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_afe3081b2372f184cc24c701c2c064306}{value}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_aff0ac499e2895aa06d062ffd2aa6472b}{value\_}};\ \}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ rapidjson::Document::AllocatorType\&\ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_ae5ba00f12ee5314cf7fe6b1ad1cc8b3e}{allocator}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_aff0ac499e2895aa06d062ffd2aa6472b}{value\_}}.GetAllocator();\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_ref_counted}{RefCounted}}<\mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator}{EasyJsonAllocator}}>;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_a8546d5bbd57b21e24870f437c6fabbf1}{\string~EasyJsonAllocator}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ underlying\ rapidjson::Value\ object\ (Document\ is}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ a\ subclass\ of\ Value\ that\ has\ its\ own\ allocator).}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ rapidjson::Document\ \mbox{\hyperlink{classdoris_1_1_easy_json_1_1_easy_json_allocator_aff0ac499e2895aa06d062ffd2aa6472b}{value\_}};}
+\DoxyCodeLine{00174\ \ \ \ \ \};}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ Used\ to\ instantiate\ descendant\ objects.}}
+\DoxyCodeLine{00177\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_easy_json_a4eb97e5ff4795ee2c6dbefcf5cbe08e2}{EasyJson}}(rapidjson::Value*\ \mbox{\hyperlink{classdoris_1_1_easy_json_a784c3dbd11764fa9b197b7902c350213}{value}},\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<EasyJsonAllocator>}}\ alloc);}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ One\ allocator\ is\ shared\ among\ an\ EasyJson\ object\ and}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//\ all\ of\ its\ descendants.}}
+\DoxyCodeLine{00181\ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<EasyJsonAllocator>}}\ \mbox{\hyperlink{classdoris_1_1_easy_json_af28125e9768e2aeca8fdf6a5dc9bedb0}{alloc\_}};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ A\ pointer\ to\ the\ underlying\ Value\ in\ the\ object}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{comment}{//\ tree\ owned\ by\ alloc\_.}}
+\DoxyCodeLine{00185\ \ \ \ \ rapidjson::Value*\ \mbox{\hyperlink{classdoris_1_1_easy_json_ab3bd660551b8e592c03309e12b7fd7ba}{value\_}};}
+\DoxyCodeLine{00186\ \};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

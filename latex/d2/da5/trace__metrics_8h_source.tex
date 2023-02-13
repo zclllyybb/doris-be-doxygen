@@ -1,0 +1,95 @@
+\hypertarget{trace__metrics_8h_source}{}\doxysection{trace\+\_\+metrics.\+h}
+\label{trace__metrics_8h_source}\index{/Users/dabowang/be\_all/util/trace\_metrics.h@{/Users/dabowang/be\_all/util/trace\_metrics.h}}
+\mbox{\hyperlink{trace__metrics_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{map-util_8h}{gutil/map-\/util.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{spinlock_8h}{util/spinlock.h}}"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ A\ simple\ map\ of\ constant\ string\ names\ to\ integer\ counters.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Typically,\ the\ TRACE\_COUNTER\_INCREMENT(...)\ macro\ defined\ in}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ trace.h\ is\ used\ to\ increment\ a\ counter\ within\ this\ map.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ This\ currently\ is\ just\ a\ thin\ wrapper\ around\ a\ spinlocked\ map,}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ but\ if\ it\ becomes\ noticeable\ in\ the\ CPU\ profile,\ various\ optimizations}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ are\ plausible.}}
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_trace_metrics}{TraceMetrics}}\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a3a136810a5a8bd949118f274d416a10f}{TraceMetrics}}()\ \{\}}
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a145dc6d72c3152ca999a06f59c23cfbd}{\string~TraceMetrics}}()\ \{\}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{comment}{//\ Internalize\ the\ given\ string\ by\ duplicating\ it\ into\ a\ process-\/wide}}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ pool.\ If\ this\ string\ has\ already\ been\ interned,\ returns\ a\ pointer}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//\ to\ a\ previous\ instance.\ Otherwise,\ copies\ it\ into\ the\ pool.}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ The\ resulting\ strings\ are\ purposefully\ leaked,\ so\ this\ should\ only}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ be\ used\ in\ cases\ where\ the\ number\ of\ unique\ strings\ that\ will\ be}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ passed\ is\ relatively\ low\ (i.e.\ not\ user-\/specified).}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Because\ 'name'\ is\ exposed\ back\ to\ operators,\ it\ must\ be\ a\ printable}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ ASCII\ string.}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_ae1c77f4e39ec829d90698b7c1809712a}{InternName}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ given\ counter.}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a946777f3fd93ef77da80ad81e512a8ca}{Increment}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ int64\_t\ amount);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ copy\ of\ the\ current\ counter\ map.}}
+\DoxyCodeLine{00059\ \ \ \ \ std::map<const\ char*,\ int64\_t>\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_aa12f5ba75c9d9ae82ba1b750050d5c46}{Get}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ Return\ metric's\ current\ value.}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ the\ 'name'\ MUST\ be\ the\ same\ const\ char*\ which\ is\ used\ for}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ insertion.\ This\ is\ because\ we\ do\ pointer-\/wise\ comparison\ internally.}}
+\DoxyCodeLine{00065\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a041834c10002733ee28f98daebb9d7d5}{GetMetric}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{classdoris_1_1_spin_lock}{SpinLock}}\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a2ddca6daea747fedb927f1005a93f5d6}{lock\_}};}
+\DoxyCodeLine{00069\ \ \ \ \ std::map<const\ char*,\ int64\_t>\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a5f83b42be5092bd3a85c32dec1b62c31}{counters\_}};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a008fc50b1b2922b76b380708c38952a8}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_trace_metrics}{TraceMetrics}});}
+\DoxyCodeLine{00072\ \};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a946777f3fd93ef77da80ad81e512a8ca}{TraceMetrics::Increment}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ int64\_t\ amount)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ std::lock\_guard<SpinLock>\ l(\mbox{\hyperlink{classdoris_1_1_trace_metrics_a2ddca6daea747fedb927f1005a93f5d6}{lock\_}});}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a5f83b42be5092bd3a85c32dec1b62c31}{counters\_}}[\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}}]\ +=\ amount;}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{inline}\ std::map<const\ char*,\ int64\_t>\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_aa12f5ba75c9d9ae82ba1b750050d5c46}{TraceMetrics::Get}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00080\ \ \ \ \ std::unique\_lock<SpinLock>\ l(\mbox{\hyperlink{classdoris_1_1_trace_metrics_a2ddca6daea747fedb927f1005a93f5d6}{lock\_}});}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a5f83b42be5092bd3a85c32dec1b62c31}{counters\_}};}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_trace_metrics_a041834c10002733ee28f98daebb9d7d5}{TraceMetrics::GetMetric}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00085\ \ \ \ \ std::lock\_guard<SpinLock>\ l(\mbox{\hyperlink{classdoris_1_1_trace_metrics_a2ddca6daea747fedb927f1005a93f5d6}{lock\_}});}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_a0e0568b132cecc1a7617d6c402b040c2}{FindWithDefault}}(\mbox{\hyperlink{classdoris_1_1_trace_metrics_a5f83b42be5092bd3a85c32dec1b62c31}{counters\_}},\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ 0);}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

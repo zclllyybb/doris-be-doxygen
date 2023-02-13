@@ -1,0 +1,231 @@
+\hypertarget{thread__collision__warner_8h_source}{}\doxysection{thread\+\_\+collision\+\_\+warner.\+h}
+\label{thread__collision__warner_8h_source}\index{/Users/dabowang/be\_all/gutil/threading/thread\_collision\_warner.h@{/Users/dabowang/be\_all/gutil/threading/thread\_collision\_warner.h}}
+\mbox{\hyperlink{thread__collision__warner_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2012\ The\ Chromium\ Authors.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Use\ of\ this\ source\ code\ is\ governed\ by\ a\ BSD-\/style\ license\ that\ can\ be}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ found\ in\ the\ LICENSE\ file.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops_8h}{gutil/atomicops.h}}"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifndef\ BASE\_EXPORT}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ BASE\_EXPORT}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ A\ helper\ class\ alongside\ macros\ to\ be\ used\ to\ verify\ assumptions\ about\ thread}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ safety\ of\ a\ class.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ Example:\ Queue\ implementation\ non\ thread-\/safe\ but\ still\ usable\ if\ clients}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ are\ synchronized\ somehow.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ In\ this\ case\ the\ macro\ DFAKE\_SCOPED\_LOCK\ has\ to\ be}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ used,\ it\ checks\ that\ if\ a\ thread\ is\ inside\ the\ push/pop\ then}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ noone\ else\ is\ still\ inside\ the\ pop/push}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ class\ NonThreadSafeQueue\ \{}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ public:}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ void\ push(int)\ \{\ DFAKE\_SCOPED\_LOCK(push\_pop\_);\ ...\ \}}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ int\ pop()\ \{\ DFAKE\_SCOPED\_LOCK(push\_pop\_);\ ...\ \}}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ private:}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ DFAKE\_MUTEX(push\_pop\_);}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Example:\ Queue\ implementation\ non\ thread-\/safe\ but\ still\ usable\ if\ clients}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ are\ synchronized\ somehow,\ it\ calls\ a\ method\ to\ "{}protect"{}\ from}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ a\ "{}protected"{}\ method}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ In\ this\ case\ the\ macro\ DFAKE\_SCOPED\_RECURSIVE\_LOCK}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ has\ to\ be\ used,\ it\ checks\ that\ if\ a\ thread\ is\ inside\ the\ push/pop}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ then\ noone\ else\ is\ still\ inside\ the\ pop/push}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ class\ NonThreadSafeQueue\ \{}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ public:}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ void\ push(int)\ \{}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ DFAKE\_SCOPED\_LOCK(push\_pop\_);}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ \ ...}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ int\ pop()\ \{}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ \ \ DFAKE\_SCOPED\_RECURSIVE\_LOCK(push\_pop\_);}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ \ bar();}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ ...}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ void\ bar()\ \{\ DFAKE\_SCOPED\_RECURSIVE\_LOCK(push\_pop\_);\ ...\ \}}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ private:}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ DFAKE\_MUTEX(push\_pop\_);}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Example:\ Queue\ implementation\ not\ usable\ even\ if\ clients\ are\ synchronized,}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ so\ only\ one\ thread\ in\ the\ class\ life\ cycle\ can\ use\ the\ two\ members}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ push/pop.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ In\ this\ case\ the\ macro\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED\ pins\ the}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ specified}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ critical\ section\ the\ first\ time\ a\ thread\ enters\ push\ or\ pop,\ from}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ that\ time\ on\ only\ that\ thread\ is\ allowed\ to\ execute\ push\ or\ pop.}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ class\ NonThreadSafeQueue\ \{}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ \ public:}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ \ \ void\ push(int)\ \{\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(push\_pop\_);\ ...\ \}}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ \ \ int\ pop()\ \{\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(push\_pop\_);\ ...\ \}}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ \ private:}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ \ \ DFAKE\_MUTEX(push\_pop\_);}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ Example:\ Class\ that\ has\ to\ be\ contructed/destroyed\ on\ same\ thread,\ it\ has}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ a\ "{}shareable"{}\ method\ (with\ external\ synchronization)\ and\ a\ not}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ shareable\ method\ (even\ with\ external\ synchronization).}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ In\ this\ case\ 3\ Critical\ sections\ have\ to\ be\ defined}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ class\ ExoticClass\ \{}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ public:}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ ExoticClass()\ \{\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(ctor\_dtor\_);\ ...\ \}}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \ \string~ExoticClass()\ \{\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(ctor\_dtor\_);\ ...\ \}}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ \ \ void\ Shareable()\ \{\ DFAKE\_SCOPED\_LOCK(shareable\_section\_);\ ...\ \}}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ \ \ void\ NotShareable()\ \{\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(ctor\_dtor\_);\ ...\ \}}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ \ \ ...}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ \ private:}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ \ \ DFAKE\_MUTEX(ctor\_dtor\_);}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ \ \ DFAKE\_MUTEX(shareable\_section\_);}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#if\ !defined(NDEBUG)}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ Defines\ a\ class\ member\ that\ acts\ like\ a\ mutex.\ It\ is\ used\ only\ as\ a}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ verification\ tool.}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ DFAKE\_MUTEX(obj)\ mutable\ base::ThreadCollisionWarner\ obj}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ Asserts\ the\ call\ is\ never\ called\ simultaneously\ in\ two\ threads.\ Used\ at}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ member\ function\ scope.}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_LOCK(obj)\ base::ThreadCollisionWarner::ScopedCheck\ s\_check\_\#\#obj(\&obj)}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ Asserts\ the\ call\ is\ never\ called\ simultaneously\ in\ two\ threads.\ Used\ at}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ member\ function\ scope.\ Same\ as\ DFAKE\_SCOPED\_LOCK\ but\ allows\ recursive\ locks.}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_RECURSIVE\_LOCK(obj)\ \(\backslash\)}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \ \ base::ThreadCollisionWarner::ScopedRecursiveCheck\ sr\_check\_\#\#obj(\&obj)}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ Asserts\ the\ code\ is\ always\ executed\ in\ the\ same\ thread.}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(obj)\ base::ThreadCollisionWarner::Check\ check\_\#\#obj(\&obj)}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#define\ DFAKE\_MUTEX(obj)\ typedef\ void\ InternalFakeMutexType\#\#obj}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_LOCK(obj)\ ((void)0)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_RECURSIVE\_LOCK(obj)\ ((void)0)}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#define\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED(obj)\ ((void)0)}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ The\ class\ ThreadCollisionWarner\ uses\ an\ Asserter\ to\ notify\ the\ collision}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ AsserterBase\ is\ the\ interfaces\ and\ DCheckAsserter\ is\ the\ default\ asserter}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ used.\ During\ the\ unit\ tests\ is\ used\ another\ class\ that\ doesn't\ "{}DCHECK"{}}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ in\ case\ of\ collision\ (check\ thread\_collision\_warner\_unittests.cc)}}
+\DoxyCodeLine{00132\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{structbase_1_1_asserter_base}{AsserterBase}}\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structbase_1_1_asserter_base_aec60e83a4cf817f31efaa0fbc4fe3aee}{\string~AsserterBase}}()\ \{\}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structbase_1_1_asserter_base_ab428450bc3374e051c127cc80516d83f}{warn}}(int64\_t\ previous\_thread\_id,\ int64\_t\ current\_thread\_id)\ =\ 0;}
+\DoxyCodeLine{00135\ \};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{structbase_1_1_d_check_asserter}{DCheckAsserter}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structbase_1_1_asserter_base}{AsserterBase}}\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structbase_1_1_d_check_asserter_a166f8fee9bfad18481a2588fa08ac887}{\string~DCheckAsserter}}()\ \{\}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ warn(int64\_t\ previous\_thread\_id,\ int64\_t\ current\_thread\_id)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00140\ \};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{class\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}\ \{}
+\DoxyCodeLine{00143\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ The\ parameter\ asserter\ is\ there\ only\ for\ test\ purpose}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_a60019f48b6dc55a3dd6c7f7e646333f4}{ThreadCollisionWarner}}(\mbox{\hyperlink{structbase_1_1_asserter_base}{AsserterBase}}*\ asserter\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{structbase_1_1_d_check_asserter}{DCheckAsserter}}())}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ :\ valid\_thread\_id\_(0),\ counter\_(0),\ asserter\_(asserter)\ \{\}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_a4d584ced148dcdc4879652bd11993a65}{\string~ThreadCollisionWarner}}()\ \{\ \textcolor{keyword}{delete}\ asserter\_;\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ This\ class\ is\ meant\ to\ be\ used\ through\ the\ macro}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ it\ doesn't\ leave\ the\ critical\ section,\ as\ opposed\ to\ ScopedCheck,}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ because\ the\ critical\ section\ being\ pinned\ is\ allowed\ to\ be\ used\ only}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ from\ one\ thread}}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check}{Check}}\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check_a1f8b2a1e736a03ce9fa7b54ea75879cc}{Check}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ warner)\ :\ warner\_(warner)\ \{\ warner\_-\/>EnterSelf();\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check_acce64f3655f0bc7f241c288e5cff527f}{\string~Check}}()\ \{\}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check_a5a72614124824e7f451c43fbd3cfcc49}{warner\_}};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check_a809d9ed1c0effa4e64495f1bab1dc8c1}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_check}{Check}});}
+\DoxyCodeLine{00165\ \ \ \ \ \};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ This\ class\ is\ meant\ to\ be\ used\ through\ the\ macro}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ DFAKE\_SCOPED\_LOCK}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check}{ScopedCheck}}\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check_a4451c19d653a99f7d39a2fc664709256}{ScopedCheck}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ warner)\ :\ warner\_(warner)\ \{\ warner\_-\/>Enter();\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check_afe4cce6a8bc473478a8db4d6e3e08dd9}{\string~ScopedCheck}}()\ \{\ warner\_-\/>Leave();\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check_a5a72614124824e7f451c43fbd3cfcc49}{warner\_}};}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check_a9d707fa3db96181a5ca1fbc0bc14c454}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_check}{ScopedCheck}});}
+\DoxyCodeLine{00179\ \ \ \ \ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ This\ class\ is\ meant\ to\ be\ used\ through\ the\ macro}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ DFAKE\_SCOPED\_RECURSIVE\_LOCK}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check}{ScopedRecursiveCheck}}\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check_a7a0055819c727f6ab06733dff20dd131}{ScopedRecursiveCheck}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ warner)\ :\ warner\_(warner)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ warner\_-\/>EnterSelf();}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check_a8807291e57a3f9c3b088341e9eeb015a}{\string~ScopedRecursiveCheck}}()\ \{\ warner\_-\/>Leave();\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}}*\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check_a5a72614124824e7f451c43fbd3cfcc49}{warner\_}};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check_a0147d376a085c1dacf83d1da6904aa05}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner_1_1_scoped_recursive_check}{ScopedRecursiveCheck}});}
+\DoxyCodeLine{00195\ \ \ \ \ \};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ This\ method\ stores\ the\ current\ thread\ identifier\ and\ does\ a\ DCHECK}}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ if\ a\ another\ thread\ has\ already\ done\ it,\ it\ is\ safe\ if\ same\ thread}}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ calls\ this\ multiple\ time\ (recursion\ allowed).}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordtype}{void}\ EnterSelf();}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ EnterSelf\ but\ recursion\ is\ not\ allowed.}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{void}\ Enter();}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Removes\ the\ thread\_id\ stored\ in\ order\ to\ allow\ other\ threads\ to}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ call\ EnterSelf\ or\ Enter.}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{void}\ Leave();}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ This\ stores\ the\ thread\ id\ that\ is\ inside\ the\ critical\ section,\ if\ the}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ value\ is\ 0\ then\ no\ thread\ is\ inside.}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{subtle::Atomic64}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_af1d5189f001dd1bb172bd63bdadc51b9}{valid\_thread\_id\_}};}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Counter\ to\ trace\ how\ many\ time\ a\ critical\ section\ was\ "{}pinned"{}}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ (when\ allowed)\ in\ order\ to\ unpin\ it\ when\ counter\_\ reaches\ 0.}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{subtle::Atomic64}}\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_a4395f03ac50a524755870f4b40d6bfbb}{counter\_}};}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ Here\ only\ for\ class\ unit\ tests\ purpose,\ during\ the\ test\ I\ need\ to\ not}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ DCHECK\ but\ notify\ the\ collision\ with\ something\ else.}}
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{structbase_1_1_asserter_base}{AsserterBase}}*\ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_ac35f8b339ac1416068ee67d633639306}{asserter\_}};}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{classbase_1_1_thread_collision_warner_a269d69ffc8792d4dae2be131518fe18a}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classbase_1_1_thread_collision_warner}{ThreadCollisionWarner}});}
+\DoxyCodeLine{00223\ \};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \}\ \textcolor{comment}{//\ namespace\ base}}
+
+\end{DoxyCode}

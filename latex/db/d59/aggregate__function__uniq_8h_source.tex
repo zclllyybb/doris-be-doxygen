@@ -1,0 +1,203 @@
+\hypertarget{aggregate__function__uniq_8h_source}{}\doxysection{aggregate\+\_\+function\+\_\+uniq.\+h}
+\label{aggregate__function__uniq_8h_source}\index{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_uniq.h@{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_uniq.h}}
+\mbox{\hyperlink{aggregate__function__uniq_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/AggregateFunctions/AggregateFunctionUniq.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <parallel\_hashmap/phmap.h>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{gutil_2hash_2city_8h}{gutil/hash/city.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{aggregate__function_8h}{vec/aggregate\_functions/aggregate\_function.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__decimal_8h}{vec/columns/column\_decimal.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{aggregation__common_8h}{vec/common/aggregation\_common.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{assert__cast_8h}{vec/common/assert\_cast.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bit__cast_8h}{vec/common/bit\_cast.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__set_8h}{vec/common/hash\_table/hash\_set.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{typeid__cast_8h}{vec/common/typeid\_cast.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__number_8h}{vec/data\_types/data\_type\_number.h}}"{}}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Here\ is\ an\ empirical\ value.}}
+\DoxyCodeLine{00040\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}\ =\ 16;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00045\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data}{AggregateFunctionUniqExactData}}\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_ad077ffe5ae148208a3b05626feece447}{is\_string\_key}}\ =\ std::is\_same\_v<T,\ String>;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_ac712c269af692069f1fd9f07a817fe2f}{Key}}\ =\ std::conditional\_t<is\_string\_key,\ UInt128,\ T>;}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_a2a36f2ed3660113ca309ed84c5ebea07}{Hash}}\ =\ std::conditional\_t<is\_string\_key,\ UInt128TrivialHash,\ HashCRC32<Key>>;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_ac5dc345617b6d90c38318cff75c5d323}{Set}}\ =\ phmap::flat\_hash\_set<Key,\ Hash>;}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_u_int128}{UInt128}}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_a9367373a329ed5021240e3a49ac8f535}{get\_key}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_u_int128}{UInt128}}\ key;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_sip_hash}{SipHash}}\ hash;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ hash.\mbox{\hyperlink{class_sip_hash_a67fa6128a47509a3c050f2372e3cc51e}{update}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.data,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.size);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ hash.\mbox{\hyperlink{class_sip_hash_a64bae5e3103c171c37305840842e8a80}{get128}}(key.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_u_int128_ac26d66d8d18a2c23206a9c3de0feca60}{low}},\ key.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_u_int128_af876e53503a96f86c2550a66a1b42309}{high}});}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ key;}
+\DoxyCodeLine{00058\ \ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_ac5dc345617b6d90c38318cff75c5d323}{Set}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_a2b95abf72ae903d7546f88a4f2a1a666}{set}};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_function_uniq_exact_data_aa5336aaef3f8ac70e8c5b187a59d8a82}{get\_name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}uniqExact"{}};\ \}}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedetail}{detail}}\ \{}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1detail_1_1_one_adder}{OneAdder}}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1detail_1_1_one_adder_a1fcc72c7170d5b611169c10d10592ed9}{add}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ column,\ \textcolor{keywordtype}{size\_t}\ row\_num)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ String>)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_ac276c99b237c085b9717447709dedb45}{get\_data\_at}}(row\_num);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.set.insert(Data::get\_key(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDecimalNumber<T>)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.set.insert(\mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal}{ColumnDecimal<T>}}\&>(column).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}()[row\_num]);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.set.insert(\mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<T>}}\&>(column).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}()[row\_num]);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00088\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq}{AggregateFunctionUniq}}\ final}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<Data,\ AggregateFunctionUniq<T,\ Data>>\ \{}
+\DoxyCodeLine{00090\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ac70e0bea0fd10473dc9dfdec0abfad0f}{KeyType}}\ =\ std::conditional\_t<std::is\_same\_v<T,\ String>,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_u_int128}{UInt128}},\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}>;}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_adddf2da0f09684a6be81721e60cdd9ce}{AggregateFunctionUniq}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4701f0b6051888cee0d0b84540a6f331}{Data}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq}{AggregateFunctionUniq}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4701f0b6051888cee0d0b84540a6f331}{Data}}>>(argument\_types\_,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\})\ \{\}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ Data::get\_name();\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a576a9559872b7b902fcec2bbdb1ff214}{get\_return\_type}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ std::make\_shared<DataTypeInt64>();\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1detail_1_1_one_adder_a1fcc72c7170d5b611169c10d10592ed9}{detail::OneAdder<T,\ Data>::add}}(this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place),\ *columns[0],\ row\_num);}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ac70e0bea0fd10473dc9dfdec0abfad0f}{KeyType}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a04287aea58f3bb8d7431ab4e56636138}{get\_keys}}(std::vector<KeyType>\&\ keys\_container,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ column,\ \textcolor{keywordtype}{size\_t}\ batch\_size)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ String>)\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ keys\_container.resize(batch\_size);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ !=\ batch\_size;\ ++i)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_ac276c99b237c085b9717447709dedb45}{get\_data\_at}}(i);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keys\_container[i]\ =\ Data::get\_key(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ keys\_container.data();}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ColumnType\ =}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::conditional\_t<IsDecimalNumber<T>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal}{ColumnDecimal<T>}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<T>}}>;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ assert\_cast<const\ ColumnType\&>(column).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}().\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_aeeef45fed489c40edf082728caa588e1}{add\_batch}}(\textcolor{keywordtype}{size\_t}\ batch\_size,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}*\ places,\ \textcolor{keywordtype}{size\_t}\ place\_offset,}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*\ arena,\ \textcolor{keywordtype}{bool}\ \textcolor{comment}{/*agg\_many*/})\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ std::vector<KeyType>\ keys\_container;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ac70e0bea0fd10473dc9dfdec0abfad0f}{KeyType}}*\ keys\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a04287aea58f3bb8d7431ab4e56636138}{get\_keys}}(keys\_container,\ *columns[0],\ batch\_size);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ std::vector<typename\ Data::Set*>\ array\_of\_data\_set(batch\_size);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ !=\ batch\_size;\ ++i)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ array\_of\_data\_set[i]\ =\ \&(this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(places[i]\ +\ place\_offset).set);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ !=\ batch\_size;\ ++i)\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}\ <\ batch\_size)\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ array\_of\_data\_set[i\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}]-\/>prefetch(}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keys[i\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}]);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ array\_of\_data\_set[i]-\/>insert(keys[i]);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ae2b6a83216392e87441b8d57a683d75d}{merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ rhs,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ rhs\_set\ =\ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(rhs).set;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rhs\_set.size()\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ set\ =\ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).set;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ set.rehash(set.size()\ +\ rhs\_set.size());}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ elem\ :\ rhs\_set)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ set.insert(elem);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a020a15f065e0a272cddf1a63515f2ed2}{add\_batch\_single\_place}}(\textcolor{keywordtype}{size\_t}\ batch\_size,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ std::vector<KeyType>\ keys\_container;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ac70e0bea0fd10473dc9dfdec0abfad0f}{KeyType}}*\ keys\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a04287aea58f3bb8d7431ab4e56636138}{get\_keys}}(keys\_container,\ *columns[0],\ batch\_size);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ set\ =\ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).set;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ !=\ batch\_size;\ ++i)\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}\ <\ batch\_size)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ set.prefetch(keys[i\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1cd1695f711b4519cb82f0b3fe680f79}{HASH\_MAP\_PREFETCH\_DIST}}]);}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ set.insert(keys[i]);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a55336ef83a948829e989d77518ddfec1}{serialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ set\ =\ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).set;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_aea0f84880e4df4a136a12a3f01104392}{write\_var\_uint}}(set.size(),\ buf);}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ elem\ :\ set)\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_adadb8942a018672168c1a9b1154c668f}{write\_pod\_binary}}(elem,\ buf);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ \ \ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a75f733281a252b53aba6baee3a15c3cd}{deserialize\_and\_merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ set\ =\ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).set;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a81586a76c764e2556f67139907fa5440}{UInt64}}\ size;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a09f41c09d98543d82de792a1f07d0f4b}{read\_var\_uint}}(size,\ buf);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ set.rehash(size\ +\ set.size());}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ac70e0bea0fd10473dc9dfdec0abfad0f}{KeyType}}\ ref;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a6f945673a27540a6bf33e9add6b3388e}{read\_pod\_binary}}(ref,\ buf);}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ set.insert(ref);}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a77f102c7c029218e3ff9612ec9b6dfac}{deserialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_a75f733281a252b53aba6baee3a15c3cd}{deserialize\_and\_merge}}(place,\ buf,\ arena);}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_uniq_ad81b3ac3e979a4cfc70ec1472cf74009}{insert\_result\_into}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ assert\_cast<ColumnInt64\&>(to).get\_data().push\_back(this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).set.size());}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

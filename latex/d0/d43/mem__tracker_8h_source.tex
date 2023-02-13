@@ -1,0 +1,113 @@
+\hypertarget{mem__tracker_8h_source}{}\doxysection{mem\+\_\+tracker.\+h}
+\label{mem__tracker_8h_source}\index{/Users/dabowang/be\_all/runtime/memory/mem\_tracker.h@{/Users/dabowang/be\_all/runtime/memory/mem\_tracker.h}}
+\mbox{\hyperlink{mem__tracker_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/runtime/mem-\/tracker.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pretty__printer_8h}{util/pretty\_printer.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }MemTrackerLimiter;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ Used\ to\ track\ memory\ usage.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ MemTracker\ can\ be\ consumed\ manually\ by\ consume()/release(),\ or\ put\ into\ SCOPED\_CONSUME\_MEM\_TRACKER,}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ which\ will\ automatically\ track\ all\ memory\ usage\ of\ the\ code\ segment\ where\ it\ is\ located.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.}}
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_mem_tracker}{MemTracker}}\ \{}
+\DoxyCodeLine{00036\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot}{Snapshot}}\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_a75b160f574a0be26114bae2c7686a5e1}{type}}\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_a1dd28f5ea7b5b0780013e960944ddaa0}{label}};}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_a50592231bd59924bca184337687bb3d0}{parent\_label}}\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_a39d95d9fe64881a7e7e835eefd2e8f26}{limit}}\ =\ 0;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_acac9b98b1e419b1e887bbcde31111563}{cur\_consumption}}\ =\ 0;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot_a8e3aa8706825469d93a44d52537293b9}{peak\_consumption}}\ =\ 0;}
+\DoxyCodeLine{00044\ \ \ \ \ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ Creates\ and\ adds\ the\ tracker\ to\ the\ mem\_tracker\_pool.}}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a2437ed28355dfee8dcf872532bbb7b8c}{MemTracker}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4f0b24914cbb33868035e88f9ace5254}{label}},\ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ profile,\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ parent,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ profile\_counter\_name);}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a2437ed28355dfee8dcf872532bbb7b8c}{MemTracker}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4f0b24914cbb33868035e88f9ace5254}{label}},\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ parent\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ For\ MemTrackerLimiter}}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a2437ed28355dfee8dcf872532bbb7b8c}{MemTracker}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a0d0e574f937dec78bff0a213701ec291}{\_parent\_group\_num}}\ =\ -\/1;\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a9487c2d1e92d0ce60d9838f2cafd0ead}{\string~MemTracker}}();}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{print\_bytes}}(int64\_t\ bytes)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ bytes\ >=\ 0\ ?\ \mbox{\hyperlink{classdoris_1_1_pretty_printer_aaa3ce08858081586e0f1e563733cadf2}{PrettyPrinter::print}}(bytes,\ TUnit::BYTES)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}-\/"{}}\ +\ \mbox{\hyperlink{classdoris_1_1_pretty_printer_aaa3ce08858081586e0f1e563733cadf2}{PrettyPrinter::print}}(std::abs(bytes),\ TUnit::BYTES);}
+\DoxyCodeLine{00058\ \ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4f0b24914cbb33868035e88f9ace5254}{label}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4338ddf03fc0c06eebd83dd0980e318d}{\_label}};\ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a31e5b0c760f409926eea2b113da097d6}{parent\_label}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a9981f2235434b2b0c8e327f82adb23f8}{\_parent\_label}};\ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4c73562a36ac3b5fc5d813173b48cad8}{set\_parent\_label}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a9981f2235434b2b0c8e327f82adb23f8}{\_parent\_label}};\ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ memory\ consumed\ in\ bytes.}}
+\DoxyCodeLine{00065\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a2d3e67ea53d8c7030b298411a3c6c354}{consumption}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_ae3fb4f048d93a770a1edcbd63b563b4a}{\_consumption}}-\/>current\_value();\ \}}
+\DoxyCodeLine{00066\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_af5fc407c5a0e14e029a918c5b2e7662f}{peak\_consumption}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_ae3fb4f048d93a770a1edcbd63b563b4a}{\_consumption}}-\/>value();\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a478672779d1bbdb836cecbdb6e78659a}{consume}}(int64\_t\ bytes)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bytes\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_ae3fb4f048d93a770a1edcbd63b563b4a}{\_consumption}}-\/>add(bytes);}
+\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a95957cfddb30a4994895fac43c38e701}{release}}(int64\_t\ bytes)\ \{\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a478672779d1bbdb836cecbdb6e78659a}{consume}}(-\/bytes);\ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a0deeb2e36a1317f786320ec1c3b59200}{set\_consumption}}(int64\_t\ bytes)\ \{\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_ae3fb4f048d93a770a1edcbd63b563b4a}{\_consumption}}-\/>set(bytes);\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00076\ \ \ \ \ Snapshot\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_aeddc99121d36fa595f59d581d504a041}{make\_snapshot}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Specify\ group\_num\ from\ mem\_tracker\_pool\ to\ generate\ snapshot.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a18b642e639c010850b724cb42d632646}{make\_group\_snapshot}}(std::vector<Snapshot>*\ snapshots,\ int64\_t\ group\_num,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a31e5b0c760f409926eea2b113da097d6}{parent\_label}});}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a374c86955dec8be60a072d81ab2143aa}{log\_usage}}(\mbox{\hyperlink{structdoris_1_1_mem_tracker_1_1_snapshot}{MemTracker::Snapshot}}\ snapshot);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4dcb28d0641b6d37aef23c662ec11908}{debug\_string}}()\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ std::stringstream\ msg;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ msg\ <<\ \textcolor{stringliteral}{"{}label:\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4338ddf03fc0c06eebd83dd0980e318d}{\_label}}\ <<\ \textcolor{stringliteral}{"{};\ "{}}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}consumption:\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a2d3e67ea53d8c7030b298411a3c6c354}{consumption}}()\ <<\ \textcolor{stringliteral}{"{};\ "{}}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}peak\_consumption:\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_af5fc407c5a0e14e029a918c5b2e7662f}{peak\_consumption}}()\ <<\ \textcolor{stringliteral}{"{};\ "{}};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ msg.str();}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a3c0fbef7e93a4273c8ce0cef0421309b}{bind\_parent}}(\mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ parent);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ label\ used\ in\ the\ make\ snapshot,\ not\ guaranteed\ unique.}}
+\DoxyCodeLine{00094\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a4338ddf03fc0c06eebd83dd0980e318d}{\_label}};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ std::shared\_ptr<RuntimeProfile::HighWaterMarkCounter>\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_ae3fb4f048d93a770a1edcbd63b563b4a}{\_consumption}};\ \textcolor{comment}{//\ in\ bytes}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Tracker\ is\ located\ in\ group\ num\ in\ mem\_tracker\_pool}}
+\DoxyCodeLine{00099\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a0d0e574f937dec78bff0a213701ec291}{\_parent\_group\_num}}\ =\ 0;}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ Use\ \_parent\_label\ to\ correlate\ with\ parent\ limiter\ tracker.}}
+\DoxyCodeLine{00101\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_a9981f2235434b2b0c8e327f82adb23f8}{\_parent\_label}}\ =\ \textcolor{stringliteral}{"{}-\/"{}};}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Iterator\ into\ mem\_tracker\_pool\ for\ this\ object.\ Stored\ to\ have\ O(1)\ remove.}}
+\DoxyCodeLine{00104\ \ \ \ \ std::list<MemTracker*>::iterator\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_abf525d09577fcdfd1a59cf7be0b7a45d}{\_tracker\_group\_it}};}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

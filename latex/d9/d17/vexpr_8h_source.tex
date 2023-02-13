@@ -1,0 +1,199 @@
+\hypertarget{vexpr_8h_source}{}\doxysection{vexpr.\+h}
+\label{vexpr_8h_source}\index{/Users/dabowang/be\_all/vec/exprs/vexpr.h@{/Users/dabowang/be\_all/vec/exprs/vexpr.h}}
+\mbox{\hyperlink{vexpr_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bitmapfilter__predicate_8h}{exprs/bitmapfilter\_predicate.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hybrid__set_8h}{exprs/hybrid\_set.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Exprs\_types.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime_2types_8h}{runtime/types.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{udf__internal_8h}{udf/udf\_internal.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type_8h}{vec/data\_types/data\_type.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vexpr__context_8h}{vec/exprs/vexpr\_context.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{function_8h}{vec/functions/function.h}}"{}}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }vectorized\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#define\ RETURN\_IF\_ERROR\_OR\_PREPARED(stmt)\ \(\backslash\)}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \ if\ (\_prepared)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ return\ Status::OK();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_prepared\ =\ true;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ RETURN\_IF\_ERROR(stmt);\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}\ \{}
+\DoxyCodeLine{00045\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ resize\ inserted\ param\ column\ to\ make\ sure\ column\ size\ equal\ to\ block.rows()}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ and\ return\ param\ column\ index}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ac4d2b187b5ace8d7c750dad5cdc6034c}{insert\_param}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}*\ block,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name}{ColumnWithTypeAndName}}\&\&\ elem,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ usually\ elem.column\ always\ is\ const\ column,\ so\ we\ just\ clone\ it.}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ elem.column\ =\ elem.column-\/>clone\_resized(size);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a77f369726854ebacb96fb49e7146e980}{insert}}(std::move(elem));}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a08f559e5612203aeedf927d660e77b67}{columns}}()\ -\/\ 1;}
+\DoxyCodeLine{00053\ \ \ \ \ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a0839acfd2cd87a90c06c9eb0f9673cbc}{VExpr}}(\textcolor{keyword}{const}\ TExprNode\&\ node);}
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a56a6905164c879404cc53f60d048bff1}{VExpr}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}\&\ vexpr);}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a56a6905164c879404cc53f60d048bff1}{VExpr}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_abc12921e2ba5a98e2d792b496cecbc58}{type}},\ \textcolor{keywordtype}{bool}\ is\_slotref,\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a383b4bf9fa5747435372f741fd1747f3}{is\_nullable}});}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ only\ used\ for\ test}}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a56a6905164c879404cc53f60d048bff1}{VExpr}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_af2d0e40cef1e30575ab3c4f3afac7cd8}{\string~VExpr}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ac6611cdc22a95fcfcce5749101582cc9}{clone}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a151df6c8978861d08ed230a66114397b}{expr\_name}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a26d52937535a52c99b0dd722dcae516b}{prepare}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ row\_desc,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{}\ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a23dd992dfdd884ef1afbc0573712ad5b}{open}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionContext::FunctionStateScope}}\ scope);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a1373c921466e4b47184c64a1df57ebbe}{execute}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}*\ result\_column\_id)\ =\ 0;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \textcolor{comment}{}\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ad61f341147ba83929acb09d735e20fc0}{close}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionContext::FunctionStateScope}}\ scope);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a15122336c8118f2089d1bc88ceb7a245}{data\_type}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_aac8fdd6b502c831e06cb9a6c91a51e43}{\_data\_type}};\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_abc12921e2ba5a98e2d792b496cecbc58}{type}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae81cd959560bd36f792fd5375b75d012}{\_type}};\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a8d91a8150d568b729b0bd40996eb7849}{is\_slot\_ref}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ade654e6d8b3bc01827addfed36db9440}{\_node\_type}}\ ==\ TExprNodeType::SLOT\_REF;\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ TExprNodeType::type\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a2e71dadbaa465160e9d8e6225ab6ff1e}{node\_type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ade654e6d8b3bc01827addfed36db9440}{\_node\_type}};\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ TExprOpcode::type\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a5ce9a1ef6a738bd4c7a8646205336de9}{op}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a8205b63a52a674f0d96a6b4cf013a728}{\_opcode}};\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a40ac99f1686eb5bf5fa8818ae01c5c27}{add\_child}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr)\ \{\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae9ea8367311f191ff56948f47f188e0a}{\_children}}.push\_back(expr);\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a8768a470a00ddf2aaf2bfd304746c382}{create\_expr\_tree}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ TExpr\&\ texpr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}**\ ctx);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a99613799ebed9b5ded40f8a4652a3a5a}{create\_expr\_trees}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ std::vector<TExpr>\&\ texprs,}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<VExprContext*>*\ ctxs);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a26d52937535a52c99b0dd722dcae516b}{prepare}}(\textcolor{keyword}{const}\ std::vector<VExprContext*>\&\ ctxs,\ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ row\_desc);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a23dd992dfdd884ef1afbc0573712ad5b}{open}}(\textcolor{keyword}{const}\ std::vector<VExprContext*>\&\ ctxs,\ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a9263eb9c9c0d9fe9479adb75fa736498}{clone\_if\_not\_exists}}(\textcolor{keyword}{const}\ std::vector<VExprContext*>\&\ ctxs,\ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<VExprContext*>*\ new\_ctxs);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ad61f341147ba83929acb09d735e20fc0}{close}}(\textcolor{keyword}{const}\ std::vector<VExprContext*>\&\ ctxs,\ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a383b4bf9fa5747435372f741fd1747f3}{is\_nullable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_aac8fdd6b502c831e06cb9a6c91a51e43}{\_data\_type}}-\/>is\_nullable();\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a240c1924416689e5700ff0d9f30539d9}{PrimitiveType}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a7cac37220c7287ce2bcda28867a9ce47}{result\_type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae81cd959560bd36f792fd5375b75d012}{\_type}}.\mbox{\hyperlink{structdoris_1_1_type_descriptor_af489c7be15df91529c6ce9709c87cc44}{type}};\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a08909ac305378f716eb9aef099f5b328}{create\_expr}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ TExprNode\&\ texpr\_node,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**\ expr);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a5c361e6795faa7bcc5590c6f1829bccc}{create\_tree\_from\_thrift}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ std::vector<TExprNode>\&\ nodes,}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ parent,\ \textcolor{keywordtype}{int}*\ node\_idx,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**\ root\_expr,}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}**\ ctx);}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<VExpr*>\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ab97a619c5a505a18ec99eb14f2e40084}{children}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae9ea8367311f191ff56948f47f188e0a}{\_children}};\ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_abbe4d6f7abf5a925a79fe482a1ed9c2f}{set\_children}}(std::vector<VExpr*>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ab97a619c5a505a18ec99eb14f2e40084}{children}})\ \{\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae9ea8367311f191ff56948f47f188e0a}{\_children}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ab97a619c5a505a18ec99eb14f2e40084}{children}};\ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{virtual}\ std::string\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{debug\_string}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{debug\_string}}(\textcolor{keyword}{const}\ std::vector<VExpr*>\&\ exprs);}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{debug\_string}}(\textcolor{keyword}{const}\ std::vector<VExprContext*>\&\ ctxs);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_aa78dfe1a5d51271472e9e54f3f5d5857}{is\_and\_expr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a0b708d08f80b3138a70aa6316f136766}{\_fn}}.name.function\_name\ ==\ \textcolor{stringliteral}{"{}and"{}};\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a7d61d20f9afbdb06bee3620a10e20a4c}{is\_compound\_predicate}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{const}\ TFunction\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ad9f74ac08bd891d3119d45a7479cd8c6}{fn}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a0b708d08f80b3138a70aa6316f136766}{\_fn}};\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a4060a925d8b84b0ed34e110ef34436cb}{is\_constant}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a1e4f3ad5ab015b50d5242bab1845cbf9}{get\_const\_col}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,\ \mbox{\hyperlink{structdoris_1_1_column_ptr_wrapper}{ColumnPtrWrapper}}**\ output);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a2f679124ed9f85fce5b18aff5388c3c1}{fn\_context\_index}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a6ea6d2a99731b5c84fe2eb0a0f47a89f}{\_fn\_context\_index}};\ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ad24965328db1a88822f2749f2c4c5447}{expr\_without\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (expr-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a2e71dadbaa465160e9d8e6225ab6ff1e}{node\_type}}()\ ==\ doris::TExprNodeType::CAST\_EXPR)\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ad24965328db1a88822f2749f2c4c5447}{expr\_without\_cast}}(expr-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae9ea8367311f191ff56948f47f188e0a}{\_children}}[0]);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ expr;}
+\DoxyCodeLine{00161\ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ If\ this\ expr\ is\ a\ RuntimeFilterWrapper,\ this\ method\ will\ return\ an\ underlying\ rf\ expression}}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a86149d9f52b1aed31abf6e5f97404e4a}{get\_impl}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ If\ this\ expr\ is\ a\ BloomPredicate,\ this\ method\ will\ return\ a\ BloomFilterFunc}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{virtual}\ std::shared\_ptr<BloomFilterFuncBase>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a1422c968c939d3eb54282e0b8fed1f64}{get\_bloom\_filter\_func}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Method\ 'get\_bloom\_filter\_func()'\ is\ not\ supported\ in\ expression:\ "{}}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ this-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{debug\_string}}();}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{virtual}\ std::shared\_ptr<HybridSetBase>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae4468c4e6d47f340f6850094f6b83d98}{get\_set\_func}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ If\ this\ expr\ is\ a\ BitmapPredicate,\ this\ method\ will\ return\ a\ BitmapFilterFunc}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{virtual}\ std::shared\_ptr<BitmapFilterFuncBase>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a48c69dc66f16a761a27a6601f5336ae3}{get\_bitmap\_filter\_func}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Method\ 'get\_bitmap\_filter\_func()'\ is\ not\ supported\ in\ expression:\ "{}}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ this-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{debug\_string}}();}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00180\ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc}{FunctionContext::TypeDesc}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a731ec71aeb76e2717b29ca0854c97435}{column\_type\_to\_type\_desc}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_abc12921e2ba5a98e2d792b496cecbc58}{type}});}
+\DoxyCodeLine{00185\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a2d607053bba46b943fbca24ba8adb39d}{debug\_string}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a151df6c8978861d08ed230a66114397b}{expr\_name}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ std::stringstream\ out;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ out\ <<\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a151df6c8978861d08ed230a66114397b}{expr\_name}}\ <<\ \textcolor{stringliteral}{"{}("{}}\ <<\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae21c3e223fb1aec0439964d01e5e0282}{VExpr::debug\_string}}()\ <<\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out.str();}
+\DoxyCodeLine{00189\ \ \ \ \ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a20abe170102c967972e778cd25760d4b}{register\_function\_context}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{doris::RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_acef2b6c0e9f11ba4bcfe546f43a5392e}{init\_function\_context}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionContext::FunctionStateScope}}\ scope,}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7f96c8dd088c1f093dd8225e8856ac48}{FunctionBasePtr}}\&\ function)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a515375cf65cbc4473aae63f87150b044}{close\_function\_context}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ context,\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionContext::FunctionStateScope}}\ scope,}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7f96c8dd088c1f093dd8225e8856ac48}{FunctionBasePtr}}\&\ function)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ TExprNodeType::type\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ade654e6d8b3bc01827addfed36db9440}{\_node\_type}};}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ Used\ to\ check\ what\ opcode}}
+\DoxyCodeLine{00209\ \ \ \ \ TExprOpcode::type\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a8205b63a52a674f0d96a6b4cf013a728}{\_opcode}};}
+\DoxyCodeLine{00210\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae81cd959560bd36f792fd5375b75d012}{\_type}};}
+\DoxyCodeLine{00211\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_aac8fdd6b502c831e06cb9a6c91a51e43}{\_data\_type}};}
+\DoxyCodeLine{00212\ \ \ \ \ std::vector<VExpr*>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_ae9ea8367311f191ff56948f47f188e0a}{\_children}};}
+\DoxyCodeLine{00213\ \ \ \ \ TFunction\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a0b708d08f80b3138a70aa6316f136766}{\_fn}};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a6ea6d2a99731b5c84fe2eb0a0f47a89f}{\_fn\_context\_index}};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ If\ this\ expr\ is\ constant,\ this\ will\ store\ and\ cache\ the\ value\ generated\ by}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ get\_const\_col()}}
+\DoxyCodeLine{00222\ \ \ \ \ std::shared\_ptr<ColumnPtrWrapper>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_aba46364a40bcd8b4f60e0d64ab3663e4}{\_constant\_col}};}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_a172dfd8fdb71d5342bea7ab847110cdb}{\_prepared}};}
+\DoxyCodeLine{00224\ \};}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \}\ \textcolor{comment}{//\ namespace\ vectorized}}
+\DoxyCodeLine{00227\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

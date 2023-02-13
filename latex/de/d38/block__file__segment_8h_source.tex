@@ -1,0 +1,187 @@
+\hypertarget{block__file__segment_8h_source}{}\doxysection{block\+\_\+file\+\_\+segment.\+h}
+\label{block__file__segment_8h_source}\index{/Users/dabowang/be\_all/io/cache/block/block\_file\_segment.h@{/Users/dabowang/be\_all/io/cache/block/block\_file\_segment.h}}
+\mbox{\hyperlink{block__file__segment_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Interpreters/Cache/FileSegment.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block__file__cache_8h}{io/cache/block/block\_file\_cache.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{fs_2file__reader_8h}{io/fs/file\_reader.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{fs_2file__writer_8h}{io/fs/file\_writer.h}}"{}}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }io\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }FileBlock;}
+\DoxyCodeLine{00037\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1io_a7b4eb20d4fdfaa0bd58cb48243d3b246}{FileBlockSPtr}}\ =\ std::shared\_ptr<FileBlock>;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1io_a12b7a12e387d2192f0feb8ce5f59c116}{FileBlocks}}\ =\ std::list<FileBlockSPtr>;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1io_1_1_file_block}{FileBlock}}\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1io_1_1_l_r_u_file_cache}{LRUFileCache}};}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1io_1_1_i_file_cache_1_1_key}{Key}}\ =\ \mbox{\hyperlink{structdoris_1_1io_1_1_i_file_cache_1_1_key}{IFileCache::Key}};}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a02754cd52024a143c223ebfb193e7f92}{LocalWriterPtr}}\ =\ std::unique\_ptr<FileWriter>;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1io_1_1_file_block_aee93bf93baa07715431b3c7aeb969e62}{LocalReaderPtr}}\ =\ std::shared\_ptr<FileReader>;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8a17b20a73bf43ede53fda134f16f2a75e}{DOWNLOADED}},}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8aba2b45bdc11e2a4a6e86aab2ac693cbb}{EMPTY}},}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8a35045f0a8eec8847a85db7df2624c390}{DOWNLOADING}},}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8af0fb839bd6f5c01540bffebcfa597f6f}{SKIP\_CACHE}},}
+\DoxyCodeLine{00064\ \ \ \ \ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block}{FileBlock}}(\textcolor{keywordtype}{size\_t}\ offset\_,\ \textcolor{keywordtype}{size\_t}\ size\_,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a1e6e38161681b1768c9409088de74950}{Key}}\&\ key\_,\ \mbox{\hyperlink{classdoris_1_1io_1_1_i_file_cache}{IFileCache}}*\ cache\_,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ download\_state\_,\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a692564f4f6bc1e846193af7a5608cc34}{is\_persistent}});}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a6cfad4d9a89cf5ece6d885bd811a7c90}{\string~FileBlock}}();}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a41b9d35863618059da5d2066b753325d}{state}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_af91906f6fd32668cc94f470e18c8d0dc}{state\_to\_string}}(\mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{FileBlock::State}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a41b9d35863618059da5d2066b753325d}{state}});}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range}{Range}}\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa702b2b4533c7c8c3c3125d7137dbc91}{Range}}(\textcolor{keywordtype}{size\_t}\ left\_,\ \textcolor{keywordtype}{size\_t}\ right\_)\ :\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}}(left\_),\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}}(right\_)\ \{\}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a5217c01a6033414d0a8812becd3aa47b}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range}{Range}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}}\ ==\ other.\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}}\ \&\&\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}}\ ==\ other.\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}};}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}}\ -\/\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}}\ +\ 1;\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fmt::format(\textcolor{stringliteral}{"{}[\{\},\ \{\}]"{}},\ std::to\_string(\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}}),\ std::to\_string(\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_aa022cff9934a1a99bd77c49ca6a135a2}{right}}));}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range}{Range}}\&\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a7f64bbe0fc0fbedada0f827b36bc0adc}{range}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a993640311424a1ffc2d57f582b8a970f}{\_segment\_range}};\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_i_file_cache_1_1_key}{Key}}\&\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ac08bec26397305de58d0d17659780606}{key}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a17a1a261261a0b8d65391886d1be0996}{\_file\_key}};\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ac8ec3479d32f236af2d973aae6790f66}{offset}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a7f64bbe0fc0fbedada0f827b36bc0adc}{range}}().\mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range_a951236a0702535ba18ba51db69428658}{left}};\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a3c6378257911e1b2448fb43edc77a7f8}{wait}}();}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ append\ data\ to\ cache\ file}}
+\DoxyCodeLine{00102\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a62ac44cb61310089052b134cf3fcfe6c}{append}}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ read\ data\ from\ cache\ file}}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_aaaca4a1339077e4e77280b171d7eb26b}{read\_at}}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ buffer,\ \textcolor{keywordtype}{size\_t}\ offset\_);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ finish\ write,\ release\ the\ file\ writer}}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a7daa01ba417d42053f2b3d79e7bbb427}{finalize\_write}}();}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ set\ downloader\ if\ state\ ==\ EMPTY}}
+\DoxyCodeLine{00111\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a6bb3190ff637168fe4f2ed766578a090}{get\_or\_set\_downloader}}();}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a9af144a258528debeb4998dc3f0c2293}{get\_downloader}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ab6bc56c5800c63c3fc8c9dbd41ae68c8}{reset\_downloader}}(std::lock\_guard<std::mutex>\&\ segment\_lock);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a582a3f895e27efe96f4f7bc05ac19ddc}{is\_downloader}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_acf7a1157a05eb708f4b4f7c465d20506}{is\_downloaded}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a8ee66fa6b7e9802d48f4c25ed5ecea6b}{\_is\_downloaded}}.load();\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a692564f4f6bc1e846193af7a5608cc34}{is\_persistent}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a6fd5e93077e2e64a6253211947088a91}{\_is\_persistent}};\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ad06fe2663f03c71746e476a3abdd9fb3}{get\_caller\_id}}();}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a08c063aebcc79284acfdf4604a1f8677}{get\_download\_offset}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ac1e5756abf280cda9c003b98d87d7107}{get\_downloaded\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_acc51e2a7db9dc17a57d1548b7be8a1ab}{get\_info\_for\_log}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a502c550f2259bb527280440c711eea5b}{get\_path\_in\_local\_cache}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block}{FileBlock}}\&\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a6a127351fdf36789260dfde86a112ab9}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block}{FileBlock}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00134\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ae36025a7b501dd769e6c2916c24f3f7b}{FileBlock}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block}{FileBlock}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ac1e5756abf280cda9c003b98d87d7107}{get\_downloaded\_size}}(std::lock\_guard<std::mutex>\&\ segment\_lock)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00138\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a0ab040c547d02eb6d771ce4967602886}{get\_info\_for\_log\_impl}}(std::lock\_guard<std::mutex>\&\ segment\_lock)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a8b8adab283c5f8f82ed18afabfc87830}{has\_finalized\_state}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ac9628431e71ae50c17952d3066f72c91}{set\_downloaded}}(std::lock\_guard<std::mutex>\&\ segment\_lock);}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a2dd67a7f9b7a4fadf70426177e9b43e3}{is\_downloader\_impl}}(std::lock\_guard<std::mutex>\&\ segment\_lock)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a78eba78fc62277745c4c59b6c28dd201}{complete}}(std::lock\_guard<std::mutex>\&\ cache\_lock);}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a4872910d4a54bbcbe4cecf82b3323c1b}{complete\_unlocked}}(std::lock\_guard<std::mutex>\&\ cache\_lock,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\&\ segment\_lock);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a62a1292a82f5e77a85f888a40e42cdd2}{reset\_downloader\_impl}}(std::lock\_guard<std::mutex>\&\ segment\_lock);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_block_1_1_range}{Range}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a993640311424a1ffc2d57f582b8a970f}{\_segment\_range}};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_af4a661dc3222a17b6a75716948d1c07d}{\_download\_state}};}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ae1445320ef700a3791d9fd90b0c95614}{\_downloader\_id}};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a02754cd52024a143c223ebfb193e7f92}{LocalWriterPtr}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a7d1ae87f2954656855fe5024dcc57f99}{\_cache\_writer}};}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_aee93bf93baa07715431b3c7aeb969e62}{LocalReaderPtr}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_af914330c00109b0b416c7de53c369191}{\_cache\_reader}};}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a59db91e5c9ac7088d36d147ca300aeba}{\_downloaded\_size}}\ =\ 0;}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a3f0b4c278cb19f9c2b2dbdb065f51e14}{\_mutex}};}
+\DoxyCodeLine{00170\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_af56bf411a50a75827bda31c148e9d0ee}{\_cv}};}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a0978f7784df6af094b42d6c7af9a3ff1}{\_download\_mutex}};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_i_file_cache_1_1_key}{Key}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a17a1a261261a0b8d65391886d1be0996}{\_file\_key}};}
+\DoxyCodeLine{00181\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_i_file_cache}{IFileCache}}*\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_ab9fee95e6591bdeb001e458e2297ff0d}{\_cache}};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a8ee66fa6b7e9802d48f4c25ed5ecea6b}{\_is\_downloaded}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_block_a6fd5e93077e2e64a6253211947088a91}{\_is\_persistent}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00185\ \};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}}\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_aa44781d5f8499511731ade49758c5c3e}{FileBlocksHolder}}(\mbox{\hyperlink{namespacedoris_1_1io_a12b7a12e387d2192f0feb8ce5f59c116}{FileBlocks}}\&\&\ file\_segments\_)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_a1d81ddae5b5b0dbb9b9bcedec2f196da}{file\_segments}}(std::move(file\_segments\_))\ \{\}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_a7098c79934210d1fbd8fdbc6a3769eb2}{FileBlocksHolder}}(\mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}}\&\&\ other)\ noexcept}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_a1d81ddae5b5b0dbb9b9bcedec2f196da}{file\_segments}}(std::move(other.file\_segments))\ \{\}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}}\&\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_ac5d9b26b74fdfc787e219b8b7a97420e}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_a3c7aa4755e6e0b9cf2b103cb23433fca}{FileBlocksHolder}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder}{FileBlocksHolder}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_af701bfbf35992d74043588af52784d33}{\string~FileBlocksHolder}}();}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1io_a12b7a12e387d2192f0feb8ce5f59c116}{FileBlocks}}\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_a1d81ddae5b5b0dbb9b9bcedec2f196da}{file\_segments}}\ \{\};}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1io_1_1_file_blocks_holder_aa454ec5a80b6918ee2a68181f2d14476}{to\_string}}();}
+\DoxyCodeLine{00202\ \};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \}\ \textcolor{comment}{//\ namespace\ io}}
+\DoxyCodeLine{00205\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

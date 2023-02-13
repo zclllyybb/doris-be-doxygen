@@ -1,0 +1,212 @@
+\hypertarget{free__pool_8hpp_source}{}\doxysection{free\+\_\+pool.\+hpp}
+\label{free__pool_8hpp_source}\index{/Users/dabowang/be\_all/runtime/free\_pool.hpp@{/Users/dabowang/be\_all/runtime/free\_pool.hpp}}
+\mbox{\hyperlink{free__pool_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/runtime/free-\/pool.hpp}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler__util_8h}{common/compiler\_util.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging_8h}{common/logging.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__pool_8h}{runtime/mem\_pool.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bit__util_8h}{util/bit\_util.h}}"{}}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Implementation\ of\ a\ free\ pool\ to\ recycle\ allocations.\ The\ pool\ is\ broken}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ up\ into\ 64\ lists,\ one\ for\ each\ power\ of\ 2.\ Each\ allocation\ is\ rounded\ up}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ to\ the\ next\ power\ of\ 2.\ When\ the\ allocation\ is\ freed,\ it\ is\ added\ to\ the}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ corresponding\ free\ list.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Each\ allocation\ has\ an\ 8\ byte\ header\ that\ immediately\ precedes\ the\ actual}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ allocation.\ If\ the\ allocation\ is\ owned\ by\ the\ user,\ the\ header\ contains}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ the\ ptr\ to\ the\ list\ that\ it\ should\ be\ added\ to\ on\ Free().}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ When\ the\ allocation\ is\ in\ the\ pool\ (i.e.\ available\ to\ be\ handed\ out),\ it}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ contains\ the\ link\ to\ the\ next\ allocation.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ This\ has\ O(1)\ Allocate()\ and\ Free().}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ This\ is\ not\ thread\ safe.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ TODO(zxy):\ consider\ integrating\ this\ with\ MemPool.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ TODO:\ consider\ changing\ to\ something\ more\ granular\ than\ doubling.}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_free_pool}{FreePool}}\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ C'tor,\ initializes\ the\ FreePool\ to\ be\ empty.\ All\ allocations\ come\ from\ the}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ 'mem\_pool'.}}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a698ec6f743892cd6de7216d3107db3d0}{FreePool}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ mem\_pool)\ :\ \mbox{\hyperlink{classdoris_1_1_free_pool_a5aa8a8dd10f32da8bb73eae3a2132265}{\_mem\_pool}}(mem\_pool)\ \{\ memset(\&\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}},\ 0,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}));\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_free_pool_a2f51f09dd5d60135a11f6e6ffbbbd336}{\string~FreePool}}()\ \{\}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ Allocates\ a\ buffer\ of\ size.}}
+\DoxyCodeLine{00057\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris_1_1_free_pool_ab0e75e1c97c39a501fdb0fff70e6ad47}{allocate}}(int64\_t\ size)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ the\ typical\ malloc\ behavior.\ NULL\ is\ reserved\ for\ failures.}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ 0)\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(0x1);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ ceil(log\_2(size))}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ free\_list\_idx\ =\ \mbox{\hyperlink{classdoris_1_1_bit_util_a6c3979f31c68a64fdf55533bf46dcaab}{BitUtil::log2}}(size);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ DCHECK\_LT(free\_list\_idx,\ \mbox{\hyperlink{classdoris_1_1_free_pool_a61ed822224f518680a5ac4e313984f7b}{NUM\_LISTS}});}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ allocation\ =\ \mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx].\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocation\ ==\ NULL)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ There\ wasn't\ an\ existing\ allocation\ of\ the\ right\ size,\ allocate\ a\ new\ one.}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ size\ =\ 1L\ <<\ free\_list\_idx;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ allocation\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\textcolor{keyword}{>}(}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a5aa8a8dd10f32da8bb73eae3a2132265}{\_mem\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(size\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}})));}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ this\ allocation\ from\ the\ list.}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx].\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}}\ =\ allocation-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ DCHECK(allocation\ !=\ NULL);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ back\ node\ to\ point\ back\ to\ the\ list\ it\ came\ from\ so\ know\ where}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ add\ it\ on\ free().}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ allocation-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a89ee5e7590c000a4f3b261f31c394020}{list}}\ =\ \&\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx];}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(allocation)\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}});}
+\DoxyCodeLine{00084\ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ Allocates\ a\ buffer\ of\ size.}}
+\DoxyCodeLine{00087\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris_1_1_free_pool_ae790bd4ff00365055b1c55aa5598d8f1}{aligned\_allocate}}(\textcolor{keywordtype}{int}\ alignment,\ int64\_t\ size)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ alignment\ should\ be\ a\ power\ of\ 2.}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ DCHECK(alignment\ >\ 0\ \&\&\ ((alignment\ -\/\ 1)\ \&\ alignment)\ ==\ 0);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ the\ typical\ malloc\ behavior.\ NULL\ is\ reserved\ for\ failures.}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ 0)\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(alignment);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ padding\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}})\ >=\ alignment\ ?\ 0\ :\ (alignment\ -\/\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}));}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ size\ +=\ padding;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ ceil(log\_2(size))}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ free\_list\_idx\ =\ \mbox{\hyperlink{classdoris_1_1_bit_util_a6c3979f31c68a64fdf55533bf46dcaab}{BitUtil::log2}}(size);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ DCHECK\_LT(free\_list\_idx,\ \mbox{\hyperlink{classdoris_1_1_free_pool_a61ed822224f518680a5ac4e313984f7b}{NUM\_LISTS}});}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ allocation\ =\ \mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx].\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocation\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ There\ wasn't\ an\ existing\ allocation\ of\ the\ right\ size,\ allocate\ a\ new\ one.}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ size\ =\ 1L\ <<\ free\_list\_idx;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ allocation\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\textcolor{keyword}{>}(}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a5aa8a8dd10f32da8bb73eae3a2132265}{\_mem\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_ae6c8a9fd44a082f7172774fa2592c89b}{allocate\_aligned}}(size\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}),\ alignment));}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ this\ allocation\ from\ the\ list.}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx].\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}}\ =\ allocation-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ DCHECK(allocation\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ back\ node\ to\ point\ back\ to\ the\ list\ it\ came\ from\ so\ know\ where}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ add\ it\ on\ free().}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ allocation-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a89ee5e7590c000a4f3b261f31c394020}{list}}\ =\ \&\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[free\_list\_idx];}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(allocation)\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}})\ +\ padding;}
+\DoxyCodeLine{00120\ \ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_free_pool_a671a829d10ca4320f1c32b0be7058975}{free}}(uint8\_t*\ ptr)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ptr\ ==\ NULL\ ||\ \textcolor{keyword}{reinterpret\_cast<}int64\_t\textcolor{keyword}{>}(ptr)\ ==\ 0x1)\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ node\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\textcolor{keyword}{>}(ptr\ -\/\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}));}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ list\ =\ node-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a89ee5e7590c000a4f3b261f31c394020}{list}};}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a3125f7d53cd53c93785069d7046600a1}{check\_valid\_allocation}}(list);}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(\textcolor{keyword}{nullptr}\ ==\ list))\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ free\ memory\ directly\ if\ the\ pointer\ to\ free\ list\ is\ null}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ \textcolor{stringliteral}{"{}The\ free\ list\ was\ released,\ and\ this\ may\ cause\ memory\ leak."{}};}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a671a829d10ca4320f1c32b0be7058975}{free}}(ptr);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ node\ to\ front\ of\ list.}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ node-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}}\ =\ list-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ list-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}}\ =\ node;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ Returns\ an\ allocation\ that\ is\ at\ least\ 'size'.\ If\ the\ current\ allocation}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ backing\ 'ptr'\ is\ big\ enough,\ 'ptr'\ is\ returned.\ Otherwise\ a\ new\ one\ is}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ made\ and\ the\ contents\ of\ ptr\ are\ copied\ into\ it.}}
+\DoxyCodeLine{00146\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris_1_1_free_pool_ae03ae7b13fed2c25a32cc36454c752e9}{reallocate}}(uint8\_t*\ ptr,\ int64\_t\ size)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ptr\ ==\ NULL\ ||\ \textcolor{keyword}{reinterpret\_cast<}int64\_t\textcolor{keyword}{>}(ptr)\ ==\ 0x1)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_free_pool_ab0e75e1c97c39a501fdb0fff70e6ad47}{allocate}}(size);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ node\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\textcolor{keyword}{>}(ptr\ -\/\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}));}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ list\ =\ node-\/>\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a89ee5e7590c000a4f3b261f31c394020}{list}};}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a3125f7d53cd53c93785069d7046600a1}{check\_valid\_allocation}}(list);}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ bucket\_idx\ =\ (list\ -\/\ \&\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[0]);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ the\ actual\ size\ of\ ptr.}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ allocation\_size\ =\ 1\ <<\ bucket\_idx;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ it's\ already\ big\ enough,\ just\ return\ the\ ptr.}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocation\_size\ >=\ size)\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ptr;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ a\ new\ one.\ Since\ allocate()\ already\ rounds\ up\ to\ powers\ of\ 2,\ this}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ effectively\ doubles\ for\ the\ caller.}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ uint8\_t*\ new\_ptr\ =\ \mbox{\hyperlink{classdoris_1_1_free_pool_ab0e75e1c97c39a501fdb0fff70e6ad47}{allocate}}(size);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_ptr,\ ptr,\ allocation\_size);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_free_pool_a671a829d10ca4320f1c32b0be7058975}{free}}(ptr);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_ptr;}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_free_pool_a61ed822224f518680a5ac4e313984f7b}{NUM\_LISTS}}\ =\ 64;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Union\ for\ clarity\ when\ manipulating\ the\ node.}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keyword}{union\ }\{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a6532d1824f5e261b52ef5248440b247a}{next}};\ \textcolor{comment}{//\ Used\ when\ it\ is\ in\ the\ free\ list}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node_a89ee5e7590c000a4f3b261f31c394020}{list}};\ \textcolor{comment}{//\ Used\ when\ it\ is\ being\ used\ by\ the\ caller.}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00182\ \ \ \ \ \};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_free_pool_a3125f7d53cd53c93785069d7046600a1}{check\_valid\_allocation}}(\mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}*\ computed\_list\_ptr)\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ debug,\ check\ that\ list\ is\ valid.}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classdoris_1_1_free_pool_a61ed822224f518680a5ac4e313984f7b}{NUM\_LISTS}}\ \&\&\ !found;\ ++i)\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (computed\_list\_ptr\ ==\ \&\mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[i])\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ DCHECK(found);}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//\ MemPool\ to\ allocate\ from.\ Unowned.}}
+\DoxyCodeLine{00198\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ \mbox{\hyperlink{classdoris_1_1_free_pool_a5aa8a8dd10f32da8bb73eae3a2132265}{\_mem\_pool}};}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ One\ list\ head\ for\ each\ allocation\ size\ indexed\ by\ the\ LOG\_2\ of\ the\ allocation\ size.}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ While\ it\ doesn't\ make\ too\ much\ sense\ to\ use\ this\ for\ very\ small\ (e.g.\ 8\ byte)}}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ allocations,\ it\ makes\ the\ indexing\ easy.}}
+\DoxyCodeLine{00203\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_free_pool_1_1_free_list_node}{FreeListNode}}\ \mbox{\hyperlink{classdoris_1_1_free_pool_a2a89fbd88311375a0e4a894aec3830d1}{\_lists}}[\mbox{\hyperlink{classdoris_1_1_free_pool_a61ed822224f518680a5ac4e313984f7b}{NUM\_LISTS}}];}
+\DoxyCodeLine{00204\ \};}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,174 @@
+\hypertarget{segment__loader_8h_source}{}\doxysection{segment\+\_\+loader.\+h}
+\label{segment__loader_8h_source}\index{/Users/dabowang/be\_all/olap/segment\_loader.h@{/Users/dabowang/be\_all/olap/segment\_loader.h}}
+\mbox{\hyperlink{segment__loader_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}\ \textcolor{comment}{//\ for\ DISALLOW\_COPY\_AND\_ASSIGN}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{lru__cache_8h}{olap/lru\_cache.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2olap__common_8h}{olap/olap\_common.h}}"{}}\ \textcolor{comment}{//\ for\ rowset\ id}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{beta__rowset_8h}{olap/rowset/beta\_rowset.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{time_8h}{util/time.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }SegmentCacheHandle;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ SegmentLoader\ is\ used\ to\ load\ the\ Segment\ of\ BetaRowset.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ An\ LRUCache\ is\ encapsulated\ inside\ it,\ which\ is\ used\ to\ cache\ the\ opened\ segments.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ The\ caller\ should\ use\ the\ following\ method\ to\ load\ and\ obtain}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ the\ segments\ of\ a\ specified\ rowset:}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ SegmentCacheHandle\ cache\_handle;}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ RETURN\_NOT\_OK(SegmentCache::instance()-\/>load\_segments(\_rowset,\ \&cache\_handle));}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ for\ (auto\&\ seg\_ptr\ :\ cache\_handle.value()-\/>segments)\ \{}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ ...\ visit\ segment\ ...}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \}}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ Make\ sure\ that\ cache\_handle\ is\ valid\ during\ the\ segment\ usage\ period.}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a63bc857fa165fd56f92c831a5e9cccc9}{BetaRowsetSharedPtr}}\ =\ std::shared\_ptr<BetaRowset>;}
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_segment_loader}{SegmentLoader}}\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ The\ cache\ key\ or\ segment\ lru\ cache}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key}{CacheKey}}\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key_a13a67ce7ec7cbb3ce237071fc94aaf69}{CacheKey}}(\mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\ rowset\_id\_)\ :\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key_a4453465a39aeab2456b4813be3936dca}{rowset\_id}}(rowset\_id\_)\ \{\}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key_a4453465a39aeab2456b4813be3936dca}{rowset\_id}};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ to\ a\ flat\ binary\ which\ can\ be\ used\ as\ LRUCache's\ key}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key_a4b6672eb8de905bde11bb092d43d50e2}{encode}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key_a4453465a39aeab2456b4813be3936dca}{rowset\_id}}.\mbox{\hyperlink{structdoris_1_1_rowset_id_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}();\ \}}
+\DoxyCodeLine{00057\ \ \ \ \ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ The\ cache\ value\ of\ segment\ lru\ cache.}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ Holding\ all\ opened\ segments\ of\ a\ rowset.}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value}{CacheValue}}\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Save\ the\ last\ visit\ time\ of\ this\ cache\ entry.}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ atomic\ because\ it\ may\ be\ modified\ by\ multi\ threads.}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value_a4bad50ba893235dc4c2d3adda5c972e6}{last\_visit\_time}}\ =\ 0;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ std::vector<segment\_v2::SegmentSharedPtr>\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}};}
+\DoxyCodeLine{00066\ \ \ \ \ \};}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ Create\ global\ instance\ of\ this\ class.}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ "{}capacity"{}\ is\ the\ capacity\ of\ lru\ cache.}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Currently\ we\ use\ the\ number\ of\ rowset\ as\ the\ cache\ capacity.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ That\ is,\ the\ limit\ of\ cache\ is\ the\ number\ of\ rowset.}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ This\ is\ because\ currently\ we\ cannot\ accurately\ estimate\ the\ memory\ occupied\ by\ a\ segment.}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ After\ the\ estimation\ of\ segment\ memory\ usage\ is\ provided\ later,\ it\ is\ recommended}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ to\ use\ Memory\ as\ the\ capacity\ limit\ of\ the\ cache.}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a39c9daaeaf8d3e0b7c247812a3577ba5}{create\_global\_instance}}(\textcolor{keywordtype}{size\_t}\ capacity);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Return\ global\ instance.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Client\ should\ call\ create\_global\_cache\ before.}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_segment_loader}{SegmentLoader}}*\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a317dc19c14e1090e7545992cfaa794fd}{instance}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a50389e618e385e905d86d3fe83997fa5}{\_s\_instance}};\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_loader_a5bda80ead458897b18c3476dcb6173cd}{SegmentLoader}}(\textcolor{keywordtype}{size\_t}\ capacity);}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Load\ segments\ of\ "{}rowset"{},\ return\ the\ "{}cache\_handle"{}\ which\ contains\ segments.}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ If\ use\_cache\ is\ true,\ it\ will\ be\ loaded\ from\ \_cache.}}
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_ab4f626a5622a1bb1bfb9763056bd9877}{load\_segments}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a63bc857fa165fd56f92c831a5e9cccc9}{BetaRowsetSharedPtr}}\&\ rowset,\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}*\ cache\_handle,}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ use\_cache\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ Try\ to\ prune\ the\ segment\ cache\ if\ expired.}}
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a8141b010f5abd8bd21e674ad54790075}{prune}}();}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_loader_a5bda80ead458897b18c3476dcb6173cd}{SegmentLoader}}();}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Lookup\ the\ given\ rowset\ in\ the\ cache.}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ If\ the\ rowset\ is\ found,\ the\ cache\ entry\ will\ be\ written\ into\ handle.}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ entry\ is\ found,\ otherwise\ return\ false.}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a0f2e0c130f6c4244ea3404f56d4b0c40}{\_lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key}{SegmentLoader::CacheKey}}\&\ key,\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}*\ handle);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ Insert\ a\ cache\ entry\ by\ key.}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ And\ the\ cache\ entry\ will\ be\ returned\ in\ handle.}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ This\ function\ is\ thread-\/safe.}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a8e5428897c1f9ece1cb3b6880a111dff}{\_insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_key}{SegmentLoader::CacheKey}}\&\ key,\ \mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value}{CacheValue}}\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}*\ handle);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_segment_loader}{SegmentLoader}}*\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a50389e618e385e905d86d3fe83997fa5}{\_s\_instance}};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ A\ LRU\ cache\ to\ cache\ all\ opened\ segments}}
+\DoxyCodeLine{00107\ \ \ \ \ std::unique\_ptr<Cache>\ \mbox{\hyperlink{classdoris_1_1_segment_loader_a80235f290f396ea3c3d30148f4b6f445}{\_cache}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00108\ \};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ A\ handle\ for\ a\ single\ rowset\ from\ segment\ lru\ cache.}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ The\ handle\ can\ ensure\ that\ the\ segment\ is\ valid}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ and\ will\ not\ be\ closed\ while\ the\ holder\ of\ the\ handle\ is\ accessing\ the\ segment.}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ The\ handle\ will\ automatically\ release\ the\ cache\ entry\ when\ it\ is\ destroyed.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ So\ the\ caller\ need\ to\ make\ sure\ the\ handle\ is\ valid\ in\ lifecycle.}}
+\DoxyCodeLine{00115\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}\ \{}
+\DoxyCodeLine{00116\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_af0b27c85de4e8e616e9ba2f87f72ed07}{SegmentCacheHandle}}()\ \{\}}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac75528b7863ec5fb2ffa5a21f9f498f8}{SegmentCacheHandle}}(\mbox{\hyperlink{classdoris_1_1_cache}{Cache}}*\ cache,\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ handle)\ :\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}(cache),\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}(handle)\ \{\}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_aca4556329f97e0d3fd148e2fcb85d2f0}{\string~SegmentCacheHandle}}()\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}}.empty())\ <<\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}}.size();}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(!\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab5e376bc733719c11233d55f12a53bbc}{owned}});}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ last\_visit\_time\ is\ set\ when\ release.}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ because\ it\ only\ be\ needed\ when\ pruning.}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ ((\mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value}{SegmentLoader::CacheValue}}*)\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}-\/>\mbox{\hyperlink{classdoris_1_1_cache_a138742ce948f24dedce1aea076df01e9}{value}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}))-\/>last\_visit\_time\ =\ \mbox{\hyperlink{namespacedoris_a8c873b61acc89dfc24f33b7bc4757242}{UnixMillis}}();}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}-\/>\mbox{\hyperlink{classdoris_1_1_cache_a99ff5ff87dc624c6460076b6e6879011}{release}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}});}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a2a6dc81a660eb13c7093568a12def51e}{SegmentCacheHandle}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}\&\&\ other)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}},\ other.\_cache);}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}},\ other.\_handle);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab5e376bc733719c11233d55f12a53bbc}{owned}}\ =\ other.owned;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}}\ =\ std::move(other.segments);}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}\&\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab600a956f3e419592dd1a7cf2c9effab}{operator=}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}}\&\&\ other)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}},\ other.\_cache);}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}},\ other.\_handle);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab5e376bc733719c11233d55f12a53bbc}{owned}}\ =\ other.owned;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}}\ =\ std::move(other.segments);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00145\ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ std::vector<segment\_v2::SegmentSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a32e38b459f821d2497eb4c4892fb98ea}{get\_segments}}()\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab5e376bc733719c11233d55f12a53bbc}{owned}})\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}};}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{structdoris_1_1_segment_loader_1_1_cache_value}{SegmentLoader::CacheValue}}*)\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}-\/>\mbox{\hyperlink{classdoris_1_1_cache_a138742ce948f24dedce1aea076df01e9}{value}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}))-\/>segments;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ If\ set\ to\ true,\ the\ loaded\ segments\ will\ be\ saved\ in\ segments,\ not\ in\ lru\ cache;}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ab5e376bc733719c11233d55f12a53bbc}{owned}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00158\ \ \ \ \ std::vector<segment\_v2::SegmentSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ac4d74cfef03e2c477aad6b861dcc4d15}{segments}};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache}{Cache}}*\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ Don't\ allow\ copy\ and\ assign}}
+\DoxyCodeLine{00165\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_segment_cache_handle_a5656ac727b04a6380b42e85e52ef8f79}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_segment_cache_handle}{SegmentCacheHandle}});}
+\DoxyCodeLine{00166\ \};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

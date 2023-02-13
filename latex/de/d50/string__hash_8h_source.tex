@@ -1,0 +1,83 @@
+\hypertarget{string__hash_8h_source}{}\doxysection{string\+\_\+hash.\+h}
+\label{string__hash_8h_source}\index{/Users/dabowang/be\_all/gutil/hash/string\_hash.h@{/Users/dabowang/be\_all/gutil/hash/string\_hash.h}}
+\mbox{\hyperlink{string__hash_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2011\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ These\ are\ the\ core\ hashing\ routines\ which\ operate\ on\ strings.\ We\ define}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ strings\ loosely\ as\ a\ sequence\ of\ bytes,\ and\ these\ routines\ are\ designed\ to}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ work\ with\ the\ most\ fundamental\ representations\ of\ a\ string\ of\ bytes.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ These\ routines\ provide\ "{}good"{}\ hash\ functions\ in\ terms\ of\ both\ quality\ and}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ speed.\ Their\ values\ can\ and\ will\ change\ as\ their\ implementations\ change\ and}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ evolve.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{gutil_2hash_2city_8h}{gutil/hash/city.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{jenkins_8h}{gutil/hash/jenkins.h}}"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{jenkins__lookup2_8h}{gutil/hash/jenkins\_lookup2.h}}"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{integral__types_8h}{gutil/integral\_types.h}}"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{port_8h}{gutil/port.h}}"{}}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacehash__internal}{hash\_internal}}\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ We\ have\ some\ special\ cases\ for\ 64-\/bit\ hardware\ and\ x86-\/64\ in\ particular.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Instead\ of\ sprinkling\ ifdefs\ through\ the\ file,\ we\ have\ one\ ugly\ ifdef\ here.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Later\ code\ can\ then\ use\ "{}if"{}\ instead\ of\ "{}ifdef"{}.}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#if\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{enum}\ \{\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{x86\_64}}\ =\ \textcolor{keyword}{true},\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{sixty\_four\_bit}}\ =\ \textcolor{keyword}{true}\ \};}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#elif\ defined(\_LP64)}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{enum}\ \{\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{x86\_64}}\ =\ \textcolor{keyword}{false},\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{sixty\_four\_bit}}\ =\ \textcolor{keyword}{true}\ \};}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{enum}\ \{\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{x86\_64}}\ =\ \textcolor{keyword}{false},\ \mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{sixty\_four\_bit}}\ =\ \textcolor{keyword}{false}\ \};}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Arbitrary\ mix\ constants\ (pi).}}
+\DoxyCodeLine{00035\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{namespacehash__internal_a133f906eeea37e359ecbe93a8aa205b4}{kMix32}}\ =\ 0x12b9b0a1UL;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespacehash__internal_af998a0548aceeef75eea78c152f84682}{kMix64}}\ =\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0x2b992ddfa23249d6);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \}\ \textcolor{comment}{//\ namespace\ hash\_internal}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{string__hash_8h_af20f9b6b83f304e1d761177599fe81ce}{HashStringThoroughlyWithSeed}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ len,\ \textcolor{keywordtype}{size\_t}\ seed)\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{hash\_internal::x86\_64}})}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{namespaceutil__hash_aed2a4750316c07de6ee99ee932bf28bd}{util\_hash::CityHash64WithSeed}}(s,\ len,\ seed));}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{hash\_internal::sixty\_four\_bit}})}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{gutil_2hash_2hash_8h_aca01dee17b4ee121cd4484b4d3a84547}{Hash64StringWithSeed}}(s,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(len),\ seed);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jenkins_8cc_acdc62f6ffbf1ae3613e12eb15e7516c0}{Hash32StringWithSeed}}(s,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(len),\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(seed)));}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{string__hash_8h_aecac3bad837de66ece785932ccea778d}{HashStringThoroughly}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ len)\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{hash\_internal::x86\_64}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{namespaceutil__hash_ad0ba022ddd9dae3ad8f79eadc9568c76}{util\_hash::CityHash64}}(s,\ len));}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{hash\_internal::sixty\_four\_bit}})}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{gutil_2hash_2hash_8h_aca01dee17b4ee121cd4484b4d3a84547}{Hash64StringWithSeed}}(s,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(len),\ \mbox{\hyperlink{namespacehash__internal_af998a0548aceeef75eea78c152f84682}{hash\_internal::kMix64}});}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jenkins_8cc_acdc62f6ffbf1ae3613e12eb15e7516c0}{Hash32StringWithSeed}}(s,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(len),\ \mbox{\hyperlink{namespacehash__internal_a133f906eeea37e359ecbe93a8aa205b4}{hash\_internal::kMix32}}));}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{string__hash_8h_a00fb1addd7b98129f142bc53bf55f5c6}{HashStringThoroughlyWithSeeds}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ len,\ \textcolor{keywordtype}{size\_t}\ seed0,\ \textcolor{keywordtype}{size\_t}\ seed1)\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57a3d60667dd6d425c55278a56f335c3fb3}{hash\_internal::x86\_64}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceutil__hash_abd356fce295f927ddb52e38ce76d10c2}{util\_hash::CityHash64WithSeeds}}(s,\ len,\ seed0,\ seed1);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacehash__internal_ab04a0655cd1e3bcac5e8f48c18df1a57ac64a30a1f18b6c1abe1963f8b04753a7}{hash\_internal::sixty\_four\_bit}})\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ =\ seed0;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ b\ =\ seed1;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ c\ =\ \mbox{\hyperlink{string__hash_8h_aecac3bad837de66ece785932ccea778d}{HashStringThoroughly}}(s,\ len);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jenkins__lookup2_8h_af1266f1a262fb4ce37900bfc9dd38b9d}{mix}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ c);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ c;}
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(seed0);}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ b\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(seed1);}
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ c\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(\mbox{\hyperlink{string__hash_8h_aecac3bad837de66ece785932ccea778d}{HashStringThoroughly}}(s,\ len));}
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{jenkins__lookup2_8h_af1266f1a262fb4ce37900bfc9dd38b9d}{mix}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ c);}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{return}\ c;}
+\DoxyCodeLine{00077\ \}}
+
+\end{DoxyCode}

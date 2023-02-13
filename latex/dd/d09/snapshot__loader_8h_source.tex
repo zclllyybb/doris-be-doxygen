@@ -1,0 +1,110 @@
+\hypertarget{snapshot__loader_8h_source}{}\doxysection{snapshot\+\_\+loader.\+h}
+\label{snapshot__loader_8h_source}\index{/Users/dabowang/be\_all/runtime/snapshot\_loader.h@{/Users/dabowang/be\_all/runtime/snapshot\_loader.h}}
+\mbox{\hyperlink{snapshot__loader_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Types\_types.h"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{client__cache_8h}{runtime/client\_cache.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }ExecEnv;}
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }StorageBackend;}
+\DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }FileStat;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *\ Upload:}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ upload()\ will\ upload\ the\ specified\ snapshot}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ to\ remote\ storage\ via\ broker.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ Each\ call\ of\ upload()\ is\ responsible\ for\ several\ tablet\ snapshots.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ It\ will\ try\ to\ get\ the\ existing\ files\ in\ remote\ storage,}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *\ and\ only\ upload\ the\ incremental\ part\ of\ files.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ *\ Download:}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ *\ download()\ will\ download\ the\ remote\ tablet\ snapshot\ files}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ *\ to\ local\ snapshot\ dir\ via\ broker.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ *\ It\ will\ also\ only\ download\ files\ which\ does\ not\ exist\ in\ local\ dir.}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ *\ Move:}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ *\ move()\ is\ the\ final\ step\ of\ restore\ process.\ it\ will\ replace\ the}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *\ old\ tablet\ data\ dir\ with\ the\ newly\ downloaded\ snapshot\ dir.}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ *\ and\ reload\ the\ tablet\ header\ to\ take\ this\ tablet\ on\ line.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_snapshot_loader}{SnapshotLoader}}\ \{}
+\DoxyCodeLine{00058\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_snapshot_loader}{SnapshotLoader}}(\mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ env,\ int64\_t\ job\_id,\ int64\_t\ task\_id);}
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_snapshot_loader}{SnapshotLoader}}(\mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ env,\ int64\_t\ job\_id,\ int64\_t\ task\_id,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TNetworkAddress\&\ broker\_addr,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::map<std::string,\ std::string>\&\ broker\_prop,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TStorageBackendType::type\ type);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a5ad89467a727ed177894660fd4870e5d}{\string~SnapshotLoader}}();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a3b058fe3af724ed781e950999abb6bab}{upload}}(\textcolor{keyword}{const}\ std::map<std::string,\ std::string>\&\ src\_to\_dest\_path,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::map<int64\_t,\ std::vector<std::string>>*\ tablet\_files);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a5bb37143ce87040af73fd326e5025a35}{download}}(\textcolor{keyword}{const}\ std::map<std::string,\ std::string>\&\ src\_to\_dest\_path,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<int64\_t>*\ downloaded\_tablet\_ids);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a11995982f429dbbf1d26527360331ad0}{move}}(\textcolor{keyword}{const}\ std::string\&\ snapshot\_path,\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ tablet,\ \textcolor{keywordtype}{bool}\ overwrite);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a8839b71b8b4400c93804c3868eb60891}{\_get\_tablet\_id\_and\_schema\_hash\_from\_file\_path}}(\textcolor{keyword}{const}\ std::string\&\ src\_path,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ tablet\_id,\ int32\_t*\ schema\_hash);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a9086f8828652ee552367d5ab68c82ebc}{\_check\_local\_snapshot\_paths}}(\textcolor{keyword}{const}\ std::map<std::string,\ std::string>\&\ src\_to\_dest\_path,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ check\_src);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a62c41593ad4fcaee65bc8dd97ca7ee0c}{\_get\_existing\_files\_from\_local}}(\textcolor{keyword}{const}\ std::string\&\ local\_path,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::string>*\ local\_files);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a6bc83ab07c0e662e96b9b04aa464236d}{\_end\_with}}(\textcolor{keyword}{const}\ std::string\&\ str,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{structmatch}{match}});}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_ac82d53636e861d7194067bfebd72df29}{\_replace\_tablet\_id}}(\textcolor{keyword}{const}\ std::string\&\ file\_name,\ int64\_t\ tablet\_id,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string*\ new\_file\_name);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a474574cd2b4096f09b8fabbfc0cd6338}{\_get\_tablet\_id\_from\_remote\_path}}(\textcolor{keyword}{const}\ std::string\&\ remote\_path,\ int64\_t*\ tablet\_id);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a5b676fae99f38d22ce797cb377d2fe51}{\_report\_every}}(\textcolor{keywordtype}{int}\ report\_threshold,\ \textcolor{keywordtype}{int}*\ counter,\ \textcolor{keywordtype}{int}\ finished\_num,\ \textcolor{keywordtype}{int}\ total\_num,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTaskType::type\ type);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_aa8a505fa8ed357de3f22828350ac9d70}{\_env}};}
+\DoxyCodeLine{00097\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_abcaf64df7d4f2d64f24e8b0eabe099ea}{\_job\_id}};}
+\DoxyCodeLine{00098\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_acbdd2554287b188661adb3c8c2397f64}{\_task\_id}};}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{const}\ TNetworkAddress\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a71e22037b96f90ed2633239e61947bd9}{\_broker\_addr}};}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{const}\ std::map<std::string,\ std::string>\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_ab64e28b28555ffdc60b5d45d2a81cc45}{\_prop}};}
+\DoxyCodeLine{00101\ \ \ \ \ std::unique\_ptr<StorageBackend>\ \mbox{\hyperlink{classdoris_1_1_snapshot_loader_a3b32ba0b908bc8cb9d8da7dacc83faad}{\_storage\_backend}};}
+\DoxyCodeLine{00102\ \};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \}\ \textcolor{comment}{//\ end\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,216 @@
+\hypertarget{short__key__index_8h_source}{}\doxysection{short\+\_\+key\+\_\+index.\+h}
+\label{short__key__index_8h_source}\index{/Users/dabowang/be\_all/olap/short\_key\_index.h@{/Users/dabowang/be\_all/olap/short\_key\_index.h}}
+\mbox{\hyperlink{short__key__index_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <iterator>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/segment\_v2.pb.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debug__util_8h}{util/debug\_util.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{faststring_8h}{util/faststring.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Encode\ a\ segment\ short\ key\ indices\ to\ one\ ShortKeyPage.\ This\ version}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ only\ accepts\ binary\ key,\ client\ should\ assure\ that\ input\ key\ is\ sorted,}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ otherwise\ error\ could\ happens.\ This\ builder\ would\ arrange\ the\ page\ body\ in\ the}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ following\ format:}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ \ \ \ ShortKeyPageBody\ :=\ KeyContent\string^NumEntry,\ KeyOffset(vint)\string^NumEntry}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ \ \ \ NumEntry,\ KeyBytes,\ OffsetBytes\ is\ stored\ in\ ShortKeyFooterPB}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Usage:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ \ ShortKeyIndexBuilder\ builder(segment\_id,\ num\_rows\_per\_block);}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ \ \ builder.add\_item(key1);}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ \ \ ...}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ builder.add\_item(keyN);}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ builder.finalize(segment\_size,\ num\_rows,\ \&slices);}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ NOTE:\ This\ is\ used\ for\ BetaRowset}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ TODO(zc):}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ 1.\ If\ this\ can\ leverage\ binary\ page\ to\ save\ key\ and\ offset\ data}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ 2.\ Extending\ this\ to\ save\ in\ a\ BTree\ like\ struct,\ which\ can\ index\ full\ key}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ more\ than\ short\ key}}
+\DoxyCodeLine{00050\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_builder}{ShortKeyIndexBuilder}}\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_ae2530a56cad400a2c5f9443dfa4c2c7d}{ShortKeyIndexBuilder}}(uint32\_t\ segment\_id,\ uint32\_t\ num\_rows\_per\_block)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a31f6529e46d67bc68e77c1fe3628ab11}{\_segment\_id}}(segment\_id),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a68be098ff48f14ee07a164eb930b6e82}{\_num\_rows\_per\_block}}(num\_rows\_per\_block),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a17e51fa46b25da51a8135b377ea17ade}{\_num\_items}}(0)\ \{\}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a9cb4632e00eac83f8dda5b24144586ee}{add\_item}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ key);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a5e847af3605f49e5362e08a4b67362a7}{size}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a8ae10ff6b3653440487ea371efdcefc3}{\_key\_buf}}.\mbox{\hyperlink{classdoris_1_1faststring_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\ +\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a0b9f1d6ad29ac6b9721eb8e8eda3d2d5}{\_offset\_buf}}.\mbox{\hyperlink{classdoris_1_1faststring_a259cb5a711406a8c3e5d937eb9350cca}{size}}();\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a4b25f03cbc6f966a534003fc8472e54a}{finalize}}(uint32\_t\ num\_rows,\ std::vector<Slice>*\ body,\ segment\_v2::PageFooterPB*\ footer);}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00062\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a31f6529e46d67bc68e77c1fe3628ab11}{\_segment\_id}};}
+\DoxyCodeLine{00063\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a68be098ff48f14ee07a164eb930b6e82}{\_num\_rows\_per\_block}};}
+\DoxyCodeLine{00064\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a17e51fa46b25da51a8135b377ea17ade}{\_num\_items}};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1faststring}{faststring}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a8ae10ff6b3653440487ea371efdcefc3}{\_key\_buf}};}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1faststring}{faststring}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_builder_a0b9f1d6ad29ac6b9721eb8e8eda3d2d5}{\_offset\_buf}};}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder}{ShortKeyIndexDecoder}};}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ An\ Iterator\ to\ iterate\ one\ short\ key\ index.}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ Client\ can\ use\ this\ class\ to\ iterator\ all\ items\ in\ this\ index.}}
+\DoxyCodeLine{00074\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \{}
+\DoxyCodeLine{00075\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a8806ca091813ced0b0658fedaa448357}{iterator\_category}}\ =\ std::random\_access\_iterator\_tag;}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_slice}{value\_type}}\ =\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}};}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_slice}{pointer}}\ =\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*;}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_slice}{reference}}\ =\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_ae17e3c69d1ddd534fefbab5801943c26}{difference\_type}}\ =\ ssize\_t;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aa114dc0adb95e6756260806c79e6ae3d}{ShortKeyIndexIterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder}{ShortKeyIndexDecoder}}*\ decoder,\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a516aa85d07d6c5ea547f680ebb4e3f4c}{ordinal}}\ =\ 0)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}}(decoder),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}(\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a516aa85d07d6c5ea547f680ebb4e3f4c}{ordinal}})\ \{\}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a6b8a14afa4c780fcc345e7495a033963}{operator-\/=}}(ssize\_t\ step)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ -\/=\ step;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a6d6ac479ea5af09a50bee795db84b68e}{operator+=}}(ssize\_t\ step)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ +=\ step;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00093\ \ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_af2d8e235e39daac7d47cc23673eb5c3c}{operator++}}()\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}++;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a1ae9fce27252d1ca4141c039869f6b4e}{operator-\/-\/}}()\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}};}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aacdf092528a096c20fa3fc2c9c0031ae}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ other)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ !=\ other.\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ ||\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}}\ !=\ other.\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}};}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aa8c9bfa50a4e020c371b1f333c242130}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ other)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ ==\ other.\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}}\ ==\ other.\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}};}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ ssize\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_ae9d634489dd9dbff0df8707ff897072b}{operator-\/}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ -\/\ other.\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}};}
+\DoxyCodeLine{00115\ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a315419f26d3c59fa143b49b90a019049}{valid}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_afa3a6b25c62a56964c4d7caad12c6ac0}{operator*}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ ssize\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a516aa85d07d6c5ea547f680ebb4e3f4c}{ordinal}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}};\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder}{ShortKeyIndexDecoder}}*\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}};}
+\DoxyCodeLine{00125\ \ \ \ \ ssize\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}};}
+\DoxyCodeLine{00126\ \};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ Used\ to\ decode\ short\ key\ to\ header\ and\ encoded\ index\ data.}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ Usage:}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ \ \ \ \ \ ShortKeyIndexDecoder\ decoder;}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ \ \ \ \ \ decoder.parse(body,\ footer);}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ \ \ \ \ \ auto\ iter\ =\ decoder.lower\_bound(key);}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder}{ShortKeyIndexDecoder}}\ \{}
+\DoxyCodeLine{00134\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_af1e92eb03b0fdca8c348c2f2abd00054}{ShortKeyIndexDecoder}}()\ :\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}}(false)\ \{\}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ client\ should\ assure\ that\ body\ is\ available\ when\ this\ class\ is\ used}}
+\DoxyCodeLine{00138\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a50389e932f2061ec8dcf223e255cbe4d}{parse}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ body,\ \textcolor{keyword}{const}\ segment\_v2::ShortKeyFooterPB\&\ footer);}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3843b243344753ab5d73cd27cfeae510}{begin}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\textcolor{keyword}{this},\ 0\};}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a2a03459fbb1ce544137e9402b1ca48ae}{end}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\textcolor{keyword}{this},\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3aef8cb3eba14f18214bc3839e3ade05}{num\_items}}()\};}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Return\ an\ iterator\ which\ locates\ at\ the\ first\ item\ who\ is}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ equal\ with\ or\ greater\ than\ the\ given\ key.}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ If\ one\ key\ is\ the\ prefix\ of\ other\ key,\ this\ function\ thinks}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ that\ longer\ key\ is\ greater\ than\ the\ shorter\ key.}}
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a4e17bd27109364a8d8a5fb3176ce372b}{lower\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ seek<true>(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}});}
+\DoxyCodeLine{00157\ \ \ \ \ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ iterator\ which\ locates\ the\ first\ item\ greater\ than\ the}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ input\ key.}}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a5ac9ec208a08c939ced7293c4f468f7e}{upper\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ seek<false>(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}});}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3aef8cb3eba14f18214bc3839e3ade05}{num\_items}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a4f00351ee2b9085c4623f23eb49eb536}{\_footer}}.num\_items();}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a8042577e0ece12dd75a6515b95dcd466}{num\_rows\_per\_block}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a4f00351ee2b9085c4623f23eb49eb536}{\_footer}}.num\_rows\_per\_block();}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}}(ssize\_t\ ordinal)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ DCHECK(ordinal\ >=\ 0\ \&\&\ ordinal\ <\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3aef8cb3eba14f18214bc3839e3ade05}{num\_items}}());}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a2b43f9b17813d9e8f7035e53e8ab6c18}{\_key\_data}}.\mbox{\hyperlink{structdoris_1_1_slice_a91a70b77df95bd8b0830b49a094c2acb}{data}}\ +\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a746a7d092aac48374a66782e3646f3c0}{\_offsets}}[ordinal],\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a746a7d092aac48374a66782e3646f3c0}{\_offsets}}[ordinal\ +\ 1]\ -\/\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a746a7d092aac48374a66782e3646f3c0}{\_offsets}}[ordinal]\};}
+\DoxyCodeLine{00180\ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ lower\_bound>}
+\DoxyCodeLine{00184\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator}{ShortKeyIndexIterator}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a936e8c6a2328666d3f86691329e0cbfd}{seek}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ comparator\ =\ [](\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ lhs,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ rhs)\ \{\ \textcolor{keywordflow}{return}\ lhs.\mbox{\hyperlink{structdoris_1_1_slice_af01d06b2bc3ce61d3eadbda4ccec16cf}{compare}}(rhs)\ <\ 0;\ \};}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a4e17bd27109364a8d8a5fb3176ce372b}{lower\_bound}})\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::lower\_bound(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3843b243344753ab5d73cd27cfeae510}{begin}}(),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a2a03459fbb1ce544137e9402b1ca48ae}{end}}(),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}},\ comparator);}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::upper\_bound(\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3843b243344753ab5d73cd27cfeae510}{begin}}(),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a2a03459fbb1ce544137e9402b1ca48ae}{end}}(),\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}},\ comparator);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3138d883795a00f556d19da078f528d0}{\_parsed}};}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ All\ following\ fields\ are\ only\ valid\ after\ parse\ has\ been\ executed\ successfully}}
+\DoxyCodeLine{00197\ \ \ \ \ segment\_v2::ShortKeyFooterPB\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a4f00351ee2b9085c4623f23eb49eb536}{\_footer}};}
+\DoxyCodeLine{00198\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a746a7d092aac48374a66782e3646f3c0}{\_offsets}};}
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a2b43f9b17813d9e8f7035e53e8ab6c18}{\_key\_data}};}
+\DoxyCodeLine{00200\ \};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_afa3a6b25c62a56964c4d7caad12c6ac0}{ShortKeyIndexIterator::operator*}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}}-\/>\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a682a93ce816d25a0f2ab81eb569bd127}{key}}(\mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}});}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a315419f26d3c59fa143b49b90a019049}{ShortKeyIndexIterator::valid}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_a67b09eb4431f65ef584e2205bc8998b3}{\_ordinal}}\ <\ \mbox{\hyperlink{classdoris_1_1_short_key_index_iterator_aff6eae44f0a3c9773160b82e01c7033a}{\_decoder}}-\/>\mbox{\hyperlink{classdoris_1_1_short_key_index_decoder_a3aef8cb3eba14f18214bc3839e3ade05}{num\_items}}();}
+\DoxyCodeLine{00208\ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

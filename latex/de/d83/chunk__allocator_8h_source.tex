@@ -1,0 +1,104 @@
+\hypertarget{chunk__allocator_8h_source}{}\doxysection{chunk\+\_\+allocator.\+h}
+\label{chunk__allocator_8h_source}\index{/Users/dabowang/be\_all/runtime/memory/chunk\_allocator.h@{/Users/dabowang/be\_all/runtime/memory/chunk\_allocator.h}}
+\mbox{\hyperlink{chunk__allocator_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{struct\ }Chunk;}
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }ChunkArena;}
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }MetricEntity;}
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }MemTrackerLimiter;}
+\DoxyCodeLine{00032\ \textcolor{keyword}{class\ }Status;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Used\ to\ allocate\ memory\ with\ power-\/of-\/two\ length.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ This\ Allocator\ allocate\ memory\ from\ system\ and\ cache\ free\ chunks\ for}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ later\ use.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ ChunkAllocator\ has\ one\ ChunkArena\ for\ each\ CPU\ core,\ it\ will\ try\ to\ allocate}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ memory\ from\ current\ core\ arena\ firstly.\ In\ this\ way,\ there\ will\ be\ no\ lock\ contention}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ between\ concurrently-\/running\ threads.\ If\ this\ fails,\ ChunkAllocator\ will\ try\ to\ allocate}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ memory\ from\ other\ core's\ arena.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Memory\ Reservation}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ ChunkAllocator\ has\ a\ limit\ about\ how\ much\ free\ chunk\ bytes\ it\ can\ reserve,\ above\ which}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ chunk\ will\ released\ to\ system\ memory.\ For\ the\ worst\ case,\ when\ the\ limits\ is\ 0,\ it\ will}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ act\ as\ allocating\ directly\ from\ system.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ ChunkArena\ will\ keep\ a\ separate\ free\ list\ for\ each\ chunk\ size.\ In\ common\ case,\ chunk\ will}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ be\ allocated\ from\ current\ core\ arena.\ In\ this\ case,\ there\ is\ no\ lock\ contention.}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Must\ call\ CpuInfo::init()\ and\ DorisMetrics::instance()-\/>initialize()\ to\ achieve\ good\ performance}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ before\ first\ object\ is\ created.\ And\ call\ init\_instance()\ before\ use\ instance\ is\ called.}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_chunk_allocator}{ChunkAllocator}}\ \{}
+\DoxyCodeLine{00054\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a33a27d1994b19bd2c3dc478e9cfc433d}{init\_instance}}(\textcolor{keywordtype}{size\_t}\ reserve\_limit);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#ifdef\ BE\_TEST}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator}{ChunkAllocator}}*\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{instance}}();}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator}{ChunkAllocator}}*\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{instance}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a04dc868ffa4147c456cb6de2ed83a35a}{\_s\_instance}};\ \}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ Up\ size\ to\ 2\string^n\ length,\ allocate\ a\ chunk.}}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a7dff7b3490e3470ae678ded168497f7f}{allocate\_align}}(\textcolor{keywordtype}{size\_t}\ size,\ \mbox{\hyperlink{structdoris_1_1_chunk}{Chunk}}*\ chunk);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ Free\ chunk\ allocated\ from\ this\ allocator}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_afdab6f09e1609ccfba66a6ff77a73301}{free}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_chunk}{Chunk}}\&\ chunk);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ Transfer\ the\ memory\ ownership\ to\ the\ chunk\ allocator.}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ If\ the\ chunk\ allocator\ is\ full,\ then\ free\ to\ the\ system.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Note:\ make\ sure\ that\ the\ length\ of\ 'data'\ is\ equal\ to\ size,}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ otherwise\ the\ capacity\ of\ chunk\ allocator\ will\ be\ wrong.}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_afdab6f09e1609ccfba66a6ff77a73301}{free}}(uint8\_t*\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_ac8bb3912a3ce86b15842e79d0b421204}{clear}}();}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a214c3a8d280bff93dd09bd6a930092ef}{mem\_consumption}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_abf092a1ef510dc62b6a105bae0493be3}{\_reserved\_bytes}};\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_chunk_allocator}{ChunkAllocator}}(\textcolor{keywordtype}{size\_t}\ reserve\_limit);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator}{ChunkAllocator}}*\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a04dc868ffa4147c456cb6de2ed83a35a}{\_s\_instance}};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a453b996a5596ad61b8fb2dd0a52f8ef3}{\_reserve\_bytes\_limit}};}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ When\ the\ reserved\ chunk\ memory\ size\ is\ greater\ than\ the\ limit,}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ it\ is\ allowed\ to\ steal\ the\ chunks\ of\ other\ arenas.}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a8046ab30da21c5c59e49c07be6e4588d}{\_steal\_arena\_limit}};}
+\DoxyCodeLine{00089\ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_abf092a1ef510dc62b6a105bae0493be3}{\_reserved\_bytes}};}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ each\ core\ has\ a\ ChunkArena}}
+\DoxyCodeLine{00091\ \ \ \ \ std::vector<std::unique\_ptr<ChunkArena>>\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a4a81c1e45390fcff51f9c9f86f40eedb}{\_arenas}};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ std::shared\_ptr<MetricEntity>\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a5759b704dd85fe66193a38d1f1c11ea6}{\_chunk\_allocator\_metric\_entity}};}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ std::unique\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a31d4888710271b589237f5995336ebd5}{\_mem\_tracker}};}
+\DoxyCodeLine{00096\ \};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

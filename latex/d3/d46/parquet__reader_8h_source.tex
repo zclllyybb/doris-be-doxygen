@@ -1,0 +1,100 @@
+\hypertarget{parquet__reader_8h_source}{}\doxysection{parquet\+\_\+reader.\+h}
+\label{parquet__reader_8h_source}\index{/Users/dabowang/be\_all/exec/arrow/parquet\_reader.h@{/Users/dabowang/be\_all/exec/arrow/parquet\_reader.h}}
+\mbox{\hyperlink{parquet__reader_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <arrow/api.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <arrow/buffer.h>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <arrow/io/api.h>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <arrow/io/file.h>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <arrow/io/interfaces.h>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <arrow/status.h>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <parquet/api/reader.h>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <parquet/api/writer.h>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <parquet/arrow/reader.h>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <parquet/arrow/writer.h>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <parquet/exception.h>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{common_2config_8h}{common/config.h}}"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arrow__reader_8h}{exec/arrow/arrow\_reader.h}}"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/PaloBrokerService\_types.h"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/PlanNodes\_types.h"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Types\_types.h"{}}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{class\ }ExecEnv;}
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }TBrokerRangeDesc;}
+\DoxyCodeLine{00052\ \textcolor{keyword}{class\ }TNetworkAddress;}
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }RuntimeState;}
+\DoxyCodeLine{00054\ \textcolor{keyword}{class\ }SlotDescriptor;}
+\DoxyCodeLine{00055\ \textcolor{keyword}{class\ }FileReader;}
+\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }RowGroupReader;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ Reader\ of\ parquet\ file}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap}{ParquetReaderWrap}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_arrow_reader_wrap}{ArrowReaderWrap}}\ \{}
+\DoxyCodeLine{00060\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ batch\_size\ is\ not\ use\ here}}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap}{ParquetReaderWrap}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \textcolor{keyword}{const}\ std::vector<SlotDescriptor*>\&\ file\_slot\_descs,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_file_reader}{FileReader}}*\ file\_reader,\ int32\_t\ num\_of\_columns\_from\_file,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ range\_start\_offset,\ int64\_t\ range\_size,\ \textcolor{keywordtype}{bool}\ case\_sensitive\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_ab585a1d49bdec062e398e6059a32a4fc}{\string~ParquetReaderWrap}}()\ \textcolor{keyword}{override}\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a082b260f4e35cfcd22d1dd9e5f107798}{size}}(int64\_t*\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a082b260f4e35cfcd22d1dd9e5f107798}{size}})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a453d52ea9d67a562588247a1acc1c943}{init\_reader}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ tuple\_desc,\ \textcolor{keyword}{const}\ std::string\&\ timezone)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_ab5e699b3be3f95a1410606912e2364cc}{init\_parquet\_type}}();}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a4096ff1fb27dcdda21cb20345f14ced0}{read\_record\_batch}}(\textcolor{keywordtype}{bool}*\ eof);}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a077db9c9521e54697affc699883304c9}{handle\_timestamp}}(\textcolor{keyword}{const}\ std::shared\_ptr<arrow::TimestampArray>\&\ ts\_array,\ uint8\_t*\ buf,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t*\ wbtyes);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a192c893913d6c03e65814938ec52239e}{read\_next\_batch}}();}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_ae8714820715dcd37d4618f5ae844f105}{read\_batches}}(arrow::RecordBatchVector\&\ batches,\ \textcolor{keywordtype}{int}\ current\_group)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a5738790de6affa7cf94375749a82d926}{filter\_row\_group}}(\textcolor{keywordtype}{int}\ current\_group)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ parquet\ file\ reader\ object}}
+\DoxyCodeLine{00083\ \ \ \ \ std::shared\_ptr<arrow::RecordBatch>\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a0a327d10b3f940160f0652af3e9b1a41}{\_batch}};}
+\DoxyCodeLine{00084\ \ \ \ \ std::unique\_ptr<parquet::arrow::FileReader>\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a0c06949abd5cd54a0b9ea27fa79f5c90}{\_reader}};}
+\DoxyCodeLine{00085\ \ \ \ \ std::shared\_ptr<parquet::FileMetaData>\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_adbc5bc8741ab81a275738a89e20718ed}{\_file\_metadata}};}
+\DoxyCodeLine{00086\ \ \ \ \ std::vector<arrow::Type::type>\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_aaa7e0735e21297c76eb14508f43e5da0}{\_parquet\_column\_type}};}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a65c43950b9a00acbe8305d168fcfc1ff}{\_rows\_of\_group}};\ \textcolor{comment}{//\ rows\ in\ a\ group.}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_aa7e64262feee9f4edd42686739179a39}{\_current\_line\_of\_group}};}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a3bfdfac317bb52f334ac4d80d4d247ab}{\_current\_line\_of\_batch}};}
+\DoxyCodeLine{00091\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_parquet_reader_wrap_a25f9ae264657af8bd13812a3de098fdd}{\_timezone}};}
+\DoxyCodeLine{00092\ \};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,161 @@
+\hypertarget{priority__thread__pool_8hpp_source}{}\doxysection{priority\+\_\+thread\+\_\+pool.\+hpp}
+\label{priority__thread__pool_8hpp_source}\index{/Users/dabowang/be\_all/util/priority\_thread\_pool.hpp@{/Users/dabowang/be\_all/util/priority\_thread\_pool.hpp}}
+\mbox{\hyperlink{priority__thread__pool_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{blocking__priority__queue_8hpp}{util/blocking\_priority\_queue.hpp}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread_8h}{util/thread.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__group_8h}{util/thread\_group.h}}"{}}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ Simple\ threadpool\ which\ processes\ items\ (of\ type\ T)\ in\ parallel\ which\ were\ placed\ on\ a}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ blocking\ queue\ by\ Offer().\ Each\ item\ is\ processed\ by\ a\ single\ user-\/supplied\ method.}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_priority_thread_pool}{PriorityThreadPool}}\ \{}
+\DoxyCodeLine{00032\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{comment}{//\ Signature\ of\ a\ work-\/processing\ function.\ Takes\ the\ integer\ id\ of\ the\ thread\ which\ is}}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{//\ calling\ it\ (ids\ run\ from\ 0\ to\ num\_threads\ -\/\ 1)\ and\ a\ reference\ to\ the\ item\ to}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{comment}{//\ process.}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{typedef}\ std::function<void()>\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7e42d9a91e6c411fbe2dccfe716431d1}{WorkFunction}};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{Task}}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_acec9ce2df15222151ad66fcb1d74eb9f}{priority}};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7e42d9a91e6c411fbe2dccfe716431d1}{WorkFunction}}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_a6f281de4bce40b87e9f7a5506a3131c7}{work\_function}};}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_a9069963fa1ce9797b853db16f9845d58}{queue\_id}};}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_a38249bd4827de204a421b5196cce0708}{operator<}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{Task}}\&\ o)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_acec9ce2df15222151ad66fcb1d74eb9f}{priority}}\ <\ o.\mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_acec9ce2df15222151ad66fcb1d74eb9f}{priority}};\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{Task}}\&\ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_a9c0ebe3882d7555e8c5e6ed50f42504d}{operator++}}()\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_acec9ce2df15222151ad66fcb1d74eb9f}{priority}}\ +=\ 2;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ new\ thread\ pool\ and\ start\ num\_threads\ threads.}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ \ -\/-\/\ num\_threads:\ how\ many\ threads\ are\ part\ of\ this\ pool}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ \ -\/-\/\ queue\_size:\ the\ maximum\ size\ of\ the\ queue\ on\ which\ work\ items\ are\ offered.\ If\ the}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ queue\ exceeds\ this\ size,\ subsequent\ calls\ to\ Offer\ will\ block\ until\ there\ is}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ capacity\ available.}}
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a5e700eb806319c466dfe37ec3ac6ef2f}{PriorityThreadPool}}(uint32\_t\ num\_threads,\ uint32\_t\ queue\_size,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}(queue\_size),\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a1bc54e67bc616911a9349ec020b08141}{\_shutdown}}(false),\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}}(\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ num\_threads;\ ++i)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a9a854d7e6f53e1bf7528a1300b799448}{\_threads}}.\mbox{\hyperlink{classdoris_1_1_thread_group_a4cf942bfab17df68e82b6990748164ec}{create\_thread}}(}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::bind<void>(std::mem\_fn(\&\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_aaa7c39ffd3f7e65cc498d713205b195f}{PriorityThreadPool::work\_thread}}),\ \textcolor{keyword}{this},\ i));}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Destructor\ ensures\ that\ all\ threads\ are\ terminated\ before\ this\ object\ is\ freed}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ (otherwise\ they\ may\ continue\ to\ run\ and\ reference\ member\ variables)}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_acbfec1028a1ffd468ed91cbb2a8bed89}{\string~PriorityThreadPool}}()\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a02ad695a12a123bb98bb8746b75c5a9d}{shutdown}}();}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7c808acdf90b1c2eb4f3ee39add3d09d}{join}}();}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Blocking\ operation\ that\ puts\ a\ work\ item\ on\ the\ queue.\ If\ the\ queue\ is\ full,\ blocks}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ until\ there\ is\ capacity\ available.}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ 'work'\ is\ copied\ into\ the\ work\ queue,\ but\ may\ be\ referenced\ at\ any\ time\ in\ the}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ future.\ Therefore\ the\ caller\ needs\ to\ ensure\ that\ any\ data\ referenced\ by\ work\ (if\ T}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ is,\ e.g.,\ a\ pointer\ type)\ remains\ valid\ until\ work\ has\ been\ processed,\ and\ it's\ up\ to}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ the\ caller\ to\ provide\ their\ own\ signalling\ mechanism\ to\ detect\ this\ (or\ to\ wait\ until}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ after\ DrainAndshutdown\ returns).}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ the\ work\ item\ was\ successfully\ added\ to\ the\ queue,\ false\ otherwise}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ (which\ typically\ means\ that\ the\ thread\ pool\ has\ already\ been\ shut\ down).}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a06cf4c12de1e95a1d6b661e15af41fcb}{offer}}(\mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{Task}}\ task)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.blocking\_put(task);\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_af6023bea2ba925fab8818eae66997233}{offer}}(\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7e42d9a91e6c411fbe2dccfe716431d1}{WorkFunction}}\ func)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{PriorityThreadPool::Task}}\ task\ =\ \{0,\ func,\ 0\};}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.blocking\_put(task);}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ Shuts\ the\ thread\ pool\ down,\ causing\ the\ work\ queue\ to\ cease\ accepting\ offered\ work}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ and\ the\ worker\ threads\ to\ terminate\ once\ they\ have\ processed\ their\ current\ work\ item.}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Returns\ once\ the\ shutdown\ flag\ has\ been\ set,\ does\ not\ wait\ for\ the\ threads\ to}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ terminate.}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a02ad695a12a123bb98bb8746b75c5a9d}{shutdown}}()\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a1bc54e67bc616911a9349ec020b08141}{\_shutdown}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.shutdown();}
+\DoxyCodeLine{00096\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Blocks\ until\ all\ threads\ are\ finished.\ shutdown\ does\ not\ need\ to\ have\ been\ called,}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ since\ it\ may\ be\ called\ on\ a\ separate\ thread.}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7c808acdf90b1c2eb4f3ee39add3d09d}{join}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a9a854d7e6f53e1bf7528a1300b799448}{\_threads}}.\mbox{\hyperlink{classdoris_1_1_thread_group_a6b1515857fe822c28999d4240910f8fc}{join\_all}}();\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{virtual}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7922d0277afd45975efa21b5d066ccee}{get\_queue\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.get\_size();\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ Blocks\ until\ the\ work\ queue\ is\ empty,\ and\ then\ calls\ shutdown\ to\ stop\ the\ worker}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ threads\ and\ Join\ to\ wait\ until\ they\ are\ finished.}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ Any\ work\ Offer()'ed\ during\ DrainAndshutdown\ may\ or\ may\ not\ be\ processed.}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a9e654ab32b02349175efb2e876dd4131}{drain\_and\_shutdown}}()\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.get\_size()\ !=\ 0)\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a61cc7d5f71f71037dbd9648db49b948a}{\_empty\_cv}}.wait(l);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a02ad695a12a123bb98bb8746b75c5a9d}{shutdown}}();}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a7c808acdf90b1c2eb4f3ee39add3d09d}{join}}();}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a40600a289ab5c51a7ffeec5b7754a9fd}{is\_shutdown}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a1bc54e67bc616911a9349ec020b08141}{\_shutdown}};\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//\ Collection\ of\ worker\ threads\ that\ process\ work\ from\ the\ queue.}}
+\DoxyCodeLine{00122\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_group}{ThreadGroup}}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a9a854d7e6f53e1bf7528a1300b799448}{\_threads}};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ Guards\ \_empty\_cv}}
+\DoxyCodeLine{00125\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ Signalled\ when\ the\ queue\ becomes\ empty}}
+\DoxyCodeLine{00128\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a61cc7d5f71f71037dbd9648db49b948a}{\_empty\_cv}};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Driver\ method\ for\ each\ thread\ in\ the\ pool.\ Continues\ to\ read\ work\ from\ the\ queue}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ until\ the\ pool\ is\ shutdown.}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_aaa7c39ffd3f7e65cc498d713205b195f}{work\_thread}}(\textcolor{keywordtype}{int}\ thread\_id)\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a5df167bb648973dd735dda38e8341e76}{Thread::set\_self\_name}}(\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}}.c\_str());}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a40600a289ab5c51a7ffeec5b7754a9fd}{is\_shutdown}}())\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task}{Task}}\ task;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.blocking\_get(\&task))\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ task.\mbox{\hyperlink{structdoris_1_1_priority_thread_pool_1_1_task_a6f281de4bce40b87e9f7a5506a3131c7}{work\_function}}();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}}.get\_size()\ ==\ 0)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a61cc7d5f71f71037dbd9648db49b948a}{\_empty\_cv}}.notify\_all();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ Queue\ on\ which\ work\ items\ are\ held\ until\ a\ thread\ is\ available\ to\ process\ them\ in}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ FIFO\ order.}}
+\DoxyCodeLine{00148\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue}{BlockingPriorityQueue<Task>}}\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a46c6fcc3cdd9a72675745ca36ec7b1a2}{\_work\_queue}};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Set\ to\ true\ when\ threads\ should\ stop\ doing\ work\ and\ terminate.}}
+\DoxyCodeLine{00151\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_a1bc54e67bc616911a9349ec020b08141}{\_shutdown}};}
+\DoxyCodeLine{00152\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_priority_thread_pool_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00153\ \};}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

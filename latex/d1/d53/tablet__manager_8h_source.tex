@@ -1,0 +1,237 @@
+\hypertarget{tablet__manager_8h_source}{}\doxysection{tablet\+\_\+manager.\+h}
+\label{tablet__manager_8h_source}\index{/Users/dabowang/be\_all/olap/tablet\_manager.h@{/Users/dabowang/be\_all/olap/tablet\_manager.h}}
+\mbox{\hyperlink{tablet__manager_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <shared\_mutex>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/AgentService\_types.h"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/BackendService\_types.h"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/MasterService\_types.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__define_8h}{olap/olap\_define.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__meta_8h}{olap/olap\_meta.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{options_8h}{olap/options.h}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }Tablet;}
+\DoxyCodeLine{00043\ \textcolor{keyword}{class\ }DataDir;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ TabletManager\ provides\ get,\ add,\ delete\ tablet\ method\ for\ storage\ engine}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ NOTE:\ If\ you\ want\ to\ add\ a\ method\ that\ needs\ to\ hold\ meta-\/lock\ before\ you\ can\ call\ it,}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ please\ uniformly\ name\ the\ method\ in\ "{}xxx\_unlocked()"{}\ mode}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_tablet_manager}{TabletManager}}\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_manager}{TabletManager}}(int32\_t\ tablet\_map\_lock\_shard\_size);}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a9560e1394d64cc6a4077f7f81097ef81}{\string~TabletManager}}();}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a12e09cc757f74cd2f397274ca5045ace}{check\_tablet\_id\_exist}}(TTabletId\ tablet\_id);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ The\ param\ stores\ holds\ all\ candidate\ data\_dirs\ for\ this\ tablet.}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ If\ the\ request\ is\ from\ a\ schema-\/changing\ tablet,\ The\ directory\ selected\ by\ the}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ new\ tablet\ should\ be\ the\ same\ as\ the\ directory\ of\ origin\ tablet.\ Because\ the}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ linked-\/schema-\/change\ type\ requires\ Linux\ hard-\/link,\ which\ does\ not\ support\ cross\ disk.}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ TODO(lingbin):\ Other\ schema-\/change\ type\ do\ not\ need\ to\ be\ on\ the\ same\ disk.\ Because}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ there\ may\ be\ insufficient\ space\ on\ the\ current\ disk,\ which\ will\ lead\ the\ schema-\/change}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ task\ to\ be\ fail,\ even\ if\ there\ is\ enough\ space\ on\ other\ disks}}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_acaef6cee5df07ed609d4c6ea89b9afaa}{create\_tablet}}(\textcolor{keyword}{const}\ TCreateTabletReq\&\ request,\ std::vector<DataDir*>\ stores);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Drop\ a\ tablet\ by\ description.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ If\ `is\_drop\_table\_or\_partition`\ is\ true,\ we\ need\ to\ remove\ all\ remote\ rowsets\ in\ this\ tablet.}}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a5d6dcea491fe08d5aca8802ba11d58ac}{drop\_tablet}}(TTabletId\ tablet\_id,\ TReplicaId\ replica\_id,\ \textcolor{keywordtype}{bool}\ is\_drop\_table\_or\_partition);}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a81e11aeb2001dd1c42e707568711f0d7}{drop\_tablets\_on\_error\_root\_path}}(\textcolor{keyword}{const}\ std::vector<TabletInfo>\&\ tablet\_info\_vec);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_ae40b87aa9e24f7fd9c7ee0f760831cfd}{find\_best\_tablet\_to\_compaction}}(}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a929a7e9658c24d0d1decc37e2955576c}{CompactionType}}\ compaction\_type,\ \mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir,}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::unordered\_set<TTabletId>\&\ tablet\_submitted\_compaction,\ uint32\_t*\ score,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ std::shared\_ptr<CumulativeCompactionPolicy>\ cumulative\_compaction\_policy);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a7d26de6462f5c33ff7ef2e194b1361e0}{get\_tablet}}(TTabletId\ tablet\_id,\ \textcolor{keywordtype}{bool}\ include\_deleted\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string*\ err\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a4d5924edaef4d1a524a4a87f0e7db843}{get\_tablet}}(TTabletId\ tablet\_id,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ include\_deleted\ =\ \textcolor{keyword}{false},\ std::string*\ err\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ std::vector<TabletSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a70587a66e498dbc3d37d3a4d3284490f}{get\_all\_tablet}}();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a4141e0e4a0bad441a1156bc95d808f88}{get\_rowset\_nums}}();}
+\DoxyCodeLine{00084\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_af0fadc32af43a7a72f36479159373761}{get\_segment\_nums}}();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ Extract\ tablet\_id\ and\ schema\_hash\ from\ given\ path.}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ The\ normal\ path\ pattern\ is\ like\ "{}/data/\{shard\_id\}/\{tablet\_id\}/\{schema\_hash\}/xxx.data"{}.}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ Besides\ that,\ this\ also\ support\ empty\ tablet\ path,\ which\ path\ looks\ like}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ "{}/data/\{shard\_id\}/\{tablet\_id\}"{}}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ when\ the\ path\ matches\ the\ path\ pattern,\ and\ tablet\_id\ and\ schema\_hash\ is}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ saved\ in\ input\ params.\ When\ input\ path\ is\ an\ empty\ tablet\ directory,\ schema\_hash\ will}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ be\ set\ to\ 0.\ Return\ false\ if\ the\ path\ don't\ match\ valid\ pattern.}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_ab32a817a1f283ab6633f4e0921d02888}{get\_tablet\_id\_and\_schema\_hash\_from\_path}}(\textcolor{keyword}{const}\ std::string\&\ path,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId*\ tablet\_id,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TSchemaHash*\ schema\_hash);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa92693f877fad67ffb83a9b98fdc17a3}{get\_rowset\_id\_from\_path}}(\textcolor{keyword}{const}\ std::string\&\ path,\ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}*\ rowset\_id);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a420f18fe3d5367e2b481354940313044}{get\_tablet\_stat}}(TTabletStatResult*\ result);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ parse\ tablet\ header\ msg\ to\ generate\ tablet\ object}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ -\/\ restore:\ whether\ the\ request\ is\ from\ restore\ tablet\ action,}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ \ \ where\ we\ should\ change\ tablet\ status\ from\ shutdown\ back\ to\ running}}
+\DoxyCodeLine{00106\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a4c7d1ebab7b99392ec4db3e8dcc9766d}{load\_tablet\_from\_meta}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir,\ TTabletId\ tablet\_id,\ TSchemaHash\ schema\_hash,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ header,\ \textcolor{keywordtype}{bool}\ update\_meta,\ \textcolor{keywordtype}{bool}\ force\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ restore\ =\ \textcolor{keyword}{false},\ \textcolor{keywordtype}{bool}\ check\_path\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a0f54e8a6f6c9634bf1d529422919f836}{load\_tablet\_from\_dir}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir,\ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ schema\_hash\_path,\ \textcolor{keywordtype}{bool}\ force\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ restore\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ 获取所有tables的名字}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ Return\ OK,\ if\ run\ ok}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ Status::Error<INVALID\_ARGUMENT>(),\ if\ tables\ is\ null}}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a5a8b95cb7f7bd31388db823cc30189e2}{report\_tablet\_info}}(TTabletInfo*\ tablet\_info);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa53c25e1103e57a98973ee273ad2b037}{build\_all\_report\_tablets\_info}}(std::map<TTabletId,\ TTablet>*\ tablets\_info);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_af1c69d16fd210bc3dc1581b3c568449f}{start\_trash\_sweep}}();}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a6858ba3d88b0d21d9caea1969d79151a}{try\_delete\_unused\_tablet\_path}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir,\ TTabletId\ tablet\_id,}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \textcolor{keyword}{const}\ std::string\&\ schema\_hash\_path);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aca226415873bbbcf6b933c97013ee5af}{update\_root\_path\_info}}(std::map<std::string,\ DataDirInfo>*\ path\_map,}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}*\ tablet\_counter);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a3058b8c432a0858a52158489ecd72d5b}{get\_partition\_related\_tablets}}(int64\_t\ partition\_id,\ std::set<TabletInfo>*\ tablet\_infos);}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a5b720fa13aff4a8fda3491c31e08c149}{do\_tablet\_meta\_checkpoint}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a45704ace6cb72b2f853fc3b9df8f6650}{obtain\_specific\_quantity\_tablets}}(std::vector<TabletInfo>\&\ tablets\_info,\ int64\_t\ num);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a768cccbc9765aeeec38b94f5ae35a8c9}{register\_clone\_tablet}}(int64\_t\ tablet\_id);}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a391d37968c9766b29db9a90a930bc018}{unregister\_clone\_tablet}}(int64\_t\ tablet\_id);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a4fb9204e88264cd6fececf1a4aa0e92e}{get\_tablets\_distribution\_on\_different\_disks}}(}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ std::map<int64\_t,\ std::map<DataDir*,\ int64\_t>>\&\ tablets\_num\_on\_disk,}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ std::map<int64\_t,\ std::map<\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*,\ std::vector<TabletSize>>>\&\ tablets\_info\_on\_disk);}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a434c3e7aeabd5c47386682e53e021f60}{get\_cooldown\_tablets}}(std::vector<TabletSharedPtr>*\ tables);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aac7da552282c41da92adbe041926b1d6}{get\_all\_tablets\_storage\_format}}(TCheckStorageFormatResult*\ result);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ std::set<int64\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_ad39d4cb775951844d3e35420c77727b4}{check\_all\_tablet\_segment}}(\textcolor{keywordtype}{bool}\ repair);}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ tablet\ pointer\ to\ StorageEngine}}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ If\ force,\ drop\ the\ existing\ tablet\ add\ this\ new\ one}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ Return\ OK,\ if\ run\ ok}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ OLAP\_ERR\_TABLE\_INSERT\_DUPLICATION\_ERROR,\ if\ find\ duplication}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ Status::Error<UNINITIALIZED>(),\ if\ not\ inited}}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a095fea57efb8c673a3cc96073b5b2a97}{\_add\_tablet\_unlocked}}(TTabletId\ tablet\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ update\_meta,\ \textcolor{keywordtype}{bool}\ force);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_adb5be5532b8b19ad88bc842b5fc9fcfa}{\_add\_tablet\_to\_map\_unlocked}}(TTabletId\ tablet\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ update\_meta,\ \textcolor{keywordtype}{bool}\ keep\_files,\ \textcolor{keywordtype}{bool}\ drop\_old);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a4deaa7844efd5e903433b7a2cdbe6569}{\_check\_tablet\_id\_exist\_unlocked}}(TTabletId\ tablet\_id);}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a0db2c35c1e6a27736d2beca991467d5e}{\_drop\_tablet\_unlocked}}(TTabletId\ tablet\_id,\ TReplicaId\ replica\_id,\ \textcolor{keywordtype}{bool}\ keep\_files,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_drop\_table\_or\_partition);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a58fde99954963c657c3b7ffc63a6b3d0}{\_get\_tablet\_unlocked}}(TTabletId\ tablet\_id);}
+\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a066e2bee48c23a8c7ee3ad857dc2dcb4}{\_get\_tablet\_unlocked}}(TTabletId\ tablet\_id,\ \textcolor{keywordtype}{bool}\ include\_deleted,}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string*\ err);}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_af437770578d2d9dcdf67ec471b133920}{\_internal\_create\_tablet\_unlocked}}(\textcolor{keyword}{const}\ TCreateTabletReq\&\ request,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_schema\_change,}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet}{Tablet}}*\ base\_tablet,}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<DataDir*>\&\ data\_dirs);}
+\DoxyCodeLine{00174\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a2fd2409e22ebb0c874acaf4ff6c9ad3c}{\_create\_tablet\_meta\_and\_dir\_unlocked}}(\textcolor{keyword}{const}\ TCreateTabletReq\&\ request,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_schema\_change,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet}{Tablet}}*\ base\_tablet,}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<DataDir*>\&\ data\_dirs);}
+\DoxyCodeLine{00178\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a870786941623076c04ffb57677996ea8}{\_create\_tablet\_meta\_unlocked}}(\textcolor{keyword}{const}\ TCreateTabletReq\&\ request,\ \mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ store,}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_schema\_change\_tablet,}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet}{Tablet}}*\ base\_tablet,}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aed567e6af8c6d82336f03a32fce058cf}{TabletMetaSharedPtr}}*\ tablet\_meta);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a8ac67a0910cca6f52c78386844c06d9f}{\_add\_tablet\_to\_partition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet);}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa805d8130d247314e0377b2b8c817d6b}{\_remove\_tablet\_from\_partition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ std::shared\_mutex\&\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a025b5949eec1ac7e7375bfd31e1707b3}{\_get\_tablets\_shard\_lock}}(TTabletId\ tabletId);}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00190\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a7e3b874c01d9fdfcc4252f6063bbe7ee}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_tablet_manager}{TabletManager}});}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_tablet_manager_a0a059fa5912c6c41449e72a9cc9ebb9d}{tablet\_map\_t}}\ =\ std::unordered\_map<int64\_t,\ TabletSharedPtr>;}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard}{tablets\_shard}}\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a319d22283d881c19b376d23931203975}{tablets\_shard}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a30c3cd3068dace982c942d124fc75c6e}{tablets\_shard}}(\mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard}{tablets\_shard}}\&\&\ shard)\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a1e98470207f9219b8ff5b10ad7c564f7}{tablet\_map}}\ =\ std::move(shard.tablet\_map);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a935797957b4a0e9e3954e829b7981f25}{tablets\_under\_clone}}\ =\ std::move(shard.tablets\_under\_clone);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ protect\ tablet\_map,\ tablets\_under\_clone\ and\ tablets\_under\_restore}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{mutable}\ std::shared\_mutex\ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_af40eb81400ba119f112df5c19b60617f}{lock}};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a0a059fa5912c6c41449e72a9cc9ebb9d}{tablet\_map\_t}}\ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a1e98470207f9219b8ff5b10ad7c564f7}{tablet\_map}};}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ std::set<int64\_t>\ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard_a935797957b4a0e9e3954e829b7981f25}{tablets\_under\_clone}};}
+\DoxyCodeLine{00204\ \ \ \ \ \};}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ trace\ the\ memory\ use\ by\ meta\ of\ tablet}}
+\DoxyCodeLine{00207\ \ \ \ \ std::shared\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa8fe1dfdcaa71c1dd164d67c6f3cc910}{\_mem\_tracker}};}
+\DoxyCodeLine{00208\ \ \ \ \ std::shared\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a34e261d0103af41228050daddf9f6550}{\_tablet\_meta\_mem\_tracker}};}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a784f4d62640324ea8640a3215e0c8517}{\_tablets\_shards\_size}};}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa646d86d6a82e0a82d6e606a66f7a6ef}{\_tablets\_shards\_mask}};}
+\DoxyCodeLine{00212\ \ \ \ \ std::vector<tablets\_shard>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa4830818ab52a3b3f865458329d8a1a9}{\_tablets\_shards}};}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Protect\ \_partition\_tablet\_map,\ should\ not\ be\ obtained\ before\ \_tablet\_map\_lock\ to\ avoid\ dead\ lock}}
+\DoxyCodeLine{00215\ \ \ \ \ std::shared\_mutex\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a9aa4f00e8444fe380972df565f422fcf}{\_partition\_tablet\_map\_lock}};}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Protect\ \_shutdown\_tablets,\ should\ not\ be\ obtained\ before\ \_tablet\_map\_lock\ to\ avoid\ dead\ lock}}
+\DoxyCodeLine{00217\ \ \ \ \ std::shared\_mutex\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a85d481bbfdaa78ce5f918e025bf487c0}{\_shutdown\_tablets\_lock}};}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ partition\_id\ =>\ tablet\_info}}
+\DoxyCodeLine{00219\ \ \ \ \ std::map<int64\_t,\ std::set<TabletInfo>>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a7f1ddd1f43f47f0f5390944b1bb5bcd5}{\_partition\_tablet\_map}};}
+\DoxyCodeLine{00220\ \ \ \ \ std::vector<TabletSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aa5272a348b3bca101286a7903d4ef849}{\_shutdown\_tablets}};}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_af7c0dfce6973c6d1b58f5f7d8c0f4110}{\_tablet\_stat\_cache\_mutex}};}
+\DoxyCodeLine{00223\ \ \ \ \ std::shared\_ptr<std::vector<TTabletStat>>\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_aad522d96055c0ae1217e7199cc14f4a9}{\_tablet\_stat\_list\_cache}}\ =}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<std::vector<TTabletStat>>();}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a0a059fa5912c6c41449e72a9cc9ebb9d}{tablet\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a81d03b8560b5db3fb3b60dd2bb029d7b}{\_get\_tablet\_map}}(TTabletId\ tablet\_id);}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_manager_1_1tablets__shard}{tablets\_shard}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_manager_a631956c6f906b8b20a34bd269d8ae03f}{\_get\_tablets\_shard}}(TTabletId\ tabletId);}
+\DoxyCodeLine{00229\ \};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

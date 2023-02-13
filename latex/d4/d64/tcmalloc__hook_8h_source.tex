@@ -1,0 +1,61 @@
+\hypertarget{tcmalloc__hook_8h_source}{}\doxysection{tcmalloc\+\_\+hook.\+h}
+\label{tcmalloc__hook_8h_source}\index{/Users/dabowang/be\_all/runtime/memory/tcmalloc\_hook.h@{/Users/dabowang/be\_all/runtime/memory/tcmalloc\_hook.h}}
+\mbox{\hyperlink{tcmalloc__hook_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <gperftools/malloc\_hook.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <gperftools/nallocx.h>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <gperftools/tcmalloc.h>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__context_8h}{runtime/thread\_context.h}}"{}}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ Notice:\ modify\ the\ command\ in\ New/Delete\ Hook\ should\ be\ careful\ enough!,}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ and\ should\ be\ as\ simple\ as\ possible,\ otherwise\ it\ may\ cause\ weird\ errors.\ E.g:}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ 1.\ The\ first\ New\ Hook\ call\ of\ the\ process\ may\ be\ before\ some\ variables\ of}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ the\ process\ are\ initialized.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ 2.\ Allocating\ memory\ in\ the\ Hook\ command\ causes\ the\ Hook\ to\ be\ entered\ again,}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ infinite\ recursion.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ 3.\ TCMalloc\ hook\ will\ be\ triggered\ during\ the\ process\ of\ initializing/Destructor}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ memtracker\ shared\_ptr,\ Using\ the\ object\ pointed\ to\ by\ this\ memtracker\ shared\_ptr}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ in\ TCMalloc\ hook\ may\ cause\ crash.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ 4.\ Modifying\ additional\ thread\ local\ variables\ in\ ThreadContext\ construction\ and}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ destructor\ to\ control\ the\ behavior\ of\ consume\ can\ lead\ to\ unexpected\ behavior,}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ like\ this:\ if\ (LIKELY(doris::start\_thread\_mem\_tracker))\ \{}}
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{tcmalloc__hook_8h_a5ab973a95b9ee99b827c0d356bcb2494}{new\_hook}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ ptr,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a5b52646a480c2bf8c8af764e51330177}{CONSUME\_MEM\_TRACKER}}(tc\_nallocx(size,\ 0));}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{tcmalloc__hook_8h_ad4f873ed92c3395c3a54c2aea27895b1}{delete\_hook}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ ptr)\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{thread__context_8h_acf0fe4665e60c7e7f945275819875c55}{RELEASE\_MEM\_TRACKER}}(tc\_malloc\_size(\textcolor{keyword}{const\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(ptr)));}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{tcmalloc__hook_8h_aa936e2f3b1116c96b83579850c43de1d}{init\_hook}}()\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ MallocHook::AddNewHook(\&\mbox{\hyperlink{tcmalloc__hook_8h_a5ab973a95b9ee99b827c0d356bcb2494}{new\_hook}});}
+\DoxyCodeLine{00048\ \ \ \ \ MallocHook::AddDeleteHook(\&\mbox{\hyperlink{tcmalloc__hook_8h_ad4f873ed92c3395c3a54c2aea27895b1}{delete\_hook}});}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ For\ later\ debug.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ static\ void\ destroy\_hook()\ \{}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ \ MallocHook::RemoveNewHook(\&new\_hook);}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ MallocHook::RemoveDeleteHook(\&delete\_hook);}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \}}}
+
+\end{DoxyCode}

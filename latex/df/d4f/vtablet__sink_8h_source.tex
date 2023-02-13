@@ -1,0 +1,548 @@
+\hypertarget{vtablet__sink_8h_source}{}\doxysection{vtablet\+\_\+sink.\+h}
+\label{vtablet__sink_8h_source}\index{/Users/dabowang/be\_all/vec/sink/vtablet\_sink.h@{/Users/dabowang/be\_all/vec/sink/vtablet\_sink.h}}
+\mbox{\hyperlink{vtablet__sink_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <brpc/controller.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{object__pool_8h}{common/object\_pool.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__sink_8h}{exec/data\_sink.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__info_8h}{exec/tablet\_info.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Types\_types.h"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/internal\_service.pb.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__context_8h}{runtime/thread\_context.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bitmap_8h}{util/bitmap.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{countdown__latch_8h}{util/countdown\_latch.h}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__count__closure_8h}{util/ref\_count\_closure.h}}"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{spinlock_8h}{util/spinlock.h}}"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread_8h}{util/thread.h}}"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column_8h}{vec/columns/column.h}}"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block_8h}{vec/core/block.h}}"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }vectorized\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{class\ }VExprContext;}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }stream\_load\ \{}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ The\ counter\ of\ add\_batch\ rpc\ of\ a\ single\ node}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ total\ execution\ time\ of\ a\ add\_batch\ rpc}}
+\DoxyCodeLine{00055\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_ad3733c9027fbf400df8d8cb4ac80f43b}{add\_batch\_execution\_time\_us}}\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ lock\ waiting\ time\ in\ a\ add\_batch\ rpc}}
+\DoxyCodeLine{00057\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_aab9857f9583cbc75055a8dcc598ecea6}{add\_batch\_wait\_execution\_time\_us}}\ =\ 0;}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ number\ of\ add\_batch\ call}}
+\DoxyCodeLine{00059\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a9fcff79ca39fe457eb6d07330c8a583c}{add\_batch\_num}}\ =\ 0;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ time\ passed\ between\ marked\ close\ and\ finish\ close}}
+\DoxyCodeLine{00061\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a7a17be3d6ce84410bc29ca908085050a}{close\_wait\_time\_ms}}\ =\ 0;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\&\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a3a6b4644deb750d7b5354d8af2beffbc}{operator+=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\&\ rhs)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_ad3733c9027fbf400df8d8cb4ac80f43b}{add\_batch\_execution\_time\_us}}\ +=\ rhs.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_ad3733c9027fbf400df8d8cb4ac80f43b}{add\_batch\_execution\_time\_us}};}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_aab9857f9583cbc75055a8dcc598ecea6}{add\_batch\_wait\_execution\_time\_us}}\ +=\ rhs.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_aab9857f9583cbc75055a8dcc598ecea6}{add\_batch\_wait\_execution\_time\_us}};}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a9fcff79ca39fe457eb6d07330c8a583c}{add\_batch\_num}}\ +=\ rhs.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a9fcff79ca39fe457eb6d07330c8a583c}{add\_batch\_num}};}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a7a17be3d6ce84410bc29ca908085050a}{close\_wait\_time\_ms}}\ +=\ rhs.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a7a17be3d6ce84410bc29ca908085050a}{close\_wait\_time\_ms}};}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{friend}\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a31bcfae7fd187fae212e7e0a3132172d}{operator+}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\&\ lhs,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\&\ rhs)\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\ sum\ =\ lhs;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ sum\ +=\ rhs;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sum;}
+\DoxyCodeLine{00074\ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ It's\ very\ error-\/prone\ to\ guarantee\ the\ handler\ capture\ vars'\ \&\ this\ closure's\ destruct\ sequence.}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ So\ using\ create()\ to\ get\ the\ closure\ pointer\ is\ recommended.\ We\ can\ delete\ the\ closure\ ptr\ before\ the\ capture\ vars\ destruction.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ Delete\ this\ point\ is\ safe,\ don't\ worry\ about\ RPC\ callback\ will\ run\ after\ ReusableClosure\ deleted.}}
+\DoxyCodeLine{00080\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00081\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure}{ReusableClosure}}\ final\ :\ \textcolor{keyword}{public}\ google::protobuf::Closure\ \{}
+\DoxyCodeLine{00082\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_aa3b29e47af3e6e1909c1ec9ff5dbd97b}{ReusableClosure}}()\ :\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1e423d06226927fb52320a1031f81604}{cid}}(INVALID\_BTHREAD\_ID)\ \{\}}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a0fe85b4c57a903753bd86915c574acd5}{\string~ReusableClosure}}()\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ shouldn't\ delete\ when\ Run()\ is\ calling\ or\ going\ to\ be\ called,\ wait\ for\ current\ Run()\ done.}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a6c7abfff648dad193674fc432ad4840d}{join}}();}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a29e887f9f9288b849700454864b37c05}{SCOPED\_SWITCH\_THREAD\_MEM\_TRACKER\_LIMITER}}(\mbox{\hyperlink{classdoris_1_1_exec_env_a920023e1afb35093f05bf7b69cc5e889}{ExecEnv::GetInstance}}()-\/>orphan\_mem\_tracker());}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.Reset();}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure}{ReusableClosure<T>}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_ace08e013cc2db67c2c9c1647920e0e43}{create}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure}{ReusableClosure<T>}}();\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a0772104c694289a3ab7710f008b3bfa8}{addFailedHandler}}(\textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{void}(\textcolor{keywordtype}{bool})>\&\ fn)\ \{\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a39618104d3aacab221a06c846e1baad9}{failed\_handler}}\ =\ fn;\ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a4d8aa96ab7c1519d07926968f7ffb7d2}{addSuccessHandler}}(\textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&,\ \textcolor{keywordtype}{bool})>\&\ fn)\ \{\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a7c8242dfab817fc542cacdf6313238a9}{success\_handler}}\ =\ fn;\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a6c7abfff648dad193674fc432ad4840d}{join}}()\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ rely\ on\ in\_flight\ to\ assure\ one\ rpc\ is\ running,}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ while\ cid\ is\ not\ reliable\ due\ to\ memory\ order.}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ in\_flight\ is\ written\ before\ getting\ callid,}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ we\ can\ not\ use\ memory\ fence\ to\ synchronize.}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}})\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cid\ here\ is\ complicated}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1e423d06226927fb52320a1031f81604}{cid}}\ !=\ INVALID\_BTHREAD\_ID)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ actually\ cid\ may\ be\ the\ last\ rpc\ call\ id.}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ brpc::Join(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1e423d06226927fb52320a1031f81604}{cid}});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}})\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::this\_thread::sleep\_for(std::chrono::milliseconds(10));}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ plz\ follow\ this\ order:\ reset()\ -\/>\ set\_in\_flight()\ -\/>\ send\ brpc\ batch}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a29e887f9f9288b849700454864b37c05}{SCOPED\_SWITCH\_THREAD\_MEM\_TRACKER\_LIMITER}}(\mbox{\hyperlink{classdoris_1_1_exec_env_a920023e1afb35093f05bf7b69cc5e889}{ExecEnv::GetInstance}}()-\/>orphan\_mem\_tracker());}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.Reset();}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1e423d06226927fb52320a1031f81604}{cid}}\ =\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.call\_id();}
+\DoxyCodeLine{00118\ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a6d9ea9e81907fd3df033cbee47a4c157}{try\_set\_in\_flight}}()\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}}.compare\_exchange\_strong(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a459d73dabec2c48deda485f01f6f82cc}{clear\_in\_flight}}()\ \{\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}}\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a8a77005250537922f892a33c9b0fa883}{is\_packet\_in\_flight}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}};\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a3f345267a6a9004cf297d73174f5f2bc}{end\_mark}}()\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a60befa878a520c212e075e414fef10e2}{\_is\_last\_rpc}}\ ==\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a60befa878a520c212e075e414fef10e2}{\_is\_last\_rpc}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a29139ac9719e08c506c84696ea694060}{Run}}()\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}});}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.Failed())\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}failed\ to\ send\ brpc\ batch,\ error="{}}\ <<\ berror(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.ErrorCode())}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ error\_text="{}}\ <<\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}}.ErrorText();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a39618104d3aacab221a06c846e1baad9}{failed\_handler}}(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a60befa878a520c212e075e414fef10e2}{\_is\_last\_rpc}});}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a7c8242dfab817fc542cacdf6313238a9}{success\_handler}}(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a97cc947b65f04e2cfec82d45b2e2f722}{result}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a60befa878a520c212e075e414fef10e2}{\_is\_last\_rpc}});}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a459d73dabec2c48deda485f01f6f82cc}{clear\_in\_flight}}();}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ brpc::Controller\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1b9feb80c44a619c43e50572b147e61c}{cntl}};}
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a97cc947b65f04e2cfec82d45b2e2f722}{result}};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00150\ \ \ \ \ brpc::CallId\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a1e423d06226927fb52320a1031f81604}{cid}};}
+\DoxyCodeLine{00151\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a9a7373d0073d393aeee06d727bc4d2c5}{\_packet\_in\_flight}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00152\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a60befa878a520c212e075e414fef10e2}{\_is\_last\_rpc}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00153\ \ \ \ \ std::function<void(\textcolor{keywordtype}{bool})>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a39618104d3aacab221a06c846e1baad9}{failed\_handler}};}
+\DoxyCodeLine{00154\ \ \ \ \ std::function<void(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&,\ \textcolor{keywordtype}{bool})>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure_a7c8242dfab817fc542cacdf6313238a9}{success\_handler}};}
+\DoxyCodeLine{00155\ \};}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel}{IndexChannel}};}
+\DoxyCodeLine{00158\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel}{VNodeChannel}}\ \{}
+\DoxyCodeLine{00161\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel}{VNodeChannel}}(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}*\ parent,\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel}{IndexChannel}}*\ index\_channel,\ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ac1fb09e08808075227673add21759e4b}{node\_id}});}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a78dd8452dbac2c950605c95cc6c16ab4}{\string~VNodeChannel}}();}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ called\ before\ open,\ used\ to\ add\ tablet\ located\ in\ this\ backend}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1e08574fd8912e1e8f203ac768a8cf8c}{add\_tablet}}(\textcolor{keyword}{const}\ TTabletWithPartition\&\ tablet)\ \{\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_adc2763bb8dce9fd8ddf8d6f21dc970c9}{\_all\_tablets}}.emplace\_back(tablet);\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aad22ff82a03358bdc4671da73421109b}{add\_slave\_tablet\_nodes}}(int64\_t\ tablet\_id,\ \textcolor{keyword}{const}\ std::vector<int64\_t>\&\ slave\_nodes)\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_af05659ca98aad0e8a167e187da55555c}{\_slave\_tablet\_nodes}}[tablet\_id]\ =\ slave\_nodes;}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a9e8555112049fc2b4945120b3c45f8ab}{open}}();}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae11504d162442173f29bc3a21bc8ad00}{init}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1b8095ff27eb11bcd9797b090b7c2225}{open\_wait}}();}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a08fbac1b423914ef1a52009207ff1cff}{add\_block}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::unique\_ptr<vectorized::IColumn::Selector>,}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<int64\_t>>\&\ payload);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a63c429d7ef9b59e59df3aa715c8d230a}{try\_send\_and\_fetch\_status}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\&\ thread\_pool\_token);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_abae4d50a34f2cb19824dbc7824e55679}{try\_send\_block}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a034a6f1ef6f356354e14bbe1d58ab370}{clear\_all\_blocks}}();}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ two\ ways\ to\ stop\ channel:}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ 1.\ mark\_close()-\/>close\_wait()\ PS.\ close\_wait()\ will\ block\ waiting\ for\ the\ last\ AddBatch\ rpc\ response.}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ 2.\ just\ cancel()}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a42e80149ae34424f99776fa240634ee1}{mark\_close}}();}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ two\ ways\ to\ stop\ channel:}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ 1.\ mark\_close()-\/>close\_wait()\ PS.\ close\_wait()\ will\ block\ waiting\ for\ the\ last\ AddBatch\ rpc\ response.}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//\ 2.\ just\ cancel()}}
+\DoxyCodeLine{00198\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a2cd09239160586b7f96b1ddcdc6bf7ef}{close\_wait}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a23a67c891f69d33323a6bb2af35beace}{cancel}}(\textcolor{keyword}{const}\ std::string\&\ cancel\_msg);}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_abd37ac211f52f40ea54af4cda74e6bf1}{time\_report}}(std::unordered\_map<int64\_t,\ AddBatchCounter>*\ add\_batch\_counter\_map,}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ serialize\_batch\_ns,\ int64\_t*\ mem\_exceeded\_block\_ns,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ queue\_push\_lock\_ns,\ int64\_t*\ actual\_consume\_ns,}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ total\_add\_batch\_exec\_time\_ns,\ int64\_t*\ add\_batch\_exec\_time\_ns,}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ total\_add\_batch\_num)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ (*add\_batch\_counter\_map)[\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aba8c456316d0bef308b76f04a13cf383}{\_node\_id}}]\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae25b71d71a31bfd9714ba2457e16274b}{\_add\_batch\_counter}};}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ (*add\_batch\_counter\_map)[\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aba8c456316d0bef308b76f04a13cf383}{\_node\_id}}].\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a7a17be3d6ce84410bc29ca908085050a}{close\_wait\_time\_ms}}\ =\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a9acd288d269f1b1c99c36fedfc567696}{\_close\_time\_ms}};}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ *serialize\_batch\_ns\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a023caf7f9325247732e425308b625c69}{\_serialize\_batch\_ns}};}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ *mem\_exceeded\_block\_ns\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ac803af69033f63bdc40e37a707b43e45}{\_mem\_exceeded\_block\_ns}};}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ *queue\_push\_lock\_ns\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a31a72b4b610c0e953ef63411b961b038}{\_queue\_push\_lock\_ns}};}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ *actual\_consume\_ns\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_af74bca5af4fc2d25aa0147ba697295db}{\_actual\_consume\_ns}};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ *add\_batch\_exec\_time\_ns\ =\ (\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae25b71d71a31bfd9714ba2457e16274b}{\_add\_batch\_counter}}.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_ad3733c9027fbf400df8d8cb4ac80f43b}{add\_batch\_execution\_time\_us}}\ *\ 1000);}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ *total\_add\_batch\_exec\_time\_ns\ +=\ *add\_batch\_exec\_time\_ns;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ *total\_add\_batch\_num\ +=\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae25b71d71a31bfd9714ba2457e16274b}{\_add\_batch\_counter}}.\mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter_a9fcff79ca39fe457eb6d07330c8a583c}{add\_batch\_num}};}
+\DoxyCodeLine{00216\ \ \ \ \ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ac1fb09e08808075227673add21759e4b}{node\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aba8c456316d0bef308b76f04a13cf383}{\_node\_id}};\ \}}
+\DoxyCodeLine{00219\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a5f0eba713a692bc0aa00b2b8ec0e9ba1}{host}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a759073181aa7bf14e34ee6d46816ac9d}{\_node\_info}}.\mbox{\hyperlink{structdoris_1_1_node_info_a696b1086704b0858059129b61eaa4a9f}{host}};\ \}}
+\DoxyCodeLine{00220\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1d89c28bd42ba9a52da008bb69367171}{name}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a4beaf9701bb6176551167e11a6d6d7e1}{none\_of}}(std::initializer\_list<bool>\ vars);}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a46437b67d2350a3710231306489e966b}{channel\_info}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fmt::format(\textcolor{stringliteral}{"{}\{\},\ \{\},\ node=\{\}:\{\}"{}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a739c7d9b874cd755a3dbc23250b01f11}{\_load\_info}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a759073181aa7bf14e34ee6d46816ac9d}{\_node\_info}}.\mbox{\hyperlink{structdoris_1_1_node_info_a696b1086704b0858059129b61eaa4a9f}{host}},}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a759073181aa7bf14e34ee6d46816ac9d}{\_node\_info}}.\mbox{\hyperlink{structdoris_1_1_node_info_aa9258099944d3cebdbdd95056acaacd5}{brpc\_port}});}
+\DoxyCodeLine{00227\ \ \ \ \ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a673f9df51a395dfd4ac129d67b30bc1c}{get\_pending\_bytes}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a7ca0fdcf3a265447636b964460e25195}{\_pending\_batches\_bytes}};\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a7d001c3853269cad6f73a3cdcb8ef46f}{\_close\_check}}();}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_af5f7aad62154bf5be5b53f60b595ab3d}{\_cancel\_with\_msg}}(\textcolor{keyword}{const}\ std::string\&\ msg);}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_abb435e2c569695fda815d566412d1160}{\_parent}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00236\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel}{IndexChannel}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a2d32561319eaf3e190cb10d4dc01934a}{\_index\_channel}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00237\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aba8c456316d0bef308b76f04a13cf383}{\_node\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00238\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a739c7d9b874cd755a3dbc23250b01f11}{\_load\_info}};}
+\DoxyCodeLine{00239\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ std::shared\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aa6cdd20b5fe2b2333b87c6eedefdd91d}{\_node\_channel\_tracker}};}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aa8ef43af19ce6ea0931547d1876de7fa}{\_tuple\_desc}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00244\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_node_info}{NodeInfo}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a759073181aa7bf14e34ee6d46816ac9d}{\_node\_info}};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{comment}{//\ this\ should\ be\ set\ in\ init()\ using\ config}}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ab7e60d67375fc9377c4aa150fbf05d82}{\_rpc\_timeout\_ms}}\ =\ 60000;}
+\DoxyCodeLine{00248\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a4530858e063d46fb56f3bedf7740dea0}{\_next\_packet\_seq}}\ =\ 0;}
+\DoxyCodeLine{00249\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_add622b3b0649f667c16c071f71421af2}{\_timeout\_watch}};}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ the\ timestamp\ when\ this\ node\ channel\ be\ marked\ closed\ and\ finished\ closed}}
+\DoxyCodeLine{00252\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a9acd288d269f1b1c99c36fedfc567696}{\_close\_time\_ms}}\ =\ 0;}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{comment}{//\ user\ cancel\ or\ get\ some\ errors}}
+\DoxyCodeLine{00255\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a8fda64dfa948493c138858d38edd9cfb}{\_cancelled}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00256\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_spin_lock}{doris::SpinLock}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a792f4c86858bd5530e1bd8ada8807f7a}{\_cancel\_msg\_lock}};}
+\DoxyCodeLine{00257\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a93c1a2e56335774be22ff19c5efac081}{\_cancel\_msg}};}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{comment}{//\ send\ finished\ means\ the\ consumer\ thread\ which\ send\ the\ rpc\ can\ exit}}
+\DoxyCodeLine{00260\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a43b10d033056e434d103b587a85c7b6a}{\_send\_finished}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ add\ batches\ finished\ means\ the\ last\ rpc\ has\ be\ response,\ used\ to\ check\ whether\ this\ channel\ can\ be\ closed}}
+\DoxyCodeLine{00263\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a62a5d22091ab199025a2ea855c123fff}{\_add\_batches\_finished}}\ \{\textcolor{keyword}{false}\};\ \textcolor{comment}{//\ reuse\ for\ vectorized}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ac1fbad7c9d58c0f8b1d0dbe0ac448744}{\_eos\_is\_produced}}\ \{\textcolor{keyword}{false}\};\ \textcolor{comment}{//\ only\ for\ restricting\ producer\ behaviors}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ std::unique\_ptr<RowDescriptor>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1816227395c61a0cb82c1015b529f9e0}{\_row\_desc}};}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_aecf50290bc1f9bfa666a389de9ba117f}{\_batch\_size}}\ =\ 0;}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{//\ limit\ \_pending\_batches\ size}}
+\DoxyCodeLine{00271\ \ \ \ \ std::atomic<size\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a7ca0fdcf3a265447636b964460e25195}{\_pending\_batches\_bytes}}\ \{0\};}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a924f5dbd8b85efef28dbabca91819e65}{\_max\_pending\_batches\_bytes}}\ \{(size\_t)config::nodechannel\_pending\_queue\_max\_bytes\};}
+\DoxyCodeLine{00273\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a8dc8ea71e2ec755b9b90cc53c36bfe8f}{\_pending\_batches\_lock}};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ reuse\ for\ vectorized}}
+\DoxyCodeLine{00274\ \ \ \ \ std::atomic<int>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_adcf6d074cb392a0806bc8c78168a8032}{\_pending\_batches\_num}}\ \{0\};\ \textcolor{comment}{//\ reuse\ for\ vectorized}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ std::shared\_ptr<PBackendService\_Stub>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1283e307647043e819971ff7ad7c5461}{\_stub}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00277\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_ref_count_closure}{RefCountClosure<PTabletWriterOpenResult>}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae9a8094c13043af8d8788eea6337520a}{\_open\_closure}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ std::vector<TTabletWithPartition>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_adc2763bb8dce9fd8ddf8d6f21dc970c9}{\_all\_tablets}};}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ map\ from\ tablet\_id\ to\ node\_id\ where\ slave\ replicas\ locate\ in}}
+\DoxyCodeLine{00281\ \ \ \ \ std::unordered\_map<int64\_t,\ std::vector<int64\_t>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_af05659ca98aad0e8a167e187da55555c}{\_slave\_tablet\_nodes}};}
+\DoxyCodeLine{00282\ \ \ \ \ std::vector<TTabletCommitInfo>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a1a27e3f6283d7ed28d04454de8e33d5b}{\_tablet\_commit\_infos}};}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1stream__load_1_1_add_batch_counter}{AddBatchCounter}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ae25b71d71a31bfd9714ba2457e16274b}{\_add\_batch\_counter}};}
+\DoxyCodeLine{00285\ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a023caf7f9325247732e425308b625c69}{\_serialize\_batch\_ns}}\ \{0\};}
+\DoxyCodeLine{00286\ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_ac803af69033f63bdc40e37a707b43e45}{\_mem\_exceeded\_block\_ns}}\ \{0\};}
+\DoxyCodeLine{00287\ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a31a72b4b610c0e953ef63411b961b038}{\_queue\_push\_lock\_ns}}\ \{0\};}
+\DoxyCodeLine{00288\ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_af74bca5af4fc2d25aa0147ba697295db}{\_actual\_consume\_ns}}\ \{0\};}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ lock\ to\ protect\ \_is\_closed.}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ The\ methods\ in\ the\ IndexChannel\ are\ called\ back\ in\ the\ RpcClosure\ in\ the\ NodeChannel.}}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{comment}{//\ However,\ this\ rpc\ callback\ may\ occur\ after\ the\ whole\ task\ is\ finished\ (e.g.\ due\ to\ network\ latency),}}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ and\ by\ that\ time\ the\ IndexChannel\ may\ have\ been\ destructured,\ so\ we\ should\ not\ call\ the}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//\ IndexChannel\ methods\ anymore,\ otherwise\ the\ BE\ will\ crash.}}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ Therefore,\ we\ use\ the\ \_is\_closed\ and\ \_closed\_lock\ to\ ensure\ that\ the\ RPC\ callback}}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ function\ will\ not\ call\ the\ IndexChannel\ method\ after\ the\ NodeChannel\ is\ closed.}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{//\ The\ IndexChannel\ is\ definitely\ accessible\ until\ the\ NodeChannel\ is\ closed.}}
+\DoxyCodeLine{00298\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a6fcdb030911bb697fd25b9f1b3d54b93}{\_closed\_lock}};}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a6a7c9f0db03d1ee8f7e0e2d5a1392c2e}{\_is\_closed}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a91f2150e84757ffe2be5129f52c9e85a}{\_state}};}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ rows\ number\ received\ per\ tablet,\ tablet\_id\ -\/>\ rows\_num}}
+\DoxyCodeLine{00303\ \ \ \ \ std::vector<std::pair<int64\_t,\ int64\_t>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_afbcd04777580cf4c5740a28607d3b3c5}{\_tablets\_received\_rows}};}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ std::unique\_ptr<vectorized::MutableBlock>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_acde483b45ad2d14c11d2af495c22715d}{\_cur\_mutable\_block}};}
+\DoxyCodeLine{00306\ \ \ \ \ PTabletWriterAddBlockRequest\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_adec2d44190593113d8224add2c2b47b4}{\_cur\_add\_block\_request}};}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a06a76262d6318b5c1253ba9447b23608}{AddBlockReq}}\ =}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ std::pair<std::unique\_ptr<vectorized::MutableBlock>,\ PTabletWriterAddBlockRequest>;}
+\DoxyCodeLine{00310\ \ \ \ \ std::queue<AddBlockReq>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a69c54c80efdc0df66d5207677b62f1ce}{\_pending\_blocks}};}
+\DoxyCodeLine{00311\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_reusable_closure}{ReusableClosure<PTabletWriterAddBlockResult>}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel_a0b1aa1b26f014642b49958a4bfc411d1}{\_add\_block\_closure}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00312\ \};}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel}{IndexChannel}}\ \{}
+\DoxyCodeLine{00315\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00316\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a4f00c05bc0f816cdae5d708036f0be91}{IndexChannel}}(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}*\ parent,\ int64\_t\ index\_id)\ :\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_abb435e2c569695fda815d566412d1160}{\_parent}}(parent),\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a2d83ce66781470ceb86485bf66481ad0}{\_index\_id}}(index\_id)\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a2a5fe7c86ef51b737a2cf379dcf02808}{\_index\_channel\_tracker}}\ =}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_unique<MemTracker>(\textcolor{stringliteral}{"{}IndexChannel:indexID="{}}\ +\ std::to\_string(\mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a2d83ce66781470ceb86485bf66481ad0}{\_index\_id}}));}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a365d83010162514e77f887219304b4a3}{\string~IndexChannel}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a63880b6d0d783d24e73b96b512a7fb53}{init}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \textcolor{keyword}{const}\ std::vector<TTabletWithPartition>\&\ tablets);}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_aca8aadeb5446066e0f5844c88886d350}{for\_each\_node\_channel}}(}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ std::shared\_ptr<VNodeChannel>\&)>\&\ func)\ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ it\ :\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_aaf78fda21ea3993411d0350ab0a83f42}{\_node\_channels}})\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ func(it.second);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a554d2711e3dbf43b9f588a616d3a250f}{mark\_as\_failed}}(int64\_t\ node\_id,\ \textcolor{keyword}{const}\ std::string\&\ host,\ \textcolor{keyword}{const}\ std::string\&\ err,}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ tablet\_id\ =\ -\/1);}
+\DoxyCodeLine{00333\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_ab17fc3e5e71efbf88f49b9d75a184215}{check\_intolerable\_failure}}();}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ set\ error\ tablet\ info\ in\ runtime\ state,\ so\ that\ it\ can\ be\ returned\ to\ FE.}}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a7bd255c19170eb25840baad4b7058b09}{set\_error\_tablet\_in\_state}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a91cb47e5e204c360f523755dc49869f7}{num\_node\_channels}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_aaf78fda21ea3993411d0350ab0a83f42}{\_node\_channels}}.size();\ \}}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a61403f01407aae5e23fa6dce70b2a77d}{get\_pending\_bytes}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ mem\_consumption\ =\ 0;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_aaf78fda21ea3993411d0350ab0a83f42}{\_node\_channels}})\ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_consumption\ +=\ kv.second-\/>get\_pending\_bytes();}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ mem\_consumption;}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a20c72d09c441f5532eeda1bb6412f327}{set\_tablets\_received\_rows}}(}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<std::pair<int64\_t,\ int64\_t>>\&\ tablets\_received\_rows,\ int64\_t\ node\_id);}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ check\ whether\ the\ rows\ num\ written\ by\ different\ replicas\ is\ consistent}}
+\DoxyCodeLine{00352\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_af1ac1b46cbd2e0febe8d9a52e07e2b80}{check\_tablet\_received\_rows\_consistency}}();}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel}{VNodeChannel}};}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}};}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_abb435e2c569695fda815d566412d1160}{\_parent}};}
+\DoxyCodeLine{00359\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a2d83ce66781470ceb86485bf66481ad0}{\_index\_id}};}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{comment}{//\ from\ backend\ channel\ to\ tablet\_id}}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ ATTN:\ must\ be\ placed\ before\ `\_node\_channels`\ and\ `\_channels\_by\_tablet`.}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{comment}{//\ Because\ the\ destruct\ order\ of\ objects\ is\ opposite\ to\ the\ creation\ order.}}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ So\ NodeChannel\ will\ be\ destructured\ first.}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{comment}{//\ And\ the\ destructor\ function\ of\ NodeChannel\ waits\ for\ all\ RPCs\ to\ finish.}}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ This\ ensures\ that\ it\ is\ safe\ to\ use\ `\_tablets\_by\_channel`\ in\ the\ callback\ function\ for\ the\ end\ of\ the\ RPC.}}
+\DoxyCodeLine{00367\ \ \ \ \ std::unordered\_map<int64\_t,\ std::unordered\_set<int64\_t>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a63a96dc70a8ea20f46e1090b43a055de}{\_tablets\_by\_channel}};}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{comment}{//\ BeId\ -\/>\ channel}}
+\DoxyCodeLine{00369\ \ \ \ \ std::unordered\_map<int64\_t,\ std::shared\_ptr<VNodeChannel>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_aaf78fda21ea3993411d0350ab0a83f42}{\_node\_channels}};}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ from\ tablet\_id\ to\ backend\ channel}}
+\DoxyCodeLine{00371\ \ \ \ \ std::unordered\_map<int64\_t,\ std::vector<std::shared\_ptr<VNodeChannel>>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a3c6b010eae9daab9b11b6873fd586541}{\_channels\_by\_tablet}};}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ lock\ to\ protect\ \_failed\_channels\ and\ \_failed\_channels\_msgs}}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{classdoris_1_1_spin_lock}{doris::SpinLock}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a70bcb73cecc0507a993f21f8dbd29047}{\_fail\_lock}};}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ key\ is\ tablet\_id,\ value\ is\ a\ set\ of\ failed\ node\ id}}
+\DoxyCodeLine{00376\ \ \ \ \ std::unordered\_map<int64\_t,\ std::unordered\_set<int64\_t>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a61059642a043e4b22e07f1b5b125f840}{\_failed\_channels}};}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{comment}{//\ key\ is\ tablet\_id,\ value\ is\ error\ message}}
+\DoxyCodeLine{00378\ \ \ \ \ std::unordered\_map<int64\_t,\ std::string>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_ac45b125fc7cebba752ad7908ef359f3b}{\_failed\_channels\_msgs}};}
+\DoxyCodeLine{00379\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_ac068fb705ba5ec5ea3c274ae3ec9bc99}{\_intolerable\_failure\_status}}\ =\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ std::unique\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_a2a5fe7c86ef51b737a2cf379dcf02808}{\_index\_channel\_tracker}};}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{comment}{//\ rows\ num\ received\ by\ DeltaWriter\ per\ tablet,\ tablet\_id\ -\/>\ <node\_Id,\ rows\_num>}}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{comment}{//\ used\ to\ verify\ whether\ the\ rows\ num\ received\ by\ different\ replicas\ is\ consistent}}
+\DoxyCodeLine{00384\ \ \ \ \ std::map<int64\_t,\ std::vector<std::pair<int64\_t,\ int64\_t>>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel_ac636ad3410389cf13dd3ed1a08d3462e}{\_tablets\_received\_rows}};}
+\DoxyCodeLine{00385\ \};}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \textcolor{comment}{//\ Write\ block\ data\ to\ Olap\ Table.}}
+\DoxyCodeLine{00388\ \textcolor{comment}{//\ When\ OlapTableSink::open()\ called,\ there\ will\ be\ a\ consumer\ thread\ running\ in\ the\ background.}}
+\DoxyCodeLine{00389\ \textcolor{comment}{//\ When\ you\ call\ VOlapTableSink::send(),\ you\ will\ be\ the\ producer\ who\ products\ pending\ batches.}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ Join\ the\ consumer\ thread\ in\ close().}}
+\DoxyCodeLine{00391\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_data_sink}{DataSink}}\ \{}
+\DoxyCodeLine{00392\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{comment}{//\ Construct\ from\ thrift\ struct\ which\ is\ generated\ by\ FE.}}
+\DoxyCodeLine{00394\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink}{VOlapTableSink}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a48a09d232178e1821ad6d3f9b39eaf55}{row\_desc}},}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<TExpr>\&\ texprs,\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}*\ status);}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ac399f820526eada5950da11fabaa31a1}{\string~VOlapTableSink}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a51c6b01980e9b13663050ab946ac739b}{init}}(\textcolor{keyword}{const}\ TDataSink\&\ sink)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{comment}{//\ TODO:\ unify\ the\ code\ of\ prepare/open/close\ with\ result\ sink}}
+\DoxyCodeLine{00401\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa1a9d3c8096a7d5dc7ae0b91b62b7e34}{prepare}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a019f7d127e3f74f7fea421a226699777}{open}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a16b4054382cf01ef2126b6891faa71ba}{close}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ close\_status)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00406\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a3d7b622f77d10de8f3cae03426932329}{send}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \textcolor{keywordtype}{bool}\ eos\ =\ \textcolor{keyword}{false})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a61403f01407aae5e23fa6dce70b2a77d}{get\_pending\_bytes}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a48a09d232178e1821ad6d3f9b39eaf55}{row\_desc}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a127a0937295b87e33b69d4f8f4b85c1e}{\_input\_row\_desc}};\ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ runtime\ profile\ for\ the\ sink.}}
+\DoxyCodeLine{00413\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a04225bd72d53c2c8c1a401b682aae2f1}{profile}}()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a2e859f47407c7a031f6c1e087775e510}{\_profile}};\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{comment}{//\ the\ consumer\ func\ of\ sending\ pending\ batches\ in\ every\ NodeChannel.}}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{comment}{//\ use\ polling\ \&\ NodeChannel::try\_send\_and\_fetch\_status()\ to\ achieve\ nonblocking\ sending.}}
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{comment}{//\ only\ focus\ on\ pending\ batches\ and\ channel\ status,\ the\ internal\ errors\ of\ NodeChannels\ will\ be\ handled\ by\ the\ producer}}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a76cb04f148bb2defb79a6fea2e4389c8}{\_send\_batch\_process}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state);}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_node_channel}{VNodeChannel}};}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1stream__load_1_1_index_channel}{IndexChannel}};}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//\ make\ input\ data\ valid\ for\ OLAP\ table}}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//\ return\ number\ of\ invalid/filtered\ rows.}}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ invalid\ row\ number\ is\ set\ in\ Bitmap}}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ set\ stop\_processing\ if\ we\ want\ to\ stop\ the\ whole\ process\ now.}}
+\DoxyCodeLine{00428\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a4f876f2a4e5a6d22319a8a16d5016dcc}{\_validate\_data}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \mbox{\hyperlink{classdoris_1_1_bitmap}{Bitmap}}*\ filter\_bitmap,}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}*\ filtered\_rows,\ \textcolor{keywordtype}{bool}*\ stop\_processing);}
+\DoxyCodeLine{00430\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aac22a1da795ed3226bfaff3e1f1ef354}{\_validate\_column}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\&\ type,\ \textcolor{keywordtype}{bool}\ is\_nullable,}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{vectorized::ColumnPtr}}\ column,\ \textcolor{keywordtype}{size\_t}\ slot\_index,\ \mbox{\hyperlink{classdoris_1_1_bitmap}{Bitmap}}*\ filter\_bitmap,}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ stop\_processing,\ fmt::memory\_buffer\&\ error\_prefix,}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{vectorized::IColumn::Permutation}}*\ rows\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{comment}{//\ some\ output\ column\ of\ output\ expr\ may\ have\ different\ nullable\ property\ with\ dest\ slot\ desc}}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{comment}{//\ so\ here\ need\ to\ do\ the\ convert\ operation}}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ad786498386165ac6171e12edd895a509}{\_convert\_to\_dest\_desc\_block}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block);}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a440efa01d9065bd1a41729da302786a7}{find\_tablet}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \textcolor{keywordtype}{int}\ row\_index,}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_v_olap_table_partition}{VOlapTablePartition}}**\ partition,\ uint32\_t\&\ tablet\_index,}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\&\ stop\_processing,\ \textcolor{keywordtype}{bool}\&\ is\_continue);}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ std::shared\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa8fe1dfdcaa71c1dd164d67c6f3cc910}{\_mem\_tracker}};}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a141dedecd6d2ccf5c7949deafa8e65e7}{\_pool}};}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a127a0937295b87e33b69d4f8f4b85c1e}{\_input\_row\_desc}};}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{comment}{//\ unique\ load\ id}}
+\DoxyCodeLine{00449\ \ \ \ \ PUniqueId\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa651be1b16eb231faaad558dc965fd07}{\_load\_id}};}
+\DoxyCodeLine{00450\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ad23f5158666167a1d6105073a7aa506f}{\_txn\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a059b99e30c90d67d82653cbde80f2ce8}{\_num\_replicas}}\ =\ -\/1;}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ac852601815a8c95b223d1f1de658918e}{\_tuple\_desc\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ this\ is\ tuple\ descriptor\ of\ destination\ OLAP\ table}}
+\DoxyCodeLine{00455\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a62d395c0f8d15fe881c71f40c8931b2d}{\_output\_tuple\_desc}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00456\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a2372288f25f84ef3481538e8f9a80871}{\_output\_row\_desc}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a4993d3a0f988b8cfbaabb0e9921b7fbf}{\_need\_validate\_data}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{comment}{//\ number\ of\ senders\ used\ to\ insert\ into\ OlapTable,\ if\ we\ only\ support\ single\ node\ insert,}}
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{comment}{//\ all\ data\ from\ select\ should\ collectted\ and\ then\ send\ to\ OlapTable.}}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{comment}{//\ To\ support\ multiple\ senders,\ we\ maintain\ a\ channel\ for\ each\ sender.}}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a2a05354de44751abec53bfc70e81642e}{\_sender\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ad094c3a8cb226b9126e156141942fa59}{\_num\_senders}}\ =\ -\/1;}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a1a8e8606755ffcf0b420844bc81259b7}{\_is\_high\_priority}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{comment}{//\ TODO(zc):\ think\ about\ cache\ this\ data}}
+\DoxyCodeLine{00468\ \ \ \ \ std::shared\_ptr<OlapTableSchemaParam>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a7eb4fb818dae5fb9545d954f525dd7fd}{\_schema}};}
+\DoxyCodeLine{00469\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_olap_table_location_param}{OlapTableLocationParam}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ac8d7dc59caca435c9e939d6fb0f8fe3f}{\_location}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aeab71f77a4b6828c30d5a09dedfc3f31}{\_write\_single\_replica}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00471\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_olap_table_location_param}{OlapTableLocationParam}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a6a59745dae4861965e2e6591bcf4b7d1}{\_slave\_location}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00472\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_doris_nodes_info}{DorisNodesInfo}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a8d573607d3c96cad8165b588eb8f6dec}{\_nodes\_info}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a2e859f47407c7a031f6c1e087775e510}{\_profile}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \ \ std::set<int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a6b5a5b2fa7181686308ad57e38f6d844}{\_partition\_ids}};}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{comment}{//\ only\ used\ for\ partition\ with\ random\ distribution}}
+\DoxyCodeLine{00478\ \ \ \ \ std::map<int64\_t,\ int64\_t>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ab6240c1e70258979b288a8605837a814}{\_partition\_to\_tablet\_map}};}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap}{Bitmap}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aed6a3865621ad6926f45692503e579d1}{\_filter\_bitmap}};}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ index\_channel}}
+\DoxyCodeLine{00483\ \ \ \ \ std::vector<std::shared\_ptr<IndexChannel>>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aea1e20c050c9dad30030a8f753e82e08}{\_channels}};}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_count_down_latch}{CountDownLatch}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a80fc65099569991d39f4b4962819519b}{\_stop\_background\_threads\_latch}};}
+\DoxyCodeLine{00486\ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a8e0dc9993e4adb00c9510e89eb117940}{\_sender\_thread}};}
+\DoxyCodeLine{00487\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a1ebfb862bda7a277a64af16b9905edcc}{\_send\_batch\_thread\_pool\_token}};}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \ \ \ \ std::vector<DecimalV2Value>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ac767af533f961d6d4e5d3115119cce02}{\_max\_decimalv2\_val}};}
+\DoxyCodeLine{00490\ \ \ \ \ std::vector<DecimalV2Value>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_af336e7a60c949efdb01d46a78513bfbc}{\_min\_decimalv2\_val}};}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{comment}{//\ Stats\ for\ this}}
+\DoxyCodeLine{00493\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a0177e7f7080d00f1cdc44e362560f4fe}{\_validate\_data\_ns}}\ =\ 0;}
+\DoxyCodeLine{00494\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ac6f84b8aeb039b58f43e6d63dfb4fda6}{\_send\_data\_ns}}\ =\ 0;}
+\DoxyCodeLine{00495\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a6627c83bd429500d8a7a238de39dc85f}{\_number\_input\_rows}}\ =\ 0;}
+\DoxyCodeLine{00496\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ae231368fc5c8804ef0820c0216d52638}{\_number\_output\_rows}}\ =\ 0;}
+\DoxyCodeLine{00497\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_af89c369b56ad95d7b5f4b8cc9805db4e}{\_number\_filtered\_rows}}\ =\ 0;}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a1a0be57f20bbdd2963dd4d6f1b54a173}{\_input\_rows\_counter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00500\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ade78aaa15afda14319e4e5a18d95320e}{\_output\_rows\_counter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00501\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a8cb70c0534112be9cf9283d4a3f18f73}{\_filtered\_rows\_counter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00502\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a12bc91580ef28e37c86d625659a7361c}{\_send\_data\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00503\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ae6ad4ce68511c8b667d90773a4b1d172}{\_wait\_mem\_limit\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00504\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_acc5d456bbca94eb72962a863da5c1c02}{\_validate\_data\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00505\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a21b89fc87effb5dde7c618a97ac3362c}{\_open\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00506\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a839c18c4aa2d73cfcdefc3146b05ebd3}{\_close\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00507\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a7237bb4cfaf3dc647d9afc85cbd05fd6}{\_non\_blocking\_send\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00508\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a907bd741974fe9d36ba283750b1a5121}{\_non\_blocking\_send\_work\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00509\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a86ac3180ad2a7714a08fc5aff1952e06}{\_serialize\_batch\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00510\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a129f80561118f6a593f5c70ab3bc3493}{\_total\_add\_batch\_exec\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00511\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_af83989c059799e038e38ec387b5f797c}{\_max\_add\_batch\_exec\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00512\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a67125c2e061d228720a1e77711c76928}{\_add\_batch\_number}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00513\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_af47bf9eb61541c08c819b9d187fdaf44}{\_num\_node\_channels}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{comment}{//\ load\ mem\ limit\ is\ for\ remote\ load\ channel}}
+\DoxyCodeLine{00516\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_ae9b8d46b81f925544d19f57271e6860a}{\_load\_mem\_limit}}\ =\ -\/1;}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{comment}{//\ the\ timeout\ of\ load\ channels\ opened\ by\ this\ tablet\ sink.\ in\ second}}
+\DoxyCodeLine{00519\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a10e687b447cded714fccf165e953d8d7}{\_load\_channel\_timeout\_s}}\ =\ 0;}
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_abc5ef4b1951fed31d34e4fa6b1741871}{\_send\_batch\_parallelism}}\ =\ 1;}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{comment}{//\ Save\ the\ status\ of\ close()\ method}}
+\DoxyCodeLine{00523\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_abecb271a0072fa6c388cea6461a3560e}{\_close\_status}};}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{comment}{//\ User\ can\ change\ this\ config\ at\ runtime,\ avoid\ it\ being\ modified\ during\ query\ or\ loading\ process.}}
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_af53f6939efe3a55ca12e1fefa3411192}{\_transfer\_large\_data\_by\_brpc}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ \textcolor{comment}{//\ FIND\_TABLET\_EVERY\_ROW\ is\ used\ for\ both\ hash\ and\ random\ distribution\ info,\ which\ indicates\ that\ we}}
+\DoxyCodeLine{00529\ \ \ \ \ \textcolor{comment}{//\ should\ compute\ tablet\ index\ for\ every\ row}}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{comment}{//\ FIND\_TABLET\_EVERY\_BATCH\ is\ only\ used\ for\ random\ distribution\ info,\ which\ indicates\ that\ we\ should}}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{comment}{//\ compute\ tablet\ index\ for\ every\ row\ batch}}
+\DoxyCodeLine{00532\ \ \ \ \ \textcolor{comment}{//\ FIND\_TABLET\_EVERY\_SINK\ is\ only\ used\ for\ random\ distribution\ info,\ which\ indicates\ that\ we\ should}}
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{comment}{//\ only\ compute\ tablet\ index\ in\ the\ corresponding\ partition\ once\ for\ the\ whole\ time\ in\ olap\ table\ sink}}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23}{FindTabletMode}}\ \{\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23a50a00cbd750fac111acfbf77507fa296}{FIND\_TABLET\_EVERY\_ROW}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23ad0eb78f911148e4956729571a0c1918e}{FIND\_TABLET\_EVERY\_BATCH}},\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23a57888b9ae2128215e0844552aca44edd}{FIND\_TABLET\_EVERY\_SINK}}\ \};}
+\DoxyCodeLine{00535\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23}{FindTabletMode}}\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a309a679f32abce127acfb90d39db2731}{findTabletMode}}\ =\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_aa011e37895f11756702f90a5e1c24e23a50a00cbd750fac111acfbf77507fa296}{FindTabletMode::FIND\_TABLET\_EVERY\_ROW}};}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_v_olap_table_partition_param}{VOlapTablePartitionParam}}*\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a9220dabec6f1a9ffbb22d713325a946c}{\_vpartition}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00538\ \ \ \ \ std::vector<vectorized::VExprContext*>\ \mbox{\hyperlink{classdoris_1_1stream__load_1_1_v_olap_table_sink_a33073e30af9257c579669c0a331bb0e8}{\_output\_vexpr\_ctxs}};}
+\DoxyCodeLine{00539\ \};}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \}\ \textcolor{comment}{//\ namespace\ stream\_load}}
+\DoxyCodeLine{00542\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

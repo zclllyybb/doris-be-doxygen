@@ -1,0 +1,232 @@
+\hypertarget{regexps_8h_source}{}\doxysection{regexps.\+h}
+\label{regexps_8h_source}\index{/Users/dabowang/be\_all/vec/functions/regexps.h@{/Users/dabowang/be\_all/vec/functions/regexps.h}}
+\mbox{\hyperlink{regexps_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Functions/Regexps.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <hs/hs.h>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <boost/container\_hash/hash.hpp>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{string__ref_8h}{vec/common/string\_ref.h}}"{}}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }multiregexps\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Deleter,\ Deleter\ deleter>}
+\DoxyCodeLine{00041\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_hyperscan_deleter}{HyperscanDeleter}}\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_hyperscan_deleter_a21f6e9fd38e52195ebf99c6e3d4623cb}{operator()}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ deleter(ptr);}
+\DoxyCodeLine{00045\ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a75303ec454ffb6a5909762b85e3172f3}{CompilerError}}\ =}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ std::unique\_ptr<hs\_compile\_error\_t,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_hyperscan_deleter}{HyperscanDeleter}}<\textcolor{keyword}{decltype}(\&hs\_free\_compile\_error),\ \&hs\_free\_compile\_error>>;}
+\DoxyCodeLine{00052\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a38c09bab5b7729494e7d53b9d1f1e210}{ScratchPtr}}\ =\ std::unique\_ptr<hs\_scratch\_t,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_hyperscan_deleter}{HyperscanDeleter}}<\textcolor{keyword}{decltype}(\&hs\_free\_scratch),\ \&hs\_free\_scratch>>;}
+\DoxyCodeLine{00054\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a1a0c43fb5454a62237c562c69580d386}{DataBasePtr}}\ =}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ std::unique\_ptr<hs\_database\_t,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_hyperscan_deleter}{HyperscanDeleter}}<\textcolor{keyword}{decltype}(\&hs\_free\_database),\ \&hs\_free\_database>>;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps}{Regexps}}\ \{}
+\DoxyCodeLine{00060\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a8b46b43d96bb6b3f3e4ec7ffd87d8de8}{Regexps}}(hs\_database\_t*\ db\_,\ hs\_scratch\_t*\ scratch\_)\ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a698979e5acb067648844daacc0b1a3a5}{db}}\ \{db\_\},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a0dab962ee3e4c012744f21caaf90c7df}{scratch}}\ \{scratch\_\}\ \{\}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ hs\_database\_t*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a224574cbd80be8b80f6391c45e2c7794}{getDB}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a698979e5acb067648844daacc0b1a3a5}{db}}.get();\ \}}
+\DoxyCodeLine{00064\ \ \ \ \ hs\_scratch\_t*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_afb4079635d30661b9c20fb5d901932fc}{getScratch}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a0dab962ee3e4c012744f21caaf90c7df}{scratch}}.get();\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a1a0c43fb5454a62237c562c69580d386}{DataBasePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a698979e5acb067648844daacc0b1a3a5}{db}};}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a38c09bab5b7729494e7d53b9d1f1e210}{ScratchPtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps_a0dab962ee3e4c012744f21caaf90c7df}{scratch}};}
+\DoxyCodeLine{00069\ \};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps}{DeferredConstructedRegexps}}\ \{}
+\DoxyCodeLine{00072\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a37c5cf24461f54d57412d939acd13700}{DeferredConstructedRegexps}}(std::function<\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps}{Regexps}}()>\ constructor\_)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a6b52f629f8a4121a5bbc4e235670709f}{constructor}}(std::move(constructor\_))\ \{\}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps}{Regexps}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a5a6deb898d995fdaa858aed3d1a2c5da}{get}}()\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ std::lock\_guard\ lock(\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a1be3f7fa26e4521098de5f1ec0f865f3}{mutex}});}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a666630b00d3b7df26d8892783ded0971}{regexps}})\ \textcolor{keywordflow}{return}\ \&*\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a666630b00d3b7df26d8892783ded0971}{regexps}};}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a666630b00d3b7df26d8892783ded0971}{regexps}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a6b52f629f8a4121a5bbc4e235670709f}{constructor}}();}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&*\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a666630b00d3b7df26d8892783ded0971}{regexps}};}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00084\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a1be3f7fa26e4521098de5f1ec0f865f3}{mutex}};}
+\DoxyCodeLine{00085\ \ \ \ \ std::function<\mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps}{Regexps}}()>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a6b52f629f8a4121a5bbc4e235670709f}{constructor}};}
+\DoxyCodeLine{00086\ \ \ \ \ std::optional<Regexps>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_deferred_constructed_regexps_a666630b00d3b7df26d8892783ded0971}{regexps}};}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_af16260e02b86d819e4e65d39a54c566e}{DeferredConstructedRegexpsPtr}}\ =\ std::shared\_ptr<DeferredConstructedRegexps>;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ save\_indices,\ \textcolor{keywordtype}{bool}\ WithEditDistance>}
+\DoxyCodeLine{00092\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1multiregexps_1_1_regexps}{Regexps}}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a41158d2c25d3e43f2571731fa6836842}{constructRegexps}}(\textcolor{keyword}{const}\ std::vector<String>\&\ str\_patterns,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[maybe\_unused]]\ std::optional<UInt32>\ edit\_distance)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ std::vector<const\ char*>\ patterns;}
+\DoxyCodeLine{00096\ \ \ \ \ std::vector<unsigned\ int>\ flags;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00099\ \ \ \ \ std::vector<hs\_expr\_ext>\ ext\_exprs;}
+\DoxyCodeLine{00100\ \ \ \ \ std::vector<const\ hs\_expr\_ext*>\ ext\_exprs\_ptrs;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ patterns.reserve(str\_patterns.size());}
+\DoxyCodeLine{00103\ \ \ \ \ flags.reserve(str\_patterns.size());}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (WithEditDistance)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ ext\_exprs.reserve(str\_patterns.size());}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ ext\_exprs\_ptrs.reserve(str\_patterns.size());}
+\DoxyCodeLine{00108\ \ \ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ ref\ :\ str\_patterns)\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ patterns.push\_back(ref.data());}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Flags\ below\ are\ the\ pattern\ matching\ flags.}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ HS\_FLAG\_DOTALL\ is\ a\ compile\ flag\ where\ matching\ a\ .\ will\ not\ exclude\ newlines.\ This\ is\ a\ good}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ performance\ practice\ according\ to\ Hyperscan\ API.\ https://intel.github.io/hyperscan/dev-\/reference/performance.html\#dot-\/all-\/mode}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ HS\_FLAG\_ALLOWEMPTY\ is\ a\ compile\ flag\ where\ empty\ strings\ are\ allowed\ to\ match.}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ HS\_FLAG\_UTF8\ is\ a\ flag\ where\ UTF8\ literals\ are\ matched.}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ HS\_FLAG\_SINGLEMATCH\ is\ a\ compile\ flag\ where\ each\ pattern\ match\ will\ be\ returned\ only\ once.\ it\ is\ a\ good\ performance\ practice}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ as\ it\ is\ said\ in\ the\ Hyperscan\ documentation.\ https://intel.github.io/hyperscan/dev-\/reference/performance.html\#single-\/match-\/flag}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ flags.push\_back(HS\_FLAG\_DOTALL\ |\ HS\_FLAG\_SINGLEMATCH\ |\ HS\_FLAG\_ALLOWEMPTY\ |\ HS\_FLAG\_UTF8);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (WithEditDistance)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ flags.back()\ \&=\ \string~HS\_FLAG\_UTF8;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ ext\_exprs.emplace\_back();}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ ext\_exprs.back().flags\ =\ HS\_EXT\_FLAG\_EDIT\_DISTANCE;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ ext\_exprs.back().edit\_distance\ =\ edit\_distance.value();}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ ext\_exprs\_ptrs.push\_back(\&ext\_exprs.back());}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ hs\_database\_t*\ db\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00132\ \ \ \ \ hs\_compile\_error\_t*\ compile\_error;}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ std::unique\_ptr<unsigned\ int[]>\ ids;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (save\_indices)\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ ids.reset(\textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}[patterns.size()]);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ patterns.size();\ ++i)\ ids[i]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(i\ +\ 1);}
+\DoxyCodeLine{00140\ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ pattern\ :\ patterns)\ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ LOG(INFO)\ <<\ \textcolor{stringliteral}{"{}pattern:\ "{}}\ <<\ pattern\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ hs\_error\_t\ err;}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!WithEditDistance)}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ err\ =\ hs\_compile\_multi(patterns.data(),\ flags.data(),\ ids.get(),}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(patterns.size()),\ HS\_MODE\_BLOCK,\ \textcolor{keyword}{nullptr},\ \&db,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&compile\_error);}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ err\ =\ hs\_compile\_ext\_multi(patterns.data(),\ flags.data(),\ ids.get(),\ ext\_exprs\_ptrs.data(),}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(patterns.size()),\ HS\_MODE\_BLOCK,\ \textcolor{keyword}{nullptr},}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&db,\ \&compile\_error);}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{if}\ (err\ !=\ HS\_SUCCESS)\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a75303ec454ffb6a5909762b85e3172f3}{CompilerError}}\ error(compile\_error);}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (error-\/>expression\ <\ 0)}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Logical\ error:\ "{}}\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}(error-\/>message);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Bad\ arguments:\ Pattern\ "{}}\ +\ str\_patterns[error-\/>expression]\ +}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}failed\ with\ error\ "{}}\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}(error-\/>message);}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00169\ \ \ \ \ hs\_scratch\_t*\ scratch\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00170\ \ \ \ \ err\ =\ hs\_alloc\_scratch(db,\ \&scratch);}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{if}\ (err\ !=\ HS\_SUCCESS)\ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Could\ not\ allocate\ scratch\ space\ for\ hyperscan"{}};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{return}\ \{db,\ scratch\};}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table}{GlobalCacheTable}}\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a26168ee34a6a5effd53fe99c4dbc4aa7}{CACHE\_SIZE}}\ =\ 500;\ }
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket}{Bucket}}\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ std::vector<String>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_a3d6756ff36d3793e332571017feb48eb}{patterns}};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ std::optional<UInt32>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_aa06f3a68f1f6d9d0aa1e8a1c3a3211ac}{edit\_distance}};\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_af16260e02b86d819e4e65d39a54c566e}{DeferredConstructedRegexpsPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_a87fd6ac4273f893a60e8eba968c9bb84}{regexps}};\ }
+\DoxyCodeLine{00191\ \ \ \ \ \};}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ std::mutex\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a1be3f7fa26e4521098de5f1ec0f865f3}{mutex}};}
+\DoxyCodeLine{00194\ \ \ \ \ std::array<Bucket,\ CACHE\_SIZE>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a3807053b6e7f8b564fc04e621fb600ba}{known\_regexps}};}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a9ad96354c3a89f8fc13e5c8638c1e0d6}{getBucketIndexFor}}(\textcolor{keyword}{const}\ std::vector<String>\ patterns,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<UInt32>\ edit\_distance)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\ =\ 0;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ pattern\ :\ patterns)\ boost::hash\_combine(hash,\ pattern);}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ boost::hash\_combine(hash,\ edit\_distance);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ hash\ \%\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a26168ee34a6a5effd53fe99c4dbc4aa7}{CACHE\_SIZE}};}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \};}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00207\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ save\_indices,\ \textcolor{keywordtype}{bool}\ WithEditDistance>}
+\DoxyCodeLine{00208\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_af16260e02b86d819e4e65d39a54c566e}{DeferredConstructedRegexpsPtr}}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1multiregexps_a58a2fd0216c72d66bd96c245d1086926}{getOrSet}}(\textcolor{keyword}{const}\ std::vector<StringRef>\&\ patterns,}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<UInt32>\ edit\_distance)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table}{GlobalCacheTable}}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ pool;\ }
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ std::vector<String>\ str\_patterns;}
+\DoxyCodeLine{00214\ \ \ \ \ str\_patterns.reserve(patterns.size());}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ pattern\ :\ patterns)\ str\_patterns.emplace\_back(pattern.to\_string());}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bucket\_idx\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a9ad96354c3a89f8fc13e5c8638c1e0d6}{GlobalCacheTable::getBucketIndexFor}}(str\_patterns,\ edit\_distance);}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00220\ \ \ \ \ std::lock\_guard\ lock(pool.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a1be3f7fa26e4521098de5f1ec0f865f3}{mutex}});}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket}{GlobalCacheTable::Bucket}}\&\ bucket\ =\ pool.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_a3807053b6e7f8b564fc04e621fb600ba}{known\_regexps}}[bucket\_idx];}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordflow}{if}\ (bucket.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_a87fd6ac4273f893a60e8eba968c9bb84}{regexps}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ deferred\_constructed\_regexps\ =}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<DeferredConstructedRegexps>([str\_patterns,\ edit\_distance]()\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ constructRegexps<save\_indices,\ WithEditDistance>(str\_patterns,}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ edit\_distance);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ bucket\ =\ \{std::move(str\_patterns),\ edit\_distance,\ deferred\_constructed\_regexps\};}
+\DoxyCodeLine{00239\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (bucket.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_a3d6756ff36d3793e332571017feb48eb}{patterns}}\ !=\ str\_patterns\ ||\ bucket.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_aa06f3a68f1f6d9d0aa1e8a1c3a3211ac}{edit\_distance}}\ !=\ edit\_distance)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ deferred\_constructed\_regexps\ =}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<DeferredConstructedRegexps>([str\_patterns,\ edit\_distance]()\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ constructRegexps<save\_indices,\ WithEditDistance>(str\_patterns,}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ edit\_distance);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ bucket\ =\ \{std::move(str\_patterns),\ edit\_distance,\ deferred\_constructed\_regexps\};}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{return}\ bucket.\mbox{\hyperlink{structdoris_1_1vectorized_1_1multiregexps_1_1_global_cache_table_1_1_bucket_a87fd6ac4273f893a60e8eba968c9bb84}{regexps}};}
+\DoxyCodeLine{00250\ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \}\ \textcolor{comment}{//\ namespace\ multiregexps}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

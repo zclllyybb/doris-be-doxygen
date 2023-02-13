@@ -1,0 +1,302 @@
+\hypertarget{client__cache_8h_source}{}\doxysection{client\+\_\+cache.\+h}
+\label{client__cache_8h_source}\index{/Users/dabowang/be\_all/runtime/client\_cache.h@{/Users/dabowang/be\_all/runtime/client\_cache.h}}
+\mbox{\hyperlink{client__cache_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__util_8hpp}{util/hash\_util.hpp}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{metrics_8h}{util/metrics.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thrift__client_8h}{util/thrift\_client.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Helper\ class\ which\ implements\ the\ majority\ of\ the\ caching}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ functionality\ without\ using\ templates\ (i.e.\ pointers\ to\ the}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ superclass\ of\ all\ ThriftClients\ and\ a\ void*\ for\ the\ key).}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ The\ user\ of\ this\ class\ only\ sees\ RPC\ proxy\ classes,\ but\ we\ have}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ to\ track\ the\ ThriftClient\ to\ manipulate\ the\ underlying}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ transport.\ To\ do\ this,\ we\ maintain\ a\ map\ from\ an\ opaque\ 'key'}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ pointer\ type\ to\ the\ client\ implementation.\ We\ actually\ know\ the}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ type\ of\ the\ pointer\ (it's\ the\ type\ parameter\ to\ ClientCache),\ but}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ we\ deliberately\ avoid\ using\ it\ so\ that\ this\ entire\ class\ doesn't}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ get\ inlined\ every\ time\ it\ gets\ used.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ TODO:\ shut\ down\ clients\ in\ the\ background\ if\ they\ don't\ get\ used\ for\ a\ period\ of\ time}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ TODO:\ in\ order\ to\ reduce\ locking\ overhead\ when\ getting/releasing\ clients,}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ add\ call\ to\ hand\ back\ pointer\ to\ list\ stored\ in\ ClientCache\ and\ add\ separate\ lock}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ to\ list\ (or\ change\ to\ lock-\/free\ list)}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ TODO:\ reduce\ locking\ overhead\ and\ by\ adding\ per-\/address\ client\ caches,\ each\ with\ its}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ own\ lock.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ TODO:\ More\ graceful\ handling\ of\ clients\ that\ have\ failed\ (maybe\ better}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ handled\ by\ a\ smart-\/wrapper\ of\ the\ interface\ object).}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ TODO:\ limits\ on\ total\ number\ of\ clients,\ and\ clients\ per-\/backend}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_cache_helper}{ClientCacheHelper}}\ \{}
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a9bf9cc7600ad5fabac8ad5bcde39c75f}{\string~ClientCacheHelper}}();}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ Callback\ method\ which\ produces\ a\ client\ object\ when\ one\ cannot\ be}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ found\ in\ the\ cache.\ Supplied\ by\ the\ ClientCache\ wrapper.}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a57242020b86d84356ccb5d5eb7a57689}{ClientFactory}}\ =}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\mbox{\hyperlink{classdoris_1_1_thrift_client_impl}{ThriftClientImpl}}*(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \textcolor{keywordtype}{void}**\ client\_key)>;}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Return\ client\ for\ specific\ host/port\ in\ 'client'.\ If\ a\ client}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ is\ not\ available,\ the\ client\ parameter\ is\ set\ to\ nullptr.}}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a4423f8e0ff26dabde3e8a2bb064415e6}{get\_client}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a57242020b86d84356ccb5d5eb7a57689}{ClientFactory}}\&\ factory\_method,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}**\ client\_key,\ \textcolor{keywordtype}{int}\ timeout\_ms);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ Close\ and\ delete\ the\ underlying\ transport\ and\ remove\ the\ client\ from\ \_client\_map.}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ new\ client\ connecting\ to\ the\ same\ host/port.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Return\ an\ error\ status\ and\ set\ client\_key\ to\ nullptr\ if\ a\ new\ client\ cannot}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ created.}}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a6027828ded7251f3be5c12bda1ac17ae}{reopen\_client}}(\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a57242020b86d84356ccb5d5eb7a57689}{ClientFactory}}\&\ factory\_method,\ \textcolor{keywordtype}{void}**\ client\_key,\ \textcolor{keywordtype}{int}\ timeout\_ms);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ client\ to\ the\ cache,\ without\ closing\ it,\ and\ set\ *client\_key\ to\ nullptr.}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a2e7c6cd99427c4e429dbb67ddb6cf4dd}{release\_client}}(\textcolor{keywordtype}{void}**\ client\_key);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Close\ all\ connections\ to\ a\ host\ (e.g.,\ in\ case\ of\ failure)\ so\ that\ on\ their}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ next\ use\ they\ will\ have\ to\ be\ Reopen'ed.}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_af417641a99ddff54b048569ccfc30ea1}{close\_connections}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ address);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a4dcb28d0641b6d37aef23c662ec11908}{debug\_string}}();}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab21591dcf75c068aeca3498a73bd5705}{test\_shutdown}}();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_aadcd2add2436f12547a1ef5b5517097c}{init\_metrics}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache}};}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Private\ constructor\ so\ that\ only\ ClientCache\ can\ instantiate\ this\ class.}}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_afdaf89ec04ae95cfdc030855c2926997}{ClientCacheHelper}}()\ :\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a8fca490fc20af22986c9bed10ef587cf}{\_metrics\_enabled}}(false),\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab9758d0dede921ef8fe26de66b9867a0}{\_max\_cache\_size\_per\_host}}(-\/1)\ \{\}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a1a7ecca9993061f847398d30d933610e}{ClientCacheHelper}}(\textcolor{keywordtype}{int}\ max\_cache\_size\_per\_host)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a8fca490fc20af22986c9bed10ef587cf}{\_metrics\_enabled}}(false),\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab9758d0dede921ef8fe26de66b9867a0}{\_max\_cache\_size\_per\_host}}(max\_cache\_size\_per\_host)\ \{\}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ Protects\ all\ member\ variables}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ TODO:\ have\ more\ fine-\/grained\ locks\ or\ use\ lock-\/free\ data\ structures,}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ this\ isn't\ going\ to\ scale\ for\ a\ high\ request\ rate}}
+\DoxyCodeLine{00100\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ map\ from\ (host,\ port)\ to\ list\ of\ client\ keys\ for\ that\ address}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache_helper_af40e2e10ad4c0b74eebbb46ec17747bd}{ClientCacheMap}}\ =\ std::unordered\_map<TNetworkAddress,\ std::list<void*>>;}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_af40e2e10ad4c0b74eebbb46ec17747bd}{ClientCacheMap}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a7f2c1fc432989dd65ba73e3104ca4114}{\_client\_cache}};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ if\ cache\ not\ found,\ set\ client\_key\ as\ nullptr}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab922cb584e3b5d520cd39d11822e22f5}{\_get\_client\_from\_cache}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \textcolor{keywordtype}{void}**\ client\_key);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Map\ from\ client\ key\ back\ to\ its\ associated\ ThriftClientImpl\ transport}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache_helper_af9b2872ba4e205532e3bc80b68ca4108}{ClientMap}}\ =\ std::unordered\_map<void*,\ ThriftClientImpl*>;}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_af9b2872ba4e205532e3bc80b68ca4108}{ClientMap}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ac901818e95611f3eaf1be3765d75067d}{\_client\_map}};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a8fca490fc20af22986c9bed10ef587cf}{\_metrics\_enabled}};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ max\ connections\ per\ host\ in\ this\ cache,\ -\/1\ means\ unlimited}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab9758d0dede921ef8fe26de66b9867a0}{\_max\_cache\_size\_per\_host}};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ std::shared\_ptr<MetricEntity>\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a0a5e7aec5ca765d88577825f77bef473}{\_thrift\_client\_metric\_entity}};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ clients\ 'checked-\/out'\ from\ the\ cache}}
+\DoxyCodeLine{00121\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a79f2cfbf9133537eb53a092695c47224}{thrift\_used\_clients}};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ Total\ clients\ in\ the\ cache,\ including\ those\ in\ use}}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a1f7575388371f65d15ae45c4b7da5698}{thrift\_opened\_clients}};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ new\ client\ for\ specific\ host/port\ in\ 'client'\ and\ put\ it\ in\ \_client\_map}}
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_aa67d5f0e2f2827a7f9345771620162b6}{\_create\_client}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a57242020b86d84356ccb5d5eb7a57689}{ClientFactory}}\&\ factory\_method,}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}**\ client\_key,\ \textcolor{keywordtype}{int}\ timeout\_ms);}
+\DoxyCodeLine{00129\ \};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00132\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache}};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ A\ scoped\ client\ connection\ to\ help\ manage\ clients\ from\ a\ client\ cache.}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//\ Example:}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ \ \ \ \ DorisInternalServiceConnection\ client(cache,\ address,\ \&status);}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ \ \ \ \ try\ \{}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ \ \ \ \ \ \ client-\/>TransmitData(...);}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ \ \ \ \ \}\ catch\ (TTransportException\&\ e)\ \{}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ \ \ \ \ \ \ //\ Retry}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ \ \ \ \ \ \ RETURN\_IF\_ERROR(client.Reopen());}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ \ \ \ \ \ \ client-\/>TransmitData(...);}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ ('client'\ is\ released\ back\ to\ cache\ upon\ destruction.)}}
+\DoxyCodeLine{00148\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00149\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection}}\ \{}
+\DoxyCodeLine{00150\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00151\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_connection_a072a99650802b4f08fa9e0260aeac1ef}{ClientConnection}}(\mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<T>}}*\ \mbox{\hyperlink{namespacedoris_af5786aa2386a90ecb101bd8196fe44d7}{client\_cache}},\ \textcolor{keyword}{const}\ TNetworkAddress\&\ address,\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}*\ status)}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection}}(\mbox{\hyperlink{namespacedoris_af5786aa2386a90ecb101bd8196fe44d7}{client\_cache}},\ address,\ 0,\ status,\ 3)\ \{\}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_connection_a5024bde383dbb7ca73f649b9463faead}{ClientConnection}}(\mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<T>}}*\ \mbox{\hyperlink{namespacedoris_af5786aa2386a90ecb101bd8196fe44d7}{client\_cache}},\ \textcolor{keyword}{const}\ TNetworkAddress\&\ address,\ \textcolor{keywordtype}{int}\ timeout\_ms,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}*\ status,\ \textcolor{keywordtype}{int}\ max\_retries\ =\ 3)}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}}(\mbox{\hyperlink{namespacedoris_af5786aa2386a90ecb101bd8196fe44d7}{client\_cache}}),\ \mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}}(nullptr)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ num\_retries\ =\ 0;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ *status\ =\ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}}-\/>get\_client(address,\ \&\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}},\ timeout\_ms);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (status-\/>\mbox{\hyperlink{classdoris_1_1_status_a03cb7eaa663dc83af68bc28a596d09e6}{ok}}())\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}}\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_retries++\ <\ max\_retries)\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ exponential\ backoff\ retry\ with\ starting\ delay\ of\ 500ms}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ usleep(500000\ *\ (1\ <<\ num\_retries));}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(INFO)\ <<\ \textcolor{stringliteral}{"{}Failed\ to\ get\ client\ from\ cache:\ "{}}\ <<\ status-\/>\mbox{\hyperlink{classdoris_1_1_status_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ retrying["{}}\ <<\ num\_retries\ <<\ \textcolor{stringliteral}{"{}]..."{}};}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (num\_retries\ <\ max\_retries);}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_connection_af93622d7a975de35c882e2dedad76709}{\string~ClientConnection}}()\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}}-\/>release\_client(\&\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}});}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_connection_af962d700d7644aefc29ab69452faab0e}{reopen}}(\textcolor{keywordtype}{int}\ timeout\_ms)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}}-\/>reopen\_client(\&\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}},\ timeout\_ms);\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_connection_a59059ebdef46fdcd70376348116c133c}{reopen}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}}-\/>reopen\_client(\&\mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}},\ 0);\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{classdoris_1_1_client_connection_a84e9959608997de8fe4355def47ff45a}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}};\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<T>}}*\ \mbox{\hyperlink{classdoris_1_1_client_connection_a0ec5c5303e0a3b99889e7a0d0e0c5a80}{\_client\_cache}};}
+\DoxyCodeLine{00187\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{classdoris_1_1_client_connection_a8e84fc384f03c4aacfb19e8dfd1322dd}{\_client}};}
+\DoxyCodeLine{00188\ \};}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ Generic\ cache\ of\ Thrift\ clients\ for\ a\ given\ service\ type.}}
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.}}
+\DoxyCodeLine{00192\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00193\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache}}\ \{}
+\DoxyCodeLine{00194\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_thrift_client}{Client}}\ =\ \mbox{\hyperlink{classdoris_1_1_thrift_client}{ThriftClient<T>}};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_a7352eb87453833a2e40d9bef08c73ab1}{ClientCache}}()\ :\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}()\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_a626c5ee63dbaa55a026d379f810a1505}{\_client\_factory}}\ =}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::bind<ThriftClientImpl*>(std::mem\_fn(\&\mbox{\hyperlink{classdoris_1_1_client_cache_ae731fc225a8149035ea5937feaebc6a6}{ClientCache::make\_client}}),\ \textcolor{keyword}{this},}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::placeholders::\_1,\ std::placeholders::\_2);}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_ac11effcd2e1f4c0a4a6a4431da9c75ed}{ClientCache}}(\textcolor{keywordtype}{int}\ max\_cache\_size)\ :\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}(max\_cache\_size)\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_a626c5ee63dbaa55a026d379f810a1505}{\_client\_factory}}\ =}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::bind<ThriftClientImpl*>(std::mem\_fn(\&\mbox{\hyperlink{classdoris_1_1_client_cache_ae731fc225a8149035ea5937feaebc6a6}{ClientCache::make\_client}}),\ \textcolor{keyword}{this},}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::placeholders::\_1,\ std::placeholders::\_2);}
+\DoxyCodeLine{00207\ \ \ \ \ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ Close\ all\ clients\ connected\ to\ the\ supplied\ address,\ (e.g.,\ in}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ case\ of\ failure)\ so\ that\ on\ their\ next\ use\ they\ will\ have\ to\ be}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ Reopen'ed.}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a27d734234ca39c57b981a5efbcdd3125}{close\_connections}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_af417641a99ddff54b048569ccfc30ea1}{close\_connections}}(hostport);}
+\DoxyCodeLine{00214\ \ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Helper\ method\ which\ returns\ a\ debug\ string}}
+\DoxyCodeLine{00217\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_client_cache_a4dcb28d0641b6d37aef23c662ec11908}{debug\_string}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a4dcb28d0641b6d37aef23c662ec11908}{debug\_string}}();\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ For\ testing\ only:\ shutdown\ all\ clients}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_ab21591dcf75c068aeca3498a73bd5705}{test\_shutdown}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_ab21591dcf75c068aeca3498a73bd5705}{test\_shutdown}}();\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ Adds\ metrics\ for\ this\ cache.}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ The\ metrics\ have\ an\ identification\ by\ the\ 'name'\ argument}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ (which\ should\ not\ end\ in\ a\ period).}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{//\ Must\ be\ called\ before\ the\ cache\ is\ used,\ otherwise\ the\ metrics\ might\ be\ wrong}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_aadcd2add2436f12547a1ef5b5517097c}{init\_metrics}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})\ \{\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_aadcd2add2436f12547a1ef5b5517097c}{init\_metrics}}(\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}>;}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ Most\ operations\ in\ this\ class\ are\ thin\ wrappers\ around\ the}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ equivalent\ in\ ClientCacheHelper,\ which\ is\ a\ non-\/templated\ cache}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{comment}{//\ to\ avoid\ inlining\ lots\ of\ code\ wherever\ this\ cache\ is\ used.}}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_helper}{ClientCacheHelper}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ Function\ pointer,\ bound\ to\ make\_client,\ which\ produces\ clients\ when\ the\ cache\ is\ empty}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache_a769ac8b9767329b4a68bc465fa0cdccf}{ClientFactory}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_cache_helper_a57242020b86d84356ccb5d5eb7a57689}{ClientCacheHelper::ClientFactory}};}
+\DoxyCodeLine{00238\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_client_cache_a769ac8b9767329b4a68bc465fa0cdccf}{ClientFactory}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a626c5ee63dbaa55a026d379f810a1505}{\_client\_factory}};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{//\ Obtains\ a\ pointer\ to\ a\ Thrift\ interface\ object\ (of\ type\ T),}}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{comment}{//\ backed\ by\ a\ live\ transport\ which\ is\ already\ open.\ Returns}}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ Status::OK()\ unless\ there\ was\ an\ error\ opening\ the\ transport.}}
+\DoxyCodeLine{00243\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a3ada9f01d9eefa72a361bab3a87efca1}{get\_client}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}**\ iface,\ \textcolor{keywordtype}{int}\ timeout\_ms)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a4423f8e0ff26dabde3e8a2bb064415e6}{get\_client}}(hostport,\ \mbox{\hyperlink{classdoris_1_1_client_cache_a626c5ee63dbaa55a026d379f810a1505}{\_client\_factory}},}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(iface),\ timeout\_ms);}
+\DoxyCodeLine{00246\ \ \ \ \ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ Close\ and\ delete\ the\ underlying\ transport.\ Return\ a\ new\ client\ connecting\ to\ the}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{comment}{//\ same\ host/port.}}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{//\ Return\ an\ error\ status\ if\ a\ new\ connection\ cannot\ be\ established\ and\ *client\ will\ be}}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ nullptr\ in\ that\ case.}}
+\DoxyCodeLine{00252\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a5096c4215c3d0628edc19175a1738304}{reopen\_client}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}**\ client,\ \textcolor{keywordtype}{int}\ timeout\_ms)\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a6027828ded7251f3be5c12bda1ac17ae}{reopen\_client}}(\mbox{\hyperlink{classdoris_1_1_client_cache_a626c5ee63dbaa55a026d379f810a1505}{\_client\_factory}},\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(client),}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ timeout\_ms);}
+\DoxyCodeLine{00255\ \ \ \ \ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ client\ to\ the\ cache\ and\ set\ *client\ to\ nullptr.}}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a7ea895a17aedff5f10cf448bffc9d833}{release\_client}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}**\ client)\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a46037f08aa528f31fb7fefc9dc9fa1b2}{\_client\_cache\_helper}}.\mbox{\hyperlink{classdoris_1_1_client_cache_helper_a2e7c6cd99427c4e429dbb67ddb6cf4dd}{release\_client}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(client));}
+\DoxyCodeLine{00260\ \ \ \ \ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ Factory\ method\ to\ produce\ a\ new\ ThriftClient<T>\ for\ the\ wrapped\ cache}}
+\DoxyCodeLine{00263\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_client_impl}{ThriftClientImpl}}*\ \mbox{\hyperlink{classdoris_1_1_client_cache_ae731fc225a8149035ea5937feaebc6a6}{make\_client}}(\textcolor{keyword}{const}\ TNetworkAddress\&\ hostport,\ \textcolor{keywordtype}{void}**\ client\_key)\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944ce}{ThriftServer::ServerType}}\ server\_type\ =\ \mbox{\hyperlink{classdoris_1_1_client_cache_aa99207844cd4effc1e96ae7030197258}{get\_thrift\_server\_type}}();}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_client}{Client}}*\ client\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_client_cache_a1cc68049c9575336d3e3b1a89ecef7e8}{Client}}(hostport.hostname,\ hostport.port,\ server\_type);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ *client\_key\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(client-\/>\mbox{\hyperlink{classdoris_1_1_thrift_client_ae95c867349ca6df2b701ef2abc6ef4a5}{iface}}());}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ client;}
+\DoxyCodeLine{00268\ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{//\ since\ service\ type\ is\ multiple,\ we\ should\ set\ thrift\ server\ type\ here\ for\ be\ thrift\ client}}
+\DoxyCodeLine{00271\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944ce}{ThriftServer::ServerType}}\ \mbox{\hyperlink{classdoris_1_1_client_cache_aa99207844cd4effc1e96ae7030197258}{get\_thrift\_server\_type}}()\ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ thrift\_server\_type\ =\ config::thrift\_server\_type\_of\_fe;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ std::transform(thrift\_server\_type.begin(),\ thrift\_server\_type.end(),}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ thrift\_server\_type.begin(),\ [](\textcolor{keyword}{auto}\ c)\ \{\ return\ std::toupper(c);\ \});}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (strcmp(\textcolor{keyword}{typeid}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}).\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}}(),\ \textcolor{stringliteral}{"{}N5doris21FrontendServiceClientE"{}})\ ==\ 0\ \&\&}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ thrift\_server\_type\ ==\ \textcolor{stringliteral}{"{}THREADED\_SELECTOR"{}})\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea7f2834532c17968dfdcc1505e4bf5376}{ThriftServer::ServerType::NON\_BLOCKING}};}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea8735efe9eeee38d87a31f93789ebeab1}{ThriftServer::ServerType::THREADED}};}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \};}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ Doris\ backend\ client\ cache,\ used\ by\ a\ backend\ to\ send\ requests}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ to\ any\ other\ backend.}}
+\DoxyCodeLine{00286\ \textcolor{keyword}{class\ }BackendServiceClient;}
+\DoxyCodeLine{00287\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{BackendServiceClientCache}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<BackendServiceClient>}};}
+\DoxyCodeLine{00288\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_connection}{BackendServiceConnection}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection<BackendServiceClient>}};}
+\DoxyCodeLine{00289\ \textcolor{keyword}{class\ }FrontendServiceClient;}
+\DoxyCodeLine{00290\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{FrontendServiceClientCache}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<FrontendServiceClient>}};}
+\DoxyCodeLine{00291\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_connection}{FrontendServiceConnection}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection<FrontendServiceClient>}};}
+\DoxyCodeLine{00292\ \textcolor{keyword}{class\ }TPaloBrokerServiceClient;}
+\DoxyCodeLine{00293\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_cache}{BrokerServiceClientCache}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_cache}{ClientCache<TPaloBrokerServiceClient>}};}
+\DoxyCodeLine{00294\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_client_connection}{BrokerServiceConnection}}\ =\ \mbox{\hyperlink{classdoris_1_1_client_connection}{ClientConnection<TPaloBrokerServiceClient>}};}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,161 @@
+\hypertarget{index__page_8h_source}{}\doxysection{index\+\_\+page.\+h}
+\label{index__page_8h_source}\index{/Users/dabowang/be\_all/olap/rowset/segment\_v2/index\_page.h@{/Users/dabowang/be\_all/olap/rowset/segment\_v2/index\_page.h}}
+\mbox{\hyperlink{index__page_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/segment\_v2.pb.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{page__pointer_8h}{olap/rowset/segment\_v2/page\_pointer.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{faststring_8h}{util/faststring.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }segment\_v2\ \{}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ IndexPage\ is\ the\ building\ block\ for\ IndexedColumn's\ ordinal\ index\ and\ value\ index.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ It\ is\ used\ to\ guide\ searching\ for\ a\ particular\ key\ to\ the\ data\ page\ containing\ it.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ We\ use\ the\ same\ general\ format\ for\ all\ index\ pages,\ regardless\ of\ the\ data\ type\ and\ node\ type\ (leaf\ or\ internal)}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ IndexPageBody\ :=\ IndexEntry\string^NumEntry}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ IndexEntry\ :=\ KeyLength(vint),\ Byte\string^KeyLength,\ PageOffset(vlong),\ PageSize(vint)}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ IndexPageFooterPB\ records\ NumEntry\ and\ type\ (leaf/internal)\ of\ the\ index\ page.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ For\ leaf,\ IndexKey\ records\ the\ first/smallest\ key\ of\ the\ data\ page\ PagePointer\ points\ to.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ For\ internal,\ IndexKey\ records\ the\ first/smallest\ key\ of\ the\ next-\/level\ index\ page\ PagePointer\ points\ to.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ All\ keys\ are\ treated\ as\ binary\ string\ and\ compared\ with\ memcpy.\ Keys\ of\ other\ data\ type\ are\ encoded\ first\ by}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ KeyCoder,\ e.g.,\ ordinal\ index's\ original\ key\ type\ is\ uint64\_t\ but\ is\ encoded\ to\ binary\ string.}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder}{IndexPageBuilder}}\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a811797fa9c41bbfc2c8267bb53310b5e}{IndexPageBuilder}}(\textcolor{keywordtype}{size\_t}\ index\_page\_size,\ \textcolor{keywordtype}{bool}\ is\_leaf)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a848d85d34ae3a6edaaacc983caa57973}{\_index\_page\_size}}(index\_page\_size),\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a26385bb424517d2ad98c244498aeb134}{\_is\_leaf}}(is\_leaf)\ \{\}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a8e090d83f9b5f77f87f4dc6aa39995fa}{add}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ key,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1segment__v2_1_1_page_pointer}{PagePointer}}\&\ ptr);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_aeeae1cd3e9097cea1b8c813e43df5cd1}{is\_full}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a63a27d5d9ad6ab74fc8ed14c76f9cd08}{count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a7b162eef00a5a1f8710497361a65bfd5}{\_count}};\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a326e7a55e9b65d8524a7db8fd6ae174d}{finish}}(\mbox{\hyperlink{classdoris_1_1_owned_slice}{OwnedSlice}}*\ body,\ PageFooterPB*\ footer);}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a5e847af3605f49e5362e08a4b67362a7}{size}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a335d5272f81f2b13d2fc5c7f441f128a}{\_buffer}}.\mbox{\hyperlink{classdoris_1_1faststring_a259cb5a711406a8c3e5d937eb9350cca}{size}}();\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ key\ of\ the\ first\ entry\ in\ this\ index\ block.}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ The\ pointed-\/to\ data\ is\ only\ valid\ until\ the\ next\ call\ to\ this\ builder.}}
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a4837bffbb98b6d259b1fa00a6f3ba637}{get\_first\_key}}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\ key)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a4eec34c850d6d037640f3ba3d9988cb2}{\_finished}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a335d5272f81f2b13d2fc5c7f441f128a}{\_buffer}}.\mbox{\hyperlink{classdoris_1_1faststring_ac8bb3912a3ce86b15842e79d0b421204}{clear}}();}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a7b162eef00a5a1f8710497361a65bfd5}{\_count}}\ =\ 0;}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a15bd254269cc6883034a74dff16c7abb}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder}{IndexPageBuilder}});}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a848d85d34ae3a6edaaacc983caa57973}{\_index\_page\_size}};}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a26385bb424517d2ad98c244498aeb134}{\_is\_leaf}};}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a4eec34c850d6d037640f3ba3d9988cb2}{\_finished}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1faststring}{faststring}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a335d5272f81f2b13d2fc5c7f441f128a}{\_buffer}};}
+\DoxyCodeLine{00077\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_builder_a7b162eef00a5a1f8710497361a65bfd5}{\_count}}\ =\ 0;}
+\DoxyCodeLine{00078\ \};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator}{IndexPageIterator}};}
+\DoxyCodeLine{00081\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader}{IndexPageReader}}\ \{}
+\DoxyCodeLine{00082\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a7e140867736a9be1b528adf8c12a91eb}{IndexPageReader}}()\ :\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}}(false)\ \{\}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a95ae9474143f67b23025bd547bca2379}{parse}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ body,\ \textcolor{keyword}{const}\ IndexPageFooterPB\&\ footer);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a63a27d5d9ad6ab74fc8ed14c76f9cd08}{count}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ae4d845c17a82f74f3eb2eab5e0954c46}{\_footer}}.num\_entries();}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3de4d8ac05ee0af976a546474a1d3d24}{is\_leaf}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ae4d845c17a82f74f3eb2eab5e0954c46}{\_footer}}.type()\ ==\ IndexPageFooterPB::LEAF;}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1c155900a0e6c43315683cc52f206706}{get\_key}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ <\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ae4d845c17a82f74f3eb2eab5e0954c46}{\_footer}}.num\_entries());}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a67e8862012f0c187413970577cc38385}{\_keys}}[\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}];}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1segment__v2_1_1_page_pointer}{PagePointer}}\&\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1fb0211ea99dec908866e15e6939aed2}{get\_value}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}});}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ <\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ae4d845c17a82f74f3eb2eab5e0954c46}{\_footer}}.num\_entries());}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1e932553f0ad686dd8596744e71b9c1e}{\_values}}[\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}];}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ad20897c5c8bd47f5d4005989bead0e55}{reset}}();}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a3138d883795a00f556d19da078f528d0}{\_parsed}};}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ IndexPageFooterPB\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_ae4d845c17a82f74f3eb2eab5e0954c46}{\_footer}};}
+\DoxyCodeLine{00115\ \ \ \ \ std::vector<Slice>\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a67e8862012f0c187413970577cc38385}{\_keys}};}
+\DoxyCodeLine{00116\ \ \ \ \ std::vector<PagePointer>\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1e932553f0ad686dd8596744e71b9c1e}{\_values}};}
+\DoxyCodeLine{00117\ \};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator}{IndexPageIterator}}\ \{}
+\DoxyCodeLine{00120\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a1b83b910aa833637c44f18fff37178b5}{IndexPageIterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader}{IndexPageReader}}*\ reader)\ :\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}}(reader),\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}}(0)\ \{\}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ largest\ index\ entry\ whose\ key\ is\ <=\ search\_key.}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ Return\ OK\ status\ when\ such\ entry\ exists.}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ Return\ NotFound\ when\ no\ such\ entry\ is\ found\ (all\ keys\ >\ search\_key).}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ Return\ other\ error\ status\ otherwise.}}
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_ae60925f1ba3b9c30b294cf87bea92111}{seek\_at\_or\_before}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ search\_key);}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a966a0b238faa973f4a12d162b441f2f1}{seek\_to\_first}}()\ \{\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}}\ =\ 0;\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Move\ to\ the\ next\ index\ entry.}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ on\ success,\ false\ when\ no\ more\ entries\ can\ be\ read.}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_ac5c063b7797f669c5c7dbc0c2895537f}{move\_next}}()\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}}++;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}}\ >=\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}}-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a63a27d5d9ad6ab74fc8ed14c76f9cd08}{count}}())\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ when\ has\ next\ page.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_aa0ff97d948e1a549665d5dcc64a193cf}{has\_next}}()\ \{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}}\ +\ 1)\ <\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}}-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a63a27d5d9ad6ab74fc8ed14c76f9cd08}{count}}();\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a19e57126bb2403f4111f25fd6395b519}{current\_key}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}}-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1c155900a0e6c43315683cc52f206706}{get\_key}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}});\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1segment__v2_1_1_page_pointer}{PagePointer}}\&\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a3b5d90eb39d2906c95ddd9fd2485c4dc}{current\_page\_pointer}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}}-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader_a1fb0211ea99dec908866e15e6939aed2}{get\_value}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}});\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_reader}{IndexPageReader}}*\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a23f2252a179bf0676fd6caa5f374af51}{\_reader}};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_index_page_iterator_a29da2ac74d983de0ddeb219cf0752f69}{\_pos}};}
+\DoxyCodeLine{00152\ \};}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \}\ \textcolor{comment}{//\ namespace\ segment\_v2}}
+\DoxyCodeLine{00155\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

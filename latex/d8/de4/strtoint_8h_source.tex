@@ -1,0 +1,95 @@
+\hypertarget{strtoint_8h_source}{}\doxysection{strtoint.\+h}
+\label{strtoint_8h_source}\index{/Users/dabowang/be\_all/gutil/strtoint.h@{/Users/dabowang/be\_all/gutil/strtoint.h}}
+\mbox{\hyperlink{strtoint_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2008\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Architecture-\/neutral\ plug\ compatible\ replacements\ for\ strtol()\ friends.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Long's\ have\ different\ lengths\ on\ ILP-\/32\ and\ LP-\/64\ platforms,\ and\ so\ overflow}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ behavior\ across\ the\ two\ varies\ when\ strtol()\ and\ similar\ are\ used\ to\ parse}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ 32-\/bit\ integers.\ \ Similar\ problems\ exist\ with\ atoi(),\ because\ although\ it}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ has\ an\ all-\/integer\ interface,\ it\ uses\ strtol()\ internally,\ and\ so\ suffers}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ from\ the\ same\ narrowing\ problems\ on\ assignments\ to\ int.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Examples:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ errno\ =\ 0;}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ i\ =\ strtol("{}3147483647"{},\ NULL,\ 10);}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ printf("{}\%d,\ errno\ \%d\(\backslash\)n"{},\ i,\ errno);}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ //\ \ \ 32-\/bit\ platform:\ 2147483647,\ errno\ 34}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ //\ \ \ 64-\/bit\ platform:\ -\/1147483649,\ errno\ 0}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ printf("{}\%d\(\backslash\)n"{},\ atoi("{}3147483647"{}));}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ //\ \ \ 32-\/bit\ platform:\ 2147483647}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ //\ \ \ 64-\/bit\ platform:\ -\/1147483649}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ A\ way\ round\ this\ is\ to\ define\ local\ replacements\ for\ these,\ and\ use\ them}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ instead\ of\ the\ standard\ libc\ functions.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ In\ most\ 32-\/bit\ cases\ the\ replacements\ can\ be\ inlined\ away\ to\ a\ call\ to\ the}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ libc\ function.\ \ In\ a\ couple\ of\ 64-\/bit\ cases,\ however,\ adapters\ are\ required,}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ to\ provide\ the\ right\ overflow\ and\ errno\ behavior.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \textcolor{comment}{//\ For\ strtol*\ functions.}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{using\ }std::string;}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{integral__types_8h}{gutil/integral\_types.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Adapter\ functions\ for\ handling\ overflow\ and\ errno.}}
+\DoxyCodeLine{00040\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{strtoint_8h_a2405fd3bfcb16eb4b9de325596102d35}{strto32\_adapter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00041\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{strtoint_8h_afb309f6499b14bcf95bd99edfdb356fa}{strtou32\_adapter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Conversions\ to\ a\ 32-\/bit\ integer\ can\ pass\ the\ call\ to\ strto[u]l\ on\ 32-\/bit}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ platforms,\ but\ need\ a\ little\ extra\ work\ on\ 64-\/bit\ platforms.}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{strtoint_8h_ad1b43343ead1aa390f7a423310725000}{strto32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}})\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}})\ ==\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{long}))}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\textcolor{keyword}{>}(strtol(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}}));}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_a2405fd3bfcb16eb4b9de325596102d35}{strto32\_adapter}}(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{strtoint_8h_a75b4ada681450ffbc63d5eecf5cee405}{strtou32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}})\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}})\ ==\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}))}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\textcolor{keyword}{>}(strtoul(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}}));}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_afb309f6499b14bcf95bd99edfdb356fa}{strtou32\_adapter}}(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ For\ now,\ long\ long\ is\ 64-\/bit\ on\ all\ the\ platforms\ we\ care\ about,\ so\ these}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ functions\ can\ simply\ pass\ the\ call\ to\ strto[u]ll.}}
+\DoxyCodeLine{00061\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}}\ \mbox{\hyperlink{strtoint_8h_accb4ff6d505057f64bcbb4017f03fad1}{strto64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}})\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}})\ ==\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}),\ sizeof\_int64\_is\_not\_sizeof\_long\_long);}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{return}\ strtoll(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{strtoint_8h_aac2661111fa2525b43644803da3aa737}{strtou64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr,\ \textcolor{keywordtype}{char}**\ endptr,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacebase}{base}})\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}})\ ==\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}),}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sizeof\_uint64\_is\_not\_sizeof\_long\_long);}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ strtoull(nptr,\ endptr,\ \mbox{\hyperlink{namespacebase}{base}});}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ Although\ it\ returns\ an\ int,\ atoi()\ is\ implemented\ in\ terms\ of\ strtol,\ and}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ so\ has\ differing\ overflow\ and\ underflow\ behavior.\ \ atol\ is\ the\ same.}}
+\DoxyCodeLine{00074\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{strtoint_8h_a496fc42c9da1e5643f43649229261294}{atoi32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_ad1b43343ead1aa390f7a423310725000}{strto32}}(nptr,\ NULL,\ 10);}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}}\ \mbox{\hyperlink{strtoint_8h_a4ea768da60c3ed14a309a0875d572c83}{atoi64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nptr)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_accb4ff6d505057f64bcbb4017f03fad1}{strto64}}(nptr,\ NULL,\ 10);}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Convenience\ versions\ of\ the\ above\ that\ take\ a\ string\ argument.}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{strtoint_8h_a496fc42c9da1e5643f43649229261294}{atoi32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ s)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_a496fc42c9da1e5643f43649229261294}{atoi32}}(s.c\_str());}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}}\ \mbox{\hyperlink{strtoint_8h_a4ea768da60c3ed14a309a0875d572c83}{atoi64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ s)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{strtoint_8h_a4ea768da60c3ed14a309a0875d572c83}{atoi64}}(s.c\_str());}
+\DoxyCodeLine{00089\ \}}
+
+\end{DoxyCode}

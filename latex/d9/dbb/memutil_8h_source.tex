@@ -1,0 +1,141 @@
+\hypertarget{memutil_8h_source}{}\doxysection{memutil.\+h}
+\label{memutil_8h_source}\index{/Users/dabowang/be\_all/gutil/strings/memutil.h@{/Users/dabowang/be\_all/gutil/strings/memutil.h}}
+\mbox{\hyperlink{memutil_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (C)\ 2001\ and\ onwards\ Google,\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ (Please\ see\ comments\ in\ strutil.h\ near\ the\ include\ of\ <asm/string.h>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ \ if\ you\ feel\ compelled\ to\ try\ to\ provide\ more\ efficient\ implementations}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ \ of\ these\ routines.)}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ These\ routines\ provide\ mem\ versions\ of\ standard\ C\ string\ routines,}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ such\ a\ strpbrk.\ \ They\ function\ exactly\ the\ same\ as\ the\ str\ version,}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ so\ if\ you\ wonder\ what\ they\ are,\ replace\ the\ word\ "{}mem"{}\ by}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ "{}str"{}\ and\ check\ out\ the\ man\ page.\ \ I\ could\ return\ void*,\ as\ the}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ strutil.h\ mem*()\ routines\ tend\ to\ do,\ but\ I\ return\ char*\ instead}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ since\ this\ is\ by\ far\ the\ most\ common\ way\ these\ functions\ are\ called.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ The\ difference\ between\ the\ mem\ and\ str\ versions\ is\ the\ mem\ version}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ takes\ a\ pointer\ and\ a\ length,\ rather\ than\ a\ NULL-\/terminated\ string.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ The\ memcase*\ routines\ defined\ here\ assume\ the\ locale\ is\ "{}C"{}}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ (they\ use\ ascii\_tolower\ instead\ of\ tolower).}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ These\ routines\ are\ based\ on\ the\ BSD\ library.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ Here's\ a\ list\ of\ routines\ from\ string.h,\ and\ their\ mem\ analogues.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ Functions\ in\ lowercase\ are\ defined\ in\ string.h;\ those\ in\ UPPERCASE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ are\ defined\ here:}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ strlen\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ strcat\ strncat\ \ \ \ \ \ \ \ \ \ MEMCAT}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ strcpy\ strncpy\ \ \ \ \ \ \ \ \ \ memcpy}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ -\/-\/\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memccpy\ \ \ (very\ cool\ function,\ btw)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ -\/-\/\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memmove}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ -\/-\/\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memset}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ strcmp\ strncmp\ \ \ \ \ \ \ \ \ \ memcmp}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ strcasecmp\ strncasecmp\ \ MEMCASECMP}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ strchr\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memchr}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ strcoll\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ strxfrm\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ strdup\ strndup\ \ \ \ \ \ \ \ \ \ MEMDUP}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ strrchr\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMRCHR}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ strspn\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMSPN}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ strcspn\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMCSPN}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ strpbrk\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMPBRK}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ strstr\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMSTR\ MEMMEM}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ (g)strcasestr\ \ \ \ \ \ \ \ \ \ \ MEMCASESTR\ MEMCASEMEM}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ strtok\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ strprefix\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMPREFIX\ \ \ \ \ \ (strprefix\ is\ from\ strutil.h)}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ strcaseprefix\ \ \ \ \ \ \ \ \ \ \ MEMCASEPREFIX\ \ (strcaseprefix\ is\ from\ strutil.h)}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ strsuffix\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMSUFFIX\ \ \ \ \ \ (strsuffix\ is\ from\ strutil.h)}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ strcasesuffix\ \ \ \ \ \ \ \ \ \ \ MEMCASESUFFIX\ \ (strcasesuffix\ is\ from\ strutil.h)}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ -\/-\/\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMIS}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ -\/-\/\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMCASEIS}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ strcount\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MEMCOUNT\ \ \ \ \ \ \ (strcount\ is\ from\ strutil.h)}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ <string.h>}\ \textcolor{comment}{//\ to\ get\ the\ POSIX\ mem*()\ routines}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a37f7f740741152777d965fcbde5f81c9}{memcat}}(\textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{size\_t}\ destlen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{size\_t}\ srclen)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(dest\ +\ destlen,\ src,\ srclen));}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{memutil_8h_ac34588256e64135a5022bec78e8dc330}{memcasecmp}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{lgamma_8c_a1ff9ee3251659529629e761b307fada6}{s1}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{lgamma_8c_a6f99aff13f96e26313f4fdfb4fbe5b1d}{s2}},\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_af8731c67b02fc322c817b47f5371029d}{memdup}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}});}
+\DoxyCodeLine{00064\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a26b9149d447a88375f00e253e53d784f}{memrchr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{int}\ c,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}});}
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{memutil_8h_a4265800c434b32f9e49c021f5af9357c}{memspn}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ accept);}
+\DoxyCodeLine{00066\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{memutil_8h_aedda0035e4cb2378800dfb80bb62532b}{memcspn}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ reject);}
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a3e09e81f79c11b39218f594534b42718}{mempbrk}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ accept);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ This\ is\ for\ internal\ use\ only.\ \ Don't\ call\ this\ directly}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ case\_sensitive>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a304a5f13d29801e04e8bb5a6a711ca19}{int\_memmatch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle,\ \textcolor{keywordtype}{size\_t}\ neelen);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ These\ are\ the\ guys\ you\ can\ call\ directly}}
+\DoxyCodeLine{00074\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_aec87f60e5893aac7bf0644a1946ff561}{memstr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{memutil_8cc_aa4a5e365e782e29ffba1ad1e50fe63b9}{int\_memmatch<true>}}(phaystack,\ haylen,\ pneedle,\ strlen(pneedle));}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a72d87d20dbb2b2f7d6b4892eee032c6e}{memcasestr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{memutil_8cc_aab3790e62241853fc8472acab56d756b}{int\_memmatch<false>}}(phaystack,\ haylen,\ pneedle,\ strlen(pneedle));}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a09d2692975358386961c8581dc52aa31}{memmem}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ needlelen)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{memutil_8cc_aa4a5e365e782e29ffba1ad1e50fe63b9}{int\_memmatch<true>}}(phaystack,\ haylen,\ pneedle,\ needlelen);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a4f9bbdbf344bef193c80add4eb38fb56}{memcasemem}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ needlelen)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{memutil_8cc_aab3790e62241853fc8472acab56d756b}{int\_memmatch<false>}}(phaystack,\ haylen,\ pneedle,\ needlelen);}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ This\ is\ significantly\ faster\ for\ case-\/sensitive\ matches\ with\ very}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ few\ possible\ matches.\ \ See\ unit\ test\ for\ benchmarks.}}
+\DoxyCodeLine{00094\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{memutil_8h_a1ab3b61b402d45a90fa58d7c0badd446}{memmatch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ phaystack,\ \textcolor{keywordtype}{size\_t}\ haylen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pneedle,\ \textcolor{keywordtype}{size\_t}\ neelen);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ The\ "{}"{}'s\ catch\ people\ who\ don't\ pass\ in\ a\ literal\ for\ "{}str"{}}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#define\ strliterallen(str)\ (sizeof("{}"{}}\ str\ "{}"{})\ -\/\ 1)}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ Must\ use\ a\ string\ literal\ for\ prefix.}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#define\ memprefix(str,\ len,\ prefix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ >=\ strliterallen(prefix))\ \&\&\ memcmp(str,\ prefix,\ strliterallen(prefix))\ ==\ 0)\ \(\backslash\)}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ ?\ str\ +\ strliterallen(prefix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ :\ NULL)}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#define\ memcaseprefix(str,\ len,\ prefix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ >=\ strliterallen(prefix))\ \&\&\ memcasecmp(str,\ prefix,\ strliterallen(prefix))\ ==\ 0)\ \(\backslash\)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ ?\ str\ +\ strliterallen(prefix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ :\ NULL)}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ Must\ use\ a\ string\ literal\ for\ suffix.}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#define\ memsuffix(str,\ len,\ suffix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ >=\ strliterallen(suffix))\ \&\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \ \ \ \ memcmp(str\ +\ (len)-\/strliterallen(suffix),\ suffix,\ strliterallen(suffix))\ ==\ 0)\ \(\backslash\)}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ ?\ str\ +\ (len)-\/strliterallen(suffix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ :\ NULL)}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#define\ memcasesuffix(str,\ len,\ suffix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ >=\ strliterallen(suffix))\ \&\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \ \ \ \ memcasecmp(str\ +\ (len)-\/strliterallen(suffix),\ suffix,\ strliterallen(suffix))\ ==\ 0)\ \(\backslash\)}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ ?\ str\ +\ (len)-\/strliterallen(suffix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ :\ NULL)}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#define\ memis(str,\ len,\ literal)\ \(\backslash\)}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ ==\ strliterallen(literal))\ \&\&\ memcmp(str,\ literal,\ strliterallen(literal))\ ==\ 0))}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#define\ memcaseis(str,\ len,\ literal)\ \(\backslash\)}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\ \ \ \ ((((len)\ ==\ strliterallen(literal))\ \&\&\ memcasecmp(str,\ literal,\ strliterallen(literal))\ ==\ 0))}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{memutil_8h_ada7cc4eeb7458ecd64349eb07398bc74}{memcount}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{size\_t}\ len,\ \textcolor{keywordtype}{char}\ c)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{int}\ num\ =\ 0;}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ len;\ i++)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buf[i]\ ==\ c)\ num++;}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{return}\ num;}
+\DoxyCodeLine{00135\ \}}
+
+\end{DoxyCode}

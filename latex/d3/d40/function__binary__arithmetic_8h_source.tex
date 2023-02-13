@@ -1,0 +1,864 @@
+\hypertarget{function__binary__arithmetic_8h_source}{}\doxysection{function\+\_\+binary\+\_\+arithmetic.\+h}
+\label{function__binary__arithmetic_8h_source}\index{/Users/dabowang/be\_all/vec/functions/function\_binary\_arithmetic.h@{/Users/dabowang/be\_all/vec/functions/function\_binary\_arithmetic.h}}
+\mbox{\hyperlink{function__binary__arithmetic_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Functions/FunctionBinaryArithmetic.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{decimalv2__value_8h}{runtime/decimalv2\_value.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{udf__internal_8h}{udf/udf\_internal.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__const_8h}{vec/columns/column\_const.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__decimal_8h}{vec/columns/column\_decimal.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__nullable_8h}{vec/columns/column\_nullable.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__vector_8h}{vec/columns/column\_vector.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arithmetic__overflow_8h}{vec/common/arithmetic\_overflow.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__decimal_8h}{vec/data\_types/data\_type\_decimal.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__nullable_8h}{vec/data\_types/data\_type\_nullable.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__number_8h}{vec/data\_types/data\_type\_number.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{number__traits_8h}{vec/data\_types/number\_traits.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{cast__type__to__either_8h}{vec/functions/cast\_type\_to\_either.h}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{function_8h}{vec/functions/function.h}}"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ Arithmetic\ operations:\ +,\ -\/,\ *,\ |,\ \&,\ \string^,\ \string~}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ need\ implement\ apply(a,\ b)}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Arithmetic\ operations\ (to\ null\ type):\ /,\ \%,\ intDiv\ (integer\ division),\ log}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ need\ implement\ apply(a,\ b,\ is\_null),\ apply(array\_a,\ b,\ null\_map)}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ apply(array\_a,\ b,\ null\_map)\ is\ only\ used\ on\ vector\_constant}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ TODO:\ vector\_constant\ optimization\ not\ work\ on\ decimal\ type\ now}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00052\ \textcolor{keyword}{struct\ }PlusImpl;}
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00054\ \textcolor{keyword}{struct\ }MinusImpl;}
+\DoxyCodeLine{00055\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00056\ \textcolor{keyword}{struct\ }MultiplyImpl;}
+\DoxyCodeLine{00057\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00058\ \textcolor{keyword}{struct\ }DivideFloatingImpl;}
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00060\ \textcolor{keyword}{struct\ }DivideIntegralImpl;}
+\DoxyCodeLine{00061\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00062\ \textcolor{keyword}{struct\ }ModuloImpl;}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{template}\ <\textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{typename}\ Operation>}
+\DoxyCodeLine{00065\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OperationTraits}}\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_aa98545f6d3c24ba18cfe44c5ffac8030}{T}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}};}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a8667c7543ff217023e759cb6659f86ca}{Op}}\ =\ Operation<T,\ T>;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{is\_plus\_minus}}\ =}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ PlusImpl<T,\ T>>\ ||\ std::is\_same\_v<Op,\ MinusImpl<T,\ T>>;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{is\_multiply}}\ =\ std::is\_same\_v<Op,\ MultiplyImpl<T,\ T>>;}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{is\_division}}\ =\ std::is\_same\_v<Op,\ DivideFloatingImpl<T,\ T>>\ ||}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ DivideIntegralImpl<T,\ T>>;}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ae105bf6b15c7ec1da549a042392adb5b}{is\_mod}}\ =\ std::is\_same\_v<Op,\ ModuloImpl<T,\ T>>;}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_af0b4d80b950aaabc32bf4ab39658ef14}{allow\_decimal}}\ =}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ PlusImpl<T,\ T>>\ ||\ std::is\_same\_v<Op,\ MinusImpl<T,\ T>>\ ||}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ MultiplyImpl<T,\ T>>\ ||\ std::is\_same\_v<Op,\ ModuloImpl<T,\ T>>\ ||}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ DivideFloatingImpl<T,\ T>>\ ||}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Op,\ DivideIntegralImpl<T,\ T>>;}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a5cf842d1281818e8c27d8ec8b91bf667}{can\_overflow}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{is\_plus\_minus}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{is\_multiply}};}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a19befa06fb13b1436b7cc35eaf79a74b}{has\_variadic\_argument}}\ =}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ !std::is\_void\_v<decltype(has\_variadic\_argument\_types(std::declval<Op>()))>;}
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keyword}{typename}\ ResultType\ =\ \textcolor{keyword}{typename}\ Op::ResultType>}
+\DoxyCodeLine{00085\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base}{BinaryOperationImplBase}}\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits}{Traits}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits}{NumberTraits::BinaryOperatorTraits<A,\ B>}};}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a4be54ee156e92081971f0e1f734bcb3b}{ColumnVectorResult}}\ =}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ std::conditional\_t<IsDecimalNumber<ResultType>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal}{ColumnDecimal<ResultType>}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<ResultType>}}>;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a69b115bf9aebd1251ee1d6c4b7db2939}{vector\_vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<A>}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<B>}}\&\ b,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c)\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i]);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a07f4b8f06b75faa24974647219ba89b1}{vector\_vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<A>}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<B>}}\&\ b,}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<UInt8>}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a2d52371be31752b5213f05718d47d84b}{vector\_constant}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<A>}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c)\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a9b50a20fdcae28548587696f4ca2f317}{vector\_constant}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<A>}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<UInt8>}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ c,\ null\_map);}
+\DoxyCodeLine{00117\ \ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a191c0bc7f73e45be6f99d81e43b33dd2}{constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<B>}}\&\ b,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ b.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i]);}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00124\ \ \ \ \ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_ae2d986dbe47acd7056bd28fddc20da0c}{constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<B>}}\&\ b,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ResultType>}}\&\ c,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<UInt8>}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ b.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{static}\ ResultType\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a3668fb823da8c276f14b5ba00d7ae057}{constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b)\ \{\ \textcolor{keywordflow}{return}\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keyword}{static}\ ResultType\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a224de7de691792d538406f3a0742ea52}{constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\&\ is\_null)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Op::template\ apply<ResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00138\ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}},\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keywordtype}{bool}\ is\_to\_null\_type,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ ResultType\ =\ \textcolor{keyword}{typename}\ Op::ResultType>}
+\DoxyCodeLine{00143\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl}{BinaryOperationImpl}}\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base}{Base}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base}{BinaryOperationImplBase<A,\ B,\ Op,\ ResultType>}};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_abe81aee3750b906fb673e77a2dad7ba3}{adapt\_normal\_constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ Base::ColumnVectorResult::create(1);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(1,\ 0);}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_element(0)\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a3668fb823da8c276f14b5ba00d7ae057}{Base::constant\_constant}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ null\_map-\/>get\_element(0));}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_element(0)\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a3668fb823da8c276f14b5ba00d7ae057}{Base::constant\_constant}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ \ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_a313789ca3c8658c1ad4a243cdaefc224}{adapt\_normal\_vector\_constant}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ check\_and\_get\_column<typename\ Base::Traits::ColumnVectorA>(column\_left);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ Base::ColumnVectorResult::create(column\_left-\/>size());}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_left-\/>size(),\ 0);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a2d52371be31752b5213f05718d47d84b}{Base::vector\_constant}}(column\_left\_ptr-\/>get\_data(),\ b,\ column\_result-\/>get\_data(),}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map-\/>get\_data());}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a2d52371be31752b5213f05718d47d84b}{Base::vector\_constant}}(column\_left\_ptr-\/>get\_data(),\ b,\ column\_result-\/>get\_data());}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_a5de62d8872b6fcda4bad160827709871}{adapt\_normal\_constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ check\_and\_get\_column<typename\ Base::Traits::ColumnVectorB>(column\_right);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ Base::ColumnVectorResult::create(column\_right-\/>size());}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ DCHECK(column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_right-\/>size(),\ 0);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a191c0bc7f73e45be6f99d81e43b33dd2}{Base::constant\_vector}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ column\_right\_ptr-\/>get\_data(),\ column\_result-\/>get\_data(),}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map-\/>get\_data());}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a191c0bc7f73e45be6f99d81e43b33dd2}{Base::constant\_vector}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ column\_right\_ptr-\/>get\_data(),\ column\_result-\/>get\_data());}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_aae6561b03f8fc8f03ca96fd88ebb2de4}{adapt\_normal\_vector\_vector}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right)\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ check\_and\_get\_column<typename\ Base::Traits::ColumnVectorA>(column\_left);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ check\_and\_get\_column<typename\ Base::Traits::ColumnVectorB>(column\_right);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ Base::ColumnVectorResult::create(column\_left-\/>size());}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_result-\/>size(),\ 0);}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a69b115bf9aebd1251ee1d6c4b7db2939}{Base::vector\_vector}}(column\_left\_ptr-\/>get\_data(),\ column\_right\_ptr-\/>get\_data(),}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_data(),\ null\_map-\/>get\_data());}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl_base_a69b115bf9aebd1251ee1d6c4b7db2939}{Base::vector\_vector}}(column\_left\_ptr-\/>get\_data(),\ column\_right\_ptr-\/>get\_data(),}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_data());}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00219\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B,\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{typename}\ Operation,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ ResultType,\ \textcolor{keywordtype}{bool}\ is\_to\_null\_type,\ \textcolor{keywordtype}{bool}\ return\_nullable\_type,}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ check\_overflow\ =\ \textcolor{keyword}{true}>}
+\DoxyCodeLine{00222\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation}{DecimalBinaryOperation}}\ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OpTraits}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OperationTraits<Operation>}};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_native_type_a19462713b2aab2dae2c87c15f262c1df}{NativeType<ResultType>::Type}};}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_aa61f5a56184c7ce6434a0102970b9056}{Op}}\ =\ Operation<NativeResultType,\ NativeResultType>;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits}{Traits}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits}{NumberTraits::BinaryOperatorTraits<A,\ B>}};}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_decimal_padded_p_o_d_array}{ColumnDecimal<ResultType>::Container}};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9b8c4198f9c9bcee9b00ecb5acc49cbb}{vector\_vector}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a9bfa82749155173aa36591b5f86fb240}{Traits::ArrayA}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a04e0d4c09b2895b428ea4086f762767a}{Traits::ArrayB}}\&\ b,}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ \&\&\ IsDecimalV2<A>\ \&\&\ IsDecimalV2<B>\ \&\&}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDecimalV2<ResultType>)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ Op::vector\_vector(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ c);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i]);}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_aee32ef3bae16e1a48d506ed5b678e27f}{vector\_vector}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a9bfa82749155173aa36591b5f86fb240}{Traits::ArrayA}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a04e0d4c09b2895b428ea4086f762767a}{Traits::ArrayB}}\&\ b,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDecimalV2<B>\ ||\ IsDecimalV2<A>)\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}}\ \&\&\ (IsDecimalNumber<B>\ ||\ IsDecimalNumber<A>))\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ ((\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \&\&}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDecimalNumber<B>\ ||\ IsDecimalNumber<A>))\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a67c9237b7770af43d1353915b9542550}{apply\_op\_safely}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b[i],\ c[i].\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a5d94ce10458cb9eb938eb3e31875f897}{vector\_constant}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a9bfa82749155173aa36591b5f86fb240}{Traits::ArrayA}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c)\ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}}\ \&\&\ IsDecimalNumber<B>)\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a5e5d32dc84eeb78d74da451ad4f78a21}{vector\_constant}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a9bfa82749155173aa36591b5f86fb240}{Traits::ArrayA}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c,}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.size();}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}}\ \&\&\ IsDecimalNumber<B>)\ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b,\ null\_map[i]);}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ ((\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \&\&}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDecimalNumber<B>\ ||\ IsDecimalNumber<A>))\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a67c9237b7770af43d1353915b9542550}{apply\_op\_safely}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b,\ c[i].\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}[i],\ b,\ null\_map[i]);}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00298\ \ \ \ \ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a0b336c8519409123fcec5b6b109f325b}{constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a04e0d4c09b2895b428ea4086f762767a}{Traits::ArrayB}}\&\ b,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c)\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ b.size();}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDecimalV2<A>\ ||\ IsDecimalV2<B>)\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}\ da(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}});}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ Op::template\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(da,\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}(b[i])).value();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i]);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a5e7c6155e42dafc83637014a92753d50}{constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a04e0d4c09b2895b428ea4086f762767a}{Traits::ArrayB}}\&\ b,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9f1382fdab088d25bb1f227e5d57304b}{ArrayC}}\&\ c,}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ b.size();}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}}\ \&\&\ IsDecimalNumber<B>)\ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ ((\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \&\&}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDecimalNumber<B>\ ||\ IsDecimalNumber<A>))\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a67c9237b7770af43d1353915b9542550}{apply\_op\_safely}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i],\ c[i].\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c[i]\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b[i],\ null\_map[i]);}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keyword}{static}\ ResultType\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a3668fb823da8c276f14b5ba00d7ae057}{constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);\ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{static}\ ResultType\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a224de7de691792d538406f3a0742ea52}{constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\&\ is\_null)\ \{}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}}\ \&\&\ IsDecimalNumber<B>)\ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ ((\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \&\&}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDecimalNumber<B>\ ||\ IsDecimalNumber<A>))\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ res;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ is\_null\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a67c9237b7770af43d1353915b9542550}{apply\_op\_safely}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ res);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a2f1f6fc811e567a7c14f0dd04929c205}{adapt\_decimal\_constant\_constant}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnDecimal<ResultType>::create}}(}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ \mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<ResultType>}}\&>(*res\_data\_type).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal_a3a8b6e26009e3ff170ccd4d0f22f3759}{get\_scale}}());}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ \&\&\ !is\_to\_null\_type\ \&\&}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ \&\&\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ ||\ IsDecimalV2<A>\ ||}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDecimalV2<B>))\ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ function\ type!"{}};}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ ||\ is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(1,\ 0);}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_element(0)\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a3668fb823da8c276f14b5ba00d7ae057}{constant\_constant}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ null\_map-\/>get\_element(0));}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_element(0)\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a3668fb823da8c276f14b5ba00d7ae057}{constant\_constant}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \ \ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae7ec8d83afccde4746f77403407c1b85}{adapt\_decimal\_vector\_constant}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}\ b,}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =\ check\_and\_get\_column<typename\ Traits::ColumnVectorA>(column\_left);}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnDecimal<ResultType>::create}}(}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left-\/>size(),}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<ResultType>}}\&>(*res\_data\_type).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal_a3a8b6e26009e3ff170ccd4d0f22f3759}{get\_scale}}());}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ \&\&\ !is\_to\_null\_type\ \&\&}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ \&\&\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ ||\ IsDecimalV2<A>\ ||}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDecimalV2<B>))\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ function\ type!"{}};}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ ||\ is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_left-\/>size(),\ 0);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a5d94ce10458cb9eb938eb3e31875f897}{vector\_constant}}(column\_left\_ptr-\/>get\_data(),\ b,\ column\_result-\/>get\_data(),}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map-\/>get\_data());}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a5d94ce10458cb9eb938eb3e31875f897}{vector\_constant}}(column\_left\_ptr-\/>get\_data(),\ b,\ column\_result-\/>get\_data());}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a17c6344a992c23c76a41b55252db9eeb}{adapt\_decimal\_constant\_vector}}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =\ check\_and\_get\_column<typename\ Traits::ColumnVectorB>(column\_right);}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnDecimal<ResultType>::create}}(}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_right-\/>size(),}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<ResultType>}}\&>(*res\_data\_type).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal_a3a8b6e26009e3ff170ccd4d0f22f3759}{get\_scale}}());}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ DCHECK(column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ \&\&\ !is\_to\_null\_type\ \&\&}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ \&\&\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ ||\ IsDecimalV2<A>\ ||}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDecimalV2<B>))\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ function\ type!"{}};}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ ||\ is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_right-\/>size(),\ 0);}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a0b336c8519409123fcec5b6b109f325b}{constant\_vector}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ column\_right\_ptr-\/>get\_data(),\ column\_result-\/>get\_data(),}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map-\/>get\_data());}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a0b336c8519409123fcec5b6b109f325b}{constant\_vector}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ column\_right\_ptr-\/>get\_data(),\ column\_result-\/>get\_data());}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00413\ \ \ \ \ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_afc8ce519d33f0bed50763f19ed2d7d3d}{adapt\_decimal\_vector\_vector}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =\ check\_and\_get\_column<typename\ Traits::ColumnVectorA>(column\_left);}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =\ check\_and\_get\_column<typename\ Traits::ColumnVectorB>(column\_right);}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnDecimal<ResultType>::create}}(}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left-\/>size(),}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{assert__cast_8h_a7249b78e4a20f13fd2da161ade9383b1}{assert\_cast}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<ResultType>}}\&>(*res\_data\_type).\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal_a3a8b6e26009e3ff170ccd4d0f22f3759}{get\_scale}}());}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ \&\&\ !is\_to\_null\_type\ \&\&}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ \&\&\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ ||\ IsDecimalV2<A>\ ||}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDecimalV2<B>))\ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ function\ type!"{}};}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (return\_nullable\_type\ ||\ is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnUInt8::create}}(column\_result-\/>size(),\ 0);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9b8c4198f9c9bcee9b00ecb5acc49cbb}{vector\_vector}}(column\_left\_ptr-\/>get\_data(),\ column\_right\_ptr-\/>get\_data(),}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_data(),\ null\_map-\/>get\_data());}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(column\_result),\ std::move(null\_map));}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a9b8c4198f9c9bcee9b00ecb5acc49cbb}{vector\_vector}}(column\_left\_ptr-\/>get\_data(),\ column\_right\_ptr-\/>get\_data(),}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_result-\/>get\_data());}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ column\_result;}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00440\ \ \ \ \ \}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b)\ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDecimalV2<B>\ ||\ IsDecimalV2<A>)\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Now,\ Doris\ only\ support\ decimal\ +-\/*/\ decimal.}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ overflow\ in\ consider\ in\ operator}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Op::template\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}),\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}(b)).value();}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a5cf842d1281818e8c27d8ec8b91bf667}{OpTraits::can\_overflow}}\ \&\&\ check\_overflow)\ \{}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ res;}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ handle\ overflow\ gracefully}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Op::template\ apply<NativeResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ res))\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}Decimal\ math\ overflow"{}};}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ =\ max\_decimal\_value<ResultType>();}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Op::template\ apply<NativeResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00462\ \ \ \ \ \}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a21ca67a2e1d562dfd72393d9d10e2a1c}{apply}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\&\ is\_null)\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDecimalV2<B>\ ||\ IsDecimalV2<A>)\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}\ l(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}});}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}\ r(b);}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ans\ =\ Op::template\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(l,\ r,\ is\_null);}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ result;}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&result,\ \&ans,\ std::min(\textcolor{keyword}{sizeof}(result),\ \textcolor{keyword}{sizeof}(ans)));}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Op::template\ apply<NativeResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00476\ \ \ \ \ \}}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_afe38efee99e8e9622a4d29182c872e44}{apply\_scaled}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b)\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ res;}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (check\_overflow)\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ overflow\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a5cf842d1281818e8c27d8ec8b91bf667}{OpTraits::can\_overflow}})\ \{}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ overflow\ |=\ Op::template\ apply<NativeResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ res);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ =\ Op::template\ apply<NativeResultType>(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ handle\ overflow\ gracefully}}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (overflow)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}Decimal\ math\ overflow"{}};}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ =\ max\_decimal\_value<ResultType>();}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b);}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \ \ \}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a683c0ee699089af2b7720391431764e6}{apply\_scaled\_div}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b,}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\&\ is\_null)\ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}})\ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ \}}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ad31b622c91cf15d188afac84ed29e2ff}{apply\_scaled\_mod}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b,}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\&\ is\_null)\ \{}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ is\_null);}
+\DoxyCodeLine{00514\ \ \ \ \ \}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a67c9237b7770af43d1353915b9542550}{apply\_op\_safely}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\ b,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_a4ae8072995660706f5f9b0772e83ea8b}{NativeResultType}}\&\ c)\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}}\ ||\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}})\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Op::template\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation_ae034c697a037a2236d4b2cce185cdf8f}{apply}}(\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ b,\ c);}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00520\ \ \ \ \ \}}
+\DoxyCodeLine{00521\ \};}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00524\ \textcolor{keyword}{struct\ }InvalidType;}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ V,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00527\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}\ :\ std::bool\_constant<V>\ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_case_a834c467da58ea1d81821952d3c473b64}{type}}\ =\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}};}
+\DoxyCodeLine{00529\ \};}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00532\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00533\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_aaf752e1fe2dec65964fcd088d24d7237}{Switch}}\ =\ \textcolor{keyword}{typename}\ std::disjunction<Ts...,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case<true,\ InvalidType>}}>::type;}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DataType>}
+\DoxyCodeLine{00536\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a12cf6193cefda5cf774d1a9923b037d8}{IsIntegral}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00537\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00538\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5357e9faddbf9c40571503aec02b4718}{IsIntegral<DataTypeUInt8>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00539\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00540\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_adecc3568a69a48ab084017ca4738e225}{IsIntegral<DataTypeInt8>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00541\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00542\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aefd71d960788f3ef0b3382247a504d4c}{IsIntegral<DataTypeInt16>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00543\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00544\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5ed02f9a458dfb2729c70b3d9e838f2a}{IsIntegral<DataTypeInt32>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00545\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00546\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae5004bb9c2a667bf11599c99290752a1}{IsIntegral<DataTypeInt64>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00547\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00548\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac9ad3da623992d6941eae5a3390cf879}{IsIntegral<DataTypeInt128>}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00551\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a2093a4323e23b9489530e2296786ac9a}{UseLeftDecimal}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00552\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00553\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ UseLeftDecimal<DataTypeDecimal<Decimal128I>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal32>}}>\ =}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \textcolor{keyword}{true};}
+\DoxyCodeLine{00555\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00556\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ UseLeftDecimal<DataTypeDecimal<Decimal128I>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal64>}}>\ =}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \textcolor{keyword}{true};}
+\DoxyCodeLine{00558\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00559\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ UseLeftDecimal<DataTypeDecimal<Decimal64>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal32>}}>\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00562\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_a963f7e3190bd3335de1267c4f078fd76}{DataTypeFromFieldType}}\ =}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ std::conditional\_t<std::is\_same\_v<T,\ NumberTraits::Error>,\ InvalidType,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_number}{DataTypeNumber<T>}}>;}
+\DoxyCodeLine{00564\ }
+\DoxyCodeLine{00565\ \textcolor{keyword}{template}\ <\textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Operation,\ \textcolor{keyword}{typename}\ LeftDataType,}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ RightDataType>}
+\DoxyCodeLine{00567\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_traits}{BinaryOperationTraits}}\ \{}
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_traits_abd2bb914ef45dce5f8efb0956696f00c}{Op}}\ =\ Operation<typename\ LeftDataType::FieldType,\ typename\ RightDataType::FieldType>;}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OpTraits}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OperationTraits<Operation>}};}
+\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_traits_ad2e780ebf82550a1cb5145837f212d73}{ResultDataType}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aaf752e1fe2dec65964fcd088d24d7237}{Switch}}<}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_af0b4d80b950aaabc32bf4ab39658ef14}{OpTraits::allow\_decimal}}\ \&\&}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDataTypeDecimal<LeftDataType>\ ||\ IsDataTypeDecimal<RightDataType>),}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InvalidType>,}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<(IsDataTypeDecimalV2<LeftDataType>\ \&\&\ IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !IsDataTypeDecimalV2<RightDataType>)\ ||}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDataTypeDecimalV2<RightDataType>\ \&\&\ IsDataTypeDecimal<LeftDataType>\ \&\&}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !IsDataTypeDecimalV2<LeftDataType>),}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InvalidType>,}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<IsDataTypeDecimal<LeftDataType>\ \&\&\ IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UseLeftDecimal<LeftDataType,\ RightDataType>,}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LeftDataType>,}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<IsDataTypeDecimal<LeftDataType>\ \&\&\ IsDataTypeDecimal<RightDataType>,}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RightDataType>,}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<IsDataTypeDecimal<LeftDataType>\ \&\&\ !IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsIntegral<RightDataType>,}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LeftDataType>,}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<!IsDataTypeDecimal<LeftDataType>\ \&\&\ IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsIntegral<LeftDataType>,}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RightDataType>,}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<IsDataTypeDecimal<LeftDataType>\ \&\&\ !IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !IsIntegral<RightDataType>,}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InvalidType>,}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<!IsDataTypeDecimal<LeftDataType>\ \&\&\ IsDataTypeDecimal<RightDataType>\ \&\&}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !IsIntegral<LeftDataType>,}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InvalidType>,}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_case}{Case}}<!IsDataTypeDecimal<LeftDataType>\ \&\&\ !IsDataTypeDecimal<RightDataType>,}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a963f7e3190bd3335de1267c4f078fd76}{DataTypeFromFieldType<typename\ Op::ResultType>}}>>;}
+\DoxyCodeLine{00603\ \};}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LeftDataType,\ \textcolor{keyword}{typename}\ RightDataType,\ \textcolor{keyword}{typename}\ ExpectedResultDataType,}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Operation,\ \textcolor{keywordtype}{bool}\ is\_to\_null\_type,}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ return\_nullable\_type>}
+\DoxyCodeLine{00608\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter}{ConstOrVectorAdapter}}\ \{}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ac4a74f6f8c22329b736c00d600186d32}{result\_is\_decimal}}\ =}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ IsDataTypeDecimal<LeftDataType>\ ||\ IsDataTypeDecimal<RightDataType>;}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a774874f2cc119420265728794327c215}{ResultDataType}}\ =\ ExpectedResultDataType;}
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a485a119bbd67ac86181fa8d3ade7327c}{ResultType}}\ =\ \textcolor{keyword}{typename}\ ResultDataType::FieldType;}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a02acca77bb86a00770f998a9e7ed946f}{A}}\ =\ \textcolor{keyword}{typename}\ LeftDataType::FieldType;}
+\DoxyCodeLine{00615\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a86bbd69253078b2f3e3cc0c7ad191cd1}{B}}\ =\ \textcolor{keyword}{typename}\ RightDataType::FieldType;}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a53f3107ac600483bf4d0320332a2c66a}{OperationImpl}}\ =\ std::conditional\_t<}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ IsDataTypeDecimal<ResultDataType>,}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_decimal_binary_operation}{DecimalBinaryOperation}}<\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a02acca77bb86a00770f998a9e7ed946f}{A}},\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a86bbd69253078b2f3e3cc0c7ad191cd1}{B}},\ Operation,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a485a119bbd67ac86181fa8d3ade7327c}{ResultType}},\ is\_to\_null\_type,}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\_nullable\_type>,}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_impl}{BinaryOperationImpl<A,\ B,\ Operation<A,\ B>}},\ is\_to\_null\_type,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a485a119bbd67ac86181fa8d3ade7327c}{ResultType}}>>;}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a8b379ea22a4af4d318eb4f4a1b415398}{execute}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeftDataType\&\ type\_left,\ \textcolor{keyword}{const}\ RightDataType\&\ type\_right,}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_const\_left\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a85dfa9ef8ec5a8555e00a9314d3a7f4d}{is\_column\_const}}(*column\_left);}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_const\_right\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a85dfa9ef8ec5a8555e00a9314d3a7f4d}{is\_column\_const}}(*column\_right);}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_const\_left\ \&\&\ is\_const\_right)\ \{}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_aaa60650268e3809cd440f9d1bda0ca9d}{constant\_constant}}(column\_left,\ column\_right,\ type\_left,\ type\_right,}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\_data\_type);}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (is\_const\_left)\ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ab657989a1d386cb90ac7c11335887e96}{constant\_vector}}(column\_left,\ column\_right,\ type\_left,\ type\_right,\ res\_data\_type);}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (is\_const\_right)\ \{}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a47ba6f81794241622dd883545b792316}{vector\_constant}}(column\_left,\ column\_right,\ type\_left,\ type\_right,\ res\_data\_type);}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ab366be29c0a837ac41249c3fd88a2273}{vector\_vector}}(column\_left,\ column\_right,\ type\_left,\ type\_right,\ res\_data\_type);}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00639\ \ \ \ \ \}}
+\DoxyCodeLine{00640\ }
+\DoxyCodeLine{00641\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_aaa60650268e3809cd440f9d1bda0ca9d}{constant\_constant}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeftDataType\&\ type\_left,}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ RightDataType\&\ type\_right,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =\ check\_and\_get\_column<ColumnConst>(column\_left);}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =\ check\_and\_get\_column<ColumnConst>(column\_right);}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_result\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00650\ }
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ac4a74f6f8c22329b736c00d600186d32}{result\_is\_decimal}})\ \{}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result\ =\ OperationImpl::adapt\_decimal\_constant\_constant(}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left\_ptr-\/>template\ get\_value<A>(),}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_right\_ptr-\/>template\ get\_value<B>(),\ res\_data\_type);}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ column\_result\ =\ OperationImpl::adapt\_normal\_constant\_constant(}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left\_ptr-\/>template\ get\_value<A>(),}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_right\_ptr-\/>template\ get\_value<B>());}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00661\ }
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnConst::create}}(std::move(column\_result),\ column\_left-\/>size());}
+\DoxyCodeLine{00663\ \ \ \ \ \}}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_a47ba6f81794241622dd883545b792316}{vector\_constant}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeftDataType\&\ type\_left,\ \textcolor{keyword}{const}\ RightDataType\&\ type\_right,}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_right\_ptr\ =\ check\_and\_get\_column<ColumnConst>(column\_right);}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ DCHECK(column\_right\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ac4a74f6f8c22329b736c00d600186d32}{result\_is\_decimal}})\ \{}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_decimal\_vector\_constant(}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left-\/>get\_ptr(),\ column\_right\_ptr-\/>template\ get\_value<B>(),}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\_data\_type);}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_normal\_vector\_constant(}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left-\/>get\_ptr(),\ column\_right\_ptr-\/>template\ get\_value<B>());}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00679\ \ \ \ \ \}}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ab657989a1d386cb90ac7c11335887e96}{constant\_vector}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeftDataType\&\ type\_left,\ \textcolor{keyword}{const}\ RightDataType\&\ type\_right,}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_left\_ptr\ =\ check\_and\_get\_column<ColumnConst>(column\_left);}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ DCHECK(column\_left\_ptr\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ac4a74f6f8c22329b736c00d600186d32}{result\_is\_decimal}})\ \{}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_decimal\_constant\_vector(}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left\_ptr-\/>template\ get\_value<A>(),\ column\_right-\/>get\_ptr(),}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\_data\_type);}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_normal\_constant\_vector(}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left\_ptr-\/>template\ get\_value<A>(),\ column\_right-\/>get\_ptr());}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00695\ \ \ \ \ \}}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ab366be29c0a837ac41249c3fd88a2273}{vector\_vector}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_left,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ column\_right,}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeftDataType\&\ type\_left,\ \textcolor{keyword}{const}\ RightDataType\&\ type\_right,}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ res\_data\_type)\ \{}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter_ac4a74f6f8c22329b736c00d600186d32}{result\_is\_decimal}})\ \{}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_decimal\_vector\_vector(}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_left-\/>get\_ptr(),\ column\_right-\/>get\_ptr(),\ res\_data\_type);}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OperationImpl::adapt\_normal\_vector\_vector(column\_left-\/>get\_ptr(),}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_right-\/>get\_ptr());}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00707\ \ \ \ \ \}}
+\DoxyCodeLine{00708\ \};}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ \textcolor{keyword}{template}\ <\textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Operation,\ \textcolor{keyword}{typename}\ Name,\ \textcolor{keywordtype}{bool}\ is\_to\_null\_type>}
+\DoxyCodeLine{00711\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic}{FunctionBinaryArithmetic}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_function}{IFunction}}\ \{}
+\DoxyCodeLine{00712\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OpTraits}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits}{OperationTraits<Operation>}};}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ F>}
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ type,\ F\&\&\ f)\ \{}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a9b97eff6ce7164c760ceb2e5548afe9e}{cast\_type\_to\_either}}<\mbox{\hyperlink{namespacedoris_1_1vectorized_a03f407c37932b0082e1d7e2893118ec9}{DataTypeUInt8}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad47abcee0a58feba1f6722bce0e10744}{DataTypeInt8}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1a7bd0fe9972a0cb01d014e25094cd5f}{DataTypeInt16}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a71bd5424c4d90c5e1d38704f63476381}{DataTypeInt32}},}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a00a8912c83d3f6ebc4174be0be2cf40d}{DataTypeInt64}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a988f47bf85776e7f148f000bb095073c}{DataTypeInt128}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a54ec333757c348a9f808d3a5bedb9870}{DataTypeFloat32}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aadc716786823fdce7ede2c8d4869bd97}{DataTypeFloat64}},}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal32>}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal64>}},}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal128>}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_decimal}{DataTypeDecimal<Decimal128I>}}>(}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type,\ std::forward<F>(f));}
+\DoxyCodeLine{00721\ \ \ \ \ \}}
+\DoxyCodeLine{00722\ }
+\DoxyCodeLine{00723\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ F>}
+\DoxyCodeLine{00724\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4fac9592b16a3298b5cbe77737f53706}{cast\_both\_types}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ left,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ right,\ F\&\&\ f)\ \{}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(left,\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ left\_)\ \{}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(right,\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ right\_)\ \{\ \textcolor{keywordflow}{return}\ f(left\_,\ right\_);\ \});}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00728\ \ \ \ \ \}}
+\DoxyCodeLine{00729\ }
+\DoxyCodeLine{00730\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ F>}
+\DoxyCodeLine{00731\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a2edc74f3dcef6ace70ea175fa40e17e5}{cast\_both\_types}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ left,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ right,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_data_type}{IDataType}}*\ res,}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ F\&\&\ f)\ \{}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(left,\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ left\_)\ \{}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(right,\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ right\_)\ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cfffe06c9964002f166ceaab8c9f046}{cast\_type}}(res,\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ res\_)\ \{\ \textcolor{keywordflow}{return}\ f(left\_,\ right\_,\ res\_);\ \});}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00738\ \ \ \ \ \}}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00741\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ Name::name;}
+\DoxyCodeLine{00742\ }
+\DoxyCodeLine{00743\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab86136da2bd8ca8be896f10b5a678a26}{FunctionPtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a7bf9ea74a972f522d66d4dddf5ea212b}{create}}()\ \{\ \textcolor{keywordflow}{return}\ std::make\_shared<FunctionBinaryArithmetic>();\ \}}
+\DoxyCodeLine{00744\ }
+\DoxyCodeLine{00745\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_aa4ccfd9e2ad74fb621c37c2fe826244a}{FunctionBinaryArithmetic}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00746\ }
+\DoxyCodeLine{00747\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a857a20970ce2f860323316fcaad16cb0}{name}};\ \}}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a9ab722bf690decd2bb265a69a734586b}{get\_number\_of\_arguments}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ 2;\ \}}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4cc07338e79d527e6fc45626c6350b26}{get\_variadic\_argument\_types\_impl}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a19befa06fb13b1436b7cc35eaf79a74b}{OpTraits::has\_variadic\_argument}})\ \{}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ OpTraits::Op::get\_variadic\_argument\_types();}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
+\DoxyCodeLine{00756\ \ \ \ \ \}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ada848f55845a18e2d7317a5f43d0aa9d}{get\_return\_type\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ arguments)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ type\_res;}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ valid\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4fac9592b16a3298b5cbe77737f53706}{cast\_both\_types}}(}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arguments[0].\mbox{\hyperlink{namespacedoris_1_1vectorized_a15491adacffd97f9c5b6efe5dd58f657}{get}}(),\ arguments[1].\mbox{\hyperlink{namespacedoris_1_1vectorized_a15491adacffd97f9c5b6efe5dd58f657}{get}}(),\ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ left,\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ right)\ \{}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }LeftDataType\ =\ std::decay\_t<\textcolor{keyword}{decltype}(left)>;}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }RightDataType\ =\ std::decay\_t<\textcolor{keyword}{decltype}(right)>;}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultDataType\ =}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_traits}{BinaryOperationTraits}}<Operation,\ LeftDataType,}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RightDataType>::ResultDataType;}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!std::is\_same\_v<ResultDataType,\ InvalidType>)\ \{}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDataTypeDecimal<LeftDataType>\ \&\&}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDataTypeDecimal<RightDataType>)\ \{}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\_res\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aca4a40cf7898fcf4185e9c42ba9e2aba}{decimal\_result\_type}}(left,\ right,\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_ac465f889a3e17d21ee593381904862e9}{OpTraits::is\_multiply}},}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a2f13e1198a348b89387ee5e4e76a2964}{OpTraits::is\_division}},}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_operation_traits_a1141b369f0dc843cb13bb256164192ea}{OpTraits::is\_plus\_minus}});}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDataTypeDecimal<LeftDataType>)\ \{}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\_res\ =\ std::make\_shared<LeftDataType>(left.get\_precision(),}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ left.get\_scale());}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDataTypeDecimal<RightDataType>)\ \{}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\_res\ =\ std::make\_shared<RightDataType>(right.get\_precision(),}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ right.get\_scale());}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (IsDataTypeDecimal<ResultDataType>)\ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\_res\ =\ std::make\_shared<ResultDataType>(27,\ 9);}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\_res\ =\ std::make\_shared<ResultDataType>();}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!valid)\ \{}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ fmt::format(\textcolor{stringliteral}{"{}Illegal\ types\ \{\}\ and\ \{\}\ of\ arguments\ of\ function\ \{\}"{}},}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arguments[0]-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}(),\ arguments[1]-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}(),}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}());}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_to\_null\_type)\ \{}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aac8e73eaa6aee54ea37e6d3fbfc970b6}{make\_nullable}}(type\_res);}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_res;}
+\DoxyCodeLine{00799\ \ \ \ \ \}}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_addc3120590db01e8bbf9fe9e23f79594}{execute\_impl}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}\&\ block,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a69df8cb2bb6bcd07aa3b387782deb8f1}{ColumnNumbers}}\&\ arguments,}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ result,\ \textcolor{keywordtype}{size\_t}\ input\_rows\_count)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ left\_generic\ =\ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}.get();}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ right\_generic\ =\ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[1]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}.get();}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ result\_generic\ =\ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}.get();}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (left\_generic-\/>is\_nullable())\ \{}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ left\_generic\ =}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_nullable}{DataTypeNullable}}*\textcolor{keyword}{>}(left\_generic)-\/>get\_nested\_type().get();}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (right\_generic-\/>is\_nullable())\ \{}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ right\_generic\ =}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_nullable}{DataTypeNullable}}*\textcolor{keyword}{>}(right\_generic)-\/>get\_nested\_type().get();}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ result\_is\_nullable\ =\ context-\/>\mbox{\hyperlink{classdoris__udf_1_1_function_context_a2f99439b2b338f042ef7ea16325a96e8}{impl}}()-\/>\mbox{\hyperlink{classdoris_1_1_function_context_impl_a12e3df0da9295f368acc4ba30d5740d7}{check\_overflow\_for\_decimal}}();}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_generic-\/>is\_nullable())\ \{}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \ \ \ \ result\_generic\ =}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_nullable}{DataTypeNullable}}*\textcolor{keyword}{>}(result\_generic)-\/>get\_nested\_type().get();}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00819\ }
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ valid\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_a4fac9592b16a3298b5cbe77737f53706}{cast\_both\_types}}(}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ left\_generic,\ right\_generic,\ result\_generic,}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ left,\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ right,\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ res)\ \{}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }LeftDataType\ =\ std::decay\_t<\textcolor{keyword}{decltype}(left)>;}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }RightDataType\ =\ std::decay\_t<\textcolor{keyword}{decltype}(right)>;}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ExpectedResultDataType\ =\ std::decay\_t<\textcolor{keyword}{decltype}(res)>;}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultDataType\ =}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_binary_operation_traits}{BinaryOperationTraits}}<Operation,\ LeftDataType,}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RightDataType>::ResultDataType;}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !std::is\_same\_v<ResultDataType,\ InvalidType>\ \&\&}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDataTypeDecimal<ExpectedResultDataType>\ ==}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac96ac555ef68edda44a1f8f60e4141a9}{IsDataTypeDecimal}}<}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ResultDataType>)\&\&(IsDataTypeDecimal<ExpectedResultDataType>\ ==}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (IsDataTypeDecimal<LeftDataType>\ ||}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IsDataTypeDecimal<RightDataType>)))\ \{}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_is\_nullable)\ \{}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter}{ConstOrVectorAdapter}}<}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LeftDataType,\ RightDataType,}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::conditional\_t<IsDataTypeDecimal<ExpectedResultDataType>,}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ExpectedResultDataType,\ ResultDataType>,}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Operation,\ is\_to\_null\_type,}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true}>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_function_a40932ff3d5066d512d7e649443b73dec}{::execute}}(block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}},}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[1]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}},\ left,}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ right,}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a174d35d751f410a19f4bfe649d3cc3a4}{remove\_nullable}}(}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}));}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a0f83afb1e34b7b73db116622fa569508}{replace\_by\_position}}(result,\ std::move(column\_result));}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\_result\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_const_or_vector_adapter}{ConstOrVectorAdapter}}<}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LeftDataType,\ RightDataType,}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::conditional\_t<IsDataTypeDecimal<ExpectedResultDataType>,}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ExpectedResultDataType,\ ResultDataType>,}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Operation,\ is\_to\_null\_type,}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false}>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_function_a40932ff3d5066d512d7e649443b73dec}{::execute}}(block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}},}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[1]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}},}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ left,\ right,}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a174d35d751f410a19f4bfe649d3cc3a4}{remove\_nullable}}(}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}));}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a0f83afb1e34b7b73db116622fa569508}{replace\_by\_position}}(result,\ std::move(column\_result));}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!valid)\ \{}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::RuntimeError(\textcolor{stringliteral}{"{}\{\}'s\ arguments\ do\ not\ match\ the\ expected\ data\ types"{}},}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_function_binary_arithmetic_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}());}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00869\ }
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00871\ \ \ \ \ \}}
+\DoxyCodeLine{00872\ \};}
+\DoxyCodeLine{00873\ }
+\DoxyCodeLine{00874\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

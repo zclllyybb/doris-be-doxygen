@@ -1,0 +1,1181 @@
+\hypertarget{jsonb__document_8h_source}{}\doxysection{jsonb\+\_\+document.\+h}
+\label{jsonb__document_8h_source}\index{/Users/dabowang/be\_all/util/jsonb\_document.h@{/Users/dabowang/be\_all/util/jsonb\_document.h}}
+\mbox{\hyperlink{jsonb__document_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ \ Copyright\ (c)\ 2014,\ Facebook,\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ This\ source\ code\ is\ licensed\ under\ the\ BSD-\/style\ license\ found\ in\ the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ LICENSE\ file\ in\ the\ root\ directory\ of\ this\ source\ tree.\ An\ additional\ grant}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ of\ patent\ rights\ can\ be\ found\ in\ the\ PATENTS\ file\ in\ the\ same\ directory.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ This\ header\ defines\ JsonbDocument,\ JsonbKeyValue,\ and\ various\ value\ classes}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ which\ are\ derived\ from\ JsonbValue,\ and\ a\ forward\ iterator\ for\ container}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ values\ -\/\ essentially\ everything\ that\ is\ related\ to\ JSONB\ binary\ data}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ structures.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ Implementation\ notes:}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ None\ of\ the\ classes\ in\ this\ header\ file\ can\ be\ instantiated\ directly\ (i.e.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ you\ cannot\ create\ a\ JsonbKeyValue\ or\ JsonbValue\ object\ -\/\ all\ constructors}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ are\ declared\ non-\/public).\ We\ use\ the\ classes\ as\ wrappers\ on\ the\ packed\ JSONB}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ bytes\ (serialized),\ and\ cast\ the\ classes\ (types)\ to\ the\ underlying\ packed}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ byte\ array.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ For\ the\ same\ reason,\ we\ cannot\ define\ any\ JSONB\ value\ class\ to\ be\ virtual,}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ since\ we\ never\ call\ constructors,\ and\ will\ not\ instantiate\ vtbl\ and\ vptrs.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ Therefore,\ the\ classes\ are\ defined\ as\ packed\ structures\ (i.e.\ no\ data}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ alignment\ and\ padding),\ and\ the\ private\ member\ variables\ of\ the\ classes\ are}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ defined\ precisely\ in\ the\ same\ order\ as\ the\ JSONB\ spec.\ This\ ensures\ we}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ access\ the\ packed\ JSONB\ bytes\ correctly.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ The\ packed\ structures\ are\ highly\ optimized\ for\ in-\/place\ operations\ with\ low}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ overhead.\ The\ reads\ (and\ in-\/place\ writes)\ are\ performed\ directly\ on\ packed}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ bytes.\ There\ is\ no\ memory\ allocation\ at\ all\ at\ runtime.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ For\ updates/writes\ of\ values\ that\ will\ expand\ the\ original\ JSONB\ size,\ the}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *\ write\ will\ fail,\ and\ the\ caller\ needs\ to\ handle\ buffer\ increase.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ **\ Iterator\ **}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ Both\ ObjectVal\ class\ and\ ArrayVal\ class\ have\ iterator\ type\ that\ you\ can\ use}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ to\ declare\ an\ iterator\ on\ a\ container\ object\ to\ go\ through\ the\ key-\/value}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ pairs\ or\ value\ list.\ The\ iterator\ has\ both\ non-\/const\ and\ const\ types.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ *\ Note:\ iterators\ are\ forward\ direction\ only.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ *\ **\ Query\ **}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ *\ Querying\ into\ containers\ is\ through\ the\ member\ functions\ find\ (for\ key/value}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ *\ pairs)\ and\ get\ (for\ array\ elements),\ and\ is\ in\ streaming\ style.\ We\ don't}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *\ need\ to\ read/scan\ the\ whole\ JSONB\ packed\ bytes\ in\ order\ to\ return\ results.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ *\ Once\ the\ key/index\ is\ found,\ we\ will\ stop\ search.\ \ You\ can\ use\ text\ to\ query}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ *\ both\ objects\ and\ array\ (for\ array,\ text\ will\ be\ converted\ to\ integer\ index),}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *\ and\ use\ index\ to\ retrieve\ from\ array.\ Array\ index\ is\ 0-\/based.}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *\ **\ External\ dictionary\ **}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ *\ During\ query\ processing,\ you\ can\ also\ pass\ a\ call-\/back\ function,\ so\ the}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ *\ search\ will\ first\ try\ to\ check\ if\ the\ key\ string\ exists\ in\ the\ dictionary.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ *\ If\ so,\ search\ will\ be\ based\ on\ the\ id\ instead\ of\ the\ key\ string.}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ *\ @author\ Tian\ Xia\ <tianx@fb.com>}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ *\ this\ file\ is\ copied\ from\ }}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ *\ https://github.com/facebook/mysql-\/5.6/blob/fb-\/mysql-\/5.6.35/fbson/FbsonDocument.h}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ *\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#ifndef\ JSONB\_JSONBDOCUMENT\_H}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#define\ JSONB\_JSONBDOCUMENT\_H}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ \#include\ "{}util/string\_parser.hpp"{}}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#pragma\ pack(push,\ 1)}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ JSONB\_VER\ 1}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ forward\ declaration}}
+\DoxyCodeLine{00086\ \textcolor{keyword}{class\ }JsonbValue;}
+\DoxyCodeLine{00087\ \textcolor{keyword}{class\ }ObjectVal;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_ab50143d8d97874b8a18fc65421eb9c83}{MaxNestingLevel}}\ =\ 100;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ *\ JsonbType\ defines\ 10\ primitive\ types\ and\ 2\ container\ types,\ as\ described}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ *\ below.}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ *\ primitive\_value\ ::=}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ *\ \ \ 0x00\ \ \ \ \ \ \ \ //null\ value\ (0\ byte)}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ *\ |\ 0x01\ \ \ \ \ \ \ \ //boolean\ true\ (0\ byte)}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ *\ |\ 0x02\ \ \ \ \ \ \ \ //boolean\ false\ (0\ byte)}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ *\ |\ 0x03\ int8\ \ \ //char/int8\ (1\ byte)}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ *\ |\ 0x04\ int16\ \ //int16\ (2\ bytes)}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ *\ |\ 0x05\ int32\ \ //int32\ (4\ bytes)}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ *\ |\ 0x06\ int64\ \ //int64\ (8\ bytes)}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ *\ |\ 0x07\ double\ //floating\ point\ (8\ bytes)}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ *\ |\ 0x08\ string\ //variable\ length\ string}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ *\ |\ 0x09\ binary\ //variable\ length\ binary}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ *\ container\ ::=}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ *\ \ \ 0x0A\ int32\ key\_value\_list\ //object,\ int32\ is\ the\ total\ bytes\ of\ the\ object}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ *\ |\ 0x0B\ int32\ value\_list\ \ \ \ \ //array,\ int32\ is\ the\ total\ bytes\ of\ the\ array}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00111\ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ :\ \textcolor{keywordtype}{char}\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{T\_Null}}\ =\ 0x00,}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{T\_True}}\ =\ 0x01,}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{T\_False}}\ =\ 0x02,}
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{T\_Int8}}\ =\ 0x03,}
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{T\_Int16}}\ =\ 0x04,}
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{T\_Int32}}\ =\ 0x05,}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{T\_Int64}}\ =\ 0x06,}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{T\_Double}}\ =\ 0x07,}
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{T\_String}}\ =\ 0x08,}
+\DoxyCodeLine{00121\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{T\_Binary}}\ =\ 0x09,}
+\DoxyCodeLine{00122\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{T\_Object}}\ =\ 0x0A,}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{T\_Array}}\ =\ 0x0B,}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{T\_Int128}}\ =\ 0x0C,}
+\DoxyCodeLine{00125\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{T\_Float}}\ =\ 0x0D,}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa34b297af0d2f4a6024a59d0d3a318026}{NUM\_TYPES}},}
+\DoxyCodeLine{00127\ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ *\ JsonbDocument\ is\ the\ main\ object\ that\ accesses\ and\ queries\ JSONB\ packed}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ *\ bytes.\ NOTE:\ JsonbDocument\ only\ allows\ object\ container\ as\ the\ top\ level}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ *\ JSONB\ value.\ However,\ you\ can\ use\ the\ static\ method\ "{}createValue"{}\ to\ get\ any}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ *\ JsonbValue\ object\ from\ the\ packed\ bytes.}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ *\ JsonbDocument\ object\ also\ dereferences\ to\ an\ object\ container\ value}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ *\ (ObjectVal)\ once\ JSONB\ is\ loaded.}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ *\ **\ Load\ **}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ *\ JsonbDocument\ is\ usable\ after\ loading\ packed\ bytes\ (memory\ location)\ into}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ *\ the\ object.\ We\ only\ need\ the\ header\ and\ first\ few\ bytes\ of\ the\ payload\ after}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ *\ header\ to\ verify\ the\ JSONB.}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ *\ Note:\ creating\ an\ JsonbDocument\ (through\ createDocument)\ does\ not\ allocate}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ *\ any\ memory.\ The\ document\ object\ is\ an\ efficient\ wrapper\ on\ the\ packed\ bytes}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ *\ which\ is\ accessed\ directly.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ *\ **\ Query\ **}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ *\ Query\ is\ through\ dereferencing\ into\ ObjectVal.}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00150\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\ \{}
+\DoxyCodeLine{00151\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ Prepare\ a\ document\ in\ the\ buffer}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a80e406a4dabf2435ad5914b4effe002a}{makeDocument}}(\textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size,\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ type);}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a80e406a4dabf2435ad5914b4effe002a}{makeDocument}}(\textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ rval);}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ create\ an\ JsonbDocument\ object\ from\ JSONB\ packed\ bytes}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a6f3d6d8641e307033b92fc8a13385afb}{createDocument}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size);}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ create\ an\ JsonbValue\ from\ JSONB\ packed\ bytes}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a944f6721536b96e961eb8e1f3dab71af}{createValue}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size);}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a357d8cb1002e82af7d1b46f9c2954a77}{version}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_ad4925ffd113f7e6fb79e04612c3420e1}{header\_}}.\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header_a22fdfac634462b967e8952325d6b0b09}{ver\_}};\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_ab432a7d4f14adb11963d3cf0cd77bc6d}{getValue}}()\ \{\ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)\mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a5003889c972d7009cea81db89e28c9e2}{setValue}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_ac84884d433d0ea499e520e88d8b84315}{operator-\/>}}()\ \{\ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*)\mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a64aad78ceac83a04b5b06b75831b018e}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ ((\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*)\mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_af8a90ca7ac183fc17aaba5b1ab07ea2e}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a5f6b81bca760f09e5feaeb50877673b4}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a4de63264f413160373125a770319c8ce}{operator<=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a7344dcc54b34389ed94101fc549afdd8}{operator>=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00189\ \ \ \ \ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a6e2458083bce67e44dc991f8f2647c32}{operator<}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00193\ \ \ \ \ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a87e18c18db012a2530079aed095dd460}{operator>}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}comparing\ between\ JsonbDocument\ is\ not\ supported"{}};}
+\DoxyCodeLine{00197\ \ \ \ \ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ *\ JsonbHeader\ class\ defines\ JSONB\ header\ (internal\ to\ JsonbDocument).}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ *\ Currently\ it\ only\ contains\ version\ information\ (1-\/byte).\ We\ may\ expand\ the}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ *\ header\ to\ include\ checksum\ of\ the\ JSONB\ binary\ for\ more\ security.}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}}\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ uint8\_t\ \mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header_a22fdfac634462b967e8952325d6b0b09}{ver\_}};}
+\DoxyCodeLine{00208\ \ \ \ \ \}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_ad4925ffd113f7e6fb79e04612c3420e1}{header\_}};}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[0];}
+\DoxyCodeLine{00211\ \};}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ *\ JsonbFwdIteratorT\ implements\ JSONB's\ iterator\ template.}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ *\ Note:\ it\ is\ an\ FORWARD\ iterator\ only\ due\ to\ the\ design\ of\ JSONB\ format.}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00218\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Iter\_Type,\ \textcolor{keyword}{class}\ Cont\_Type>}
+\DoxyCodeLine{00219\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\ \{}
+\DoxyCodeLine{00220\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{typedef}\ Iter\_Type\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}};}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter\_Type>::pointer\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a09c0e6f13c0d96f8313dbe73da7aca68}{pointer}};}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter\_Type>::reference\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a26f591bf0a7e85a1b1d3a7221117f043}{reference}};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a1c7b1a3d9510a8b1ce78bb00d8a08073}{JsonbFwdIteratorT}}()\ :\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}(nullptr)\ \{\}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a56e25a0a873c4d45661b2b8979612297}{JsonbFwdIteratorT}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}}\&\ i)\ :\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}(i)\ \{\}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ allow\ non-\/const\ to\ const\ iterator\ conversion\ (same\ container\ type)}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Iter\_Ty>}
+\DoxyCodeLine{00231\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a2f2ed2c6e72f0165fba04cb6094f3cd9}{JsonbFwdIteratorT}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT<Iter\_Ty,\ Cont\_Type>}}\&\ rhs)\ :\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}(rhs.\mbox{\hyperlink{namespacebase}{base}}())\ \{\}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a64a1a5770b273284b9cb3f2be201d310}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}\ ==\ rhs.\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}});\ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_aad2e60f5f62becfa669c908ad4b798c6}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a64a1a5770b273284b9cb3f2be201d310}{operator==}}(rhs);\ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a57f48946f0ebe5fd949335dc60b300d9}{operator<}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}\ <\ rhs.\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}});\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a8529157909848ed78d4454aba847730d}{operator>}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a57f48946f0ebe5fd949335dc60b300d9}{operator<}}(rhs);\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ac51c6e2c650d372786293313e95e2919}{operator++}}()\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}})(((\textcolor{keywordtype}{char}*)\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}})\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}-\/>numPackedBytes());}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_af60783837b5e330700b3f538995b75de}{operator++}}(\textcolor{keywordtype}{int})\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tmp\ =\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}})(((\textcolor{keywordtype}{char}*)\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}})\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}}-\/>numPackedBytes());}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tmp;}
+\DoxyCodeLine{00250\ \ \ \ \ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{explicit}\ \textcolor{keyword}{operator}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a09c0e6f13c0d96f8313dbe73da7aca68}{pointer}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}};\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a26f591bf0a7e85a1b1d3a7221117f043}{reference}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ab086ec1916db61d1ab56a801abca8d91}{operator*}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}};\ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a09c0e6f13c0d96f8313dbe73da7aca68}{pointer}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_aef4e7d4e0fa56e9f7509c555f73d24d2}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}};\ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_a0d4f70dac2e753c9e0f314f727cdfe67}{base}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}};\ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00261\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_acf43b29546ccfdf05114ef99b1e65bba}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t_ad518d00be5f9fcfa297d4df4fc46b133}{current\_}};}
+\DoxyCodeLine{00262\ \};}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keyword}{typedef}\ int\ (*\mbox{\hyperlink{namespacedoris_ae48e41919c16ed670759a7b14715d33d}{hDictInsert}})(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ len);}
+\DoxyCodeLine{00265\ \textcolor{keyword}{typedef}\ int\ (*\mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}})(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ len);}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{keyword}{typedef}\ std::underlying\_type<JsonbType>::type\ \mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}};}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ *\ JsonbKeyValue\ class\ defines\ JSONB\ key\ type,\ as\ described\ below.}}
+\DoxyCodeLine{00271\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ *\ key\ ::=}}
+\DoxyCodeLine{00273\ \textcolor{comment}{\ *\ \ \ 0x00\ int8\ \ \ \ //1-\/byte\ dictionary\ id}}
+\DoxyCodeLine{00274\ \textcolor{comment}{\ *\ |\ int8\ (byte*)\ //int8\ (>0)\ is\ the\ size\ of\ the\ key\ string}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00276\ \textcolor{comment}{\ *\ value\ ::=\ primitive\_value\ |\ container}}
+\DoxyCodeLine{00277\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00278\ \textcolor{comment}{\ *\ JsonbKeyValue\ can\ be\ either\ an\ id\ mapping\ to\ the\ key\ string\ in\ an\ external}}
+\DoxyCodeLine{00279\ \textcolor{comment}{\ *\ dictionary,\ or\ it\ is\ the\ original\ key\ string.\ Whether\ to\ read\ an\ id\ or\ a}}
+\DoxyCodeLine{00280\ \textcolor{comment}{\ *\ string\ is\ decided\ by\ the\ first\ byte\ (size\_).}}
+\DoxyCodeLine{00281\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ *\ Note:\ a\ key\ object\ must\ be\ followed\ by\ a\ value\ object.\ Therefore,\ a\ key}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ *\ object\ implicitly\ refers\ to\ a\ key-\/value\ pair,\ and\ you\ can\ get\ the\ value}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ *\ object\ right\ after\ the\ key\ object.\ The\ function\ numPackedBytes\ hence}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ *\ indicates\ the\ total\ size\ of\ the\ key-\/value\ pair,\ so\ that\ we\ will\ be\ able\ go}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ *\ to\ next\ pair\ from\ the\ key.}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ *\ **\ Dictionary\ size\ **}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ *\ By\ default,\ the\ dictionary\ size\ is\ 255\ (1-\/byte).\ Users\ can\ define}}
+\DoxyCodeLine{00290\ \textcolor{comment}{\ *\ "{}USE\_LARGE\_DICT"{}\ to\ increase\ the\ dictionary\ size\ to\ 655535\ (2-\/byte).}}
+\DoxyCodeLine{00291\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00292\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}\ \{}
+\DoxyCodeLine{00293\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b8b739ffd021c7f23fa52e94ebdfbd8}{sMaxKeyId}}\ =\ 65535;}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keyword}{typedef}\ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{keyid\_type}};}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a317b2fd976a99aa8e07e37680fe870a8}{sMaxKeyLen}}\ =\ 64;}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ key.\ 0\ indicates\ it\ is\ stored\ as\ id}}
+\DoxyCodeLine{00300\ \ \ \ \ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a9567fa102ac7bef3b304981a0499f654}{klen}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}};\ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ get\ the\ key\ string.\ Note\ the\ string\ may\ not\ be\ null\ terminated.}}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a9b137b7fa73013346990461d3150df96}{getKeyStr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key__}{key\_}}.\mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key___a089c31a64fc8b84870a3fda768f19969}{str\_}};\ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{keyid\_type}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5d857f2659203ea97b85c2af9e09b3a2}{getKeyId}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key__}{key\_}}.\mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key___a12c76445e730c78815854664ce94ce45}{id\_}};\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a0e125c84b866cf6b61726dca18575da4}{keyPackedBytes}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}}\ ?\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}})\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}})\ :\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{keyid\_type}}));}
+\DoxyCodeLine{00309\ \ \ \ \ \}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a3ad4ddad2506af3e6ee43e36ff9e795a}{value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)(((\textcolor{keywordtype}{char}*)\textcolor{keyword}{this})\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a0e125c84b866cf6b61726dca18575da4}{keyPackedBytes}}());\ \}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ total\ packed\ bytes\ (key+value)}}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00317\ \ \ \ \ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b969af660449b1fefc1a5578b0454dd}{size\_}};}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{union\ }\mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key__}{key\_}}\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{keyid\_type}}\ \mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key___a12c76445e730c78815854664ce94ce45}{id\_}};}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{uniondoris_1_1_jsonb_key_value_1_1key___a089c31a64fc8b84870a3fda768f19969}{str\_}}[1];}
+\DoxyCodeLine{00322\ \ \ \ \ \}\ key\_;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a4dc8f8bf9a52345004c5d7b0c252528a}{JsonbKeyValue}}();}
+\DoxyCodeLine{00325\ \};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ *\ JsonbValue\ is\ the\ base\ class\ of\ all\ JSONB\ types.\ It\ contains\ only\ one\ member}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ *\ variable\ -\/\ type\ info,\ which\ can\ be\ retrieved\ by\ member\ functions\ is[Type]()}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ *\ or\ type().}}
+\DoxyCodeLine{00331\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00332\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \{}
+\DoxyCodeLine{00333\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a21eb543c174ed047dc17300db7db7aad}{sMaxValueLen}}\ =\ 1\ <<\ 24;\ \textcolor{comment}{//\ 16M}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_abada6dfb33f4cbafe1e443a5cf8dc8d0}{isNull}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}});\ \}}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_af86ff7fcda2d789fc75b7750e6acfb82}{isTrue}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}});\ \}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_acfacec7c9bdda3797acf7674ad9a3820}{isFalse}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}});\ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a772efbf9d46b2e1e3840763a76307040}{isInt}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a235eae33b966a0a9b5276d86ef808629}{isInt8}}()\ ||\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a467058d6e49f04dcc3af55d4d493c128}{isInt16}}()\ ||\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a9177934fe42dcd7691fb51f1ec1f7ac3}{isInt32}}()\ ||\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a7290e5e0ddc94ce4790c7d05e0c633a5}{isInt64}}();\ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a235eae33b966a0a9b5276d86ef808629}{isInt8}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}});\ \}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a467058d6e49f04dcc3af55d4d493c128}{isInt16}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}});\ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a9177934fe42dcd7691fb51f1ec1f7ac3}{isInt32}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}});\ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a7290e5e0ddc94ce4790c7d05e0c633a5}{isInt64}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}});\ \}}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a758c92bd63c516d466d3efdc8fc709e4}{isDouble}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}});\ \}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a7283345d095683fd5e3a75cb4d3b8410}{isFloat}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}});\ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_abc9dc0708ec1aae2309621664fa8e5a4}{isString}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}});\ \}}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_aee3ba44cd3f14501633ae2e8ea04b4d0}{isBinary}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}});\ \}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a13b605b2c9876ab317e21637b8646def}{isObject}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}});\ \}}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_aefe7cc24045c3560d7550ba662375ce4}{isArray}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}});\ \}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a404b4919a0912af0d364bf6d1125ece1}{isInt128}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{JsonbType::T\_Int128}});\ \}}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a552abcd9b973a92d97588cacbe8da1e3}{type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}};\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a4c8194883b2c6e20b9898dddc702d85a}{typeName}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}}:}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}null"{}};}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}}:}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}}:}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}bool"{}};}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}int"{}};}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}bigint"{}};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}}:}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}double"{}};}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}}:}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}float"{}};}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}}:}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}string"{}};}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}}:}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}binary"{}};}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}:}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}object"{}};}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}}:}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}array"{}};}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}unknown"{}};}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \ \ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ total\ packed\ bytes}}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ value\ in\ bytes}}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a69622a843a8c7f05bf706cf80fad6951}{size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{comment}{//\ get\ the\ raw\ byte\ array\ of\ the\ value}}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a0375887d096a88047754cc1e6691c909}{getValuePtr}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{comment}{//\ find\ the\ JSONB\ value\ by\ a\ key\ path\ string\ (null\ terminated)}}
+\DoxyCodeLine{00394\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a381b4a784cc566b417099f59417dc640}{findPath}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key\_path,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ delim\ =\ \textcolor{stringliteral}{"{}."{}},}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a381b4a784cc566b417099f59417dc640}{findPath}}(key\_path,\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})strlen(key\_path),\ delim,\ handler);}
+\DoxyCodeLine{00397\ \ \ \ \ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{//\ find\ the\ JSONB\ value\ by\ a\ key\ path\ string\ (with\ length)}}
+\DoxyCodeLine{00400\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a381b4a784cc566b417099f59417dc640}{findPath}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key\_path,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ len,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ delim,}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler);}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}};}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00405\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}};\ \textcolor{comment}{//\ type\ info}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a990616ac191ea4ba5cdc1e8a84f73388}{JsonbValue}}();}
+\DoxyCodeLine{00408\ \};}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00411\ \textcolor{comment}{\ *\ NumerValT\ is\ the\ template\ class\ (derived\ from\ JsonbValue)\ of\ all\ number}}
+\DoxyCodeLine{00412\ \textcolor{comment}{\ *\ types\ (integers\ and\ double).}}
+\DoxyCodeLine{00413\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00414\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00415\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \{}
+\DoxyCodeLine{00416\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00417\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a33323b948fe55414832663bcab1ad09c}{val}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}};\ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a990616ac191ea4ba5cdc1e8a84f73388}{JsonbValue}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}});\ \}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{comment}{//\ catch\ all\ unknow\ specialization\ of\ the\ template\ class}}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{setVal}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00425\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}};}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_aa0d7dfca07557e889ba75b15c6fc07ae}{NumberValT}}();}
+\DoxyCodeLine{00428\ \};}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<int8\_t>}}\ \mbox{\hyperlink{namespacedoris_a44215038ec9ab9d8854dbbe0e2124f24}{JsonbInt8Val}};}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \textcolor{comment}{//\ override\ setVal\ for\ Int8Val}}
+\DoxyCodeLine{00433\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00434\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbInt8Val::setVal}}(int8\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a235eae33b966a0a9b5276d86ef808629}{isInt8}}())\ \{}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00441\ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<int16\_t>}}\ \mbox{\hyperlink{namespacedoris_afd617997811506d3246c8557bd102ce7}{JsonbInt16Val}};}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ override\ setVal\ for\ Int16Val}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00447\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbInt16Val::setVal}}(int16\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a467058d6e49f04dcc3af55d4d493c128}{isInt16}}())\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00450\ \ \ \ \ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00454\ \}}
+\DoxyCodeLine{00455\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<int32\_t>}}\ \mbox{\hyperlink{namespacedoris_a3efd00eaa432faa911c7502c1bd358dd}{JsonbInt32Val}};}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \textcolor{comment}{//\ override\ setVal\ for\ Int32Val}}
+\DoxyCodeLine{00458\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00459\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbInt32Val::setVal}}(int32\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a9177934fe42dcd7691fb51f1ec1f7ac3}{isInt32}}())\ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00462\ \ \ \ \ \}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00466\ \}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<int64\_t>}}\ \mbox{\hyperlink{namespacedoris_aa36a2b66e0d9b455929698dc2f36a1f5}{JsonbInt64Val}};}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \textcolor{comment}{//\ override\ setVal\ for\ Int64Val}}
+\DoxyCodeLine{00471\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00472\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbInt64Val::setVal}}(int64\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a7290e5e0ddc94ce4790c7d05e0c633a5}{isInt64}}())\ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00475\ \ \ \ \ \}}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00479\ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<\_\_int128\_t>}}\ \mbox{\hyperlink{namespacedoris_a35cc920711bd2c8d24070c6c1d2979f9}{JsonbInt128Val}};}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \textcolor{comment}{//\ override\ setVal\ for\ Int64Val}}
+\DoxyCodeLine{00484\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00485\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbInt128Val::setVal}}(\_\_int128\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a404b4919a0912af0d364bf6d1125ece1}{isInt128}}())\ \{}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00488\ \ \ \ \ \}}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00492\ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<double>}}\ \mbox{\hyperlink{namespacedoris_a68d73c6dabf5b9d3c6a5c9c73a308807}{JsonbDoubleVal}};}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \textcolor{comment}{//\ override\ setVal\ for\ DoubleVal}}
+\DoxyCodeLine{00497\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00498\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbDoubleVal::setVal}}(\textcolor{keywordtype}{double}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a758c92bd63c516d466d3efdc8fc709e4}{isDouble}}())\ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00501\ \ \ \ \ \}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00505\ \}}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_number_val_t}{NumberValT<float>}}\ \mbox{\hyperlink{namespacedoris_a73e8bb9c395696e484a024019927058b}{JsonbFloatVal}};}
+\DoxyCodeLine{00508\ }
+\DoxyCodeLine{00509\ \textcolor{comment}{//\ override\ setVal\ for\ DoubleVal}}
+\DoxyCodeLine{00510\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00511\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_number_val_t_a0d5d18abc91523a05fb750edcaa73e2a}{JsonbFloatVal::setVal}}(\textcolor{keywordtype}{float}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00512\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_a7283345d095683fd5e3a75cb4d3b8410}{isFloat}}())\ \{}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00514\ \ \ \ \ \}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_number_val_t_a7bcc7b5bf1b1d3c6b24330f66bbcb098}{num\_}}\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00517\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00518\ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \textcolor{comment}{//\ A\ class\ to\ get\ an\ integer}}
+\DoxyCodeLine{00521\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_int_val}{JsonbIntVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \{}
+\DoxyCodeLine{00522\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00523\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt8Val}}*)\textcolor{keyword}{this})-\/>val();}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt16Val}}*)\textcolor{keyword}{this})-\/>val();}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt32Val}}*)\textcolor{keyword}{this})-\/>val();}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt64Val}}*)\textcolor{keyword}{this})-\/>val();}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00536\ \ \ \ \ \}}
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_a97c9488dcf224ffb0f1c7ec97a4a0126}{setVal}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}})\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ <\ std::numeric\_limits<int8\_t>::min()\ ||}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ >\ std::numeric\_limits<int8\_t>::max())}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt8Val}}*)\textcolor{keyword}{this})-\/>setVal((int8\_t)\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}});}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ <\ std::numeric\_limits<int16\_t>::min()\ ||}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ >\ std::numeric\_limits<int16\_t>::max())}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt16Val}}*)\textcolor{keyword}{this})-\/>setVal((int16\_t)\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}});}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ <\ std::numeric\_limits<int32\_t>::min()\ ||}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}}\ >\ std::numeric\_limits<int32\_t>::max())}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt32Val}}*)\textcolor{keyword}{this})-\/>setVal((int32\_t)\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}});}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_number_val_t}{JsonbInt64Val}}*)\textcolor{keyword}{this})-\/>setVal(\mbox{\hyperlink{classdoris_1_1_jsonb_int_val_af6f3de8013337a8a15cc37c55d801bdc}{val}});}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \ \ \}}
+\DoxyCodeLine{00560\ \};}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00563\ \textcolor{comment}{\ *\ BlobVal\ is\ the\ base\ class\ (derived\ from\ JsonbValue)\ for\ string\ and\ binary}}
+\DoxyCodeLine{00564\ \textcolor{comment}{\ *\ types.\ The\ size\_\ indicates\ the\ total\ bytes\ of\ the\ payload\_.}}
+\DoxyCodeLine{00565\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00566\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \{}
+\DoxyCodeLine{00567\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ blob\ payload\ only}}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_ac4639c7c531b32d7756df141862da85d}{getBlobLen}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}};\ \}}
+\DoxyCodeLine{00570\ }
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{comment}{//\ return\ the\ blob\ as\ byte\ array}}
+\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a25ced9429f63037d504abe14f0c5a6d8}{getBlob}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};\ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ total\ packed\ bytes}}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a990616ac191ea4ba5cdc1e8a84f73388}{JsonbValue}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}})\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}};\ \}}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}};}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00579\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[0];}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \ \ \ \ \textcolor{comment}{//\ set\ new\ blob\ bytes}}
+\DoxyCodeLine{00583\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_ac8edbf9218f55128fae608049832fb3c}{internalSetVal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ blob,\ uint32\_t\ blobSize)\ \{}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ we\ cannot\ fit\ the\ new\ blob,\ fail\ the\ operation}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (blobSize\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}})\ \{}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}},\ blob,\ blobSize);}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ reset\ of\ the\ bytes\ to\ 0.\ \ Note\ we\ cannot\ change\ the\ size\_\ of\ the}}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ current\ payload,\ as\ all\ values\ are\ packed.}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ blobSize,\ 0,\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}}\ -\/\ blobSize);}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00596\ \ \ \ \ \}}
+\DoxyCodeLine{00597\ }
+\DoxyCodeLine{00598\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a3458041822bcd12be580c2ae007f241c}{JsonbBlobVal}}();}
+\DoxyCodeLine{00599\ \};}
+\DoxyCodeLine{00600\ }
+\DoxyCodeLine{00601\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00602\ \textcolor{comment}{\ *\ Binary\ type}}
+\DoxyCodeLine{00603\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00604\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_binary_val}{JsonbBinaryVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}\ \{}
+\DoxyCodeLine{00605\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00606\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_binary_val_ae0db12f248d88196b7d49923733c9049}{setVal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ blob,\ uint32\_t\ blobSize)\ \{}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_aee3ba44cd3f14501633ae2e8ea04b4d0}{isBinary}}())\ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_ac8edbf9218f55128fae608049832fb3c}{internalSetVal}}(blob,\ blobSize);}
+\DoxyCodeLine{00612\ \ \ \ \ \}}
+\DoxyCodeLine{00613\ }
+\DoxyCodeLine{00614\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00615\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_binary_val_a68b16ba63755d3a0b07814b78ab01dd6}{JsonbBinaryVal}}();}
+\DoxyCodeLine{00616\ \};}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00619\ \textcolor{comment}{\ *\ String\ type}}
+\DoxyCodeLine{00620\ \textcolor{comment}{\ *\ Note:\ JSONB\ string\ may\ not\ be\ a\ c-\/string\ (NULL-\/terminated)}}
+\DoxyCodeLine{00621\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00622\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_string_val}{JsonbStringVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}\ \{}
+\DoxyCodeLine{00623\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_string_val_ad50c653eb1dde8acd703388055e4ca55}{setVal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str,\ uint32\_t\ blobSize)\ \{}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_value_abc9dc0708ec1aae2309621664fa8e5a4}{isString}}())\ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_ac8edbf9218f55128fae608049832fb3c}{internalSetVal}}(str,\ blobSize);}
+\DoxyCodeLine{00630\ \ \ \ \ \}}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00632\ \textcolor{comment}{\ \ \ \ This\ function\ return\ the\ actual\ size\ of\ a\ string.\ Since\ for}}
+\DoxyCodeLine{00633\ \textcolor{comment}{\ \ \ \ a\ string,\ it\ can\ be\ null-\/terminated\ with\ null\ paddings\ or\ it}}
+\DoxyCodeLine{00634\ \textcolor{comment}{\ \ \ \ can\ take\ all\ the\ space\ in\ the\ payload\_\ without\ null\ in\ the\ end.}}
+\DoxyCodeLine{00635\ \textcolor{comment}{\ \ \ \ So\ we\ need\ to\ check\ it\ to\ get\ the\ true\ actual\ length\ of\ a\ string.}}
+\DoxyCodeLine{00636\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_jsonb_string_val_a247bd0fb9923075af341c93f52ff7b9b}{length}}()\ \{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It's\ an\ empty\ string}}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ string\ stored\ takes\ all\ the\ spaces\ in\ payload\_}}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}}\ -\/\ 1]\ !=\ 0)\ \{}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It's\ shorter\ than\ the\ size\ of\ payload\_}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ strnlen(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}},\ \mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}});}
+\DoxyCodeLine{00646\ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \ \ \textcolor{comment}{//\ convert\ the\ string\ (case\ insensitive)\ to\ a\ boolean\ value}}
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{comment}{//\ "{}false"{}:\ 0}}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{comment}{//\ "{}true"{}:\ 1}}
+\DoxyCodeLine{00650\ \ \ \ \ \textcolor{comment}{//\ all\ other\ strings:\ -\/1}}
+\DoxyCodeLine{00651\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_string_val_ab4ce4e60b4773dd5b913c1c0847b240d}{getBoolVal}}()\ \{}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}}\ ==\ 4\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[0])\ ==\ \textcolor{charliteral}{'t'}\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[1])\ ==\ \textcolor{charliteral}{'r'}\ \&\&}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[2])\ ==\ \textcolor{charliteral}{'u'}\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[3])\ ==\ \textcolor{charliteral}{'e'})}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a13656a4861697290c264e82cab25ecfe}{size\_}}\ ==\ 5\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[0])\ ==\ \textcolor{charliteral}{'f'}\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[1])\ ==\ \textcolor{charliteral}{'a'}\ \&\&}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[2])\ ==\ \textcolor{charliteral}{'l'}\ \&\&\ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[3])\ ==\ \textcolor{charliteral}{'s'}\ \&\&}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tolower(\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[4])\ ==\ \textcolor{charliteral}{'e'})}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00661\ \ \ \ \ \}}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00664\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_string_val_ae1eed46fb13348d5cab30212897dcdc3}{JsonbStringVal}}();}
+\DoxyCodeLine{00665\ \};}
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00668\ \textcolor{comment}{\ *\ ContainerVal\ is\ the\ base\ class\ (derived\ from\ JsonbValue)\ for\ object\ and}}
+\DoxyCodeLine{00669\ \textcolor{comment}{\ *\ array\ types.\ The\ size\_\ indicates\ the\ total\ bytes\ of\ the\ payload\_.}}
+\DoxyCodeLine{00670\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00671\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \{}
+\DoxyCodeLine{00672\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ container\ payload\ only}}
+\DoxyCodeLine{00674\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_container_val_a8c24698692c5d141bdfeec5422f64a3a}{getContainerSize}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};\ \}}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{comment}{//\ return\ the\ container\ payload\ as\ byte\ array}}
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_container_val_a72a3b9e9809711c33595f37623e6ec36}{getPayload}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};\ \}}
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ total\ packed\ bytes}}
+\DoxyCodeLine{00680\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_container_val_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a990616ac191ea4ba5cdc1e8a84f73388}{JsonbValue}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}})\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};\ \}}
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}};}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00684\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}[0];}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_container_val_a45a83e933486aec05cd271296c19ad3f}{ContainerVal}}();}
+\DoxyCodeLine{00688\ \};}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00691\ \textcolor{comment}{\ *\ Object\ type}}
+\DoxyCodeLine{00692\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00693\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}\ \{}
+\DoxyCodeLine{00694\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00695\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a5b9c4f243d1d9425995a28f7608e36ac}{value\_type}};}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{value\_type}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_ad25b518036b886d8f35a3c059301d007}{pointer}};}
+\DoxyCodeLine{00697\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{value\_type}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_a13c57dab17e2c903cadfa5e35ba84064}{const\_pointer}};}
+\DoxyCodeLine{00698\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT<pointer,\ ObjectVal>}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a2d7833c352918fff50f4c64bf55734fb}{iterator}};}
+\DoxyCodeLine{00699\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT<const\_pointer,\ ObjectVal>}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a288077e191520f16c6ce67b92da516ef}{const\_iterator}};}
+\DoxyCodeLine{00700\ }
+\DoxyCodeLine{00701\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00702\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key,\ handler);}
+\DoxyCodeLine{00704\ \ \ \ \ \}}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a0f60bdead88df2baac8b3ef509c1319a}{search}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key,\ klen,\ handler);}
+\DoxyCodeLine{00708\ \ \ \ \ \}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a7d809375ae8d59384427cb3fb597efbf}{search}}(\textcolor{keywordtype}{int}\ key\_id)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a7d809375ae8d59384427cb3fb597efbf}{search}}(key\_id);\ \}}
+\DoxyCodeLine{00711\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a334f291c624dc107bd053a9c9a56911c}{search}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!key)\ \{}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}();}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key,\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})strlen(key),\ handler);}
+\DoxyCodeLine{00716\ \ \ \ \ \}}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a31dae829c2ae408773899ec4baecbcec}{search}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!key\ ||\ !klen)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}();}
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ key\_id\ =\ -\/1;}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (handler\ \&\&\ (key\_id\ =\ handler(key,\ klen))\ >=\ 0)\ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key\_id);}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a0d599db217cc57aa7a790d1c14ca7b7b}{internalSearch}}(key,\ klen);}
+\DoxyCodeLine{00726\ \ \ \ \ \}}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a4c394d844c6c0cf182e308f204c49e43}{search}}(\textcolor{keywordtype}{int}\ key\_id)\ \{}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_id\ <\ 0\ ||\ key\_id\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b8b739ffd021c7f23fa52e94ebdfbd8}{JsonbKeyValue::sMaxKeyId}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}();}
+\DoxyCodeLine{00730\ }
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pch\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fence\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00733\ }
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (pch\ <\ fence)\ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}*\ pkey\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}*)(pch);}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a9567fa102ac7bef3b304981a0499f654}{klen}}()\ \&\&\ key\_id\ ==\ pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5d857f2659203ea97b85c2af9e09b3a2}{getKeyId}}())\ \{}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a2d7833c352918fff50f4c64bf55734fb}{iterator}}(pkey);}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \ \ \ \ pch\ +=\ pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}();}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ assert(pch\ ==\ fence);}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}();}
+\DoxyCodeLine{00744\ \ \ \ \ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_a78eb60b6213565265b534e778c42d94b}{find}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a78eb60b6213565265b534e778c42d94b}{find}}(key,\ handler);}
+\DoxyCodeLine{00748\ \ \ \ \ \}}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_ae4df68654507a069a5b93a81379f9698}{find}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a78eb60b6213565265b534e778c42d94b}{find}}(key,\ klen,\ handler);}
+\DoxyCodeLine{00752\ \ \ \ \ \}}
+\DoxyCodeLine{00753\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_a5bed659f76e6900223fe338d54b677a2}{find}}(\textcolor{keywordtype}{int}\ key\_id)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{classdoris_1_1_object_val_a5bed659f76e6900223fe338d54b677a2}{find}}(key\_id);\ \}}
+\DoxyCodeLine{00754\ }
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{comment}{//\ find\ the\ JSONB\ value\ by\ a\ key\ string\ (null\ terminated)}}
+\DoxyCodeLine{00756\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_a72c16c67fad9e6b9e04e86f158213a12}{find}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!key)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a78eb60b6213565265b534e778c42d94b}{find}}(key,\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})strlen(key),\ handler);}
+\DoxyCodeLine{00759\ \ \ \ \ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{comment}{//\ find\ the\ JSONB\ value\ by\ a\ key\ string\ (with\ length)}}
+\DoxyCodeLine{00762\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_ab071c5937fa7df3415bd28a5be253172}{find}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen,\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ kv\ =\ \mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key,\ klen,\ handler);}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}()\ ==\ kv)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kv-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a3ad4ddad2506af3e6ee43e36ff9e795a}{value}}();}
+\DoxyCodeLine{00766\ \ \ \ \ \}}
+\DoxyCodeLine{00767\ }
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{comment}{//\ find\ the\ JSONB\ value\ by\ a\ key\ dictionary\ ID}}
+\DoxyCodeLine{00769\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_object_val_a7ec8508b3c97a2c8dac38bfab8610c2b}{find}}(\textcolor{keywordtype}{int}\ key\_id)\ \{}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ kv\ =\ \mbox{\hyperlink{classdoris_1_1_object_val_a5fc9fb08710a66403c9d6690ab75b1f5}{search}}(key\_id);}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}()\ ==\ kv)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kv-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a3ad4ddad2506af3e6ee43e36ff9e795a}{value}}();}
+\DoxyCodeLine{00773\ \ \ \ \ \}}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_ad69bd11391be1a1dba5c8202259664f8}{begin}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a2d7833c352918fff50f4c64bf55734fb}{iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{pointer}})\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a29305669b60ca1680752e2fc3592ba99}{begin}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a288077e191520f16c6ce67b92da516ef}{const\_iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{pointer}})\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a2d7833c352918fff50f4c64bf55734fb}{iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{pointer}})(\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}}));\ \}}
+\DoxyCodeLine{00780\ }
+\DoxyCodeLine{00781\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a288077e191520f16c6ce67b92da516ef}{const\_iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{pointer}})(\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}}));\ \}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00784\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_object_val_a0d599db217cc57aa7a790d1c14ca7b7b}{internalSearch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen)\ \{}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pch\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fence\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00787\ }
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (pch\ <\ fence)\ \{}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}*\ pkey\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_key_value}{JsonbKeyValue}}*)(pch);}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (klen\ ==\ pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a9567fa102ac7bef3b304981a0499f654}{klen}}()\ \&\&\ strncmp(key,\ pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a9b137b7fa73013346990461d3150df96}{getKeyStr}}(),\ klen)\ ==\ 0)\ \{}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_a2d7833c352918fff50f4c64bf55734fb}{iterator}}(pkey);}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ \ \ \ pch\ +=\ pkey-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}();}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ assert(pch\ ==\ fence);}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_object_val_acad38d52497a975bfb6f2f6acd76631f}{end}}();}
+\DoxyCodeLine{00799\ \ \ \ \ \}}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00802\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_val_abdbecd42cfe97c4177a8eac3863ee5a3}{ObjectVal}}();}
+\DoxyCodeLine{00803\ \};}
+\DoxyCodeLine{00804\ }
+\DoxyCodeLine{00805\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00806\ \textcolor{comment}{\ *\ Array\ type}}
+\DoxyCodeLine{00807\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00808\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_array_val}{ArrayVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}\ \{}
+\DoxyCodeLine{00809\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00810\ \ \ \ \ \textcolor{comment}{//\ get\ the\ JSONB\ value\ at\ index}}
+\DoxyCodeLine{00811\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_array_val_afaa1a87893b8c92e2a2f1d2cc591a327}{get}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ <\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00813\ }
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pch\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fence\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00816\ }
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (pch\ <\ fence\ \&\&\ idx-\/-\/\ >\ 0)\ pch\ +=\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)pch)-\/>numPackedBytes();}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ >\ 0\ ||\ pch\ ==\ fence)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00819\ }
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)pch;}
+\DoxyCodeLine{00821\ \ \ \ \ \}}
+\DoxyCodeLine{00822\ }
+\DoxyCodeLine{00823\ \ \ \ \ \textcolor{comment}{//\ Get\ number\ of\ elements\ in\ array}}
+\DoxyCodeLine{00824\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_array_val_a50284d98f234768373b2dcf9c8bc51f1}{numElem}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pch\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fence\ =\ \mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00827\ }
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ num\ =\ 0;}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (pch\ <\ fence)\ \{}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ ++num;}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ pch\ +=\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)pch)-\/>numPackedBytes();}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ assert(pch\ ==\ fence);}
+\DoxyCodeLine{00835\ }
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ num;}
+\DoxyCodeLine{00837\ \ \ \ \ \}}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}\ \mbox{\hyperlink{classdoris_1_1_array_val_aa1d2d1a74cd7c8573e6aeea32eb416a6}{value\_type}};}
+\DoxyCodeLine{00840\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{value\_type}}*\ \mbox{\hyperlink{classdoris_1_1_array_val_ad25b518036b886d8f35a3c059301d007}{pointer}};}
+\DoxyCodeLine{00841\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{value\_type}}*\ \mbox{\hyperlink{classdoris_1_1_array_val_a13c57dab17e2c903cadfa5e35ba84064}{const\_pointer}};}
+\DoxyCodeLine{00842\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT<pointer,\ ArrayVal>}}\ \mbox{\hyperlink{classdoris_1_1_array_val_a0567d38ff3575ebb581b5d6de8ba60e7}{iterator}};}
+\DoxyCodeLine{00843\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{JsonbFwdIteratorT<const\_pointer,\ ArrayVal>}}\ \mbox{\hyperlink{classdoris_1_1_array_val_abe862fa4731222b2447e1ca9dc0d6105}{const\_iterator}};}
+\DoxyCodeLine{00844\ }
+\DoxyCodeLine{00845\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_array_val_ad69bd11391be1a1dba5c8202259664f8}{begin}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_array_val_a0567d38ff3575ebb581b5d6de8ba60e7}{iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{pointer}})\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00846\ }
+\DoxyCodeLine{00847\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_array_val_a29305669b60ca1680752e2fc3592ba99}{begin}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_array_val_abe862fa4731222b2447e1ca9dc0d6105}{const\_iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{pointer}})\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}});\ \}}
+\DoxyCodeLine{00848\ }
+\DoxyCodeLine{00849\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{iterator}}\ \mbox{\hyperlink{classdoris_1_1_array_val_acad38d52497a975bfb6f2f6acd76631f}{end}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_array_val_a0567d38ff3575ebb581b5d6de8ba60e7}{iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{pointer}})(\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}}));\ \}}
+\DoxyCodeLine{00850\ }
+\DoxyCodeLine{00851\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_fwd_iterator_t}{const\_iterator}}\ \mbox{\hyperlink{classdoris_1_1_array_val_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_array_val_abe862fa4731222b2447e1ca9dc0d6105}{const\_iterator}}((\mbox{\hyperlink{classdoris_1_1_jsonb_value}{pointer}})(\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_container_val_a13656a4861697290c264e82cab25ecfe}{size\_}}));\ \}}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00854\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_array_val_a15980d513ddcfba0d209b6e1b9b7ce0e}{ArrayVal}}();}
+\DoxyCodeLine{00855\ \};}
+\DoxyCodeLine{00856\ }
+\DoxyCodeLine{00857\ \textcolor{comment}{//\ Prepare\ an\ empty\ document}}
+\DoxyCodeLine{00858\ \textcolor{comment}{//\ input:\ pb\ -\/\ buuffer/packed\ bytes\ for\ jsonb\ document}}
+\DoxyCodeLine{00859\ \textcolor{comment}{//\ \ \ \ \ \ \ \ size\ -\/\ size\ of\ the\ buffer}}
+\DoxyCodeLine{00860\ \textcolor{comment}{//\ \ \ \ \ \ \ \ type\ -\/\ value\ type\ in\ the\ document}}
+\DoxyCodeLine{00861\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a80e406a4dabf2435ad5914b4effe002a}{JsonbDocument::makeDocument}}(\textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size,\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ type)\ \{}
+\DoxyCodeLine{00862\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pb\ ||\ size\ <\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}))\ \{}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00864\ \ \ \ \ \}}
+\DoxyCodeLine{00865\ }
+\DoxyCodeLine{00866\ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ <\ JsonbType::T\_Null\ ||\ type\ >=\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa34b297af0d2f4a6024a59d0d3a318026}{JsonbType::NUM\_TYPES}})\ \{}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00868\ \ \ \ \ \}}
+\DoxyCodeLine{00869\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ doc\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*)pb;}
+\DoxyCodeLine{00870\ \ \ \ \ \textcolor{comment}{//\ Write\ header}}
+\DoxyCodeLine{00871\ \ \ \ \ doc-\/>header\_.ver\_\ =\ \mbox{\hyperlink{jsonb__document_8h_a8ce5f63ceac6ce146e8c649e17113abc}{JSONB\_VER}};}
+\DoxyCodeLine{00872\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ doc-\/>getValue();}
+\DoxyCodeLine{00873\ \ \ \ \ \textcolor{comment}{//\ Write\ type}}
+\DoxyCodeLine{00874\ \ \ \ \ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}-\/>type\_\ =\ type;}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{comment}{//\ Set\ empty\ JsonbValue}}
+\DoxyCodeLine{00877\ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}})}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ ((\mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}*)\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})-\/>size\_\ =\ 0;}
+\DoxyCodeLine{00879\ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}})}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ ((\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}*)\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})-\/>size\_\ =\ 0;}
+\DoxyCodeLine{00881\ \ \ \ \ \textcolor{keywordflow}{return}\ doc;}
+\DoxyCodeLine{00882\ \}}
+\DoxyCodeLine{00883\ }
+\DoxyCodeLine{00884\ \textcolor{comment}{//\ Prepare\ a\ document\ from\ an\ JsonbValue}}
+\DoxyCodeLine{00885\ \textcolor{comment}{//\ input:\ pb\ -\/\ buuffer/packed\ bytes\ for\ jsonb\ document}}
+\DoxyCodeLine{00886\ \textcolor{comment}{//\ \ \ \ \ \ \ \ size\ -\/\ size\ of\ the\ buffer}}
+\DoxyCodeLine{00887\ \textcolor{comment}{//\ \ \ \ \ \ \ \ rval\ -\/\ jsonb\ value\ to\ be\ copied\ into\ the\ document}}
+\DoxyCodeLine{00888\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a80e406a4dabf2435ad5914b4effe002a}{JsonbDocument::makeDocument}}(\textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ rval)\ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \textcolor{comment}{//\ checking\ if\ the\ buffer\ is\ big\ enough\ to\ store\ the\ value}}
+\DoxyCodeLine{00890\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pb\ ||\ !rval\ ||\ size\ <\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ rval-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}())\ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00892\ \ \ \ \ \}}
+\DoxyCodeLine{00893\ }
+\DoxyCodeLine{00894\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}}\ type\ =\ rval-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a552abcd9b973a92d97588cacbe8da1e3}{type}}();}
+\DoxyCodeLine{00895\ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ <\ JsonbType::T\_Null\ ||\ type\ >=\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa34b297af0d2f4a6024a59d0d3a318026}{JsonbType::NUM\_TYPES}})\ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00897\ \ \ \ \ \}}
+\DoxyCodeLine{00898\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ doc\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*)pb;}
+\DoxyCodeLine{00899\ \ \ \ \ \textcolor{comment}{//\ Write\ header}}
+\DoxyCodeLine{00900\ \ \ \ \ doc-\/>header\_.ver\_\ =\ \mbox{\hyperlink{jsonb__document_8h_a8ce5f63ceac6ce146e8c649e17113abc}{JSONB\_VER}};}
+\DoxyCodeLine{00901\ \ \ \ \ \textcolor{comment}{//\ get\ the\ starting\ byte\ of\ the\ value}}
+\DoxyCodeLine{00902\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ doc-\/>getValue();}
+\DoxyCodeLine{00903\ \ \ \ \ \textcolor{comment}{//\ binary\ copy\ of\ the\ rval}}
+\DoxyCodeLine{00904\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ !=\ rval)\ \textcolor{comment}{//\ copy\ not\ necessary\ if\ values\ are\ the\ same}}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ memmove(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ rval,\ rval-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}());}
+\DoxyCodeLine{00906\ }
+\DoxyCodeLine{00907\ \ \ \ \ \textcolor{keywordflow}{return}\ doc;}
+\DoxyCodeLine{00908\ \}}
+\DoxyCodeLine{00909\ }
+\DoxyCodeLine{00910\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a6f3d6d8641e307033b92fc8a13385afb}{JsonbDocument::createDocument}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size)\ \{}
+\DoxyCodeLine{00911\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pb\ ||\ size\ <\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}))\ \{}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00913\ \ \ \ \ \}}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ doc\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*)pb;}
+\DoxyCodeLine{00916\ \ \ \ \ \textcolor{keywordflow}{if}\ (doc-\/>header\_.ver\_\ !=\ \mbox{\hyperlink{jsonb__document_8h_a8ce5f63ceac6ce146e8c649e17113abc}{JSONB\_VER}})\ \{}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00918\ \ \ \ \ \}}
+\DoxyCodeLine{00919\ }
+\DoxyCodeLine{00920\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ val\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)doc-\/>\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00921\ \ \ \ \ if\ (val-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a552abcd9b973a92d97588cacbe8da1e3}{type}}()\ <\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}}\ ||\ val-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a552abcd9b973a92d97588cacbe8da1e3}{type}}()\ >=\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa34b297af0d2f4a6024a59d0d3a318026}{JsonbType::NUM\_TYPES}}\ ||}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ size\ !=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ val-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}())\ \{}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00924\ \ \ \ \ \}}
+\DoxyCodeLine{00925\ }
+\DoxyCodeLine{00926\ \ \ \ \ \textcolor{keywordflow}{return}\ doc;}
+\DoxyCodeLine{00927\ \}}
+\DoxyCodeLine{00928\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a5003889c972d7009cea81db89e28c9e2}{JsonbDocument::setValue}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00929\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}},\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}-\/>numPackedBytes());}
+\DoxyCodeLine{00930\ \}}
+\DoxyCodeLine{00931\ }
+\DoxyCodeLine{00932\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a944f6721536b96e961eb8e1f3dab71af}{JsonbDocument::createValue}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ pb,\ uint32\_t\ size)\ \{}
+\DoxyCodeLine{00933\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pb\ ||\ size\ <\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}))\ \{}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00935\ \ \ \ \ \}}
+\DoxyCodeLine{00936\ }
+\DoxyCodeLine{00937\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ doc\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*)pb;}
+\DoxyCodeLine{00938\ \ \ \ \ \textcolor{keywordflow}{if}\ (doc-\/>header\_.ver\_\ !=\ \mbox{\hyperlink{jsonb__document_8h_a8ce5f63ceac6ce146e8c649e17113abc}{JSONB\_VER}})\ \{}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00940\ \ \ \ \ \}}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ val\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)doc-\/>\mbox{\hyperlink{classdoris_1_1_container_val_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}};}
+\DoxyCodeLine{00943\ \ \ \ \ if\ (size\ !=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_jsonb_document_1_1_jsonb_header}{JsonbHeader}})\ +\ val-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}())\ \{}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00945\ \ \ \ \ \}}
+\DoxyCodeLine{00946\ }
+\DoxyCodeLine{00947\ \ \ \ \ \textcolor{keywordflow}{return}\ val;}
+\DoxyCodeLine{00948\ \}}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a5783222a97e0bef6b23ff66a1c23e357}{JsonbDocument::numPackedBytes}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)\mbox{\hyperlink{classdoris_1_1_jsonb_document_a966f07d6d648ed29022dc2c0eede9abb}{payload\_}})-\/>numPackedBytes()\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_document_ad4925ffd113f7e6fb79e04612c3420e1}{header\_}});}
+\DoxyCodeLine{00952\ \}}
+\DoxyCodeLine{00953\ }
+\DoxyCodeLine{00954\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a5783222a97e0bef6b23ff66a1c23e357}{JsonbKeyValue::numPackedBytes}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00955\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ ks\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a0e125c84b866cf6b61726dca18575da4}{keyPackedBytes}}();}
+\DoxyCodeLine{00956\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ val\ =\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*)(((\textcolor{keywordtype}{char}*)\textcolor{keyword}{this})\ +\ ks);}
+\DoxyCodeLine{00957\ \ \ \ \ \textcolor{keywordflow}{return}\ ks\ +\ val-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{numPackedBytes}}();}
+\DoxyCodeLine{00958\ \}}
+\DoxyCodeLine{00959\ }
+\DoxyCodeLine{00960\ \textcolor{comment}{//\ Poor\ man's\ "{}virtual"{}\ function\ JsonbValue::numPackedBytes}}
+\DoxyCodeLine{00961\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a5783222a97e0bef6b23ff66a1c23e357}{JsonbValue::numPackedBytes}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00962\ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{00963\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}}:}
+\DoxyCodeLine{00964\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}}:}
+\DoxyCodeLine{00965\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}}:\ \{}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}});}
+\DoxyCodeLine{00967\ \ \ \ \ \}}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:\ \{}
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(int8\_t);}
+\DoxyCodeLine{00971\ \ \ \ \ \}}
+\DoxyCodeLine{00972\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:\ \{}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(int16\_t);}
+\DoxyCodeLine{00974\ \ \ \ \ \}}
+\DoxyCodeLine{00975\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:\ \{}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(int32\_t);}
+\DoxyCodeLine{00977\ \ \ \ \ \}}
+\DoxyCodeLine{00978\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:\ \{}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(int64\_t);}
+\DoxyCodeLine{00980\ \ \ \ \ \}}
+\DoxyCodeLine{00981\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}}:\ \{}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{double});}
+\DoxyCodeLine{00983\ \ \ \ \ \}}
+\DoxyCodeLine{00984\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}}:\ \{}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float});}
+\DoxyCodeLine{00986\ \ \ \ \ \}}
+\DoxyCodeLine{00987\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{JsonbType::T\_Int128}}:\ \{}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ +\ \textcolor{keyword}{sizeof}(\_\_int128\_t);}
+\DoxyCodeLine{00989\ \ \ \ \ \}}
+\DoxyCodeLine{00990\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}}:}
+\DoxyCodeLine{00991\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}}:\ \{}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}*)(\textcolor{keyword}{this}))-\/>numPackedBytes();}
+\DoxyCodeLine{00993\ \ \ \ \ \}}
+\DoxyCodeLine{00994\ }
+\DoxyCodeLine{00995\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}:}
+\DoxyCodeLine{00996\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}}:\ \{}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}*)(\textcolor{keyword}{this}))-\/>numPackedBytes();}
+\DoxyCodeLine{00998\ \ \ \ \ \}}
+\DoxyCodeLine{00999\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{01001\ \ \ \ \ \}}
+\DoxyCodeLine{01002\ \}}
+\DoxyCodeLine{01003\ }
+\DoxyCodeLine{01004\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a69622a843a8c7f05bf706cf80fad6951}{JsonbValue::size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01005\ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{01006\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:\ \{}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(int8\_t);}
+\DoxyCodeLine{01008\ \ \ \ \ \}}
+\DoxyCodeLine{01009\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:\ \{}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(int16\_t);}
+\DoxyCodeLine{01011\ \ \ \ \ \}}
+\DoxyCodeLine{01012\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:\ \{}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(int32\_t);}
+\DoxyCodeLine{01014\ \ \ \ \ \}}
+\DoxyCodeLine{01015\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:\ \{}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(int64\_t);}
+\DoxyCodeLine{01017\ \ \ \ \ \}}
+\DoxyCodeLine{01018\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}}:\ \{}
+\DoxyCodeLine{01019\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(double);}
+\DoxyCodeLine{01020\ \ \ \ \ \}}
+\DoxyCodeLine{01021\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}}:\ \{}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(float);}
+\DoxyCodeLine{01023\ \ \ \ \ \}}
+\DoxyCodeLine{01024\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{JsonbType::T\_Int128}}:\ \{}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\_\_int128\_t);}
+\DoxyCodeLine{01026\ \ \ \ \ \}}
+\DoxyCodeLine{01027\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}}:}
+\DoxyCodeLine{01028\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}}:\ \{}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}*)(\textcolor{keyword}{this}))-\/>getBlobLen();}
+\DoxyCodeLine{01030\ \ \ \ \ \}}
+\DoxyCodeLine{01031\ }
+\DoxyCodeLine{01032\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}:}
+\DoxyCodeLine{01033\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}}:\ \{}
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}*)(\textcolor{keyword}{this}))-\/>getContainerSize();}
+\DoxyCodeLine{01035\ \ \ \ \ \}}
+\DoxyCodeLine{01036\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}}:}
+\DoxyCodeLine{01037\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}}:}
+\DoxyCodeLine{01038\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}}:}
+\DoxyCodeLine{01039\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{01041\ \ \ \ \ \}}
+\DoxyCodeLine{01042\ \}}
+\DoxyCodeLine{01043\ }
+\DoxyCodeLine{01044\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a0375887d096a88047754cc1e6691c909}{JsonbValue::getValuePtr}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01045\ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}})\ \{}
+\DoxyCodeLine{01046\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}}:}
+\DoxyCodeLine{01047\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}}:}
+\DoxyCodeLine{01048\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}}:}
+\DoxyCodeLine{01049\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}}:}
+\DoxyCodeLine{01050\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}}:}
+\DoxyCodeLine{01051\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}}:}
+\DoxyCodeLine{01052\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{JsonbType::T\_Int128}}:}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keywordtype}{char}*)\textcolor{keyword}{this})\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365f}{JsonbType}});}
+\DoxyCodeLine{01054\ }
+\DoxyCodeLine{01055\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}}:}
+\DoxyCodeLine{01056\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}}:}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_blob_val}{JsonbBlobVal}}*)(\textcolor{keyword}{this}))-\/>getBlob();}
+\DoxyCodeLine{01058\ }
+\DoxyCodeLine{01059\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}:}
+\DoxyCodeLine{01060\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}}:}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_container_val}{ContainerVal}}*)(\textcolor{keyword}{this}))-\/>getPayload();}
+\DoxyCodeLine{01062\ }
+\DoxyCodeLine{01063\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}}:}
+\DoxyCodeLine{01064\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}}:}
+\DoxyCodeLine{01065\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}}:}
+\DoxyCodeLine{01066\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01068\ \ \ \ \ \}}
+\DoxyCodeLine{01069\ \}}
+\DoxyCodeLine{01070\ }
+\DoxyCodeLine{01071\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_value_a381b4a784cc566b417099f59417dc640}{JsonbValue::findPath}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key\_path,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ kp\_len,}
+\DoxyCodeLine{01072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ delim\ =\ \textcolor{stringliteral}{"{}."{}},\ \mbox{\hyperlink{namespacedoris_a194b263a4cc1b0fc18aeb1d5994babf1}{hDictFind}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{01073\ \ \ \ \ \textcolor{keywordflow}{if}\ (!key\_path)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01074\ \ \ \ \ \textcolor{keywordflow}{if}\ (kp\_len\ ==\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{this};}
+\DoxyCodeLine{01075\ }
+\DoxyCodeLine{01076\ \ \ \ \ \textcolor{comment}{//\ skip\ \$\ and\ .\ at\ beginning}}
+\DoxyCodeLine{01077\ \ \ \ \ \textcolor{keywordflow}{if}\ (kp\_len\ >\ 0\ \&\&\ *key\_path\ ==\ \textcolor{charliteral}{'\$'})\ \{}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ key\_path++;}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ kp\_len-\/-\/;}
+\DoxyCodeLine{01080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (kp\_len\ >\ 0\ \&\&\ *key\_path\ ==\ \textcolor{charliteral}{'.'})\ \{}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ \ \ \ \ \ \ key\_path++;}
+\DoxyCodeLine{01082\ \ \ \ \ \ \ \ \ \ \ \ \ kp\_len-\/-\/;}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01084\ \ \ \ \ \}}
+\DoxyCodeLine{01085\ }
+\DoxyCodeLine{01086\ \ \ \ \ \textcolor{keywordflow}{if}\ (kp\_len\ ==\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{this};}
+\DoxyCodeLine{01087\ }
+\DoxyCodeLine{01088\ \ \ \ \ \textcolor{keywordflow}{if}\ (!delim)\ delim\ =\ \textcolor{stringliteral}{"{}."{}};\ \textcolor{comment}{//\ default\ delimiter}}
+\DoxyCodeLine{01089\ }
+\DoxyCodeLine{01090\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ pval\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{01091\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fence\ =\ key\_path\ +\ kp\_len;}
+\DoxyCodeLine{01092\ \ \ \ \ \textcolor{keywordtype}{char}\ idx\_buf[21];\ \textcolor{comment}{//\ buffer\ to\ parse\ array\ index\ (integer\ value)}}
+\DoxyCodeLine{01093\ }
+\DoxyCodeLine{01094\ \ \ \ \ \textcolor{keywordflow}{while}\ (pval\ \&\&\ key\_path\ <\ fence)\ \{}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key\ =\ key\_path;}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ klen\ =\ 0;}
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ left\_bracket\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ right\_bracket\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ idx\_len\ =\ 0;}
+\DoxyCodeLine{01100\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ current\ key\ and\ []\ bracket\ position}}
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ key\_path\ !=\ fence\ \&\&\ *key\_path\ !=\ *delim;\ ++key\_path,\ ++klen)\ \{}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{charliteral}{'['}\ ==\ *key\_path)\ \{}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ left\_bracket\ =\ key\_path;}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{charliteral}{']'}\ ==\ *key\_path)\ \{}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ right\_bracket\ =\ key\_path;}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01108\ }
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ brackets\ and\ array\ index\ length}}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (left\_bracket\ ||\ right\_bracket)\ \{}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!left\_bracket\ ||\ !right\_bracket)\ \{}
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ the\ last\ char\ is\ ]}}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\ +\ klen\ -\/\ 1\ !=\ right\_bracket)\ \{}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ part\ before\ left\_bracket\ is\ object\ key}}
+\DoxyCodeLine{01119\ \ \ \ \ \ \ \ \ \ \ \ \ klen\ =\ left\_bracket\ -\/\ key;}
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ part\ between\ left\_bracket\ and\ right\_bracket\ is\ array\ index}}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \ \ \ \ idx\_len\ =\ right\_bracket\ -\/\ left\_bracket\ -\/\ 1;}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01123\ }
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!klen\ \&\&\ !idx\_len)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01125\ }
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ get\ value\ of\ key\ in\ object}}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (klen)\ \{}
+\DoxyCodeLine{01128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(pval-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}}))\ \{}
+\DoxyCodeLine{01129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pval\ =\ ((\mbox{\hyperlink{classdoris_1_1_object_val}{ObjectVal}}*)pval)-\/>find(key,\ klen,\ handler);}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pval)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01135\ }
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ get\ value\ at\ idx\ in\ array}}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (idx\_len)\ \{}
+\DoxyCodeLine{01138\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(pval-\/>\mbox{\hyperlink{classdoris_1_1_jsonb_value_a5e9f13b3335eadf937b2d41b796bd22f}{type\_}}\ ==\ \mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}}))\ \{}
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (idx\_len\ >=\ \textcolor{keyword}{sizeof}(idx\_buf))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(idx\_buf,\ left\_bracket\ +\ 1,\ idx\_len);}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ idx\_buf[idx\_len]\ =\ 0;}
+\DoxyCodeLine{01142\ }
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ end\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ =\ (int)strtol(idx\_buf,\ \&end,\ 10);}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (end\ \&\&\ !*end)}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pval\ =\ ((\mbox{\hyperlink{classdoris_1_1_array_val}{ArrayVal}}*)pval)-\/>get(\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}});}
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ incorrect\ index\ string}}
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01150\ }
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ doris::StringParser::ParseResult\ parse\_result;}}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ int\ index\ =\ doris::StringParser::string\_to\_int<int>(left\_bracket\ +\ 1,\ idx\_len,\ \&parse\_result);}}
+\DoxyCodeLine{01153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ (parse\_result\ ==\ doris::StringParser::ParseResult::PARSE\_SUCCESS)}}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01156\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01157\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01158\ }
+\DoxyCodeLine{01159\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ skip\ the\ delimiter}}
+\DoxyCodeLine{01160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_path\ <\ fence)\ \{}
+\DoxyCodeLine{01161\ \ \ \ \ \ \ \ \ \ \ \ \ ++key\_path;}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_path\ ==\ fence)}
+\DoxyCodeLine{01163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ have\ a\ trailing\ delimiter\ at\ the\ end}}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01165\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01166\ \ \ \ \ \}}
+\DoxyCodeLine{01167\ }
+\DoxyCodeLine{01168\ \ \ \ \ \textcolor{keywordflow}{return}\ pval;}
+\DoxyCodeLine{01169\ \}}
+\DoxyCodeLine{01170\ }
+\DoxyCodeLine{01171\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+\DoxyCodeLine{01172\ }
+\DoxyCodeLine{01173\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{01174\ }
+\DoxyCodeLine{01175\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ JSONB\_JSONBDOCUMENT\_H}}
+
+\end{DoxyCode}

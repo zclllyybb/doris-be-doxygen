@@ -1,0 +1,393 @@
+\hypertarget{casts_8h_source}{}\doxysection{casts.\+h}
+\label{casts_8h_source}\index{/Users/dabowang/be\_all/gutil/casts.h@{/Users/dabowang/be\_all/gutil/casts.h}}
+\mbox{\hyperlink{casts_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2009\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Various\ Google-\/specific\ casting\ templates.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ This\ code\ is\ compiled\ directly\ on\ many\ platforms,\ including\ client}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ platforms\ like\ Windows,\ Mac,\ and\ embedded\ systems.\ \ Before\ making}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ any\ changes\ here,\ make\ sure\ that\ you're\ not\ breaking\ any\ platforms.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <assert.h>}\ \textcolor{comment}{//\ for\ use\ with\ down\_cast<>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{logging_8h}{common/logging.h}}>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <limits.h>}\ \textcolor{comment}{//\ for\ enumeration\ casts\ and\ tests}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <string.h>}\ \textcolor{comment}{//\ for\ memcpy}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{template__util_8h}{gutil/template\_util.h}}"{}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ Use\ implicit\_cast\ as\ a\ safe\ version\ of\ static\_cast\ or\ const\_cast}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ for\ implicit\ conversions.\ For\ example:}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ -\/\ Upcasting\ in\ a\ type\ hierarchy.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ -\/\ Performing\ arithmetic\ conversions\ (int32\ to\ int64,\ int\ to\ double,\ etc.).}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ -\/\ Adding\ const\ or\ volatile\ qualifiers.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ In\ general,\ implicit\_cast\ can\ be\ used\ to\ convert\ this\ code}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ To\ to\ =\ from;}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ DoSomething(to);}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ to\ this}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ DoSomething(implicit\_cast<To>(from));}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ base::identity\_\ is\ used\ to\ make\ a\ non-\/deduced\ context,\ which}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ forces\ all\ callers\ to\ explicitly\ specify\ the\ template\ argument.}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ To>}
+\DoxyCodeLine{00037\ \textcolor{keyword}{inline}\ To\ \mbox{\hyperlink{casts_8h_a311cae3e77a5aa2a529441efa8c8ea96}{implicit\_cast}}(\textcolor{keyword}{typename}\ \mbox{\hyperlink{structbase_1_1identity___a565429e62c1d4fd084335146ba778e17}{base::identity\_<To>::type}}\ to)\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordflow}{return}\ to;}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ This\ version\ of\ implicit\_cast\ is\ used\ when\ two\ template\ arguments}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ are\ specified.\ It's\ obsolete\ and\ should\ not\ be\ used.}}
+\DoxyCodeLine{00043\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ To,\ \textcolor{keyword}{typename}\ From>}
+\DoxyCodeLine{00044\ \textcolor{keyword}{inline}\ To\ \mbox{\hyperlink{casts_8h_a311cae3e77a5aa2a529441efa8c8ea96}{implicit\_cast}}(\textcolor{keyword}{typename}\ \mbox{\hyperlink{structbase_1_1identity___a565429e62c1d4fd084335146ba778e17}{base::identity\_<From>::type}}\ \textcolor{keyword}{const}\&\ f)\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordflow}{return}\ f;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ When\ you\ upcast\ (that\ is,\ cast\ a\ pointer\ from\ type\ Foo\ to\ type}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ SuperclassOfFoo),\ it's\ fine\ to\ use\ implicit\_cast<>,\ since\ upcasts}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ always\ succeed.\ \ When\ you\ downcast\ (that\ is,\ cast\ a\ pointer\ from}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ type\ Foo\ to\ type\ SubclassOfFoo),\ static\_cast<>\ isn't\ safe,\ because}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ how\ do\ you\ know\ the\ pointer\ is\ really\ of\ type\ SubclassOfFoo?\ \ It}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ could\ be\ a\ bare\ Foo,\ or\ of\ type\ DifferentSubclassOfFoo.\ \ Thus,}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ when\ you\ downcast,\ you\ should\ use\ this\ macro.\ \ In\ debug\ mode,\ we}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ use\ dynamic\_cast<>\ to\ double-\/check\ the\ downcast\ is\ legal\ (we\ die}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ if\ it's\ not).\ \ In\ normal\ mode,\ we\ do\ the\ efficient\ static\_cast<>}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ instead.\ \ Thus,\ it's\ important\ to\ test\ in\ debug\ mode\ to\ make\ sure}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ the\ cast\ is\ legal!}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ This\ is\ the\ only\ place\ in\ the\ code\ we\ should\ use\ dynamic\_cast<>.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ In\ particular,\ you\ SHOULDN'T\ be\ using\ dynamic\_cast<>\ in\ order\ to}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ do\ RTTI\ (eg\ code\ like\ this:}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ if\ (dynamic\_cast<Subclass1>(foo))\ HandleASubclass1Object(foo);}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ \ if\ (dynamic\_cast<Subclass2>(foo))\ HandleASubclass2Object(foo);}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ You\ should\ design\ the\ code\ some\ other\ way\ not\ to\ need\ this.}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ To,\ \textcolor{keyword}{typename}\ From>\ \textcolor{comment}{//\ use\ like\ this:\ down\_cast<T*>(foo);}}
+\DoxyCodeLine{00067\ \textcolor{keyword}{inline}\ To\ \mbox{\hyperlink{casts_8h_a90a70c147183ad12d44a717a7519f6be}{down\_cast}}(From*\ f)\ \{\ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ we\ only\ accept\ pointers}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ Ensures\ that\ To\ is\ a\ sub-\/type\ of\ From\ *.\ \ This\ test\ is\ here\ only}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ for\ compile-\/time\ type\ checking,\ and\ has\ no\ overhead\ in\ an}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ optimized\ build\ at\ run-\/time,\ as\ it\ will\ be\ optimized\ away}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ completely.}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ TODO(user):\ This\ should\ use\ COMPILE\_ASSERT.}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ ::implicit\_cast<From*,\ To>(NULL);}
+\DoxyCodeLine{00076\ \ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ uses\ RTTI\ in\ dbg\ and\ fastbuild.\ asserts\ are\ disabled\ in\ opt\ builds.}}
+\DoxyCodeLine{00079\ \ \ \ \ assert(f\ ==\ NULL\ ||\ \textcolor{keyword}{dynamic\_cast<}To\textcolor{keyword}{>}(f)\ !=\ NULL);}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}To\textcolor{keyword}{>}(f);}
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ Overload\ of\ down\_cast\ for\ references.\ Use\ like\ this:\ down\_cast<T\&>(foo).}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ The\ code\ is\ slightly\ convoluted\ because\ we're\ still\ using\ the\ pointer}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ form\ of\ dynamic\ cast.\ (The\ reference\ form\ throws\ an\ exception\ if\ it}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ fails.)}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ There's\ no\ need\ for\ a\ special\ const\ overload\ either\ for\ the\ pointer}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ or\ the\ reference\ form.\ If\ you\ call\ down\_cast\ with\ a\ const\ T\&,\ the}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ compiler\ will\ just\ bind\ From\ to\ const\ T.}}
+\DoxyCodeLine{00091\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ To,\ \textcolor{keyword}{typename}\ From>}
+\DoxyCodeLine{00092\ \textcolor{keyword}{inline}\ To\ \mbox{\hyperlink{casts_8h_a90a70c147183ad12d44a717a7519f6be}{down\_cast}}(From\&\ f)\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(std::is\_reference<To>::value,\ target\_type\_not\_a\_reference);}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{using\ }ToAsPointer\ =\ \textcolor{keyword}{typename}\ std::remove\_reference<To>::type*;}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compile-\/time\ check\ that\ To\ inherits\ from\ From.\ See\ above\ for\ details.}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ ::implicit\_cast<From*,\ ToAsPointer>(NULL);}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ assert(\textcolor{keyword}{dynamic\_cast<}ToAsPointer\textcolor{keyword}{>}(\&f)\ !=\ NULL);\ \textcolor{comment}{//\ RTTI:\ debug\ mode\ only}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}To\textcolor{keyword}{>}(f);}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ bit\_cast<Dest,Source>\ is\ a\ template\ function\ that\ implements\ the}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ equivalent\ of\ "{}*reinterpret\_cast<Dest*>(\&source)"{}.\ \ We\ need\ this\ in}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ very\ low-\/level\ functions\ like\ the\ protobuf\ library\ and\ fast\ math}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ support.}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ \ \ float\ f\ =\ 3.14159265358979;}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ \ \ int\ i\ =\ bit\_cast<int32>(f);}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ \ \ //\ i\ =\ 0x40490fdb}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ The\ classical\ address-\/casting\ method\ is:}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//}}
+\DoxyCodeLine{00115\ \textcolor{comment}{//\ \ \ //\ WRONG}}
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ \ \ float\ f\ =\ 3.14159265358979;\ \ \ \ \ \ \ \ \ \ \ \ //\ WRONG}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ \ \ int\ i\ =\ *\ reinterpret\_cast<int*>(\&f);\ \ //\ WRONG}}
+\DoxyCodeLine{00118\ \textcolor{comment}{//}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ The\ address-\/casting\ method\ actually\ produces\ undefined\ behavior}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ according\ to\ ISO\ C++\ specification\ section\ 3.10\ -\/15\ -\/.\ \ Roughly,\ this}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ section\ says:\ if\ an\ object\ in\ memory\ has\ one\ type,\ and\ a\ program}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ accesses\ it\ with\ a\ different\ type,\ then\ the\ result\ is\ undefined}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ behavior\ for\ most\ values\ of\ "{}different\ type"{}.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ This\ is\ true\ for\ any\ cast\ syntax,\ either\ *(int*)\&f\ or}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ *reinterpret\_cast<int*>(\&f).\ \ And\ it\ is\ particularly\ true\ for}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ conversions\ between\ integral\ lvalues\ and\ floating-\/point\ lvalues.}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ The\ purpose\ of\ 3.10\ -\/15-\/\ is\ to\ allow\ optimizing\ compilers\ to\ assume}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ that\ expressions\ with\ different\ types\ refer\ to\ different\ memory.\ \ gcc}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ 4.0.1\ has\ an\ optimizer\ that\ takes\ advantage\ of\ this.\ \ So\ a}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ non-\/conforming\ program\ quietly\ produces\ wildly\ incorrect\ output.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ The\ problem\ is\ not\ the\ use\ of\ reinterpret\_cast.\ \ The\ problem\ is\ type}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ punning:\ holding\ an\ object\ in\ memory\ of\ one\ type\ and\ reading\ its\ bits}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//\ back\ using\ a\ different\ type.}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ The\ C++\ standard\ is\ more\ subtle\ and\ complex\ than\ this,\ but\ that}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ is\ the\ basic\ idea.}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ Anyways\ ...}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ bit\_cast<>\ calls\ memcpy()\ which\ is\ blessed\ by\ the\ standard,}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ especially\ by\ the\ example\ in\ section\ 3.9\ .\ \ Also,\ of\ course,}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ bit\_cast<>\ wraps\ up\ the\ nasty\ logic\ in\ one\ place.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ Fortunately\ memcpy()\ is\ very\ fast.\ \ In\ optimized\ mode,\ with\ a}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ constant\ size,\ gcc\ 2.95.3,\ gcc\ 4.0.1,\ and\ msvc\ 7.1\ produce\ inline}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ code\ with\ the\ minimal\ amount\ of\ data\ movement.\ \ On\ a\ 32-\/bit\ system,}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ memcpy(d,s,4)\ compiles\ to\ one\ load\ and\ one\ store,\ and\ memcpy(d,s,8)}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ compiles\ to\ two\ loads\ and\ two\ stores.}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ I\ tested\ this\ code\ with\ gcc\ 2.95.3,\ gcc\ 4.0.1,\ icc\ 8.1,\ and\ msvc\ 7.1.}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ WARNING:\ if\ Dest\ or\ Source\ is\ a\ non-\/POD\ type,\ the\ result\ of\ the\ memcpy}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ is\ likely\ to\ surprise\ you.}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//}}
+\DoxyCodeLine{00158\ \textcolor{comment}{//\ Props\ to\ Bill\ Gibbons\ for\ the\ compile\ time\ assertion\ technique\ and}}
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ Art\ Komninos\ and\ Igor\ Tandetnik\ for\ the\ msvc\ experiments.}}
+\DoxyCodeLine{00160\ \textcolor{comment}{//}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ -\/-\/\ mec\ 2005-\/10-\/17}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Dest,\ \textcolor{keyword}{class}\ Source>}
+\DoxyCodeLine{00164\ \textcolor{keyword}{inline}\ Dest\ \mbox{\hyperlink{casts_8h_a9cbf05d915a81a024557f3c7fcf619f9}{bit\_cast}}(\textcolor{keyword}{const}\ Source\&\ source)\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Compile\ time\ assertion:\ sizeof(Dest)\ ==\ sizeof(Source)}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ A\ compile\ error\ here\ means\ your\ Dest\ and\ Source\ have\ different\ sizes.}}
+\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\textcolor{keyword}{sizeof}(Dest)\ ==\ \textcolor{keyword}{sizeof}(Source),\ VerifySizesAreEqual);}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ Dest\ dest;}
+\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&dest,\ \&source,\ \textcolor{keyword}{sizeof}(dest));}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00172\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{comment}{//\ ****\ Enumeration\ Casts\ and\ Tests}}
+\DoxyCodeLine{00175\ \textcolor{comment}{//}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ C++\ requires\ that\ the\ value\ of\ an\ integer\ that\ is\ converted\ to\ an}}
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ enumeration\ be\ within\ the\ value\ bounds\ of\ the\ enumeration.\ \ Modern}}
+\DoxyCodeLine{00178\ \textcolor{comment}{//\ compilers\ can\ and\ do\ take\ advantage\ of\ this\ requirement\ to\ optimize}}
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ programs.\ \ So,\ using\ a\ raw\ static\_cast\ with\ enums\ can\ be\ bad.\ \ See}}
+\DoxyCodeLine{00180\ \textcolor{comment}{//}}
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ The\ following\ templates\ and\ macros\ enable\ casting\ from\ an\ int\ to\ an\ enum}}
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ with\ checking\ against\ the\ appropriate\ bounds.\ \ First,\ when\ defining\ an}}
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ enumeration,\ identify\ the\ limits\ of\ the\ values\ of\ its\ enumerators.}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ \ \ enum\ A\ \{\ A\_min\ =\ -\/18,\ A\_max\ =\ 33\ \};}}
+\DoxyCodeLine{00186\ \textcolor{comment}{//\ \ \ MAKE\_ENUM\_LIMITS(A,\ A\_min,\ A\_max)}}
+\DoxyCodeLine{00187\ \textcolor{comment}{//}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//\ Convert\ an\ enum\ to\ an\ int\ in\ one\ of\ two\ ways.\ \ The\ preferred\ way\ is\ a}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ tight\ conversion,\ which\ ensures\ that\ A\_min\ <=\ value\ <=\ A\_max.}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//}}
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ \ \ A\ var\ =\ tight\_enum\_cast<A>(3);}}
+\DoxyCodeLine{00192\ \textcolor{comment}{//}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ However,\ the\ C++\ language\ defines\ the\ set\ of\ possible\ values\ for\ an}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ enumeration\ to\ be\ essentially\ the\ range\ of\ a\ bitfield\ that\ can\ represent}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ all\ the\ enumerators,\ i.e.\ those\ within\ the\ nearest\ containing\ power}}
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ of\ two.\ \ In\ the\ example\ above,\ the\ nearest\ positive\ power\ of\ two\ is\ 64,}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ and\ so\ the\ upper\ bound\ is\ 63.\ \ The\ nearest\ negative\ power\ of\ two\ is}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ -\/32\ and\ so\ the\ lower\ bound\ is\ -\/32\ (two's\ complement),\ which\ is\ upgraded}}
+\DoxyCodeLine{00199\ \textcolor{comment}{//\ to\ match\ the\ upper\ bound,\ becoming\ -\/64.\ \ The\ values\ within\ this\ range}}
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ of\ -\/64\ to\ 63\ are\ valid,\ according\ to\ the\ C++\ standard.\ \ You\ can\ cast}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//\ values\ within\ this\ range\ as\ follows.}}
+\DoxyCodeLine{00202\ \textcolor{comment}{//}}
+\DoxyCodeLine{00203\ \textcolor{comment}{//\ \ \ A\ var\ =\ loose\_enum\_cast<A>(45);}}
+\DoxyCodeLine{00204\ \textcolor{comment}{//}}
+\DoxyCodeLine{00205\ \textcolor{comment}{//\ These\ casts\ will\ log\ a\ message\ if\ the\ value\ does\ not\ reside\ within\ the}}
+\DoxyCodeLine{00206\ \textcolor{comment}{//\ specified\ range,\ and\ will\ be\ fatal\ when\ in\ debug\ mode.}}
+\DoxyCodeLine{00207\ \textcolor{comment}{//}}
+\DoxyCodeLine{00208\ \textcolor{comment}{//\ For\ those\ times\ when\ an\ assert\ too\ strong,\ there\ are\ test\ functions.}}
+\DoxyCodeLine{00209\ \textcolor{comment}{//}}
+\DoxyCodeLine{00210\ \textcolor{comment}{//\ \ \ bool\ var\ =\ tight\_enum\_test<A>(3);}}
+\DoxyCodeLine{00211\ \textcolor{comment}{//\ \ \ bool\ var\ =\ loose\_enum\_test<A>(45);}}
+\DoxyCodeLine{00212\ \textcolor{comment}{//}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ For\ code\ that\ needs\ to\ use\ the\ enumeration\ value\ if\ and\ only\ if}}
+\DoxyCodeLine{00214\ \textcolor{comment}{//\ it\ is\ good,\ there\ is\ a\ function\ that\ both\ tests\ and\ casts.}}
+\DoxyCodeLine{00215\ \textcolor{comment}{//}}
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ \ \ int\ i\ =\ ....;}}
+\DoxyCodeLine{00217\ \textcolor{comment}{//\ \ \ A\ var;}}
+\DoxyCodeLine{00218\ \textcolor{comment}{//\ \ \ if\ (tight\_enum\_test\_cast<A>(i,\ \&var))}}
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ \ \ \ \ ....\ //\ use\ valid\ var\ with\ value\ as\ indicated\ by\ i}}
+\DoxyCodeLine{00220\ \textcolor{comment}{//\ \ \ else}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ \ \ \ \ ....\ //\ handle\ invalid\ enum\ cast}}
+\DoxyCodeLine{00222\ \textcolor{comment}{//}}
+\DoxyCodeLine{00223\ \textcolor{comment}{//\ The\ enum\ test/cast\ facility\ is\ currently\ limited\ to\ enumerations\ that}}
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ fit\ within\ an\ int.\ \ It\ is\ also\ limited\ to\ two's\ complement\ ints.}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{comment}{//\ **\ Implementation\ Description}}
+\DoxyCodeLine{00227\ \textcolor{comment}{//}}
+\DoxyCodeLine{00228\ \textcolor{comment}{//\ The\ enum\_limits\ template\ class\ captures\ the\ minimum\ and\ maximum}}
+\DoxyCodeLine{00229\ \textcolor{comment}{//\ enumerator.\ \ All\ uses\ of\ this\ template\ are\ intended\ to\ be\ of}}
+\DoxyCodeLine{00230\ \textcolor{comment}{//\ specializations,\ so\ the\ generic\ has\ a\ field\ to\ identify\ itself\ as}}
+\DoxyCodeLine{00231\ \textcolor{comment}{//\ not\ specialized.\ \ The\ test/cast\ templates\ assert\ specialization.}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00234\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classenum__limits}{enum\_limits}}\ \{}
+\DoxyCodeLine{00235\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ Enum\ \mbox{\hyperlink{classenum__limits_aa0844b19616e2c3d18b69a51d3d88ad4}{min\_enumerator}}\ =\ 0;}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ Enum\ \mbox{\hyperlink{classenum__limits_a565cb49981e5caa006be72a9b23036eb}{max\_enumerator}}\ =\ 0;}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classenum__limits_ad89f3a90af3d85c7fb425e96caa56324}{is\_specialized}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00239\ \};}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ Now\ we\ define\ the\ macro\ to\ define\ the\ specialization\ for\ enum\_limits.}}
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ The\ specialization\ checks\ that\ the\ enumerators\ fit\ within\ an\ int.}}
+\DoxyCodeLine{00243\ \textcolor{comment}{//\ This\ checking\ relies\ on\ integral\ promotion.}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\#define\ MAKE\_ENUM\_LIMITS(ENUM\_TYPE,\ ENUM\_MIN,\ ENUM\_MAX)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{\ \ \ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\ \ \ \ class\ enum\_limits<ENUM\_TYPE>\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\ \ \ \ public:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ const\ ENUM\_TYPE\ min\_enumerator\ =\ ENUM\_MIN;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ const\ ENUM\_TYPE\ max\_enumerator\ =\ ENUM\_MAX;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ const\ bool\ is\_specialized\ =\ true;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ COMPILE\_ASSERT(ENUM\_MIN\ >=\ INT\_MIN,\ enumerator\_too\_negative\_for\_int);\ \(\backslash\)}}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ COMPILE\_ASSERT(ENUM\_MAX\ <=\ INT\_MAX,\ enumerator\_too\_positive\_for\_int);\ \(\backslash\)}}
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\ \ \ \ \};}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \textcolor{comment}{//\ The\ loose\ enum\ test/cast\ is\ actually\ the\ more\ complicated\ one,}}
+\DoxyCodeLine{00257\ \textcolor{comment}{//\ because\ of\ the\ problem\ of\ finding\ the\ bounds.}}
+\DoxyCodeLine{00258\ \textcolor{comment}{//}}
+\DoxyCodeLine{00259\ \textcolor{comment}{//\ The\ unary\ upper\ bound,\ ub,\ on\ a\ positive\ number\ is\ its\ positive}}
+\DoxyCodeLine{00260\ \textcolor{comment}{//\ saturation,\ i.e.\ for\ a\ value\ v\ within\ pow(2,k-\/1)\ <=\ v\ <\ pow(2,k),}}
+\DoxyCodeLine{00261\ \textcolor{comment}{//\ the\ upper\ bound\ is\ pow(2,k)-\/1.}}
+\DoxyCodeLine{00262\ \textcolor{comment}{//}}
+\DoxyCodeLine{00263\ \textcolor{comment}{//\ The\ unary\ lower\ bound,\ lb,\ on\ a\ negative\ number\ is\ its\ negative}}
+\DoxyCodeLine{00264\ \textcolor{comment}{//\ saturation,\ i.e.\ for\ a\ value\ v\ within\ -\/pow(2,k)\ <=\ v\ <\ -\/pow(2,k-\/1),}}
+\DoxyCodeLine{00265\ \textcolor{comment}{//\ the\ lower\ bound\ is\ -\/pow(2,k).}}
+\DoxyCodeLine{00266\ \textcolor{comment}{//}}
+\DoxyCodeLine{00267\ \textcolor{comment}{//\ The\ actual\ bounds\ are\ (1)\ the\ binary\ upper\ bound\ over\ the\ maximum}}
+\DoxyCodeLine{00268\ \textcolor{comment}{//\ enumerator\ and\ the\ one's\ complement\ of\ a\ negative\ minimum\ enumerator}}
+\DoxyCodeLine{00269\ \textcolor{comment}{//\ and\ (2)\ the\ binary\ lower\ bound\ over\ the\ minimum\ enumerator\ and\ the}}
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ one's\ complement\ of\ the\ positive\ maximum\ enumerator,\ except\ that\ if\ no}}
+\DoxyCodeLine{00271\ \textcolor{comment}{//\ enumerators\ are\ negative,\ the\ lower\ bound\ is\ zero.}}
+\DoxyCodeLine{00272\ \textcolor{comment}{//}}
+\DoxyCodeLine{00273\ \textcolor{comment}{//\ The\ algorithm\ relies\ heavily\ on\ the\ observation\ that}}
+\DoxyCodeLine{00274\ \textcolor{comment}{//}}
+\DoxyCodeLine{00275\ \textcolor{comment}{//\ \ \ a,b>0\ then\ ub(a,b)\ ==\ ub(a)\ |\ ub(b)\ ==\ ub(a|b)}}
+\DoxyCodeLine{00276\ \textcolor{comment}{//\ \ \ a,b<0\ then\ lb(a,b)\ ==\ lb(a)\ \&\ lb(b)\ ==\ lb(a\&b)}}
+\DoxyCodeLine{00277\ \textcolor{comment}{//}}
+\DoxyCodeLine{00278\ \textcolor{comment}{//\ Note\ that\ the\ compiler\ will\ boil\ most\ of\ this\ code\ away}}
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ because\ of\ value\ propagation\ on\ the\ constant\ enumerator\ bounds.}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00282\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{casts_8h_abdc5b66a342d06a0adb8b661d508c58b}{loose\_enum\_test}}(\textcolor{keywordtype}{int}\ e\_val)\ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::is\_specialized}},\ missing\_MAKE\_ENUM\_LIMITS);}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keyword}{const}\ Enum\ e\_min\ =\ \mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::min\_enumerator}};}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keyword}{const}\ Enum\ e\_max\ =\ \mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::max\_enumerator}};}
+\DoxyCodeLine{00286\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\textcolor{keyword}{sizeof}(e\_val)\ ==\ 4\ ||\ \textcolor{keyword}{sizeof}(e\_val)\ ==\ 8,\ unexpected\_int\_size);}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ unary\ bounding\ negative\ number\ of\ e\_min\ and\ e\_max.}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ unary\ bounding\ negative\ number\ of\ e\_max.}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ This\ would\ be\ b\_min\ =\ e\_max\ <\ 0\ ?\ e\_max\ :\ \string~e\_max,}}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{comment}{//\ but\ we\ want\ to\ avoid\ branches\ to\ help\ the\ compiler.}}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordtype}{int}\ e\_max\_sign\ =\ e\_max\ >>\ (\textcolor{keyword}{sizeof}(e\_val)\ *\ 8\ -\/\ 1);}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordtype}{int}\ b\_min\ =\ \string~e\_max\_sign\ \string^\ e\_max;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ binary\ bounding\ negative\ of\ both\ e\_min\ and\ e\_max.}}
+\DoxyCodeLine{00297\ \ \ \ \ b\_min\ \&=\ e\_min;}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ However,\ if\ e\_min\ is\ positive,\ the\ result\ will\ be\ positive.}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{comment}{//\ Now\ clear\ all\ bits\ right\ of\ the\ most\ significant\ clear\ bit,}}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ which\ is\ a\ negative\ saturation\ for\ negative\ numbers.}}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ In\ the\ case\ of\ positive\ numbers,\ this\ is\ flush\ to\ zero.}}
+\DoxyCodeLine{00303\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 1;}
+\DoxyCodeLine{00304\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 2;}
+\DoxyCodeLine{00305\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 4;}
+\DoxyCodeLine{00306\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 8;}
+\DoxyCodeLine{00307\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 16;}
+\DoxyCodeLine{00308\ \textcolor{preprocessor}{\#if\ INT\_MAX\ >\ 2147483647}}
+\DoxyCodeLine{00309\ \ \ \ \ b\_min\ \&=\ b\_min\ >>\ 32;}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ unary\ bounding\ positive\ number\ of\ e\_max.}}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordtype}{int}\ b\_max\ =\ e\_max\_sign\ \string^\ e\_max;}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ binary\ bounding\ positive\ number\ of\ that}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ and\ the\ unary\ bounding\ positive\ number\ of\ e\_min.}}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordtype}{int}\ e\_min\_sign\ =\ e\_min\ >>\ (\textcolor{keyword}{sizeof}(e\_val)\ *\ 8\ -\/\ 1);}
+\DoxyCodeLine{00318\ \ \ \ \ b\_max\ |=\ e\_min\_sign\ \string^\ e\_min;}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{comment}{//\ Now\ set\ all\ bits\ right\ of\ the\ most\ significant\ set\ bit,}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{comment}{//\ which\ is\ a\ positive\ saturation\ for\ positive\ numbers.}}
+\DoxyCodeLine{00322\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 1;}
+\DoxyCodeLine{00323\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 2;}
+\DoxyCodeLine{00324\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 4;}
+\DoxyCodeLine{00325\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 8;}
+\DoxyCodeLine{00326\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 16;}
+\DoxyCodeLine{00327\ \textcolor{preprocessor}{\#if\ INT\_MAX\ >\ 2147483647}}
+\DoxyCodeLine{00328\ \ \ \ \ b\_max\ |=\ b\_max\ >>\ 32;}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{comment}{//\ Finally\ test\ the\ bounds.}}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{return}\ b\_min\ <=\ e\_val\ \&\&\ e\_val\ <=\ b\_max;}
+\DoxyCodeLine{00333\ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00336\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{casts_8h_a73076ab7726024e4ce6f47a20c3ea8bb}{tight\_enum\_test}}(\textcolor{keywordtype}{int}\ e\_val)\ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::is\_specialized}},\ missing\_MAKE\_ENUM\_LIMITS);}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keyword}{const}\ Enum\ e\_min\ =\ \mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::min\_enumerator}};}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keyword}{const}\ Enum\ e\_max\ =\ \mbox{\hyperlink{classenum__limits}{enum\_limits<Enum>::max\_enumerator}};}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordflow}{return}\ e\_min\ <=\ e\_val\ \&\&\ e\_val\ <=\ e\_max;}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00344\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{casts_8h_a5acf7c984db5bd010f8fb020b6d489ce}{loose\_enum\_test\_cast}}(\textcolor{keywordtype}{int}\ e\_val,\ Enum*\ e\_var)\ \{}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordflow}{if}\ (loose\_enum\_test<Enum>(e\_val))\ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ *e\_var\ =\ \textcolor{keyword}{static\_cast<}Enum\textcolor{keyword}{>}(e\_val);}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00348\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00350\ \ \ \ \ \}}
+\DoxyCodeLine{00351\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00354\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{casts_8h_a9194166288eafb5152fa25ecca9fb540}{tight\_enum\_test\_cast}}(\textcolor{keywordtype}{int}\ e\_val,\ Enum*\ e\_var)\ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordflow}{if}\ (tight\_enum\_test<Enum>(e\_val))\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ *e\_var\ =\ \textcolor{keyword}{static\_cast<}Enum\textcolor{keyword}{>}(e\_val);}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00358\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00360\ \ \ \ \ \}}
+\DoxyCodeLine{00361\ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00364\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1internal_aa452c2a24749bbcbc3fb1cff1846074d}{WarnEnumCastError}}(\textcolor{keywordtype}{int}\ value\_of\_int)\ \{}
+\DoxyCodeLine{00367\ \ \ \ \ LOG(DFATAL)\ <<\ \textcolor{stringliteral}{"{}Bad\ enum\ value\ "{}}\ <<\ value\_of\_int;}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00371\ \}\ \textcolor{comment}{//\ namespace\ base}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00374\ \textcolor{keyword}{inline}\ Enum\ \mbox{\hyperlink{casts_8h_a10b369d866b439041e19edcb710d24ba}{loose\_enum\_cast}}(\textcolor{keywordtype}{int}\ e\_val)\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordflow}{if}\ (!loose\_enum\_test<Enum>(e\_val))\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1internal_aa452c2a24749bbcbc3fb1cff1846074d}{base::internal::WarnEnumCastError}}(e\_val);}
+\DoxyCodeLine{00377\ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Enum\textcolor{keyword}{>}(e\_val);}
+\DoxyCodeLine{00379\ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Enum>}
+\DoxyCodeLine{00382\ \textcolor{keyword}{inline}\ Enum\ \mbox{\hyperlink{casts_8h_af6435f0be2f09cfdac1bfc453bc6b0dd}{tight\_enum\_cast}}(\textcolor{keywordtype}{int}\ e\_val)\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keywordflow}{if}\ (!tight\_enum\_test<Enum>(e\_val))\ \{}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1internal_aa452c2a24749bbcbc3fb1cff1846074d}{base::internal::WarnEnumCastError}}(e\_val);}
+\DoxyCodeLine{00385\ \ \ \ \ \}}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Enum\textcolor{keyword}{>}(e\_val);}
+\DoxyCodeLine{00387\ \}}
+
+\end{DoxyCode}

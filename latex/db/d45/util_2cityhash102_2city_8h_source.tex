@@ -1,0 +1,102 @@
+\hypertarget{util_2cityhash102_2city_8h_source}{}\doxysection{city.\+h}
+\label{util_2cityhash102_2city_8h_source}\index{/Users/dabowang/be\_all/util/cityhash102/city.h@{/Users/dabowang/be\_all/util/cityhash102/city.h}}
+\mbox{\hyperlink{util_2cityhash102_2city_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2011\ Google,\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ of\ this\ software\ and\ associated\ documentation\ files\ (the\ "{}Software"{}),\ to\ deal}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ The\ above\ copyright\ notice\ and\ this\ permission\ notice\ shall\ be\ included\ in}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ all\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ THE\ SOFTWARE.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ CityHash,\ by\ Geoff\ Pike\ and\ Jyrki\ Alakuijala}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ This\ file\ provides\ a\ few\ functions\ for\ hashing\ strings.\ On\ x86-\/64}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ hardware\ in\ 2011,\ CityHash64()\ is\ faster\ than\ other\ high-\/quality}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ hash\ functions,\ such\ as\ Murmur.\ \ This\ is\ largely\ due\ to\ higher}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ instruction-\/level\ parallelism.\ \ CityHash64()\ and\ CityHash128()\ also\ perform}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ well\ on\ hash-\/quality\ tests.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CityHash128()\ is\ optimized\ for\ relatively\ long\ strings\ and\ returns}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ a\ 128-\/bit\ hash.\ \ For\ strings\ more\ than\ about\ 2000\ bytes\ it\ can\ be}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ faster\ than\ CityHash64().}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Functions\ in\ the\ CityHash\ family\ are\ not\ suitable\ for\ cryptography.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ WARNING:\ This\ code\ has\ not\ been\ tested\ on\ big-\/endian\ platforms!}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ It\ is\ known\ to\ work\ well\ on\ little-\/endian\ platforms\ that\ have\ a\ small\ penalty}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ for\ unaligned\ reads,\ such\ as\ current\ Intel\ and\ AMD\ moderate-\/to-\/high-\/end\ CPUs.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ By\ the\ way,\ for\ some\ hash\ functions,\ given\ strings\ a\ and\ b,\ the\ hash}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ of\ a+b\ is\ easily\ derived\ from\ the\ hashes\ of\ a\ and\ b.\ \ This\ property}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ doesn't\ hold\ for\ any\ hash\ functions\ in\ this\ file.}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#ifndef\ CITY\_HASH\_H\_}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ CITY\_HASH\_H\_}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \ \textcolor{comment}{//\ for\ size\_t.}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_city_hash__v1__0__2}{CityHash\_v1\_0\_2}}}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a33a5e996e7a90acefb8b1c0bea47e365}{uint8}};}
+\DoxyCodeLine{00062\ \textcolor{keyword}{typedef}\ uint32\_t\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}};}
+\DoxyCodeLine{00063\ \textcolor{keyword}{typedef}\ uint64\_t\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}};}
+\DoxyCodeLine{00064\ \textcolor{keyword}{typedef}\ std::pair<uint64,\ uint64>\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a82bf1aedb7323172408d1c2dff88de95}{uint128}};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a148ccb4a96b24833dbe4a6fc1165b3b8}{Uint128Low64}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classuint128}{uint128}}\&\ x)\ \{\ \textcolor{keywordflow}{return}\ x.first;\ \}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a03b35c3945be337d19fce80361c04d6a}{Uint128High64}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classuint128}{uint128}}\&\ x)\ \{\ \textcolor{keywordflow}{return}\ x.second;\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.}}
+\DoxyCodeLine{00071\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_ad0ba022ddd9dae3ad8f79eadc9568c76}{CityHash64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ a\ 64-\/bit\ seed\ is\ also}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00075\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_aed2a4750316c07de6ee99ee932bf28bd}{CityHash64WithSeed}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len,\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ seed);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ two\ seeds\ are\ also}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00079\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abd356fce295f927ddb52e38ce76d10c2}{CityHash64WithSeeds}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ seed0,\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ seed1);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.}}
+\DoxyCodeLine{00083\ \mbox{\hyperlink{classuint128}{uint128}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_ad487ffee003419a5c1394dc4117e6847}{CityHash128}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *s,\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ a\ 128-\/bit\ seed\ is\ also}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00087\ \mbox{\hyperlink{classuint128}{uint128}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abe254b73fecfa7a0b9ceb61f6d713c8d}{CityHash128WithSeed}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *s,\ \textcolor{keywordtype}{size\_t}\ len,\ \mbox{\hyperlink{classuint128}{uint128}}\ seed);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ Hash\ 128\ input\ bits\ down\ to\ 64\ bits\ of\ output.}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ This\ is\ intended\ to\ be\ a\ reasonably\ good\ hash\ function.}}
+\DoxyCodeLine{00091\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a277d7697b63b8321e906beccd0ce3339}{Hash128to64}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classuint128}{uint128}}\&\ x)\ \{}
+\DoxyCodeLine{00092\ \ \ \textcolor{comment}{//\ Murmur-\/inspired\ hashing.}}
+\DoxyCodeLine{00093\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ kMul\ =\ 0x9ddfea08eb382d69ULL;}
+\DoxyCodeLine{00094\ \ \ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ =\ (\mbox{\hyperlink{namespace_city_hash__v1__0__2_a148ccb4a96b24833dbe4a6fc1165b3b8}{Uint128Low64}}(x)\ \string^\ \mbox{\hyperlink{namespace_city_hash__v1__0__2_a03b35c3945be337d19fce80361c04d6a}{Uint128High64}}(x))\ *\ kMul;}
+\DoxyCodeLine{00095\ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ \string^=\ (\mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ >>\ 47);}
+\DoxyCodeLine{00096\ \ \ \mbox{\hyperlink{namespace_city_hash__v1__0__2_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ b\ =\ (\mbox{\hyperlink{namespace_city_hash__v1__0__2_a03b35c3945be337d19fce80361c04d6a}{Uint128High64}}(x)\ \string^\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}})\ *\ kMul;}
+\DoxyCodeLine{00097\ \ \ b\ \string^=\ (b\ >>\ 47);}
+\DoxyCodeLine{00098\ \ \ b\ *=\ kMul;}
+\DoxyCodeLine{00099\ \ \ \textcolor{keywordflow}{return}\ b;}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ CITY\_HASH\_H\_}}
+
+\end{DoxyCode}

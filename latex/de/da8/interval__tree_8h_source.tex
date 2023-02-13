@@ -1,0 +1,165 @@
+\hypertarget{interval__tree_8h_source}{}\doxysection{interval\+\_\+tree.\+h}
+\label{interval__tree_8h_source}\index{/Users/dabowang/be\_all/util/interval\_tree.h@{/Users/dabowang/be\_all/util/interval\_tree.h}}
+\mbox{\hyperlink{interval__tree_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Implements\ an\ Interval\ Tree.\ See\ http://en.wikipedia.org/wiki/Interval\_tree}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ or\ CLRS\ for\ a\ full\ description\ of\ the\ data\ structure.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ https://github.com/apache/kudu/blob/master/src/kudu/util/interval\_tree.h}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Callers\ of\ this\ class\ should\ also\ include\ interval\_tree-\/inl.h\ for\ function}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ definitions.}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <glog/logging.h>}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }interval\_tree\_internal\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Traits>}
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }ITNode;}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ End\ point\ type\ when\ boost::none.}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_ae04110792f7ff77f433fd38fee293567}{EndpointIfNone}}\ \{\ \mbox{\hyperlink{namespacedoris_a5a46d1feba8f524a798aab4378aea920}{POSITIVE\_INFINITY}},\ \mbox{\hyperlink{namespacedoris_ae7ec76d563d12ba66d3ca180f9e31034}{NEGATIVE\_INFINITY}}\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ Implements\ an\ Interval\ Tree.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ An\ Interval\ Tree\ is\ a\ data\ structure\ which\ stores\ a\ set\ of\ intervals\ and\ supports}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ efficient\ searches\ to\ determine\ which\ intervals\ in\ that\ set\ overlap\ a\ query}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ point\ or\ interval.\ These\ operations\ are\ O(lg\ n\ +\ k)\ where\ 'n'\ is\ the\ number\ of}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ intervals\ in\ the\ tree\ and\ 'k'\ is\ the\ number\ of\ results\ returned\ for\ a\ given\ query.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ This\ particular\ implementation\ is\ a\ static\ tree\ -\/-\/\ intervals\ may\ not\ be\ added\ or}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ removed\ once\ the\ tree\ is\ instantiated.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ This\ class\ also\ assumes\ that\ all\ intervals\ are\ "{}closed"{}\ intervals\ -\/-\/\ the\ intervals}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ are\ inclusive\ of\ their\ start\ and\ end\ points.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ The\ Traits\ class\ should\ have\ the\ following\ members:}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ Traits::point\_type}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ \ a\ typedef\ for\ what\ a\ "{}point"{}\ in\ the\ range\ is}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ Traits::interval\_type}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ \ a\ typedef\ for\ an\ interval}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ static\ point\_type\ get\_left(const\ interval\_type\ \&)}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ static\ point\_type\ get\_right(const\ interval\_type\ \&)}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ \ \ accessors\ which\ fetch\ the\ left\ and\ right\ bound\ of\ the\ interval,\ respectively.}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ static\ int\ compare(const\ point\_type\ \&a,\ const\ point\_type\ \&b)}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ \ \ \ \ return\ <\ 0\ if\ a\ <\ b,\ 0\ if\ a\ ==\ b,\ >\ 0\ if\ a\ >\ b}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ See\ interval\_tree-\/test.cc\ for\ an\ example\ Traits\ class\ for\ 'int'\ ranges.}}
+\DoxyCodeLine{00074\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Traits>}
+\DoxyCodeLine{00075\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_interval_tree}{IntervalTree}}\ \{}
+\DoxyCodeLine{00076\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Import\ types\ from\ the\ traits\ class\ to\ make\ code\ more\ readable.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Traits::interval\_type\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a00d05b2ae265f5617cbf60df5bc39d43}{interval\_type}};}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Traits::point\_type\ \mbox{\hyperlink{classdoris_1_1_interval_tree_acdd5d0231d73f8cd3537cf488e463d54}{point\_type}};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ And\ some\ convenience\ types.}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{typedef}\ std::vector<interval\_type>\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}};}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1interval__tree__internal_1_1_i_t_node}{interval\_tree\_internal::ITNode<Traits>}}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a786634fad8cb04e712c8a4964cda34a1}{node\_type}};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ Construct\ an\ Interval\ Tree\ containing\ the\ given\ set\ of\ intervals.}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_interval_tree}{IntervalTree}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}\&\ intervals);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_interval_tree_a2a2fdfc3e9afc3b606bc5ebbb49e11bd}{\string~IntervalTree}}();}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Find\ all\ intervals\ in\ the\ tree\ which\ contain\ the\ query\ point.}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ The\ resulting\ intervals\ are\ added\ to\ the\ 'results'\ vector.}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ The\ vector\ is\ not\ cleared\ first.}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ 'QueryPointType'\ is\ usually\ point\_type,\ but\ can\ be\ any\ other}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ type\ for\ which\ there\ exists\ the\ appropriate\ Traits::Compare(...)\ method.}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ QueryPo\textcolor{keywordtype}{int}Type>}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ad7ebaf703b80bd98be04cb51e3c269d6}{FindContainingPoint}}(\textcolor{keyword}{const}\ QueryPointType\&\ query,\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}*\ results)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ For\ each\ of\ the\ query\ points\ in\ the\ STL\ container\ 'queries',\ find\ all}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ intervals\ in\ the\ tree\ which\ may\ contain\ those\ points.\ Calls\ 'cb(point,\ interval)'}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ for\ each\ such\ interval.}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ The\ points\ in\ the\ query\ container\ must\ be\ comparable\ to\ 'point\_type'}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ using\ Traits::Compare().}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ The\ implementation\ sequences\ the\ calls\ to\ 'cb'\ with\ the\ following\ guarantees:}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{//\ 1)\ all\ of\ the\ results\ corresponding\ to\ a\ given\ interval\ will\ be\ yielded\ in\ at}}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ \ \ \ most\ two\ "{}groups"{}\ of\ calls\ (i.e.\ sub-\/sequences\ of\ calls\ with\ the\ same\ interval).}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ 2)\ within\ each\ "{}group"{}\ of\ calls,\ the\ query\ points\ will\ be\ in\ ascending\ order.}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ For\ example,\ the\ callback\ sequence\ may\ be:}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ \ cb(q1,\ interval\_1)\ -\/}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ \ cb(q2,\ interval\_1)\ \ |\ first\ group\ of\ interval\_1}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ \ cb(q6,\ interval\_1)\ \ |}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ \ cb(q7,\ interval\_1)\ -\/}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ \ cb(q2,\ interval\_2)\ -\/}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ \ cb(q3,\ interval\_2)\ \ |\ first\ group\ of\ interval\_2}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//\ \ cb(q4,\ interval\_2)\ -\/}}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ \ cb(q3,\ interval\_1)\ -\/}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ \ cb(q4,\ interval\_1)\ \ |\ second\ group\ of\ interval\_1}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ \ cb(q5,\ interval\_1)\ -\/}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ \ cb(q2,\ interval\_3)\ -\/}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ \ cb(q3,\ interval\_3)\ \ |\ first\ group\ of\ interval\_3}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ \ cb(q4,\ interval\_3)\ -\/}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ \ cb(q5,\ interval\_2)\ -\/}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ \ cb(q6,\ interval\_2)\ \ |\ second\ group\ of\ interval\_2}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ \ cb(q7,\ interval\_2)\ -\/}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ The\ input\ points\ must\ be\ pre-\/sorted\ or\ else\ this\ will\ return\ invalid}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ results.}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Callback,\ \textcolor{keyword}{class}\ QueryContainer>}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a335a3116d9f2bdec338306f6ee53654d}{ForEachIntervalContainingPoints}}(\textcolor{keyword}{const}\ QueryContainer\&\ queries,\ \textcolor{keyword}{const}\ Callback\&\ cb)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ Find\ all\ intervals\ in\ the\ tree\ which\ intersect\ the\ given\ interval.}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ The\ resulting\ intervals\ are\ added\ to\ the\ 'results'\ vector.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ The\ vector\ is\ not\ cleared\ first.}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ QueryPo\textcolor{keywordtype}{int}Type>}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a9c5dd79c87bebc6264ef4b7d63f941f2}{FindIntersectingInterval}}(\textcolor{keyword}{const}\ QueryPointType\&\ lower\_bound,}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ QueryPointType\&\ upper\_bound,\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}*\ results)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a5164b26f75dfb4e25f89f5ee3c8c4d3f}{Partition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}\&\ in,\ \mbox{\hyperlink{classdoris_1_1_interval_tree_acdd5d0231d73f8cd3537cf488e463d54}{point\_type}}*\ split\_point,\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}*\ left,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}*\ overlapping,\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}*\ right);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ node\ containing\ the\ given\ intervals,\ recursively\ splitting\ down\ the\ tree.}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1interval__tree__internal_1_1_i_t_node}{node\_type}}*\ \mbox{\hyperlink{classdoris_1_1_interval_tree_aa30b15f0d425ec633650a05dd354d97c}{CreateNode}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_interval_tree_ade4f35a729f3292b600180827425a2f2}{IntervalVector}}\&\ intervals);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1interval__tree__internal_1_1_i_t_node}{node\_type}}*\ \mbox{\hyperlink{classdoris_1_1_interval_tree_a77a704658d844c93937070f01cc3ac26}{root\_}};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_interval_tree_a30769d8ed770522f10e71e4340a4a711}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_interval_tree}{IntervalTree}});}
+\DoxyCodeLine{00157\ \};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

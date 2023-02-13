@@ -1,0 +1,193 @@
+\hypertarget{bloom__filter_8h_source}{}\doxysection{bloom\+\_\+filter.\+h}
+\label{bloom__filter_8h_source}\index{/Users/dabowang/be\_all/olap/rowset/segment\_v2/bloom\_filter.h@{/Users/dabowang/be\_all/olap/rowset/segment\_v2/bloom\_filter.h}}
+\mbox{\hyperlink{bloom__filter_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <functional>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/segment\_v2.pb.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{substitute_8h}{gutil/strings/substitute.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2utils_8h}{olap/utils.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{murmur__hash3_8h}{util/murmur\_hash3.h}}"{}}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }segment\_v2\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1segment__v2_1_1_bloom_filter_options}{BloomFilterOptions}}\ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{//\ false\ positive\ probability}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1segment__v2_1_1_bloom_filter_options_abb715594da26279b77207b1ad81a30d1}{fpp}}\ =\ 0.05;}
+\DoxyCodeLine{00036\ \ \ \ \ HashStrategyPB\ \mbox{\hyperlink{structdoris_1_1segment__v2_1_1_bloom_filter_options_a9c7d329b62dae1cc5e9e071e70652c6f}{strategy}}\ =\ HASH\_MURMUR3\_X64\_64;}
+\DoxyCodeLine{00037\ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Base\ class\ for\ bloom\ filter}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ To\ support\ null\ value,\ the\ size\ of\ bloom\ filter\ is\ optimize\ bytes\ +\ 1.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ The\ last\ byte\ is\ for\ null\ value\ flag.}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter}{BloomFilter}}\ \{}
+\DoxyCodeLine{00043\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ Default\ seed\ for\ the\ hash\ function.\ It\ comes\ from\ date\ +\%s.}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a018ba60463fe6a40dfe4bfbb295a8966}{DEFAULT\_SEED}}\ =\ 1575457558;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ Minimum\ Bloom\ filter\ size,\ set\ to\ the\ size\ of\ a\ tiny\ Bloom\ filter\ block}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_afef4ca2ab08f54ffa51bbae6eea35310}{MINIMUM\_BYTES}}\ =\ 32;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Maximum\ Bloom\ filter\ size,\ set\ it\ to\ half\ of\ max\ segment\ file\ size}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ad14a20e873855be93b2918a029e088b9}{MAXIMUM\_BYTES}}\ =\ 128\ *\ 1024\ *\ 1024;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ Factory\ function\ for\ BloomFilter}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ab0d2f64df238acaf50dcf829d34f77a6}{create}}(BloomFilterAlgorithmPB\ algorithm,\ std::unique\_ptr<BloomFilter>*\ bf,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bf\_size\ =\ 0);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac724c8b7c330e30b4b54a4bf9abcb443}{BloomFilter}}()\ :\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}(nullptr),\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}(0),\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}}(0),\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}(nullptr)\ \{\}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a3812ac717633b06fb3244b297255b2f1}{\string~BloomFilter}}()\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}})\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}};}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a69262b42b75d2eba75a69db8afaae506}{is\_ngram\_bf}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ for\ write}}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a11514a6241f1cf7f224ea252133c02ea}{init}}(uint64\_t\ n,\ \textcolor{keywordtype}{double}\ fpp,\ HashStrategyPB\ strategy)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a11514a6241f1cf7f224ea252133c02ea}{init}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_aa61e9179167c625e813fc5f5d8616951}{optimal\_bit\_num}}(n,\ fpp)\ /\ 8,\ strategy);}
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a2670b030754513cabfbcfc6b5cf53e62}{init}}(uint64\_t\ filter\_size)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a2670b030754513cabfbcfc6b5cf53e62}{init}}(filter\_size,\ HASH\_MURMUR3\_X64\_64);\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_aa3e01e77fd882d65d97891bf9d4528b2}{init}}(uint64\_t\ filter\_size,\ HashStrategyPB\ strategy)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (strategy\ ==\ HASH\_MURMUR3\_X64\_64)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a831906eaa3cba55b7039263df8175828}{\_hash\_func}}\ =\ \mbox{\hyperlink{murmur__hash3_8cpp_ad4d56f60c9431498ef12c8aabfd8a279}{murmur\_hash3\_x64\_64}};}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InvalidArgument(\textcolor{stringliteral}{"{}invalid\ strategy:\{\}"{}},\ strategy);}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ =\ filter\_size;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ DCHECK((\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ \&\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ -\/\ 1))\ ==\ 0);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}}\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ +\ 1;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ reserve\ last\ byte\ for\ null\ flag}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}[\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}}];}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}},\ 0,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}});}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}\ =\ (\textcolor{keywordtype}{bool}*)(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}\ +\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}});}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ for\ read}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ use\ deep\ copy\ to\ acquire\ the\ data}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ad0210cb893f30baba9fe4303256defd8}{init}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ buf,\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}},\ HashStrategyPB\ strategy)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}\ >\ 1);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (strategy\ ==\ HASH\_MURMUR3\_X64\_64)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a831906eaa3cba55b7039263df8175828}{\_hash\_func}}\ =\ \mbox{\hyperlink{murmur__hash3_8cpp_ad4d56f60c9431498ef12c8aabfd8a279}{murmur\_hash3\_x64\_64}};}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InvalidArgument(\textcolor{stringliteral}{"{}invalid\ strategy:\{\}"{}},\ strategy);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InvalidArgument(\textcolor{stringliteral}{"{}invalid\ size:\{\}"{}},\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}});}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}[\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}];}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}},\ buf,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}});}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}}\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}};}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}}\ -\/\ 1;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ DCHECK((\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ \&\ (\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}}\ -\/\ 1))\ ==\ 0);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}\ =\ (\textcolor{keywordtype}{bool}*)(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}\ +\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}});}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{\ memset(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}},\ 0,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}});\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a4a4dfd0b9da0192359b46b119999d190}{hash}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ buf,\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ uint64\_t\ hash\_code;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a831906eaa3cba55b7039263df8175828}{\_hash\_func}}(buf,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}},\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a018ba60463fe6a40dfe4bfbb295a8966}{DEFAULT\_SEED}},\ \&hash\_code);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ hash\_code;}
+\DoxyCodeLine{00118\ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a82f82cc9d2898b6b8974e21b7db9757a}{add\_bytes}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ buf,\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}})\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buf\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ uint64\_t\ code\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a4a4dfd0b9da0192359b46b119999d190}{hash}}(buf,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}});}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a488690b7ef23161a2395b22b7d61347e}{add\_hash}}(code);}
+\DoxyCodeLine{00127\ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a0bd9a91a4ffc2b2d1bc1b6ab017f560c}{test\_bytes}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ buf,\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buf\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ uint64\_t\ code\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a4a4dfd0b9da0192359b46b119999d190}{hash}}(buf,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}});}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a873944ead3d46514a037f8ce293ff3cb}{test\_hash}}(code);}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a842bc1fc197661c230eb11e44c31a208}{contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter}{BloomFilter}}\&\ bf\_)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_adadd36169ed39954b5ea94f2a88b1c15}{data}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}};\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_acbd869add8e77d34619160c7c64d8de3}{num\_bytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}};\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{virtual}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}};\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a34be2985820fc80bdeec95b298e97820}{set\_has\_null}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_af9897e6f0ee268394b36502873e50739}{has\_null}})\ \{\ *\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}}\ =\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_af9897e6f0ee268394b36502873e50739}{has\_null}};\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_af9897e6f0ee268394b36502873e50739}{has\_null}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}};\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a488690b7ef23161a2395b22b7d61347e}{add\_hash}}(uint64\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a4a4dfd0b9da0192359b46b119999d190}{hash}})\ =\ 0;}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a873944ead3d46514a037f8ce293ff3cb}{test\_hash}}(uint64\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a4a4dfd0b9da0192359b46b119999d190}{hash}})\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_aebdb26dd35831b301cf5509371973d02}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter}{BloomFilter}}*\ other)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ DCHECK(other-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}()\ ==\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}});}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ other-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a25b0583d48ac105d377c938066361f5e}{size}}();\ i++)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}[i]\ |=\ other-\/>\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}}[i];}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00160\ \ \ \ \ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_adfc74fe32896164c93477aa9a7446504}{used\_bits}}(uint64\_t\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ Compute\ the\ optimal\ bit\ number\ according\ to\ the\ following\ rule:}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ m\ =\ -\/n\ *\ ln(fpp)\ /\ (ln(2)\ \string^\ 2)}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ n:\ expected\ distinct\ record\ number}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ fpp:\ false\ positive\ probability}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ the\ result\ will\ be\ power\ of\ 2}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_aa61e9179167c625e813fc5f5d8616951}{optimal\_bit\_num}}(uint64\_t\ n,\ \textcolor{keywordtype}{double}\ fpp);}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ bloom\ filter\ data}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ specially\ add\ one\ byte\ for\ null\ flag}}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6d995411bcb21f78e2b123e9449df39c}{\_data}};}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ optimal\ bloom\ filter\ num\ bytes}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ it\ is\ calculated\ by\ optimal\_bit\_num()\ /\ 8}}
+\DoxyCodeLine{00177\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ae1f2972ea17919738df2ab8fb3e0e7e0}{\_num\_bytes}};}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ equal\ to\ \_num\_bytes\ +\ 1}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ last\ byte\ is\ for\ has\_null\ flag}}
+\DoxyCodeLine{00180\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a6648b5bbe7815b247a1ba6f03e1daac0}{\_size}};}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ last\ byte's\ pointer\ in\ data\ for\ null\ flag}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordtype}{bool}*\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_ac591d2dfc434d85349c9aa298b706542}{\_has\_null}};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00185\ \ \ \ \ std::function<void(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int},\ \textcolor{keyword}{const}\ uint64\_t,\ \textcolor{keywordtype}{void}*)>\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bloom_filter_a831906eaa3cba55b7039263df8175828}{\_hash\_func}};}
+\DoxyCodeLine{00186\ \};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \}\ \textcolor{comment}{//\ namespace\ segment\_v2}}
+\DoxyCodeLine{00189\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

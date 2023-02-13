@@ -1,0 +1,749 @@
+\hypertarget{tdigest_8h_source}{}\doxysection{tdigest.\+h}
+\label{tdigest_8h_source}\index{/Users/dabowang/be\_all/util/tdigest.h@{/Users/dabowang/be\_all/util/tdigest.h}}
+\mbox{\hyperlink{tdigest_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ Licensed\ to\ Derrick\ R.\ Burns\ under\ one\ or\ more}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ contributor\ license\ agreements.\ \ See\ the\ NOTICES\ file\ distributed\ with}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ this\ work\ for\ additional\ information\ regarding\ copyright\ ownership.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ The\ ASF\ licenses\ this\ file\ to\ You\ under\ the\ Apache\ License,\ Version\ 2.0}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ (the\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ T-\/Digest\ :\ \ Percentile\ and\ Quantile\ Estimation\ of\ Big\ Data}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ A\ new\ data\ structure\ for\ accurate\ on-\/line\ accumulation\ of\ rank-\/based\ statistics}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ such\ as\ quantiles\ and\ trimmed\ means.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ See\ original\ paper:\ "{}Computing\ extremely\ accurate\ quantiles\ using\ t-\/digest"{}}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ by\ Ted\ Dunning\ and\ Otmar\ Ertl\ for\ more\ details}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ https://github.com/tdunning/t-\/digest/blob/07b8f2ca2be8d0a9f04df2feadad5ddc1bb73c88/docs/t-\/digest-\/paper/histo.pdf.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ https://github.com/derrickburns/tdigest}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <cfloat>}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging_8h}{common/logging.h}}"{}}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{udf_8h}{udf/udf.h}}"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debug__util_8h}{util/debug\_util.h}}"{}}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{util_2radix__sort_8h}{util/radix\_sort.h}}"{}}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ =\ float;}
+\DoxyCodeLine{00062\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ =\ float;}
+\DoxyCodeLine{00063\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ =\ size\_t;}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_ab53eadd4d41aca98d37e0267cba65ee7}{kHighWater}}\ =\ 40000;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}\ \{}
+\DoxyCodeLine{00068\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_ab37e30cd4bd7e8fd76f4d4b7c6fe2ea9}{Centroid}}()\ :\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}(0.0,\ 0.0)\ \{\}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_ad1af8a865460242b448965cf7f6a59e1}{Centroid}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_centroid_ac75adff612fb05507fc310094d0b52f5}{mean}},\ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_centroid_adf436b34cc3c680390216a5ee4b7be33}{weight}})\ :\ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}}(\mbox{\hyperlink{classdoris_1_1_centroid_ac75adff612fb05507fc310094d0b52f5}{mean}}),\ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}(\mbox{\hyperlink{classdoris_1_1_centroid_adf436b34cc3c680390216a5ee4b7be33}{weight}})\ \{\}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_centroid_ac75adff612fb05507fc310094d0b52f5}{mean}}()\ const\ noexcept\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}};\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_centroid_adf436b34cc3c680390216a5ee4b7be33}{weight}}()\ const\ noexcept\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}};\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\&\ \mbox{\hyperlink{classdoris_1_1_centroid_ae30fb5b76938e230dd9a14493ccf2fd4}{mean}}()\ noexcept\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}};\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\&\ \mbox{\hyperlink{classdoris_1_1_centroid_a03d8366b14a4dce3c8f5b78baeb12e69}{weight}}()\ noexcept\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}};\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_centroid_a162865bc9693a1ccf2dad564af747ab0}{add}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}\&\ c)\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ DCHECK\_GT(c.\mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}},\ 0);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}\ !=\ 0.0)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}\ +=\ c.\mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}};}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}}\ +=\ c.\mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}\ *\ (c.\mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}})\ /\ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}};}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}\ =\ c.\mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}}\ =\ c.\mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}};}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_centroid_a8fe158987ff153c4db5883d2678d3c53}{\_mean}}\ =\ 0;}
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_centroid_a1766c46bcd73f2844be41c64d90af092}{\_weight}}\ =\ 0;}
+\DoxyCodeLine{00095\ \};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_centroid_list}{CentroidList}}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_centroid_list_a84436f8643b49d18a3ab5fc295bbbe6f}{CentroidList}}(\textcolor{keyword}{const}\ std::vector<Centroid>\&\ s)\ :\ \mbox{\hyperlink{structdoris_1_1_centroid_list_a50319dc1a2c2cd45bf555cebe22b1919}{iter}}(s.cbegin()),\ \mbox{\hyperlink{structdoris_1_1_centroid_list_ad6851d8d841820691e0b8a50afb6297d}{end}}(s.cend())\ \{\}}
+\DoxyCodeLine{00099\ \ \ \ \ std::vector<Centroid>::const\_iterator\ \mbox{\hyperlink{structdoris_1_1_centroid_list_a50319dc1a2c2cd45bf555cebe22b1919}{iter}};}
+\DoxyCodeLine{00100\ \ \ \ \ std::vector<Centroid>::const\_iterator\ \mbox{\hyperlink{structdoris_1_1_centroid_list_ad6851d8d841820691e0b8a50afb6297d}{end}};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_centroid_list_a26e94ac149e5205057d93cf14dfa3325}{advance}}()\ \{\ \textcolor{keywordflow}{return}\ ++\mbox{\hyperlink{structdoris_1_1_centroid_list_a50319dc1a2c2cd45bf555cebe22b1919}{iter}}\ !=\ \mbox{\hyperlink{structdoris_1_1_centroid_list_ad6851d8d841820691e0b8a50afb6297d}{end}};\ \}}
+\DoxyCodeLine{00103\ \};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_centroid_list_comparator}{CentroidListComparator}}\ \{}
+\DoxyCodeLine{00106\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_centroid_list_comparator_a6a53d1ad3fb7dd9c595ce2f715a73079}{CentroidListComparator}}()\ \{\}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_centroid_list_comparator_ac16c82766d75b15fe83860690b43304d}{operator()}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_centroid_list}{CentroidList}}\&\ left,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_centroid_list}{CentroidList}}\&\ right)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ left.\mbox{\hyperlink{structdoris_1_1_centroid_list_a50319dc1a2c2cd45bf555cebe22b1919}{iter}}-\/>mean()\ >\ right.\mbox{\hyperlink{structdoris_1_1_centroid_list_a50319dc1a2c2cd45bf555cebe22b1919}{iter}}-\/>mean();}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \};}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_ac0ce7d4a69db3377268b8518f2fcb944}{CentroidListQueue}}\ =}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ std::priority\_queue<CentroidList,\ std::vector<CentroidList>,\ \mbox{\hyperlink{classdoris_1_1_centroid_list_comparator}{CentroidListComparator}}>;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_centroid_comparator}{CentroidComparator}}\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_centroid_comparator_aea09385b85b43777a62aac7be75100db}{operator()}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}\&\ b)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.mean()\ <\ b.\mbox{\hyperlink{classdoris_1_1_centroid_ac75adff612fb05507fc310094d0b52f5}{mean}}();\ \}}
+\DoxyCodeLine{00119\ \};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits}{TDigestRadixSortTraits}}\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_centroid}{Element}}\ =\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_ae6a663af9d4703f73e1dc097d64c0fd3}{Key}}\ =\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}};}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_a66283d3c1c5ce824d30d6470056df62d}{CountType}}\ =\ uint32\_t;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_a5b2c20f622a441e4397764a4a58e41aa}{KeyBits}}\ =\ uint32\_t;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_a7328b2a83ee582220bcbac67b1b8892f}{PART\_SIZE\_BITS}}\ =\ 8;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_radix_sort_float_transform}{Transform}}\ =\ \mbox{\hyperlink{structdoris_1_1_radix_sort_float_transform}{RadixSortFloatTransform<KeyBits>}};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1_radix_sort_malloc_allocator}{Allocator}}\ =\ \mbox{\hyperlink{structdoris_1_1_radix_sort_malloc_allocator}{RadixSortMallocAllocator}};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_ae6a663af9d4703f73e1dc097d64c0fd3}{Key}}\&\ \mbox{\hyperlink{structdoris_1_1_t_digest_1_1_t_digest_radix_sort_traits_a615287d8be2c68a0256af6e75e4858e9}{extractKey}}(\mbox{\hyperlink{classdoris_1_1_centroid}{Element}}\&\ elem)\ \{\ \textcolor{keywordflow}{return}\ elem.\mbox{\hyperlink{classdoris_1_1_centroid_ac75adff612fb05507fc310094d0b52f5}{mean}}();\ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_t_digest_1_1_t_digest_comparator}{TDigestComparator}}\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_1_1_t_digest_comparator_a4ed8d7d1c457e9c5a12f344691ee01d3}{TDigestComparator}}()\ \{\}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_t_digest_1_1_t_digest_comparator_a4712433a6bec3380819d4b1e4e0fa61b}{operator()}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}*\ left,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}*\ right)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ left-\/>\mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}()\ >\ right-\/>\mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \};}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_t_digest_ac090f38d33dbb8bd2590c4d751deb39d}{TDigestQueue}}\ =}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ std::priority\_queue<const\ TDigest*,\ std::vector<const\ TDigest*>,\ \mbox{\hyperlink{classdoris_1_1_t_digest_1_1_t_digest_comparator}{TDigestComparator}}>;}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00148\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a1df0058b3a3e2c41d5498c63ec454bb9}{TDigest}}()\ :\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(10000)\ \{\}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2644807186de3e3ec429231941de0de4}{TDigest}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}})\ :\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ 0)\ \{\}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a064e569452e300f7b41710ae9ee2a843}{TDigest}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ bufferSize)\ :\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ bufferSize,\ 0)\ \{\}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac1d642fd65fae2fa58dfeca4f25f799d}{TDigest}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ unmergedSize,\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ mergedSize)}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}}),}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}}(\mbox{\hyperlink{classdoris_1_1_t_digest_a382a0af3939cfae6a7318803efce8c0d}{processedSize}}(mergedSize,\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}})),}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}}(\mbox{\hyperlink{classdoris_1_1_t_digest_abda59ef5e52721a9722492820670a695}{unprocessedSize}}(unmergedSize,\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}}))\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.reserve(\mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}});}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.reserve(\mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}}\ +\ 1);}
+\DoxyCodeLine{00160\ \ \ \ \ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa6480a0b511101dc39a6367b430b3482}{TDigest}}(std::vector<Centroid>\&\&\ \mbox{\hyperlink{classdoris_1_1_t_digest_a20f9a073ae2f2172dd22531e98afc152}{processed}},\ std::vector<Centroid>\&\&\ \mbox{\hyperlink{classdoris_1_1_t_digest_a8bb2835c315a9de1ccd4de5d081101cc}{unprocessed}},}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ unmergedSize,\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ mergedSize)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}},\ unmergedSize,\ mergedSize)\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}\ =\ std::move(\mbox{\hyperlink{classdoris_1_1_t_digest_a20f9a073ae2f2172dd22531e98afc152}{processed}});}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}\ =\ std::move(\mbox{\hyperlink{classdoris_1_1_t_digest_a8bb2835c315a9de1ccd4de5d081101cc}{unprocessed}});}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}});}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}});}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ >\ 0)\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ =\ std::min(\mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[0].\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}());}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ =\ std::max(\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cend()\ -\/\ 1)-\/>mean());}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a16227fcf3ab051c352de1b30496daad4}{updateCumulative}}();}
+\DoxyCodeLine{00175\ \ \ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(std::vector<Centroid>\&\ centroids)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ w\ =\ 0.0;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ centroid\ :\ centroids)\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ w\ +=\ centroid.weight();}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ w;}
+\DoxyCodeLine{00183\ \ \ \ \ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}\&\ \mbox{\hyperlink{classdoris_1_1_t_digest_a9caf7261ae41b0fae743c19a78a62b69}{operator=}}(\mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}\&\&\ o)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}}\ =\ o.\_compression;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}}\ =\ o.\_max\_processed;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}}\ =\ o.\_max\_unprocessed;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ =\ o.\_processed\_weight;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ =\ o.\_unprocessed\_weight;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}\ =\ std::move(o.\_processed);}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}\ =\ std::move(o.\_unprocessed);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}\ =\ std::move(o.\_cumulative);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ =\ o.\_min;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ =\ o.\_max;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00197\ \ \ \ \ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a150a8612dada0dd279d23b85b17775b9}{TDigest}}(\mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}\&\&\ o)}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(std::move(o.\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}),\ std::move(o.\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}),\ o.\mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}},}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ o.\mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}},\ o.\mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}})\ \{\}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a382a0af3939cfae6a7318803efce8c0d}{processedSize}}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ size,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (size\ ==\ 0)\ ?\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\textcolor{keyword}{>}(2\ *\ std::ceil(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}}))\ :\ size;}
+\DoxyCodeLine{00205\ \ \ \ \ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_abda59ef5e52721a9722492820670a695}{unprocessedSize}}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ size,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (size\ ==\ 0)\ ?\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\textcolor{keyword}{>}(8\ *\ std::ceil(\mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}}))\ :\ size;}
+\DoxyCodeLine{00209\ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ merge\ in\ another\ t-\/digest}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2ca81e62e387c9bf98790a72e31b64bf}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}*\ other)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ std::vector<const\ TDigest*>\ others\ \{other\};}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a20c9c1175fd043bb9bdde9415ec193db}{add}}(others.cbegin(),\ others.cend());}
+\DoxyCodeLine{00215\ \ \ \ \ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<Centroid>\&\ \mbox{\hyperlink{classdoris_1_1_t_digest_a20f9a073ae2f2172dd22531e98afc152}{processed}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}};\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<Centroid>\&\ \mbox{\hyperlink{classdoris_1_1_t_digest_a8bb2835c315a9de1ccd4de5d081101cc}{unprocessed}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}};\ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a1d3d8d16e569e39c67ca4055be607014}{maxUnprocessed}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}};\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a691629b4b60e22589b103969dd093d4e}{maxProcessed}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}};\ \}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a20c9c1175fd043bb9bdde9415ec193db}{add}}(std::vector<const\ TDigest*>\ digests)\ \{\ \mbox{\hyperlink{classdoris_1_1_t_digest_a20c9c1175fd043bb9bdde9415ec193db}{add}}(digests.cbegin(),\ digests.cend());\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ merge\ in\ a\ vector\ of\ tdigests\ in\ the\ most\ efficient\ manner\ possible}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ in\ constant\ space}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ works\ for\ any\ value\ of\ kHighWater}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a044b784c21fc88034945649c9e3ecb72}{add}}(std::vector<const\ TDigest*>::const\_iterator\ iter,}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<const\ TDigest*>::const\_iterator\ end)\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iter\ !=\ end)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ size\ =\ std::distance(iter,\ end);}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac090f38d33dbb8bd2590c4d751deb39d}{TDigestQueue}}\ pq(\mbox{\hyperlink{classdoris_1_1_t_digest_1_1_t_digest_comparator}{TDigestComparator}}\ \{\});}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ iter\ !=\ end;\ iter++)\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pq.push((*iter));}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<const\ TDigest*>\ batch;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ batch.reserve(size);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}\ =\ 0;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!pq.empty())\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ td\ =\ pq.top();}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ batch.push\_back(td);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pq.pop();}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}\ +=\ td-\/>totalSize();}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}\ >=\ \mbox{\hyperlink{namespacedoris_ab53eadd4d41aca98d37e0267cba65ee7}{kHighWater}}\ ||\ pq.empty())\ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ad3c6d257f131a91c210ec8d9d0afb107}{mergeProcessed}}(batch);}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a77f53ccb20472f1eccab5500f2267fed}{mergeUnprocessed}}(batch);}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a811c98f748f90054d87c7f699b0b6ca5}{processIfNecessary}}();}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ batch.clear();}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}\ =\ 0;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a16227fcf3ab051c352de1b30496daad4}{updateCumulative}}();}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aef73e4b52b0f5bb429071ccddc5d4386}{processedWeight}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}};\ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a5e9eb27cfed9b9793d1a2b69e9e93567}{unprocessedWeight}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}};\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2187d1266b3d663923d8f4f7a8e51ed5}{haveUnprocessed}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size()\ >\ 0;\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a3ba29d5d36e893ab940c2b6fd315b9b9}{totalSize}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ +\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size();\ \}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a24125d8923244319db5b490e5e8a08a9}{totalWeight}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\textcolor{keyword}{>}(\mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ +\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}});\ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{comment}{//\ return\ the\ cdf\ on\ the\ t-\/digest}}
+\DoxyCodeLine{00270\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a543315992a3c38394d75c6ab2edd9b0b}{cdf}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x)\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a2187d1266b3d663923d8f4f7a8e51ed5}{haveUnprocessed}}()\ ||\ \mbox{\hyperlink{classdoris_1_1_t_digest_afc891d3aea2a4eb5b44bd544d9699ace}{isDirty}}())\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}();}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aefd671fbed8e3e1f509ee57752ff26f1}{cdfProcessed}}(x);}
+\DoxyCodeLine{00273\ \ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_t_digest_afc891d3aea2a4eb5b44bd544d9699ace}{isDirty}}()\ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ >\ \mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}}\ ||\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size()\ >\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}};}
+\DoxyCodeLine{00277\ \ \ \ \ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{comment}{//\ return\ the\ cdf\ on\ the\ processed\ values}}
+\DoxyCodeLine{00280\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aefd671fbed8e3e1f509ee57752ff26f1}{cdfProcessed}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}cdf\ value\ "{}}\ <<\ x;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}processed\ size\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ ==\ 0)\ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ no\ data\ to\ examine}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}no\ processed\ values"{}};}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0.0;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ ==\ 1)\ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}one\ processed\ value\ "{}}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ \_min\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ <<\ \textcolor{stringliteral}{"{}\ \_max\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}};}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ exactly\ one\ centroid,\ should\ have\ \_max==\_min}}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ width\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}};}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ <\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}})\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0.0;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (x\ >\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}})\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1.0;}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (x\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ <=\ width)\ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \_min\ and\ \_max\ are\ too\ close\ together\ to\ do\ any\ viable\ interpolation}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0.5;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ interpolate\ if\ somehow\ we\ have\ weight\ >\ 0\ and\ \_max\ !=\ \_min}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (x\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}})\ /\ (\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}});}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ n\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ <=\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}})\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}below\ \_min\ "{}}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ \_min\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ <<\ \textcolor{stringliteral}{"{}\ x\ "{}}\ <<\ x;}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ >=\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}})\ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}above\ \_max\ "{}}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ \_max\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ <<\ \textcolor{stringliteral}{"{}\ x\ "{}}\ <<\ x;}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ for\ the\ left\ tail}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ <=\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0))\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}left\ tail\ "{}}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ \_min\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ <<\ \textcolor{stringliteral}{"{}\ mean(0)\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0)\ <<\ \textcolor{stringliteral}{"{}\ x\ "{}}\ <<\ x;}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ note\ that\ this\ is\ different\ than\ mean(0)\ >\ \_min\ ...\ this\ guarantees\ interpolation\ works}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0)\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ >\ 0)\ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (x\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}})\ /\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0)\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}})\ *\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(0)\ /\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ /\ 2.0;}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ the\ right\ tail}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ >=\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(n\ -\/\ 1))\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}right\ tail"{}}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ \_max\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ <<\ \textcolor{stringliteral}{"{}\ mean(n\ -\/\ 1)\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(n\ -\/\ 1)\ <<\ \textcolor{stringliteral}{"{}\ x\ "{}}\ <<\ x;}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(n\ -\/\ 1)\ >\ 0)\ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1.0\ -\/\ (\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ -\/\ x)\ /\ (\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(n\ -\/\ 1))\ *\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(n\ -\/\ 1)\ /}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ /\ 2.0;}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_centroid_comparator}{CentroidComparator}}\ cc;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ iter\ =}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::upper\_bound(\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cbegin(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cend(),\ \mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}(x,\ 0),\ cc);}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ i\ =\ std::distance(\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cbegin(),\ iter);}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z1\ =\ x\ -\/\ (iter\ -\/\ 1)-\/>\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}();}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z2\ =\ (iter)-\/>\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}()\ -\/\ x;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK\_LE(0.0,\ z1);}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK\_LE(0.0,\ z2);}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}middle\ "{}}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ z1\ "{}}\ <<\ z1\ <<\ \textcolor{stringliteral}{"{}\ z2\ "{}}\ <<\ z2\ <<\ \textcolor{stringliteral}{"{}\ x\ "{}}\ <<\ x;}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aec146b8df35b39ea67f9322d3c110e1b}{weightedAverage}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}[i\ -\/\ 1],\ z2,\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}[i],\ z1)\ /\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}};}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ this\ returns\ a\ quantile\ on\ the\ t-\/digest}}
+\DoxyCodeLine{00361\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a312be5d6e8f5ef91b44c8a6a1433bcee}{quantile}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ q)\ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a2187d1266b3d663923d8f4f7a8e51ed5}{haveUnprocessed}}()\ ||\ \mbox{\hyperlink{classdoris_1_1_t_digest_afc891d3aea2a4eb5b44bd544d9699ace}{isDirty}}())\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}();}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a40044ae320283d55e2e9f914a4a8469d}{quantileProcessed}}(q);}
+\DoxyCodeLine{00364\ \ \ \ \ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ this\ returns\ a\ quantile\ on\ the\ currently\ processed\ values\ without\ changing\ the\ t-\/digest}}
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{//\ the\ value\ will\ not\ represent\ the\ unprocessed\ values}}
+\DoxyCodeLine{00368\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a40044ae320283d55e2e9f914a4a8469d}{quantileProcessed}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ q)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (q\ <\ 0\ ||\ q\ >\ 1)\ \{}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}q\ should\ be\ in\ [0,1],\ got\ "{}}\ <<\ q;}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NAN;}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ ==\ 0)\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ no\ sorted\ means\ no\ data,\ no\ way\ to\ get\ a\ quantile}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NAN;}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ ==\ 1)\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ with\ one\ data\ point,\ all\ quantiles\ lead\ to\ Rome}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0);}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ know\ that\ there\ are\ at\ least\ two\ sorted\ now}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ n\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ values\ were\ stored\ in\ a\ sorted\ array,\ index\ would\ be\ the\ offset\ we\ are\ Weighterested\ in}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ =\ q\ *\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}};}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ at\ the\ boundaries,\ we\ return\ \_min\ or\ \_max}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ <=\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(0)\ /\ 2.0)\ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK\_GT(\mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(0),\ 0);}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ +\ 2.0\ *\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ /\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(0)\ *\ (\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(0)\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}});}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ iter\ =\ std::lower\_bound(\mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.cbegin(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.cend(),\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}});}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iter\ +\ 1\ !=\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.cend())\ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ i\ =\ std::distance(\mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.cbegin(),\ iter);}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z1\ =\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ -\/\ *(iter\ -\/\ 1);}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z2\ =\ *(iter)-\/\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}};}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ VLOG\_CRITICAL\ <<\ "{}z2\ "{}\ <<\ z2\ <<\ "{}\ index\ "{}\ <<\ index\ <<\ "{}\ z1\ "{}\ <<\ z1;}}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aec146b8df35b39ea67f9322d3c110e1b}{weightedAverage}}(\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(i\ -\/\ 1),\ z2,\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(i),\ z1);}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ DCHECK\_LE(\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}});}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ DCHECK\_GE(\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(n\ -\/\ 1)\ /\ 2.0);}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z1\ =\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(n\ -\/\ 1)\ /\ 2.0;}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ z2\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(n\ -\/\ 1)\ /\ 2\ -\/\ z1;}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aec146b8df35b39ea67f9322d3c110e1b}{weightedAverage}}(\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(n\ -\/\ 1),\ z1,\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ z2);}
+\DoxyCodeLine{00411\ \ \ \ \ \}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf39a3c462bac204bb12f49ed64bb8c4}{compression}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}};\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a39a3330469c114c79646d465e70d87a4}{add}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x)\ \{\ \mbox{\hyperlink{classdoris_1_1_t_digest_a39a3330469c114c79646d465e70d87a4}{add}}(x,\ 1);\ \}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_abf024beb6fd92f41bd35a3628586f7b9}{compress}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}();\ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{comment}{//\ add\ a\ single\ centroid\ to\ the\ unprocessed\ vector,\ processing\ previously\ unprocessed\ sorted\ if\ our\ limit\ has}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{comment}{//\ been\ reached.}}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a04937ff5aaa1d18919450bb36db0ee5f}{add}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x,\ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ w)\ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::isnan(x))\ \{}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.push\_back(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}(x,\ w));}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ +=\ w;}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a811c98f748f90054d87c7f699b0b6ca5}{processIfNecessary}}();}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00429\ \ \ \ \ \}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aaf0c383e8401c838fef10675bbb344c8}{add}}(std::vector<Centroid>::const\_iterator\ iter,}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<Centroid>::const\_iterator\ end)\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (iter\ !=\ end)\ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ diff\ =\ std::distance(iter,\ end);}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ room\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}}\ -\/\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size();}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mid\ =\ iter\ +\ std::min(diff,\ room);}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (iter\ !=\ mid)\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.push\_back(*(iter++));}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size()\ >=\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}})\ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}();}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00442\ \ \ \ \ \}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_t_digest_ad52aa466a40777936bc6878dd542b047}{serialized\_size}}()\ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(uint32\_t)\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}})\ *\ 5\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}})\ *\ 2\ +\ \textcolor{keyword}{sizeof}(uint32\_t)\ *\ 3\ +}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}})\ +\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size()\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}})\ +}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.size()\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}});}
+\DoxyCodeLine{00448\ \ \ \ \ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_t_digest_af3ad73dab57add0a3559848ad3466e62}{serialize}}(uint8\_t*\ writer)\ \{}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ uint8\_t*\ dst\ =\ writer;}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ uint32\_t\ total\_size\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ad52aa466a40777936bc6878dd542b047}{serialized\_size}}();}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&total\_size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}));}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}});}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}));}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}});}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[i],\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}));}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}});}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ size\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size();}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{comment}{//TODO(weixiang):\ may\ be\ once\ memcpy\ is\ enough!}}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}[i],\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}));}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}});}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ size\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.size();}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(writer,\ \&\mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}[i],\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}));}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}});}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ writer\ -\/\ dst;}
+\DoxyCodeLine{00495\ \ \ \ \ \}}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a06fc5e43c57b5cc1b1f7bc72793c74ec}{unserialize}}(\textcolor{keyword}{const}\ uint8\_t*\ type\_reader)\ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ uint32\_t\ total\_length\ =\ 0;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&total\_length,\ type\_reader,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}));}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}});}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}));}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}});}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}},\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}));}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}});}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ uint32\_t\ size;}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&size,\ type\_reader,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.resize(size);}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[i],\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}));}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}});}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&size,\ type\_reader,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.resize(size);}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}[i],\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}}));}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_centroid}{Centroid}});}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&size,\ type\_reader,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.resize(size);}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)\ \{}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&\mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}[i],\ type\_reader,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}));}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ type\_reader\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}});}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00539\ \ \ \ \ \}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00542\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}};}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ =\ std::numeric\_limits<Value>::max();}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ =\ std::numeric\_limits<Value>::min();}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \ \ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a8e925e4f462f4c1b4dd5ff7d6229e0a6}{\_max\_processed}};}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \ \mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae999e44f79dec13b26e732055c5871f6}{\_max\_unprocessed}};}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ =\ 0.0;}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ =\ 0.0;}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \ \ \ \ std::vector<Centroid>\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}};}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ std::vector<Centroid>\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}};}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \ \ \ \ std::vector<Weight>\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}};}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{comment}{//\ return\ mean\ of\ i-\/th\ centroid}}
+\DoxyCodeLine{00563\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}(\textcolor{keywordtype}{int}\ i)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[i].mean();\ \}}
+\DoxyCodeLine{00564\ }
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{comment}{//\ return\ weight\ of\ i-\/th\ centroid}}
+\DoxyCodeLine{00566\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_abc7b27f084db4fddf225ca7fa5cbd510}{weight}}(\textcolor{keywordtype}{int}\ i)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[i].weight();\ \}}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{comment}{//\ append\ all\ unprocessed\ centroids\ into\ current\ unprocessed\ vector}}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a77f53ccb20472f1eccab5500f2267fed}{mergeUnprocessed}}(\textcolor{keyword}{const}\ std::vector<const\ TDigest*>\&\ tdigests)\ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tdigests.size()\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ total\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size();}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ td\ :\ tdigests)\ \{}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ total\ +=\ td-\/>\_unprocessed.size();}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00576\ }
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.reserve(total);}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ td\ :\ tdigests)\ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.insert(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.end(),\ td-\/>\_unprocessed.cbegin(),}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ td-\/>\_unprocessed.cend());}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ +=\ td-\/>\_unprocessed\_weight;}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00583\ \ \ \ \ \}}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{comment}{//\ merge\ all\ processed\ centroids\ together\ into\ a\ single\ sorted\ vector}}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ad3c6d257f131a91c210ec8d9d0afb107}{mergeProcessed}}(\textcolor{keyword}{const}\ std::vector<const\ TDigest*>\&\ tdigests)\ \{}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tdigests.size()\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ total\ =\ 0;}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac0ce7d4a69db3377268b8518f2fcb944}{CentroidListQueue}}\ pq(\mbox{\hyperlink{classdoris_1_1_centroid_list_comparator}{CentroidListComparator}}\ \{\});}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ td\ :\ tdigests)\ \{}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ sorted\ =\ td-\/>\_processed;}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ size\ =\ sorted.size();}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >\ 0)\ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pq.push(\mbox{\hyperlink{structdoris_1_1_centroid_list}{CentroidList}}(sorted));}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\ +=\ size;}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ +=\ td-\/>\_processed\_weight;}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (total\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ >\ 0)\ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ pq.push(\mbox{\hyperlink{structdoris_1_1_centroid_list}{CentroidList}}(\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}));}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ total\ +=\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00606\ }
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ std::vector<Centroid>\ sorted;}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}total\ "{}}\ <<\ total;}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ sorted.reserve(total);}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!pq.empty())\ \{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ best\ =\ pq.top();}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ pq.pop();}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ sorted.push\_back(*(best.iter));}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (best.advance())\ pq.push(best);}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}\ =\ std::move(sorted);}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size()\ >\ 0)\ \{}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ =\ std::min(\mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[0].\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}());}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ =\ std::max(\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cend()\ -\/\ 1)-\/>mean());}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00622\ \ \ \ \ \}}
+\DoxyCodeLine{00623\ }
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a811c98f748f90054d87c7f699b0b6ca5}{processIfNecessary}}()\ \{}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_t_digest_afc891d3aea2a4eb5b44bd544d9699ace}{isDirty}}())\ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}();}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00628\ \ \ \ \ \}}
+\DoxyCodeLine{00629\ }
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a16227fcf3ab051c352de1b30496daad4}{updateCumulative}}()\ \{}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ n\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.size();}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.clear();}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.reserve(n\ +\ 1);}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ previous\ =\ 0.0;}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespacedoris_abc7179da0c33f39912b509687002fd28}{Index}}\ i\ =\ 0;\ i\ <\ n;\ i++)\ \{}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ current\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aab3213dd80d0835720ce908b45d22d84}{weight}}(i);}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ halfCurrent\ =\ current\ /\ 2.0;}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.push\_back(previous\ +\ halfCurrent);}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ previous\ =\ previous\ +\ current;}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa27e8e6735eb5eab2dcfcac62376c8ce}{\_cumulative}}.push\_back(previous);}
+\DoxyCodeLine{00642\ \ \ \ \ \}}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \ \ \ \ \textcolor{comment}{//\ merges\ \_unprocessed\ centroids\ and\ \_processed\ centroids\ together\ and\ processes\ them}}
+\DoxyCodeLine{00645\ \ \ \ \ \textcolor{comment}{//\ when\ complete,\ \_unprocessed\ will\ be\ empty\ and\ \_processed\ will\ have\ at\ most\ \_max\_processed\ centroids}}
+\DoxyCodeLine{00646\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a2e9c5136d19b1a95fc427e0852deab5c}{process}}()\ \{}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_centroid_comparator}{CentroidComparator}}\ cc;}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_radix_sort_a7012339ec414f01341be9f1dc2ee3eaa}{RadixSort<TDigestRadixSortTraits>::executeLSD}}(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.data(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size());}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ count\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.size();}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.insert(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.end(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cbegin(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cend());}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ std::inplace\_merge(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.begin(),\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.begin()\ +\ count,\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.end(),}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cc);}
+\DoxyCodeLine{00653\ }
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ +=\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}};}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ae727391f9ace1030612115a53261fab5}{\_unprocessed\_weight}}\ =\ 0;}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.clear();}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.push\_back(\mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}[0]);}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ wSoFar\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}[0].weight();}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ wLimit\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ *\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab27eaae76c368477c7196ef69ebc2d58}{integratedQ}}(1.0);}
+\DoxyCodeLine{00661\ }
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ end\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.end();}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ iter\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.cbegin()\ +\ 1;\ iter\ <\ end;\ iter++)\ \{}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ centroid\ =\ *iter;}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_acc7027b927cf69d0e8f44dd19bd7f6ef}{Weight}}\ projectedW\ =\ wSoFar\ +\ centroid.weight();}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (projectedW\ <=\ wLimit)\ \{}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wSoFar\ =\ projectedW;}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.end()\ -\/\ 1)-\/>\mbox{\hyperlink{classdoris_1_1_t_digest_a20c9c1175fd043bb9bdde9415ec193db}{add}}(centroid);}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ k1\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa3d1558e4a12bf089d92a7f647b0e392}{integratedLocation}}(wSoFar\ /\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}});}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wLimit\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}}\ *\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab27eaae76c368477c7196ef69ebc2d58}{integratedQ}}(k1\ +\ 1.0);}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wSoFar\ +=\ centroid.weight();}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.emplace\_back(centroid);}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aeb80fcf184b37b0d897a7ac6b8d3f890}{\_unprocessed}}.clear();}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}}\ =\ std::min(\mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}[0].\mbox{\hyperlink{classdoris_1_1_t_digest_a46db39cd0552125881295282fe60a965}{mean}}());}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}new\ \_min\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa4763ba44c500a7f21aaf7a482f4e6e9}{\_min}};}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}}\ =\ std::max(\mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}},\ (\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}}.cend()\ -\/\ 1)-\/>mean());}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}new\ \_max\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_t_digest_afbac9f1f052b6015033b933f62938d38}{\_max}};}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_t_digest_a16227fcf3ab051c352de1b30496daad4}{updateCumulative}}();}
+\DoxyCodeLine{00682\ \ \ \ \ \}}
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa0821c1dd6422dda8853dbc51f3a19eb}{checkWeights}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa0821c1dd6422dda8853dbc51f3a19eb}{checkWeights}}(\mbox{\hyperlink{classdoris_1_1_t_digest_ac48ab2b19b057e076eb46983b55c337a}{\_processed}},\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab13727eaabdf8a04f863047150bcf142}{\_processed\_weight}});\ \}}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ac1048fea880f17da36f90f916125dfff}{checkWeights}}(\textcolor{keyword}{const}\ std::vector<Centroid>\&\ sorted,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ total)\ \{}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ badWeight\ =\ 0;}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ k1\ =\ 0.0;}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ q\ =\ 0.0;}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ iter\ =\ sorted.cbegin();\ iter\ !=\ sorted.cend();\ iter++)\ \{}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ w\ =\ iter-\/>weight();}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dq\ =\ w\ /\ total;}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ k2\ =\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa3d1558e4a12bf089d92a7f647b0e392}{integratedLocation}}(q\ +\ dq);}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (k2\ -\/\ k1\ >\ 1\ \&\&\ w\ !=\ 1)\ \{}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}Oversize\ centroid\ at\ "{}}\ <<\ std::distance(sorted.cbegin(),\ iter)}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ k1\ "{}}\ <<\ k1\ <<\ \textcolor{stringliteral}{"{}\ k2\ "{}}\ <<\ k2\ <<\ \textcolor{stringliteral}{"{}\ dk\ "{}}\ <<\ (k2\ -\/\ k1)\ <<\ \textcolor{stringliteral}{"{}\ w\ "{}}\ <<\ w}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ q\ "{}}\ <<\ q;}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ badWeight++;}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (k2\ -\/\ k1\ >\ 1.5\ \&\&\ w\ !=\ 1)\ \{}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a43d731cf3b4272d1845ed3ee2a2d0301}{VLOG\_CRITICAL}}\ <<\ \textcolor{stringliteral}{"{}Egregiously\ Oversize\ centroid\ at\ "{}}}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::distance(sorted.cbegin(),\ iter)\ <<\ \textcolor{stringliteral}{"{}\ k1\ "{}}\ <<\ k1\ <<\ \textcolor{stringliteral}{"{}\ k2\ "{}}}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ k2\ <<\ \textcolor{stringliteral}{"{}\ dk\ "{}}\ <<\ (k2\ -\/\ k1)\ <<\ \textcolor{stringliteral}{"{}\ w\ "{}}\ <<\ w\ <<\ \textcolor{stringliteral}{"{}\ q\ "{}}\ <<\ q;}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ badWeight++;}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ q\ +=\ dq;}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ k1\ =\ k2;}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ badWeight;}
+\DoxyCodeLine{00711\ \ \ \ \ \}}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00730\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aa3d1558e4a12bf089d92a7f647b0e392}{integratedLocation}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ q)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}}\ *\ (std::asin(2.0\ *\ q\ -\/\ 1.0)\ +\ M\_PI\ /\ 2)\ /\ M\_PI;}
+\DoxyCodeLine{00732\ \ \ \ \ \}}
+\DoxyCodeLine{00733\ }
+\DoxyCodeLine{00734\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ab27eaae76c368477c7196ef69ebc2d58}{integratedQ}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ k)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (std::sin(std::min(k,\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}})\ *\ M\_PI\ /\ \mbox{\hyperlink{classdoris_1_1_t_digest_ae250e6a2dd4492aa197fd0494c9f55f8}{\_compression}}\ -\/\ M\_PI\ /\ 2)\ +\ 1)\ /\ 2;}
+\DoxyCodeLine{00736\ \ \ \ \ \}}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00743\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_aec146b8df35b39ea67f9322d3c110e1b}{weightedAverage}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x1,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}},\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x2,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}})\ \{}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (x1\ <=\ x2)\ ?\ \mbox{\hyperlink{classdoris_1_1_t_digest_ace551353c6d9494898a2620646fafb94}{weightedAverageSorted}}(x1,\ \mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}},\ x2,\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}})}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_t_digest_ace551353c6d9494898a2620646fafb94}{weightedAverageSorted}}(x2,\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}},\ x1,\ \mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}});}
+\DoxyCodeLine{00746\ \ \ \ \ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_ace551353c6d9494898a2620646fafb94}{weightedAverageSorted}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x1,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}},\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x2,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}})\ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ DCHECK\_LE(x1,\ x2);}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x\ =\ (x1\ *\ \mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}}\ +\ x2\ *\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}})\ /\ (\mbox{\hyperlink{lgamma_8c_ad79f685408a628c34e6c0389d013e8c9}{w1}}\ +\ \mbox{\hyperlink{lgamma_8c_a36f1159c577b18880c56b82e1cfb4b4a}{w2}});}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::max(x1,\ std::min(x,\ x2));}
+\DoxyCodeLine{00759\ \ \ \ \ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a7b9a2e8956e5c214ba0f46bfa94c996c}{interpolate}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x0,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ x1)\ \{\ \textcolor{keywordflow}{return}\ (x\ -\/\ x0)\ /\ (x1\ -\/\ x0);\ \}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00775\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{classdoris_1_1_t_digest_a4ed4835c5f510909640271fb60d849dd}{quantile}}(\mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}},\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ previousIndex,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ nextIndex,\ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ previousMean,}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aede0314b414a6d10b4d9dd5aad1f4080}{Value}}\ nextMean)\ \{}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ delta\ =\ nextIndex\ -\/\ previousIndex;}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ previousWeight\ =\ (nextIndex\ -\/\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}})\ /\ delta;}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nextWeight\ =\ (\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ -\/\ previousIndex)\ /\ delta;}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ previousMean\ *\ previousWeight\ +\ nextMean\ *\ nextWeight;}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ \};}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

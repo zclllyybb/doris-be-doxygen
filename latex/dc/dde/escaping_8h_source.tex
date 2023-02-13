@@ -1,0 +1,657 @@
+\hypertarget{escaping_8h_source}{}\doxysection{escaping.\+h}
+\label{escaping_8h_source}\index{/Users/dabowang/be\_all/gutil/strings/escaping.h@{/Users/dabowang/be\_all/gutil/strings/escaping.h}}
+\mbox{\hyperlink{escaping_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2006\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Authors:\ Numerous.\ Principal\ maintainers\ are\ csilvers\ and\ zunger.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ This\ is\ a\ grab-\/bag\ file\ for\ string\ utilities\ involved\ in\ escaping\ and}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ unescaping\ strings\ in\ various\ ways.\ Who\ knew\ there\ were\ so\ many?}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ NOTE:\ Although\ the\ functions\ declared\ here\ have\ been\ imported\ into}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ the\ global\ namespace,\ the\ using\ statements\ are\ slated\ for\ removal.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Do\ not\ refer\ to\ these\ symbols\ without\ properly\ namespace-\/qualifying}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ them\ with\ "{}strings::"{}.\ Of\ course\ you\ may\ also\ use\ "{}using"{}\ statements}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ within\ a\ .cc\ file.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ There\ are\ more\ escaping\ functions\ in:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ webutil/html/tagutils.h\ (Escaping\ strings\ for\ HTML,\ PRE,\ JavaScript,\ etc.)}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ webutil/url/url.h\ (Escaping\ for\ URL's,\ both\ RFC-\/2396\ and\ other\ methods)}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ template/template\_modifiers.h\ (All\ sorts\ of\ stuff)}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ util/regex/re2/re2.h\ (Escaping\ for\ literals\ within\ regular\ expressions}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/\ see\ RE2::QuoteMeta).}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ And\ probably\ many\ more\ places,\ as\ well.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00026\ \textcolor{keyword}{using\ }std::string;}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00028\ \textcolor{keyword}{using\ }std::vector;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{logging_8h}{common/logging.h}}>}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ascii__ctype_8h}{gutil/strings/ascii\_ctype.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{charset_8h}{gutil/strings/charset.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stringpiece_8h}{gutil/strings/stringpiece.h}}"{}}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacestrings}{strings}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ EscapeStrForCSV()}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ Escapes\ the\ quotes\ in\ 'src'\ by\ doubling\ them.\ This\ is\ necessary}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ for\ generating\ CSV\ files\ (see\ SplitCSVLine).}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ Returns\ the\ number\ of\ characters\ written\ into\ dest\ (not\ counting}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ the\ \(\backslash\)0)\ or\ -\/1\ if\ there\ was\ insufficient\ space.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ Example:\ [some\ "{}string"{}\ to\ test]\ -\/-\/>\ [some\ "{}"{}string"{}"{}\ to\ test]}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_ae72cc966ecd0f97464ee991bbf69894c}{EscapeStrForCSV}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ dest\_len);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ UnescapeCEscapeSequences()}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \ Copies\ "{}source"{}\ to\ "{}dest"{},\ rewriting\ C-\/style\ escape\ sequences}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ \ -\/-\/\ '\(\backslash\)n',\ '\(\backslash\)r',\ '\(\backslash\)\(\backslash\)',\ '\(\backslash\)ooo',\ etc\ -\/-\/\ to\ their\ ASCII}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ equivalents.\ \ "{}dest"{}\ must\ be\ sufficiently\ large\ to\ hold\ all}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ the\ characters\ in\ the\ rewritten\ string\ (i.e.\ at\ least\ as\ large}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \ as\ strlen(source)\ +\ 1\ should\ be\ safe,\ since\ the\ replacements}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ \ are\ always\ shorter\ than\ the\ original\ escaped\ sequences).\ \ It's}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ \ safe\ for\ source\ and\ dest\ to\ be\ the\ same.\ \ RETURNS\ the\ length}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ \ of\ dest.}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ It\ allows\ hex\ sequences\ \(\backslash\)xhh,\ or\ generally\ \(\backslash\)xhhhhh\ with\ an}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ arbitrary\ number\ of\ hex\ digits,\ but\ all\ of\ them\ together\ must}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ specify\ a\ value\ of\ a\ single\ byte\ (e.g.\ \(\backslash\)x0045\ is\ equivalent}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ \ to\ \(\backslash\)x45,\ and\ \(\backslash\)x1234\ is\ erroneous).\ If\ the\ value\ is\ too\ large,}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ it\ is\ truncated\ to\ 8\ bits\ and\ an\ error\ is\ set.\ This\ is\ also}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ \ \ true\ of\ octal\ values\ that\ exceed\ 0xff.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ \ It\ also\ allows\ escape\ sequences\ of\ the\ form\ \(\backslash\)uhhhh\ (exactly\ four}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ \ hex\ digits,\ upper\ or\ lower\ case)\ or\ \(\backslash\)Uhhhhhhhh\ (exactly\ eight}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ \ \ \ hex\ digits,\ upper\ or\ lower\ case)\ to\ specify\ a\ Unicode\ code}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ \ point.\ The\ dest\ array\ will\ contain\ the\ UTF8-\/encoded\ version\ of}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ \ \ \ that\ code-\/point\ (e.g.,\ if\ source\ contains\ \(\backslash\)u2019,\ then\ dest\ will}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ \ \ \ contain\ the\ three\ bytes\ 0xE2,\ 0x80,\ and\ 0x99).\ For\ the\ inverse}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ \ \ \ transformation,\ use\ UniLib::UTF8EscapeString}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ \ (util/utf8/public/unilib.h),\ not\ CEscapeString.}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ \ \ \ Errors:\ In\ the\ first\ form\ of\ the\ call,\ errors\ are\ reported\ with}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ \ \ \ LOG(ERROR).\ The\ same\ is\ true\ for\ the\ second\ form\ of\ the\ call\ if}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ \ \ \ the\ pointer\ to\ the\ string\ vector\ is\ NULL;\ otherwise,\ error}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ \ \ \ messages\ are\ stored\ in\ the\ vector.\ In\ either\ case,\ the\ effect\ on}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ \ \ \ the\ dest\ array\ is\ not\ defined,\ but\ rest\ of\ the\ source\ will\ be}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ \ \ \ processed.}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ \ \ \ ***\ DEPRECATED:\ Use\ CUnescape()\ in\ new\ code\ ***}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ \ \ \ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a65c1169bb9bb2f7fd12bff2f817a8d00}{UnescapeCEscapeSequences}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ source,\ \textcolor{keywordtype}{char}*\ dest);}
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a65c1169bb9bb2f7fd12bff2f817a8d00}{UnescapeCEscapeSequences}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ source,\ \textcolor{keywordtype}{char}*\ dest,\ vector<string>*\ errors);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ UnescapeCEscapeString()}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ \ This\ does\ the\ same\ thing\ as\ UnescapeCEscapeSequences,\ but\ creates}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ \ a\ new\ string.\ The\ caller\ does\ not\ need\ to\ worry\ about\ allocating}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \ \ a\ dest\ buffer.\ This\ should\ be\ used\ for\ non\ performance\ critical}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ \ \ \ tasks\ such\ as\ printing\ debug\ messages.\ It\ is\ safe\ for\ src\ and\ dest}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ \ \ \ to\ be\ the\ same.}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ \ \ \ The\ second\ call\ stores\ its\ errors\ in\ a\ supplied\ string\ vector.}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ \ \ \ If\ the\ string\ vector\ pointer\ is\ NULL,\ it\ reports\ the\ errors\ with\ LOG().}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ \ \ \ In\ the\ first\ and\ second\ calls,\ the\ length\ of\ dest\ is\ returned.\ In\ the}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ \ \ \ the\ third\ call,\ the\ new\ string\ is\ returned.}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//}}
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ \ \ \ ***\ DEPRECATED:\ Use\ CUnescape()\ in\ new\ code\ ***}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00104\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a658f0423d39525cb40e141d9e67dedd3}{UnescapeCEscapeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00105\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a658f0423d39525cb40e141d9e67dedd3}{UnescapeCEscapeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest,\ vector<string>*\ errors);}
+\DoxyCodeLine{00106\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a658f0423d39525cb40e141d9e67dedd3}{UnescapeCEscapeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ CUnescape()}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ \ \ \ Copies\ "{}source"{}\ to\ "{}dest"{},\ rewriting\ C-\/style\ escape\ sequences}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ \ \ \ -\/-\/\ '\(\backslash\)n',\ '\(\backslash\)r',\ '\(\backslash\)\(\backslash\)',\ '\(\backslash\)ooo',\ etc\ -\/-\/\ to\ their\ ASCII}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ \ \ \ equivalents.\ \ "{}dest"{}\ must\ be\ sufficiently\ large\ to\ hold\ all}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ \ \ \ the\ characters\ in\ the\ rewritten\ string\ (i.e.\ at\ least\ as\ large}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ \ \ \ as\ source.size()\ should\ be\ safe,\ since\ the\ replacements}}
+\DoxyCodeLine{00115\ \textcolor{comment}{//\ \ \ \ are\ never\ longer\ than\ the\ original\ escaped\ sequences).\ \ It's}}
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ \ \ \ safe\ for\ source\ and\ dest\ to\ be\ the\ same.\ \ RETURNS\ true\ if}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ \ \ \ conversion\ was\ successful,\ false\ otherwise.\ Stores\ the\ size\ of}}
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ \ \ \ the\ result\ in\ 'dest\_len'.}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ \ \ \ It\ allows\ hex\ sequences\ \(\backslash\)xhh,\ or\ generally\ \(\backslash\)xhhhhh\ with\ an}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ \ \ \ arbitrary\ number\ of\ hex\ digits,\ but\ all\ of\ them\ together\ must}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ \ \ \ specify\ a\ value\ of\ a\ single\ byte\ (e.g.\ \(\backslash\)x0045\ is\ equivalent}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ \ \ \ to\ \(\backslash\)x45,\ and\ \(\backslash\)x1234\ is\ erroneous).\ If\ the\ value\ is\ too\ large,}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ \ \ \ an\ error\ is\ set.\ This\ is\ also\ true\ of\ octal\ values\ that\ exceed\ 0xff.}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ \ \ \ It\ also\ allows\ escape\ sequences\ of\ the\ form\ \(\backslash\)uhhhh\ (exactly\ four}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ \ \ \ hex\ digits,\ upper\ or\ lower\ case)\ or\ \(\backslash\)Uhhhhhhhh\ (exactly\ eight}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ \ \ \ hex\ digits,\ upper\ or\ lower\ case)\ to\ specify\ a\ Unicode\ code}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ \ \ \ point.\ The\ dest\ array\ will\ contain\ the\ UTF8-\/encoded\ version\ of}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ \ \ \ that\ code-\/point\ (e.g.,\ if\ source\ contains\ \(\backslash\)u2019,\ then\ dest\ will}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ \ \ \ contain\ the\ three\ bytes\ 0xE2,\ 0x80,\ and\ 0x99).\ For\ the\ inverse}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ \ \ \ transformation,\ use\ UniLib::UTF8EscapeString}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//\ \ \ \ (util/utf8/public/unilib.h),\ not\ CEscapeString.}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ \ \ \ Errors:\ Sets\ the\ description\ of\ the\ first\ encountered\ error\ in}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//\ \ \ \ 'error'.\ To\ disable\ error\ reporting,\ set\ 'error'\ to\ NULL.}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a2394a8880abfe9af166a2e2f14afbe09}{CUnescape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}*\ dest\_len,\ \textcolor{keywordtype}{string}*\ error);}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a2394a8880abfe9af166a2e2f14afbe09}{CUnescape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{string}*\ dest,\ \textcolor{keywordtype}{string}*\ error);}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ A\ version\ with\ no\ error\ reporting.}}
+\DoxyCodeLine{00143\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a2394a8880abfe9af166a2e2f14afbe09}{CUnescape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{string}*\ dest)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacestrings_a2394a8880abfe9af166a2e2f14afbe09}{CUnescape}}(source,\ dest,\ NULL);}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ CUnescapeForNullTerminatedString()}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ This\ has\ the\ same\ behavior\ as\ CUnescape,\ except\ that\ each\ octal,\ hex,}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ or\ Unicode\ escape\ sequence\ that\ resolves\ to\ a\ null\ character\ ('\(\backslash\)0')}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ is\ left\ in\ its\ original\ escaped\ form.\ \ The\ result\ is\ a}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ display-\/formatted\ string\ that\ can\ be\ interpreted\ as\ a\ null-\/terminated}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ const\ char*\ and\ will\ not\ be\ cut\ short\ if\ it\ contains\ embedded\ null}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ characters.}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a179c3a6899ceac7b71f6e490cfe1b489}{CUnescapeForNullTerminatedString}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}*\ dest\_len,}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}*\ error);}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a179c3a6899ceac7b71f6e490cfe1b489}{CUnescapeForNullTerminatedString}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{string}*\ dest,\ \textcolor{keywordtype}{string}*\ error);}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ A\ version\ with\ no\ error\ reporting.}}
+\DoxyCodeLine{00165\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a179c3a6899ceac7b71f6e490cfe1b489}{CUnescapeForNullTerminatedString}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ source,\ \textcolor{keywordtype}{string}*\ dest)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacestrings_a179c3a6899ceac7b71f6e490cfe1b489}{CUnescapeForNullTerminatedString}}(source,\ dest,\ NULL);}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ CEscapeString()}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//\ CHexEscapeString()}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ Utf8SafeCEscapeString()}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//\ Utf8SafeCHexEscapeString()}}
+\DoxyCodeLine{00174\ \textcolor{comment}{//\ \ \ \ Copies\ 'src'\ to\ 'dest',\ escaping\ dangerous\ characters\ using}}
+\DoxyCodeLine{00175\ \textcolor{comment}{//\ \ \ \ C-\/style\ escape\ sequences.\ This\ is\ very\ useful\ for\ preparing\ query}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ \ \ \ flags.\ 'src'\ and\ 'dest'\ should\ not\ overlap.\ The\ 'Hex'\ version\ uses}}
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ \ \ \ hexadecimal\ rather\ than\ octal\ sequences.\ The\ 'Utf8Safe'\ version}}
+\DoxyCodeLine{00178\ \textcolor{comment}{//\ \ \ \ doesn't\ touch\ UTF-\/8\ bytes.}}
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ \ \ \ Returns\ the\ number\ of\ bytes\ written\ to\ 'dest'\ (not\ including\ the\ \(\backslash\)0)}}
+\DoxyCodeLine{00180\ \textcolor{comment}{//\ \ \ \ or\ -\/1\ if\ there\ was\ insufficient\ space.}}
+\DoxyCodeLine{00181\ \textcolor{comment}{//}}
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ \ \ \ Currently\ only\ \(\backslash\)n,\ \(\backslash\)r,\ \(\backslash\)t,\ "{},\ ',\ \(\backslash\)\ and\ !ascii\_isprint()\ chars\ are\ escaped.}}
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00184\ \textcolor{keywordtype}{int}\ CEscapeString(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ src\_len,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ dest\_len);}
+\DoxyCodeLine{00185\ \textcolor{keywordtype}{int}\ CHexEscapeString(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ src\_len,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ dest\_len);}
+\DoxyCodeLine{00186\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_aa7f07ffd1003028140a2169be8909829}{Utf8SafeCEscapeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ src\_len,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ dest\_len);}
+\DoxyCodeLine{00187\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_acccbdc65f3a0ffdc841d9f61e1a05989}{Utf8SafeCHexEscapeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ src\_len,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ dest\_len);}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ CEscape()}}
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ CHexEscape()}}
+\DoxyCodeLine{00192\ \textcolor{comment}{//\ Utf8SafeCEscape()}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ Utf8SafeCHexEscape()}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ \ \ \ More\ convenient\ form\ of\ CEscapeString:\ returns\ result\ as\ a\ "{}string"{}.}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ \ \ \ This\ version\ is\ slower\ than\ CEscapeString()\ because\ it\ does\ more}}
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ \ \ \ allocation.\ \ However,\ it\ is\ much\ more\ convenient\ to\ use\ in}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ \ \ \ non-\/speed-\/critical\ code\ like\ logging\ messages\ etc.}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00199\ \textcolor{keywordtype}{string}\ CEscape(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src);}
+\DoxyCodeLine{00200\ \textcolor{keywordtype}{string}\ CHexEscape(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src);}
+\DoxyCodeLine{00201\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a04ec7e8c105602f13cf182a3e944e395}{Utf8SafeCEscape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src);}
+\DoxyCodeLine{00202\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a9786d0b2c78fba2e0d9c0a32111e7512}{Utf8SafeCHexEscape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src);}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00205\ \textcolor{comment}{//\ BackslashEscape()}}
+\DoxyCodeLine{00206\ \textcolor{comment}{//\ \ \ \ Given\ a\ string\ and\ a\ list\ of\ characters\ to\ escape,\ replace\ any}}
+\DoxyCodeLine{00207\ \textcolor{comment}{//\ \ \ \ instance\ of\ one\ of\ those\ characters\ with\ \(\backslash\)\ +\ that\ character.\ For}}
+\DoxyCodeLine{00208\ \textcolor{comment}{//\ \ \ \ example,\ when\ exporting\ maps\ to\ /varz,\ label\ values\ need\ to\ have}}
+\DoxyCodeLine{00209\ \textcolor{comment}{//\ \ \ \ all\ dots\ escaped.\ Appends\ the\ result\ to\ dest.}}
+\DoxyCodeLine{00210\ \textcolor{comment}{//\ BackslashUnescape()}}
+\DoxyCodeLine{00211\ \textcolor{comment}{//\ \ \ \ Replace\ \(\backslash\)\ +\ any\ of\ the\ indicated\ "{}unescape\ me"{}\ characters\ with\ just}}
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ \ \ \ that\ character.\ Appends\ the\ result\ to\ dest.}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//}}
+\DoxyCodeLine{00214\ \textcolor{comment}{//\ \ \ \ IMPORTANT:}}
+\DoxyCodeLine{00215\ \textcolor{comment}{//\ \ \ \ This\ function\ does\ not\ escape\ \(\backslash\)\ by\ default,\ so\ if\ you\ do\ not\ include}}
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ \ \ \ it\ in\ the\ chars\ to\ escape\ you\ will\ most\ certainly\ get\ an\ undesirable}}
+\DoxyCodeLine{00217\ \textcolor{comment}{//\ \ \ \ result.\ That\ is,\ it\ won't\ be\ a\ reversible\ operation:}}
+\DoxyCodeLine{00218\ \textcolor{comment}{//\ \ \ \ \ \ string\ src\ =\ "{}foo\(\backslash\)\(\backslash\):bar"{};}}
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ \ \ \ \ \ BackslashUnescape(BackslashEscape(src,\ "{}:"{}),\ "{}:"{})\ ==\ "{}foo\(\backslash\)\(\backslash\)\(\backslash\)\(\backslash\):bar"{}}}
+\DoxyCodeLine{00220\ \textcolor{comment}{//\ \ \ \ On\ the\ other\ hand,\ for\ all\ strings\ "{}src"{},\ the\ following\ is\ true:}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ \ \ \ \ \ BackslashUnescape(BackslashEscape(src,\ "{}:\(\backslash\)\(\backslash\)"{}),\ "{}:\(\backslash\)\(\backslash\)"{})\ ==\ src}}
+\DoxyCodeLine{00222\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00223\ \textcolor{keywordtype}{void}\ BackslashEscape(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1_char_set}{strings::CharSet}}\&\ to\_escape,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}\ BackslashUnescape(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1_char_set}{strings::CharSet}}\&\ to\_unescape,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a1e6403c8e9ef3380f2dbaa2f4d8e0777}{BackslashEscape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1_char_set}{strings::CharSet}}\&\ to\_escape)\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordtype}{string}\ s;}
+\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{namespacestrings_a1e6403c8e9ef3380f2dbaa2f4d8e0777}{BackslashEscape}}(src,\ to\_escape,\ \&s);}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a5a1a596af67a3874bd7793c91557c636}{BackslashUnescape}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1_char_set}{strings::CharSet}}\&\ to\_unescape)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{string}\ s;}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{namespacestrings_a5a1a596af67a3874bd7793c91557c636}{BackslashUnescape}}(src,\ to\_unescape,\ \&s);}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00239\ \textcolor{comment}{//\ QuotedPrintableUnescape()}}
+\DoxyCodeLine{00240\ \textcolor{comment}{//\ \ \ \ Check\ out\ http://www.cis.ohio-\/state.edu/htbin/rfc/rfc2045.html\ for}}
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ \ \ \ more\ details,\ only\ briefly\ implemented.\ But\ from\ the\ web...}}
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ \ \ \ Quoted-\/printable\ is\ an\ encoding\ method\ defined\ in\ the\ MIME}}
+\DoxyCodeLine{00243\ \textcolor{comment}{//\ \ \ \ standard.\ It\ is\ used\ primarily\ to\ encode\ 8-\/bit\ text\ (such\ as\ text}}
+\DoxyCodeLine{00244\ \textcolor{comment}{//\ \ \ \ that\ includes\ foreign\ characters)\ into\ 7-\/bit\ US\ ASCII,\ creating\ a}}
+\DoxyCodeLine{00245\ \textcolor{comment}{//\ \ \ \ document\ that\ is\ mostly\ readable\ by\ humans,\ even\ in\ its\ encoded}}
+\DoxyCodeLine{00246\ \textcolor{comment}{//\ \ \ \ form.\ All\ MIME\ compliant\ applications\ can\ decode\ quoted-\/printable}}
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ \ \ \ text,\ though\ they\ may\ not\ necessarily\ be\ able\ to\ properly\ display\ the}}
+\DoxyCodeLine{00248\ \textcolor{comment}{//\ \ \ \ document\ as\ it\ was\ originally\ intended.\ As\ quoted-\/printable\ encoding}}
+\DoxyCodeLine{00249\ \textcolor{comment}{//\ \ \ \ is\ implemented\ most\ commonly,\ printable\ ASCII\ characters\ (values\ 33}}
+\DoxyCodeLine{00250\ \textcolor{comment}{//\ \ \ \ through\ 126,\ excluding\ 61),\ tabs\ and\ spaces\ that\ do\ not\ appear\ at\ the}}
+\DoxyCodeLine{00251\ \textcolor{comment}{//\ \ \ \ end\ of\ lines,\ and\ end-\/of-\/line\ characters\ are\ not\ encoded.\ Other}}
+\DoxyCodeLine{00252\ \textcolor{comment}{//\ \ \ \ characters\ are\ represented\ by\ an\ equal\ sign\ (=)\ immediately\ followed}}
+\DoxyCodeLine{00253\ \textcolor{comment}{//\ \ \ \ by\ that\ character's\ hexadecimal\ value.\ Lines\ that\ are\ longer\ than\ 76}}
+\DoxyCodeLine{00254\ \textcolor{comment}{//\ \ \ \ characters\ are\ shortened\ by\ line\ breaks,\ with\ the\ equal\ sign\ marking}}
+\DoxyCodeLine{00255\ \textcolor{comment}{//\ \ \ \ where\ the\ breaks\ occurred.}}
+\DoxyCodeLine{00256\ \textcolor{comment}{//}}
+\DoxyCodeLine{00257\ \textcolor{comment}{//\ \ \ \ Note\ that\ QuotedPrintableUnescape\ is\ different\ from\ 'Q'-\/encoding\ as}}
+\DoxyCodeLine{00258\ \textcolor{comment}{//\ \ \ \ defined\ in\ rfc2047.\ In\ particular,\ This\ does\ not\ treat\ '\_'s\ as\ spaces.}}
+\DoxyCodeLine{00259\ \textcolor{comment}{//}}
+\DoxyCodeLine{00260\ \textcolor{comment}{//\ \ \ \ See\ QEncodingUnescape().}}
+\DoxyCodeLine{00261\ \textcolor{comment}{//}}
+\DoxyCodeLine{00262\ \textcolor{comment}{//\ \ \ \ Copies\ "{}src"{}\ to\ "{}dest"{},\ rewriting\ quoted\ printable\ escape\ sequences}}
+\DoxyCodeLine{00263\ \textcolor{comment}{//\ \ \ \ =XX\ to\ their\ ASCII\ equivalents.\ src\ is\ not\ null\ terminated,\ instead}}
+\DoxyCodeLine{00264\ \textcolor{comment}{//\ \ \ \ specify\ len.\ I\ recommend\ that\ slen<szdest,\ but\ we\ honor\ szdest}}
+\DoxyCodeLine{00265\ \textcolor{comment}{//\ \ \ \ anyway.}}
+\DoxyCodeLine{00266\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest.}}
+\DoxyCodeLine{00267\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00268\ \textcolor{keywordtype}{int}\ QuotedPrintableUnescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00271\ \textcolor{comment}{//\ QEncodingUnescape()}}
+\DoxyCodeLine{00272\ \textcolor{comment}{//\ \ \ \ This\ is\ very\ similar\ to\ QuotedPrintableUnescape\ except\ that\ we\ convert}}
+\DoxyCodeLine{00273\ \textcolor{comment}{//\ \ \ \ '\_'s\ into\ spaces.\ (See\ RFC\ 2047)}}
+\DoxyCodeLine{00274\ \textcolor{comment}{//\ \ \ \ http://www.faqs.org/rfcs/rfc2047.html.}}
+\DoxyCodeLine{00275\ \textcolor{comment}{//}}
+\DoxyCodeLine{00276\ \textcolor{comment}{//\ \ \ \ Copies\ "{}src"{}\ to\ "{}dest"{},\ rewriting\ q-\/encoding\ escape\ sequences}}
+\DoxyCodeLine{00277\ \textcolor{comment}{//\ \ \ \ =XX\ to\ their\ ASCII\ equivalents.\ src\ is\ not\ null\ terminated,\ instead}}
+\DoxyCodeLine{00278\ \textcolor{comment}{//\ \ \ \ specify\ len.\ I\ recommend\ that\ slen<szdest,\ but\ we\ honour\ szdest}}
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ \ \ \ anyway.}}
+\DoxyCodeLine{00280\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest.}}
+\DoxyCodeLine{00281\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00282\ \textcolor{keywordtype}{int}\ QEncodingUnescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ Base64Unescape()}}
+\DoxyCodeLine{00286\ \textcolor{comment}{//\ WebSafeBase64Unescape()}}
+\DoxyCodeLine{00287\ \textcolor{comment}{//\ \ \ \ Copies\ "{}src"{}\ to\ "{}dest"{},\ where\ src\ is\ in\ base64\ and\ is\ written\ to\ its}}
+\DoxyCodeLine{00288\ \textcolor{comment}{//\ \ \ \ ASCII\ equivalents.\ src\ is\ not\ null\ terminated,\ instead\ specify\ len.}}
+\DoxyCodeLine{00289\ \textcolor{comment}{//\ \ \ \ I\ recommend\ that\ slen<szdest,\ but\ we\ honor\ szdest\ anyway.}}
+\DoxyCodeLine{00290\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest,\ or\ -\/1\ if\ src\ contains\ invalid\ chars.}}
+\DoxyCodeLine{00291\ \textcolor{comment}{//\ \ \ \ The\ WebSafe\ variation\ use\ '-\/'\ instead\ of\ '+'\ and\ '\_'\ instead\ of\ '/'.}}
+\DoxyCodeLine{00292\ \textcolor{comment}{//\ \ \ \ The\ variations\ that\ store\ into\ a\ string\ clear\ the\ string\ first,\ and}}
+\DoxyCodeLine{00293\ \textcolor{comment}{//\ \ \ \ return\ false\ (with\ dest\ empty)\ if\ src\ contains\ invalid\ chars;\ for}}
+\DoxyCodeLine{00294\ \textcolor{comment}{//\ \ \ \ these\ versions\ src\ and\ dest\ must\ be\ different\ strings.}}
+\DoxyCodeLine{00295\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00296\ \textcolor{keywordtype}{int}\ Base64Unescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00297\ \textcolor{keywordtype}{bool}\ Base64Unescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00298\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_abbb858850fff60ad1e364ff9e4f5bbaf}{Base64Unescape}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest)\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacestrings_abbb858850fff60ad1e364ff9e4f5bbaf}{Base64Unescape}}(src.data(),\ src.size(),\ dest);}
+\DoxyCodeLine{00300\ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \textcolor{keywordtype}{int}\ WebSafeBase64Unescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00303\ \textcolor{keywordtype}{bool}\ WebSafeBase64Unescape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00304\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_a1f3fcb47264636a87a6424d0526348c5}{WebSafeBase64Unescape}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacestrings_a1f3fcb47264636a87a6424d0526348c5}{WebSafeBase64Unescape}}(src.data(),\ src.size(),\ dest);}
+\DoxyCodeLine{00306\ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{comment}{//\ Return\ the\ length\ to\ use\ for\ the\ output\ buffer\ given\ to\ the\ base64\ escape}}
+\DoxyCodeLine{00309\ \textcolor{comment}{//\ routines.\ Make\ sure\ to\ use\ the\ same\ value\ for\ do\_padding\ in\ both.}}
+\DoxyCodeLine{00310\ \textcolor{comment}{//\ This\ function\ may\ return\ incorrect\ results\ if\ given\ input\_len\ values\ that}}
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ are\ extremely\ high,\ which\ should\ happen\ rarely.}}
+\DoxyCodeLine{00312\ \textcolor{keywordtype}{int}\ CalculateBase64EscapedLen(\textcolor{keywordtype}{int}\ input\_len,\ \textcolor{keywordtype}{bool}\ do\_padding);}
+\DoxyCodeLine{00313\ \textcolor{comment}{//\ Use\ this\ version\ when\ calling\ Base64Escape\ without\ a\ do\_padding\ arg.}}
+\DoxyCodeLine{00314\ \textcolor{keywordtype}{int}\ CalculateBase64EscapedLen(\textcolor{keywordtype}{int}\ input\_len);}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00317\ \textcolor{comment}{//\ Base64Escape()}}
+\DoxyCodeLine{00318\ \textcolor{comment}{//\ WebSafeBase64Escape()}}
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ \ \ \ Encode\ "{}src"{}\ to\ "{}dest"{}\ using\ base64\ encoding.}}
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ \ \ \ src\ is\ not\ null\ terminated,\ instead\ specify\ len.}}
+\DoxyCodeLine{00321\ \textcolor{comment}{//\ \ \ \ 'dest'\ should\ have\ at\ least\ CalculateBase64EscapedLen()\ length.}}
+\DoxyCodeLine{00322\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest.}}
+\DoxyCodeLine{00323\ \textcolor{comment}{//\ \ \ \ The\ WebSafe\ variation\ use\ '-\/'\ instead\ of\ '+'\ and\ '\_'\ instead\ of\ '/'}}
+\DoxyCodeLine{00324\ \textcolor{comment}{//\ \ \ \ so\ that\ we\ can\ place\ the\ out\ in\ the\ URL\ or\ cookies\ without\ having}}
+\DoxyCodeLine{00325\ \textcolor{comment}{//\ \ \ \ to\ escape\ them.\ \ It\ also\ has\ an\ extra\ parameter\ "{}do\_padding"{},}}
+\DoxyCodeLine{00326\ \textcolor{comment}{//\ \ \ \ which\ when\ set\ to\ false\ will\ prevent\ padding\ with\ "{}="{}.}}
+\DoxyCodeLine{00327\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00328\ \textcolor{keywordtype}{int}\ Base64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00329\ \textcolor{keywordtype}{int}\ WebSafeBase64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest,}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ do\_padding);}
+\DoxyCodeLine{00331\ \textcolor{comment}{//\ Encode\ src\ into\ dest\ with\ padding.}}
+\DoxyCodeLine{00332\ \textcolor{keywordtype}{void}\ Base64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00333\ \textcolor{comment}{//\ Encode\ src\ into\ dest\ web-\/safely\ without\ padding.}}
+\DoxyCodeLine{00334\ \textcolor{keywordtype}{void}\ WebSafeBase64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00335\ \textcolor{comment}{//\ Encode\ src\ into\ dest\ web-\/safely\ with\ padding.}}
+\DoxyCodeLine{00336\ \textcolor{keywordtype}{void}\ WebSafeBase64EscapeWithPadding(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{keywordtype}{void}\ Base64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ szsrc,\ \textcolor{keywordtype}{string}*\ dest,\ \textcolor{keywordtype}{bool}\ do\_padding);}
+\DoxyCodeLine{00339\ \textcolor{keywordtype}{void}\ WebSafeBase64Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ szsrc,\ \textcolor{keywordtype}{string}*\ dest,\ \textcolor{keywordtype}{bool}\ do\_padding);}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00342\ \textcolor{comment}{//\ Base32Unescape()}}
+\DoxyCodeLine{00343\ \textcolor{comment}{//\ \ \ \ Copies\ "{}src"{}\ to\ "{}dest"{},\ where\ src\ is\ in\ base32\ and\ is\ written\ to\ its}}
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ \ \ \ ASCII\ equivalents.\ src\ is\ not\ null\ terminated,\ instead\ specify\ len.}}
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest,\ or\ -\/1\ if\ src\ contains\ invalid\ chars.}}
+\DoxyCodeLine{00346\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00347\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_aa400085a528542a3aca66805bc2425ea}{Base32Unescape}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{int}\ szdest);}
+\DoxyCodeLine{00348\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_aa400085a528542a3aca66805bc2425ea}{Base32Unescape}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{legacy__hash_8h_abbc9ae3d9a1461512a0dc489652f3e33}{slen}},\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00349\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacestrings_aa400085a528542a3aca66805bc2425ea}{Base32Unescape}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacestrings_aa400085a528542a3aca66805bc2425ea}{Base32Unescape}}(src.data(),\ src.size(),\ dest);}
+\DoxyCodeLine{00351\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00354\ \textcolor{comment}{//\ Base32Escape()}}
+\DoxyCodeLine{00355\ \textcolor{comment}{//\ \ \ \ Encode\ "{}src"{}\ to\ "{}dest"{}\ using\ base32\ encoding.}}
+\DoxyCodeLine{00356\ \textcolor{comment}{//\ \ \ \ src\ is\ not\ null\ terminated,\ instead\ specify\ len.}}
+\DoxyCodeLine{00357\ \textcolor{comment}{//\ \ \ \ 'dest'\ should\ have\ at\ least\ CalculateBase32EscapedLen()\ length.}}
+\DoxyCodeLine{00358\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest.\ RETURNS\ 0\ if\ szsrc\ is\ zero,\ or\ szdest\ is}}
+\DoxyCodeLine{00359\ \textcolor{comment}{//\ \ \ \ too\ small\ to\ fit\ the\ fully\ encoded\ result.\ \ 'dest'\ is\ padded\ with\ '='.}}
+\DoxyCodeLine{00360\ \textcolor{comment}{//}}
+\DoxyCodeLine{00361\ \textcolor{comment}{//\ \ \ \ Note\ that\ this\ is\ "{}Base\ 32\ Encoding"{}\ from\ RFC\ 4648\ section\ 6.}}
+\DoxyCodeLine{00362\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00363\ \textcolor{keywordtype}{int}\ Base32Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{size\_t}\ szsrc,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{size\_t}\ szdest);}
+\DoxyCodeLine{00364\ \textcolor{keywordtype}{bool}\ Base32Escape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00367\ \textcolor{comment}{//\ Base32HexEscape()}}
+\DoxyCodeLine{00368\ \textcolor{comment}{//\ \ \ \ Encode\ "{}src"{}\ to\ "{}dest"{}\ using\ base32hex\ encoding.}}
+\DoxyCodeLine{00369\ \textcolor{comment}{//\ \ \ \ src\ is\ not\ null\ terminated,\ instead\ specify\ len.}}
+\DoxyCodeLine{00370\ \textcolor{comment}{//\ \ \ \ 'dest'\ should\ have\ at\ least\ CalculateBase32EscapedLen()\ length.}}
+\DoxyCodeLine{00371\ \textcolor{comment}{//\ \ \ \ RETURNS\ the\ length\ of\ dest.\ RETURNS\ 0\ if\ szsrc\ is\ zero,\ or\ szdest\ is}}
+\DoxyCodeLine{00372\ \textcolor{comment}{//\ \ \ \ too\ small\ to\ fit\ the\ fully\ encoded\ result.\ \ 'dest'\ is\ padded\ with\ '='.}}
+\DoxyCodeLine{00373\ \textcolor{comment}{//}}
+\DoxyCodeLine{00374\ \textcolor{comment}{//\ \ \ \ Note\ that\ this\ is\ "{}Base\ 32\ Encoding\ with\ Extended\ Hex\ Alphabet"{}}}
+\DoxyCodeLine{00375\ \textcolor{comment}{//\ \ \ \ from\ RFC\ 4648\ section\ 7.}}
+\DoxyCodeLine{00376\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00377\ \textcolor{keywordtype}{int}\ Base32HexEscape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ src,\ \textcolor{keywordtype}{size\_t}\ szsrc,\ \textcolor{keywordtype}{char}*\ dest,\ \textcolor{keywordtype}{size\_t}\ szdest);}
+\DoxyCodeLine{00378\ \textcolor{keywordtype}{bool}\ Base32HexEscape(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dest);}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{comment}{//\ Return\ the\ length\ to\ use\ for\ the\ output\ buffer\ given\ to\ the\ base32\ escape}}
+\DoxyCodeLine{00381\ \textcolor{comment}{//\ routines.\ \ This\ function\ may\ return\ incorrect\ results\ if\ given\ input\_len}}
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ values\ that\ are\ extremely\ high,\ which\ should\ happen\ rarely.}}
+\DoxyCodeLine{00383\ \textcolor{keywordtype}{int}\ CalculateBase32EscapedLen(\textcolor{keywordtype}{size\_t}\ input\_len);}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00386\ \textcolor{comment}{//\ EightBase32DigitsToTenHexDigits()}}
+\DoxyCodeLine{00387\ \textcolor{comment}{//\ TenHexDigitsToEightBase32Digits()}}
+\DoxyCodeLine{00388\ \textcolor{comment}{//\ \ \ \ Convert\ base32\ to\ and\ from\ hex.}}
+\DoxyCodeLine{00389\ \textcolor{comment}{//}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ \ \ for\ EightBase32DigitsToTenHexDigits():}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//\ \ \ \ \ *in\ must\ point\ to\ 8\ base32\ digits.}}
+\DoxyCodeLine{00392\ \textcolor{comment}{//\ \ \ \ \ *out\ must\ point\ to\ 10\ bytes.}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//}}
+\DoxyCodeLine{00394\ \textcolor{comment}{//\ \ \ for\ TenHexDigitsToEightBase32Digits():}}
+\DoxyCodeLine{00395\ \textcolor{comment}{//\ \ \ \ \ *in\ must\ point\ to\ 10\ hex\ digits.}}
+\DoxyCodeLine{00396\ \textcolor{comment}{//\ \ \ \ \ *out\ must\ point\ to\ 8\ bytes.}}
+\DoxyCodeLine{00397\ \textcolor{comment}{//}}
+\DoxyCodeLine{00398\ \textcolor{comment}{//\ \ \ Note\ that\ the\ Base64\ functions\ above\ are\ different.\ They\ convert\ base64}}
+\DoxyCodeLine{00399\ \textcolor{comment}{//\ \ \ to\ and\ from\ binary\ data.\ We\ convert\ to\ and\ from\ string\ representations}}
+\DoxyCodeLine{00400\ \textcolor{comment}{//\ \ \ of\ hex.\ They\ deal\ with\ arbitrary\ lengths\ and\ we\ deal\ with\ single,}}
+\DoxyCodeLine{00401\ \textcolor{comment}{//\ \ \ whole\ base32\ quanta.}}
+\DoxyCodeLine{00402\ \textcolor{comment}{//}}
+\DoxyCodeLine{00403\ \textcolor{comment}{//\ \ \ See\ RFC3548\ at\ http://www.ietf.org/rfc/rfc3548.txt}}
+\DoxyCodeLine{00404\ \textcolor{comment}{//\ \ \ for\ details\ on\ base32.}}
+\DoxyCodeLine{00405\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00406\ \textcolor{keywordtype}{void}\ EightBase32DigitsToTenHexDigits(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ in,\ \textcolor{keywordtype}{char}*\ out);}
+\DoxyCodeLine{00407\ \textcolor{keywordtype}{void}\ TenHexDigitsToEightBase32Digits(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ in,\ \textcolor{keywordtype}{char}*\ out);}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00410\ \textcolor{comment}{//\ EightBase32DigitsToFiveBytes()}}
+\DoxyCodeLine{00411\ \textcolor{comment}{//\ FiveBytesToEightBase32Digits()}}
+\DoxyCodeLine{00412\ \textcolor{comment}{//\ \ \ Convert\ base32\ to\ and\ from\ binary}}
+\DoxyCodeLine{00413\ \textcolor{comment}{//}}
+\DoxyCodeLine{00414\ \textcolor{comment}{//\ \ \ for\ EightBase32DigitsToTenHexDigits():}}
+\DoxyCodeLine{00415\ \textcolor{comment}{//\ \ \ \ \ *in\ must\ point\ to\ 8\ base32\ digits.}}
+\DoxyCodeLine{00416\ \textcolor{comment}{//\ \ \ \ \ *out\ must\ point\ to\ 5\ bytes.}}
+\DoxyCodeLine{00417\ \textcolor{comment}{//}}
+\DoxyCodeLine{00418\ \textcolor{comment}{//\ \ \ for\ TenHexDigitsToEightBase32Digits():}}
+\DoxyCodeLine{00419\ \textcolor{comment}{//\ \ \ \ \ *in\ must\ point\ to\ 5\ bytes.}}
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ \ \ \ \ *out\ must\ point\ to\ 8\ bytes.}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//}}
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ \ \ Note\ that\ the\ Base64\ functions\ above\ are\ different.\ \ They\ deal\ with}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//\ \ \ arbitrary\ lengths\ and\ we\ deal\ with\ single,\ whole\ base32\ quanta.}}
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00425\ \textcolor{keywordtype}{void}\ EightBase32DigitsToFiveBytes(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ in,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ bytes\_out);}
+\DoxyCodeLine{00426\ \textcolor{keywordtype}{void}\ FiveBytesToEightBase32Digits(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ in\_bytes,\ \textcolor{keywordtype}{char}*\ out);}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00429\ \textcolor{comment}{//\ EscapeFileName()}}
+\DoxyCodeLine{00430\ \textcolor{comment}{//\ UnescapeFileName()}}
+\DoxyCodeLine{00431\ \textcolor{comment}{//\ \ \ Utility\ functions\ to\ (un)escape\ strings\ to\ make\ them\ suitable\ for\ use\ in}}
+\DoxyCodeLine{00432\ \textcolor{comment}{//\ \ \ filenames.\ Characters\ not\ in\ [a-\/zA-\/Z0-\/9-\/\_.]\ will\ be\ escaped\ into\ \%XX.}}
+\DoxyCodeLine{00433\ \textcolor{comment}{//\ \ \ E.g:\ "{}Hello,\ world!"{}\ will\ be\ escaped\ as\ "{}Hello\%2c\%20world\%21"{}}}
+\DoxyCodeLine{00434\ \textcolor{comment}{//}}
+\DoxyCodeLine{00435\ \textcolor{comment}{//\ \ \ NB\ that\ this\ function\ escapes\ slashes,\ so\ the\ output\ will\ be\ a\ flat}}
+\DoxyCodeLine{00436\ \textcolor{comment}{//\ \ \ filename\ and\ will\ not\ keep\ the\ directory\ structure.\ Slashes\ are\ replaced}}
+\DoxyCodeLine{00437\ \textcolor{comment}{//\ \ \ with\ '\string~',\ instead\ of\ a\ \%XX\ sequence\ to\ make\ it\ easier\ for\ people\ to}}
+\DoxyCodeLine{00438\ \textcolor{comment}{//\ \ \ understand\ the\ escaped\ form\ when\ the\ original\ string\ is\ a\ file\ path.}}
+\DoxyCodeLine{00439\ \textcolor{comment}{//}}
+\DoxyCodeLine{00440\ \textcolor{comment}{//\ \ \ WARNING:\ filenames\ produced\ by\ these\ functions\ may\ not\ be\ compatible\ with}}
+\DoxyCodeLine{00441\ \textcolor{comment}{//\ \ \ Colossus\ FS.\ In\ particular,\ the\ '\%'\ character\ has\ a\ special\ meaning\ in}}
+\DoxyCodeLine{00442\ \textcolor{comment}{//\ \ \ CFS.}}
+\DoxyCodeLine{00443\ \textcolor{comment}{//}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ \ \ The\ versions\ that\ receive\ a\ string\ for\ the\ output\ will\ append\ to\ it.}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00446\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacestrings_abc018b013d94b863151c84c9a6c87fd8}{EscapeFileName}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keywordtype}{string}*\ dst);}
+\DoxyCodeLine{00447\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacestrings_a204181a6fb840095aefd89445454b5d0}{UnescapeFileName}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src,\ \textcolor{keywordtype}{string}*\ dst);}
+\DoxyCodeLine{00448\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_abc018b013d94b863151c84c9a6c87fd8}{EscapeFileName}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src)\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordtype}{string}\ r;}
+\DoxyCodeLine{00450\ \ \ \ \ \mbox{\hyperlink{namespacestrings_abc018b013d94b863151c84c9a6c87fd8}{EscapeFileName}}(src,\ \&r);}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00452\ \}}
+\DoxyCodeLine{00453\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a204181a6fb840095aefd89445454b5d0}{UnescapeFileName}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ src)\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordtype}{string}\ r;}
+\DoxyCodeLine{00455\ \ \ \ \ \mbox{\hyperlink{namespacestrings_a204181a6fb840095aefd89445454b5d0}{UnescapeFileName}}(src,\ \&r);}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00457\ \}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00460\ \textcolor{comment}{//\ Here\ are\ a\ couple\ utility\ methods\ to\ change\ ints\ to\ hex\ chars\ \&\ back}}
+\DoxyCodeLine{00461\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a9bade65fdd1bec47c5006ad8345c4594}{int\_to\_hex\_digit}}(\textcolor{keywordtype}{int}\ i)\ \{}
+\DoxyCodeLine{00464\ \ \ \ \ DCHECK((i\ >=\ 0)\ \&\&\ (i\ <=\ 15));}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordflow}{return}\ ((i\ <\ 10)\ ?\ (i\ +\ \textcolor{charliteral}{'0'})\ :\ ((i\ -\/\ 10)\ +\ \textcolor{charliteral}{'A'}));}
+\DoxyCodeLine{00466\ \}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a70404df4fe9738d33675d1018847516f}{int\_to\_lower\_hex\_digit}}(\textcolor{keywordtype}{int}\ i)\ \{}
+\DoxyCodeLine{00469\ \ \ \ \ DCHECK((i\ >=\ 0)\ \&\&\ (i\ <=\ 15));}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keywordflow}{return}\ (i\ <\ 10)\ ?\ (i\ +\ \textcolor{charliteral}{'0'})\ :\ ((i\ -\/\ 10)\ +\ \textcolor{charliteral}{'a'});}
+\DoxyCodeLine{00471\ \}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_a30485ca4728dd34cdc87ba89ea850f8a}{hex\_digit\_to\_int}}(\textcolor{keywordtype}{char}\ c)\ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{comment}{/*\ Assume\ ASCII.\ */}}
+\DoxyCodeLine{00475\ \ \ \ \ DCHECK(\textcolor{charliteral}{'0'}\ ==\ 0x30\ \&\&\ \textcolor{charliteral}{'A'}\ ==\ 0x41\ \&\&\ \textcolor{charliteral}{'a'}\ ==\ 0x61);}
+\DoxyCodeLine{00476\ \ \ \ \ DCHECK(\mbox{\hyperlink{ascii__ctype_8h_ae0fb91ccb3eb3be26931d11e6d903bb3}{ascii\_isxdigit}}(c));}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(c);}
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ >\ \textcolor{charliteral}{'9'})\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ x\ +=\ 9;}
+\DoxyCodeLine{00480\ \ \ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keywordflow}{return}\ x\ \&\ 0xf;}
+\DoxyCodeLine{00482\ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00485\ \textcolor{comment}{//\ a2b\_hex()}}
+\DoxyCodeLine{00486\ \textcolor{comment}{//\ \ Description:\ Ascii-\/to-\/Binary\ hex\ conversion.\ \ This\ converts}}
+\DoxyCodeLine{00487\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ 2*'num'\ hexadecimal\ characters\ to\ 'num'\ binary\ data.}}
+\DoxyCodeLine{00488\ \textcolor{comment}{//\ \ \ \ \ \ \ \ Return\ value:\ 'num'\ bytes\ of\ binary\ data\ (via\ the\ 'to'\ argument)}}
+\DoxyCodeLine{00489\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00490\ \textcolor{keywordtype}{void}\ a2b\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ to,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00491\ \textcolor{keywordtype}{void}\ a2b\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{char}*\ to,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00492\ \textcolor{keywordtype}{void}\ a2b\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{string}*\ to,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00493\ \textcolor{keywordtype}{string}\ a2b\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}});}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00496\ \textcolor{comment}{//\ a2b\_bin()}}
+\DoxyCodeLine{00497\ \textcolor{comment}{//\ \ Description:\ Ascii-\/to-\/Binary\ binary\ conversion.\ \ This\ converts}}
+\DoxyCodeLine{00498\ \textcolor{comment}{//\ \ \ \ \ \ \ \ a.size()\ binary\ characters\ (ascii\ '0'\ or\ '1')\ to}}
+\DoxyCodeLine{00499\ \textcolor{comment}{//\ \ \ \ \ \ \ \ ceil(a.size()/8)\ bytes\ of\ binary\ data.\ \ The\ first\ character\ is}}
+\DoxyCodeLine{00500\ \textcolor{comment}{//\ \ \ \ \ \ \ \ considered\ the\ most\ significant\ if\ byte\_order\_msb\ is\ set.\ \ a\ is}}
+\DoxyCodeLine{00501\ \textcolor{comment}{//\ \ \ \ \ \ \ \ considered\ to\ be\ padded\ with\ trailing\ 0s\ if\ its\ size\ is\ not\ a}}
+\DoxyCodeLine{00502\ \textcolor{comment}{//\ \ \ \ \ \ \ \ multiple\ of\ 8.}}
+\DoxyCodeLine{00503\ \textcolor{comment}{//\ \ \ \ \ \ \ \ Return\ value:\ ceil(a.size()/8)\ bytes\ of\ binary\ data}}
+\DoxyCodeLine{00504\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00505\ \textcolor{keywordtype}{string}\ a2b\_bin(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keywordtype}{bool}\ byte\_order\_msb);}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00508\ \textcolor{comment}{//\ b2a\_hex()}}
+\DoxyCodeLine{00509\ \textcolor{comment}{//\ \ Description:\ Binary-\/to-\/Ascii\ hex\ conversion.\ \ This\ converts}}
+\DoxyCodeLine{00510\ \textcolor{comment}{//\ \ \ 'num'\ bytes\ of\ binary\ to\ a\ 2*'num'-\/character\ hexadecimal\ representation}}
+\DoxyCodeLine{00511\ \textcolor{comment}{//\ \ \ \ Return\ value:\ 2*'num'\ characters\ of\ ascii\ text\ (via\ the\ 'to'\ argument)}}
+\DoxyCodeLine{00512\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00513\ \textcolor{keywordtype}{void}\ b2a\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{char}*\ to,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00514\ \textcolor{keywordtype}{void}\ b2a\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{string}*\ to,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00517\ \textcolor{comment}{//\ b2a\_hex()}}
+\DoxyCodeLine{00518\ \textcolor{comment}{//\ \ Description:\ Binary-\/to-\/Ascii\ hex\ conversion.\ \ This\ converts}}
+\DoxyCodeLine{00519\ \textcolor{comment}{//\ \ \ 'num'\ bytes\ of\ binary\ to\ a\ 2*'num'-\/character\ hexadecimal\ representation}}
+\DoxyCodeLine{00520\ \textcolor{comment}{//\ \ \ \ Return\ value:\ 2*'num'\ characters\ of\ ascii\ string}}
+\DoxyCodeLine{00521\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00522\ \textcolor{keywordtype}{string}\ b2a\_hex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ from,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00523\ \textcolor{keywordtype}{string}\ b2a\_hex(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ b);}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00526\ \textcolor{comment}{//\ b2a\_bin()}}
+\DoxyCodeLine{00527\ \textcolor{comment}{//\ \ Description:\ Binary-\/to-\/Ascii\ binary\ conversion.\ \ This\ converts}}
+\DoxyCodeLine{00528\ \textcolor{comment}{//\ \ \ b.size()\ bytes\ of\ binary\ to\ a\ 8*b.size()\ character\ representation}}
+\DoxyCodeLine{00529\ \textcolor{comment}{//\ \ \ (ascii\ '0'\ or\ '1').\ \ The\ highest\ order\ bit\ in\ each\ byte\ is\ returned}}
+\DoxyCodeLine{00530\ \textcolor{comment}{//\ \ \ first\ in\ the\ string\ if\ byte\_order\_msb\ is\ set.}}
+\DoxyCodeLine{00531\ \textcolor{comment}{//\ \ \ Return\ value:\ 8*b.size()\ characters\ of\ ascii\ text}}
+\DoxyCodeLine{00532\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00533\ \textcolor{keywordtype}{string}\ b2a\_bin(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ b,\ \textcolor{keywordtype}{bool}\ byte\_order\_msb);}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00536\ \textcolor{comment}{//\ ShellEscape}}
+\DoxyCodeLine{00537\ \textcolor{comment}{//\ \ \ Make\ a\ shell\ command\ argument\ from\ a\ string.}}
+\DoxyCodeLine{00538\ \textcolor{comment}{//\ \ \ Returns\ a\ Bourne\ shell\ string\ literal\ such\ that,\ once\ the\ shell\ finishes}}
+\DoxyCodeLine{00539\ \textcolor{comment}{//\ \ \ expanding\ the\ argument,\ the\ argument\ passed\ on\ to\ the\ program\ being}}
+\DoxyCodeLine{00540\ \textcolor{comment}{//\ \ \ run\ will\ be\ the\ same\ as\ whatever\ you\ passed\ in.}}
+\DoxyCodeLine{00541\ \textcolor{comment}{//\ \ \ NOTE:\ This\ is\ "{}ported"{}\ from\ python2.2's\ commands.mkarg();\ it\ should\ be}}
+\DoxyCodeLine{00542\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ safe\ for\ Bourne\ shell\ syntax\ (i.e.\ sh,\ bash),\ but\ mileage\ may\ vary}}
+\DoxyCodeLine{00543\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ with\ other\ shells.}}
+\DoxyCodeLine{00544\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00545\ \textcolor{keywordtype}{string}\ ShellEscape(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ src);}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \textcolor{comment}{//\ Runs\ ShellEscape()\ on\ the\ arguments,\ concatenates\ them\ with\ a\ space,\ and}}
+\DoxyCodeLine{00548\ \textcolor{comment}{//\ returns\ the\ resulting\ string.}}
+\DoxyCodeLine{00549\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ InputIterator>}
+\DoxyCodeLine{00550\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_aba2daaa04ae6134f7002f4ac678a892f}{ShellEscapeCommandLine}}(InputIterator\ begin,\ \textcolor{keyword}{const}\ InputIterator\&\ end)\ \{}
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{keywordtype}{string}\ result;}
+\DoxyCodeLine{00552\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ begin\ !=\ end;\ ++begin)\ \{}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!result.empty())\ result.append(\textcolor{stringliteral}{"{}\ "{}});}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ result.append(\mbox{\hyperlink{namespacestrings_ac71faecb054e600a3fbe035c4fcffb64}{ShellEscape}}(*begin));}
+\DoxyCodeLine{00555\ \ \ \ \ \}}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00557\ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \textcolor{comment}{//\ Reads\ at\ most\ bytes\_to\_read\ from\ binary\_string\ and\ writes\ it\ to}}
+\DoxyCodeLine{00560\ \textcolor{comment}{//\ ascii\_string\ in\ lower\ case\ hex.}}
+\DoxyCodeLine{00561\ \textcolor{keywordtype}{void}\ ByteStringToAscii(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ binary\_string,\ \textcolor{keywordtype}{int}\ bytes\_to\_read,\ \textcolor{keywordtype}{string}*\ ascii\_string);}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a93235ebf92b69c8a13a779ec9c000a23}{ByteStringToAscii}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ binary\_string,\ \textcolor{keywordtype}{int}\ bytes\_to\_read)\ \{}
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{keywordtype}{string}\ result;}
+\DoxyCodeLine{00565\ \ \ \ \ \mbox{\hyperlink{namespacestrings_a93235ebf92b69c8a13a779ec9c000a23}{ByteStringToAscii}}(binary\_string,\ bytes\_to\_read,\ \&result);}
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00567\ \}}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \textcolor{comment}{//\ Converts\ the\ hex\ from\ ascii\_string\ into\ binary\ data\ and}}
+\DoxyCodeLine{00570\ \textcolor{comment}{//\ writes\ the\ binary\ data\ into\ binary\_string.}}
+\DoxyCodeLine{00571\ \textcolor{comment}{//\ Empty\ input\ successfully\ converts\ to\ empty\ output.}}
+\DoxyCodeLine{00572\ \textcolor{comment}{//\ Returns\ false\ and\ may\ modify\ output\ if\ it\ is}}
+\DoxyCodeLine{00573\ \textcolor{comment}{//\ unable\ to\ parse\ the\ hex\ string.}}
+\DoxyCodeLine{00574\ \textcolor{keywordtype}{bool}\ ByteStringFromAscii(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ ascii\_string,\ \textcolor{keywordtype}{string}*\ binary\_string);}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \textcolor{comment}{//\ Clean\ up\ a\ multi-\/line\ string\ to\ conform\ to\ Unix\ line\ endings.}}
+\DoxyCodeLine{00577\ \textcolor{comment}{//\ Reads\ from\ src\ and\ appends\ to\ dst,\ so\ usually\ dst\ should\ be\ empty.}}
+\DoxyCodeLine{00578\ \textcolor{comment}{//\ If\ there\ is\ no\ line\ ending\ at\ the\ end\ of\ a\ non-\/empty\ string,\ it\ can}}
+\DoxyCodeLine{00579\ \textcolor{comment}{//\ be\ added\ automatically.}}
+\DoxyCodeLine{00580\ \textcolor{comment}{//}}
+\DoxyCodeLine{00581\ \textcolor{comment}{//\ Four\ different\ types\ of\ input\ are\ correctly\ handled:}}
+\DoxyCodeLine{00582\ \textcolor{comment}{//}}
+\DoxyCodeLine{00583\ \textcolor{comment}{//\ \ \ -\/\ Unix/Linux\ files:\ line\ ending\ is\ LF,\ pass\ through\ unchanged}}
+\DoxyCodeLine{00584\ \textcolor{comment}{//}}
+\DoxyCodeLine{00585\ \textcolor{comment}{//\ \ \ -\/\ DOS/Windows\ files:\ line\ ending\ is\ CRLF:\ convert\ to\ LF}}
+\DoxyCodeLine{00586\ \textcolor{comment}{//}}
+\DoxyCodeLine{00587\ \textcolor{comment}{//\ \ \ -\/\ Legacy\ Mac\ files:\ line\ ending\ is\ CR:\ convert\ to\ LF}}
+\DoxyCodeLine{00588\ \textcolor{comment}{//}}
+\DoxyCodeLine{00589\ \textcolor{comment}{//\ \ \ -\/\ Garbled\ files:\ random\ line\ endings,\ covert\ gracefully}}
+\DoxyCodeLine{00590\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lonely\ CR,\ lonely\ LF,\ CRLF:\ convert\ to\ LF}}
+\DoxyCodeLine{00591\ \textcolor{comment}{//}}
+\DoxyCodeLine{00592\ \textcolor{comment}{//\ \ \ @param\ src\ The\ multi-\/line\ string\ to\ convert}}
+\DoxyCodeLine{00593\ \textcolor{comment}{//\ \ \ @param\ dst\ The\ converted\ string\ is\ appended\ to\ this\ string}}
+\DoxyCodeLine{00594\ \textcolor{comment}{//\ \ \ @param\ auto\_end\_last\_line\ Automatically\ terminate\ the\ last\ line}}
+\DoxyCodeLine{00595\ \textcolor{comment}{//}}
+\DoxyCodeLine{00596\ \textcolor{comment}{//\ \ \ Limitations:}}
+\DoxyCodeLine{00597\ \textcolor{comment}{//}}
+\DoxyCodeLine{00598\ \textcolor{comment}{//\ \ \ \ \ This\ does\ not\ do\ the\ right\ thing\ for\ CRCRLF\ files\ created\ by}}
+\DoxyCodeLine{00599\ \textcolor{comment}{//\ \ \ \ \ broken\ programs\ that\ do\ another\ Unix-\/>DOS\ conversion\ on\ files}}
+\DoxyCodeLine{00600\ \textcolor{comment}{//\ \ \ \ \ that\ are\ already\ in\ CRLF\ format.}}
+\DoxyCodeLine{00601\ \textcolor{keywordtype}{void}\ CleanStringLineEndings(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ src,\ \textcolor{keywordtype}{string}*\ dst,\ \textcolor{keywordtype}{bool}\ auto\_end\_last\_line);}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \textcolor{comment}{//\ Same\ as\ above,\ but\ transforms\ the\ argument\ in\ place.}}
+\DoxyCodeLine{00604\ \textcolor{keywordtype}{void}\ CleanStringLineEndings(\textcolor{keywordtype}{string}*\ str,\ \textcolor{keywordtype}{bool}\ auto\_end\_last\_line);}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \}\ \textcolor{comment}{//\ namespace\ strings}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \textcolor{comment}{//\ The\ following\ functions\ used\ to\ be\ defined\ in\ strutil.h\ in\ the\ top-\/level}}
+\DoxyCodeLine{00609\ \textcolor{comment}{//\ namespace,\ so\ we\ alias\ them\ here.\ Do\ not\ add\ new\ functions\ here.}}
+\DoxyCodeLine{00610\ \textcolor{comment}{//}}
+\DoxyCodeLine{00611\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ Talk\ to\ him\ if\ you\ want\ to\ help.}}
+\DoxyCodeLine{00612\ \textcolor{comment}{//}}
+\DoxyCodeLine{00613\ \textcolor{comment}{//\ DEPRECATED(mec):\ Using\ these\ names\ in\ the\ global\ namespace\ is\ deprecated.}}
+\DoxyCodeLine{00614\ \textcolor{comment}{//\ Use\ the\ strings::\ names.}}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_ae72cc966ecd0f97464ee991bbf69894c}{strings::EscapeStrForCSV}};}
+\DoxyCodeLine{00617\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a65c1169bb9bb2f7fd12bff2f817a8d00}{strings::UnescapeCEscapeSequences}};}
+\DoxyCodeLine{00618\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a658f0423d39525cb40e141d9e67dedd3}{strings::UnescapeCEscapeString}};}
+\DoxyCodeLine{00619\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_ae9fd658785390a229d4fa651063b7873}{strings::CEscapeString}};}
+\DoxyCodeLine{00620\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_ae828f1138529b6ba66938596a45b1451}{strings::CHexEscapeString}};}
+\DoxyCodeLine{00621\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a3aeeb69f7e5f165bf47c6b308c760fef}{strings::CEscape}};}
+\DoxyCodeLine{00622\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a90efd1bb714f6ba0a415f1186b792cc7}{strings::CHexEscape}};}
+\DoxyCodeLine{00623\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a1e6403c8e9ef3380f2dbaa2f4d8e0777}{strings::BackslashEscape}};}
+\DoxyCodeLine{00624\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a5a1a596af67a3874bd7793c91557c636}{strings::BackslashUnescape}};}
+\DoxyCodeLine{00625\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a98a6b6b166236e806eb8f268b863d475}{strings::QuotedPrintableUnescape}};}
+\DoxyCodeLine{00626\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a84a1da80b48e7e06361186a3d2fc162c}{strings::QEncodingUnescape}};}
+\DoxyCodeLine{00627\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_abbb858850fff60ad1e364ff9e4f5bbaf}{strings::Base64Unescape}};}
+\DoxyCodeLine{00628\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a1f3fcb47264636a87a6424d0526348c5}{strings::WebSafeBase64Unescape}};}
+\DoxyCodeLine{00629\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a669c83dc169557de1d3dcd937f6c84c4}{strings::CalculateBase64EscapedLen}};}
+\DoxyCodeLine{00630\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a4728e43f928879b79b4af1aa07d35b3d}{strings::Base64Escape}};}
+\DoxyCodeLine{00631\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_afebbb33c57e36aef7c7bb1d8a1aeb53a}{strings::WebSafeBase64Escape}};}
+\DoxyCodeLine{00632\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_ab544803e86ce7a9716ff9a878c21b249}{strings::WebSafeBase64EscapeWithPadding}};}
+\DoxyCodeLine{00633\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_acfe5b54507ef953dfba1fd94fc1e88d4}{strings::Base32Escape}};}
+\DoxyCodeLine{00634\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a30b4e42a2b9b8e234c82a4a393c2df4a}{strings::Base32HexEscape}};}
+\DoxyCodeLine{00635\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a7312ef6727d91f64f7d778a0272d6e58}{strings::CalculateBase32EscapedLen}};}
+\DoxyCodeLine{00636\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a94ab2f9cf17e7521d7f682ddd2c5ce65}{strings::EightBase32DigitsToTenHexDigits}};}
+\DoxyCodeLine{00637\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a4a67689773d42d14c91638801070e66f}{strings::TenHexDigitsToEightBase32Digits}};}
+\DoxyCodeLine{00638\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a917141f89971c418bae94cb2374e7efe}{strings::EightBase32DigitsToFiveBytes}};}
+\DoxyCodeLine{00639\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a30cfa13ed8c25c62ad534bc546e1bec4}{strings::FiveBytesToEightBase32Digits}};}
+\DoxyCodeLine{00640\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a9bade65fdd1bec47c5006ad8345c4594}{strings::int\_to\_hex\_digit}};}
+\DoxyCodeLine{00641\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a70404df4fe9738d33675d1018847516f}{strings::int\_to\_lower\_hex\_digit}};}
+\DoxyCodeLine{00642\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a30485ca4728dd34cdc87ba89ea850f8a}{strings::hex\_digit\_to\_int}};}
+\DoxyCodeLine{00643\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a35b7d6931a54abba08a27764540a1b7c}{strings::a2b\_hex}};}
+\DoxyCodeLine{00644\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_abdb7aeaaa0917cbdf761b6925ce59265}{strings::a2b\_bin}};}
+\DoxyCodeLine{00645\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a0fdc57329171a07b9471006c491fb870}{strings::b2a\_hex}};}
+\DoxyCodeLine{00646\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a99f4afff26f383c135c57e016df948f7}{strings::b2a\_bin}};}
+\DoxyCodeLine{00647\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_ac71faecb054e600a3fbe035c4fcffb64}{strings::ShellEscape}};}
+\DoxyCodeLine{00648\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_aba2daaa04ae6134f7002f4ac678a892f}{strings::ShellEscapeCommandLine}};}
+\DoxyCodeLine{00649\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_af8a527e0c0615cdd8df9fd8c112d3648}{strings::ByteStringFromAscii}};}
+\DoxyCodeLine{00650\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a93235ebf92b69c8a13a779ec9c000a23}{strings::ByteStringToAscii}};}
+\DoxyCodeLine{00651\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacestrings_a0facf9b350979065592fa2a05f590e5c}{strings::CleanStringLineEndings}};}
+
+\end{DoxyCode}

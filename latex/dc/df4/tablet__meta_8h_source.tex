@@ -1,0 +1,470 @@
+\hypertarget{tablet__meta_8h_source}{}\doxysection{tablet\+\_\+meta.\+h}
+\label{tablet__meta_8h_source}\index{/Users/dabowang/be\_all/olap/tablet\_meta.h@{/Users/dabowang/be\_all/olap/tablet\_meta.h}}
+\mbox{\hyperlink{tablet__meta_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <shared\_mutex>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging_8h}{common/logging.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/olap\_file.pb.h"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{delete__handler_8h}{olap/delete\_handler.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2olap__common_8h}{olap/olap\_common.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__define_8h}{olap/olap\_define.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowid__conversion_8h}{olap/rowid\_conversion.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset_8h}{olap/rowset/rowset.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__meta_8h}{olap/rowset/rowset\_meta.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{uid__util_8h}{util/uid\_util.h}}"{}}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ Lifecycle\ states\ that\ a\ Tablet\ can\ be\ in.\ Legal\ state\ transitions\ for\ a}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Tablet\ object:}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ NOTREADY\ -\/>\ RUNNING\ -\/>\ TOMBSTONED\ -\/>\ STOPPED\ -\/>\ SHUTDOWN}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \string^\string^\string^}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ +-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/++|}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ +-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/+|}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ \ \ +-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/+}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Tablet\ is\ under\ alter\ table,\ rollup,\ clone}}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eea1bfc805b91979a3d30e7ce9656edae9f}{TABLET\_NOTREADY}},}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eeaef648ebd22e24956ea8fd71feb520fbf}{TABLET\_RUNNING}},}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ Tablet\ integrity\ has\ been\ violated,\ such\ as\ missing\ versions.}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ In\ this\ state,\ tablet\ will\ not\ accept\ any\ incoming\ request.}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ Report\ this\ state\ to\ FE,\ scheduling\ BE\ to\ drop\ tablet.}}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eeab7d40fe3604af15f5bfa8218f5624cee}{TABLET\_TOMBSTONED}},}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ Tablet\ is\ shutting\ down,\ files\ in\ disk\ still\ remained.}}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eeaa835f1d2f222ad47686fe3320cefbe72}{TABLET\_STOPPED}},}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ Files\ have\ been\ removed,\ tablet\ has\ been\ shutdown\ completely.}}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eea1052865ad5484b4a14ef37e8c41209bd}{TABLET\_SHUTDOWN}}}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{class\ }RowsetMeta;}
+\DoxyCodeLine{00068\ \textcolor{keyword}{class\ }Rowset;}
+\DoxyCodeLine{00069\ \textcolor{keyword}{class\ }DataDir;}
+\DoxyCodeLine{00070\ \textcolor{keyword}{class\ }TabletMeta;}
+\DoxyCodeLine{00071\ \textcolor{keyword}{class\ }DeleteBitmap;}
+\DoxyCodeLine{00072\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_aed567e6af8c6d82336f03a32fce058cf}{TabletMetaSharedPtr}}\ =\ std::shared\_ptr<TabletMeta>;}
+\DoxyCodeLine{00073\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a9eac641d2af334ef0f001d2ca2a498a4}{DeleteBitmapPtr}}\ =\ std::shared\_ptr<DeleteBitmap>;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ Class\ encapsulates\ meta\ of\ tablet.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ The\ concurrency\ control\ is\ handled\ in\ Tablet\ Class,\ not\ in\ this\ class.}}
+\DoxyCodeLine{00077\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\ \{}
+\DoxyCodeLine{00078\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a074b29324725ff4b4792eb324b1cff32}{create}}(\textcolor{keyword}{const}\ TCreateTabletReq\&\ request,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae98baec93bd0c7a5b8bd11dbd9f884f9}{tablet\_uid}},}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{shard\_id}},\ uint32\_t\ next\_unique\_id,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::unordered\_map<uint32\_t,\ uint32\_t>\&\ col\_ordinal\_to\_unique\_id,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aed567e6af8c6d82336f03a32fce058cf}{TabletMetaSharedPtr}}*\ tablet\_meta);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7f03a84007a85dfc87fe1f03d3458b1e}{TabletMeta}}();}
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7f03a84007a85dfc87fe1f03d3458b1e}{TabletMeta}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0294b12644d410ee7b6e25d85daa1f49}{table\_id}},\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a729d7fadedbbd9189bd15d20707b0702}{partition\_id}},\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aebbec7014f0cd07f57f939f781c46763}{tablet\_id}},\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9caa16bbfd62c26b708be9b7cea78a35}{replica\_id}},}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_af97fa4131537c64737ddb6daa35da7e8}{schema\_hash}},\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{shard\_id}},\ \textcolor{keyword}{const}\ TTabletSchema\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4acb2828400cf8ee87dea2b7e9f73fcb}{tablet\_schema}},}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ next\_unique\_id,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::unordered\_map<uint32\_t,\ uint32\_t>\&\ col\_ordinal\_to\_unique\_id,}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae98baec93bd0c7a5b8bd11dbd9f884f9}{tablet\_uid}},\ TTabletType::type\ tabletType,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TCompressionType::type\ compression\_type,\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ad73ac7a7da0318b941e194169e1edaef}{storage\_policy\_id}}\ =\ 0,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0ad2bb3aa004c82a192158f07a6f0113}{enable\_unique\_key\_merge\_on\_write}}\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ If\ need\ add\ a\ filed\ in\ TableMeta,\ filed\ init\ copy\ in\ copy\ construct\ function}}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7f03a84007a85dfc87fe1f03d3458b1e}{TabletMeta}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ tablet\_meta);}
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3e6192d2f99b71708792422233677516}{TabletMeta}}(\mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\&\ tablet\_meta)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ Function\ create\_from\_file\ is\ used\ to\ be\ compatible\ with\ previous\ tablet\_meta.}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ Previous\ tablet\_meta\ is\ a\ physical\ file\ in\ tablet\ dir,\ which\ is\ not\ stored\ in\ rocksdb.}}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a2055a88c2785aa2cc6f8d38a84e7e070}{create\_from\_file}}(\textcolor{keyword}{const}\ std::string\&\ file\_path);}
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa9e6e045c6fa6b6b28549137577a3a59}{save}}(\textcolor{keyword}{const}\ std::string\&\ file\_path);}
+\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a621c0b4f60ecc1770bd44086569d248a}{save\_as\_json}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ file\_path,\ \mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ dir);}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a6515aef4908d3d1dcce3fe1c9ea12549}{save}}(\textcolor{keyword}{const}\ std::string\&\ file\_path,\ \textcolor{keyword}{const}\ TabletMetaPB\&\ tablet\_meta\_pb);}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a83204868b355a6fe1a01ef5a18217274}{reset\_tablet\_uid}}(\textcolor{keyword}{const}\ std::string\&\ file\_path);}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a886e10ad3a3e5cecfab587716d778956}{construct\_header\_file\_path}}(\textcolor{keyword}{const}\ std::string\&\ schema\_hash\_path,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aebbec7014f0cd07f57f939f781c46763}{tablet\_id}});}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3f6e25291d9d356917595c8bd24ebecb}{save\_meta}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab9e7de1793de70042f13603d70f435cf}{serialize}}(std::string*\ meta\_binary);}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a6fde7030f0a1242a91bb8603284c09ab}{deserialize}}(\textcolor{keyword}{const}\ std::string\&\ meta\_binary);}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a8d2b15242de1e027166f3647c0395e2d}{init\_from\_pb}}(\textcolor{keyword}{const}\ TabletMetaPB\&\ tablet\_meta\_pb);}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Init\ `RowsetMeta.\_fs`\ if\ rowset\ is\ local.}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a069d23491439d7f4df5dac4653ba55c2}{init\_rs\_metas\_fs}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_aea8c56ba684d61150520d391a154c910}{io::FileSystemSPtr}}\&\ fs);}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4c54c7366851520102964f62a6232f9a}{to\_meta\_pb}}(TabletMetaPB*\ tablet\_meta\_pb);}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aeee4d3644c499ec2fe8bd95519022642}{to\_json}}(std::string*\ json\_string,\ json2pb::Pb2JsonOptions\&\ options);}
+\DoxyCodeLine{00115\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a13c45e75d452ea21777e08f51c3f3b4e}{mem\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ TabletTypePB\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3f2e149b4f1f9395b6c48fc3691a640f}{tablet\_type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a59b50692e9547943567049169d863f48}{\_tablet\_type}};\ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae98baec93bd0c7a5b8bd11dbd9f884f9}{tablet\_uid}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00119\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0294b12644d410ee7b6e25d85daa1f49}{table\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00120\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a729d7fadedbbd9189bd15d20707b0702}{partition\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00121\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aebbec7014f0cd07f57f939f781c46763}{tablet\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00122\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9caa16bbfd62c26b708be9b7cea78a35}{replica\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00123\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_af97fa4131537c64737ddb6daa35da7e8}{schema\_hash}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00124\ \ \ \ \ int16\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{shard\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a47f402139a5907c00986c896b74d5208}{set\_shard\_id}}(int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{shard\_id}});}
+\DoxyCodeLine{00126\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7d1055651e34ec805e9be916388fb79c}{creation\_time}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9b8e5259515487c8292a606a59a44541}{set\_creation\_time}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7d1055651e34ec805e9be916388fb79c}{creation\_time}});}
+\DoxyCodeLine{00128\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a13faf61403b03b727f1c5ff76a48a269}{cumulative\_layer\_point}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a1351fccd05aeb846b88fa348233dfa7d}{set\_cumulative\_layer\_point}}(int64\_t\ new\_point);}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a80047a1ccadf053f7df9bbaf2f979102}{num\_rows}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Disk\ space\ occupied\ by\ tablet,\ contain\ local\ and\ remote.}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa4f881bd3a2348a07adbf376c88473cb}{tablet\_footprint}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ Local\ disk\ space\ occupied\ by\ tablet.}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a76a06f5e2d7fa8e3f734ed21873c6925}{tablet\_local\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Remote\ disk\ space\ occupied\ by\ tablet.}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ac4b54df2cf773bd2c98140ed0456c912}{tablet\_remote\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_adca3b988bb5c6510720f1a97a9759832}{version\_count}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab550ea00eeeeff9647b86c0aae3e6075}{max\_version}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab94fe92355804266c215e1891e2d9c14}{tablet\_state}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3a65dd70b370630f5009856ffd5895b8}{set\_tablet\_state}}(\mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ state);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab1ff5fe0c79b0171ecbe2741d07f6f76}{in\_restore\_mode}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a02f7f26fd6cd52b1c7ffa6573bed557d}{set\_in\_restore\_mode}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab1ff5fe0c79b0171ecbe2741d07f6f76}{in\_restore\_mode}});}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4acb2828400cf8ee87dea2b7e9f73fcb}{tablet\_schema}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4acb2828400cf8ee87dea2b7e9f73fcb}{tablet\_schema}}(\mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_afd8e782a4eec7c47ea95c6e644ce28a9}{mutable\_tablet\_schema}}();}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a720db8a369d03bd8a7f5de6c2ca5b902}{all\_rs\_metas}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00154\ \ \ \ \ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a8d5d8e63cfd1116487889dd7d46309ba}{all\_mutable\_rs\_metas}}();}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a239c205c9605ef7d008cbefb96a1a4a0}{add\_rs\_meta}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\&\ rs\_meta);}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0b8e75482c6fb140eb67b3c98a7abf5f}{delete\_rs\_meta\_by\_version}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}},}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<RowsetMetaSharedPtr>*\ deleted\_rs\_metas);}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ If\ same\_version\ is\ true,\ the\ rowset\ in\ "{}to\_delete"{}\ will\ not\ be\ added}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ to\ \_stale\_rs\_meta,\ but\ to\ be\ deleted\ from\ rs\_meta\ directly.}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a158959ec7146609b5f3d769659d240dd}{modify\_rs\_metas}}(\textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ to\_add,}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ to\_delete,}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ same\_version\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7ac5056980411dc60879d465f6d0345f}{revise\_rs\_metas}}(std::vector<RowsetMetaSharedPtr>\&\&\ rs\_metas);}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a031a0e8a28cba0520ab963a12cef6850}{revise\_delete\_bitmap\_unlocked}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3484ecca1bed5ce4cd62aeee86c87d78}{delete\_bitmap}});}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4145d78bed35a384af2276823b2709d3}{all\_stale\_rs\_metas}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7eb86513137a3d3d80e8c6f4ee627b62}{acquire\_rs\_meta\_by\_version}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a93e28a51d1075f865faa2cd819fb270f}{delete\_stale\_rs\_meta\_by\_version}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}});}
+\DoxyCodeLine{00169\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a61a5bffcd5180bf003852035ffc943d6}{acquire\_stale\_rs\_meta\_by\_version}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a5acbea909092c6a12bce2f7fa9844dbd}{delete\_predicates}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a55c5e5d94eba810354cb0d5bc5c8080a}{version\_for\_delete\_predicate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}});}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a69af0d3524af0d99a578de7cdda0ba4d}{full\_name}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa1b29db64928a6e6be81c6895d39bcb2}{set\_partition\_id}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a729d7fadedbbd9189bd15d20707b0702}{partition\_id}});}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ RowsetTypePB\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7dce7f99cdb43bf28452fc007ab41522}{preferred\_rowset\_type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa0d13450f05278e3d3af8be20d1ee3d5}{\_preferred\_rowset\_type}};\ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a96f712ae8ef37aab9475e25b082c7a81}{set\_preferred\_rowset\_type}}(RowsetTypePB\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7dce7f99cdb43bf28452fc007ab41522}{preferred\_rowset\_type}})\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa0d13450f05278e3d3af8be20d1ee3d5}{\_preferred\_rowset\_type}}\ =\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7dce7f99cdb43bf28452fc007ab41522}{preferred\_rowset\_type}};}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ used\ for\ after\ tablet\ cloned\ to\ clear\ stale\ rowset}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aaf60c66577cbf714b8ef08c3838a560c}{clear\_stale\_rowset}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a75a37b43977ef6de02be8be7174e1a85}{\_stale\_rs\_metas}}.clear();\ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae4e335ee0baacd0409ca2a4098ab0dea}{all\_beta}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ad73ac7a7da0318b941e194169e1edaef}{storage\_policy\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae7e5aa755c2bfd597fcbd268257fee30}{\_storage\_policy\_id}};\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae518bc3df1190927836cfb8021204625}{set\_storage\_policy\_id}}(int64\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a18eaecaf99d52cb40ba1da6343fa8449}{VLOG\_NOTICE}}\ <<\ \textcolor{stringliteral}{"{}set\ tablet\_id\ :\ "{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a1798c31a73202b7834c3067dd93ce06b}{\_table\_id}}\ <<\ \textcolor{stringliteral}{"{}\ storage\ policy\ from\ "{}}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae7e5aa755c2bfd597fcbd268257fee30}{\_storage\_policy\_id}}\ <<\ \textcolor{stringliteral}{"{}\ to\ "{}}\ <<\ id;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae7e5aa755c2bfd597fcbd268257fee30}{\_storage\_policy\_id}}\ =\ id;}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0e027f8e0959aad0bd40b7471d396ab2}{init\_column\_from\_tcolumn}}(uint32\_t\ unique\_id,\ \textcolor{keyword}{const}\ TColumn\&\ tcolumn,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ColumnPB*\ column);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3484ecca1bed5ce4cd62aeee86c87d78}{delete\_bitmap}}()\ \{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1_tablet_meta_a2842e8d4fd51a5c49fcf5bebfa28d5c4}{\_delete\_bitmap}};\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0ad2bb3aa004c82a192158f07a6f0113}{enable\_unique\_key\_merge\_on\_write}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a05b179eaacd97942cee3099f8d6b8f07}{\_enable\_unique\_key\_merge\_on\_write}};\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aba4849d80acc53137009be442f34baa1}{update\_delete\_bitmap}}(\textcolor{keyword}{const}\ std::vector<RowsetSharedPtr>\&\ input\_rowsets,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_id_conversion}{RowIdConversion}}\&\ rowid\_conversion);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a59a58622420b8a92e1b62e4ec25e6c40}{\_save\_meta}}(\mbox{\hyperlink{classdoris_1_1_data_dir}{DataDir}}*\ data\_dir);}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ \_del\_predicates\ is\ ignored\ to\ compare.}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab33f0267de6136a1a92580b078686834}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ b);}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_add089166736fe96b6cac4397c5223cfb}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ b);}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00214\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a1798c31a73202b7834c3067dd93ce06b}{\_table\_id}}\ =\ 0;}
+\DoxyCodeLine{00215\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa4033d7102999d00f610cabfc9eab73c}{\_partition\_id}}\ =\ 0;}
+\DoxyCodeLine{00216\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a8c64882809994d5a843169369bd4277e}{\_tablet\_id}}\ =\ 0;}
+\DoxyCodeLine{00217\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a214c1d7c547f898c79cdfaf05d903c0a}{\_replica\_id}}\ =\ 0;}
+\DoxyCodeLine{00218\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ad02ac837254ed8c54324f1c370bbe773}{\_schema\_hash}}\ =\ 0;}
+\DoxyCodeLine{00219\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae9418705f80eb28642ea8119f94eae18}{\_shard\_id}}\ =\ 0;}
+\DoxyCodeLine{00220\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ac405c251b8b704e88bac09228ac07484}{\_creation\_time}}\ =\ 0;}
+\DoxyCodeLine{00221\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aad537728d40139cb389ee4ad45ffd741}{\_cumulative\_layer\_point}}\ =\ 0;}
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0d28d57f95347334ca5900b084f72a11}{\_tablet\_uid}};}
+\DoxyCodeLine{00223\ \ \ \ \ TabletTypePB\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a59b50692e9547943567049169d863f48}{\_tablet\_type}}\ =\ TabletTypePB::TABLET\_TYPE\_DISK;}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3ad33d991d6d138a8066f9f6593dddc9}{\_tablet\_state}}\ =\ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3eea1bfc805b91979a3d30e7ce9656edae9f}{TABLET\_NOTREADY}};}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ the\ reference\ of\ \_schema\ may\ use\ in\ tablet,\ so\ here\ need\ keep}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ the\ lifetime\ of\ tablemeta\ and\ \_schema\ is\ same\ with\ tablet}}
+\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}};}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ std::vector<RowsetMetaSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}};}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ This\ variable\ \_stale\_rs\_metas\ is\ used\ to\ record\ these\ rowsets‘\ meta\ which\ are\ be\ compacted.}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ These\ stale\ rowsets\ meta\ are\ been\ removed\ when\ rowsets'\ pathVersion\ is\ expired,}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{comment}{//\ this\ policy\ is\ judged\ and\ computed\ by\ TimestampedVersionTracker.}}
+\DoxyCodeLine{00234\ \ \ \ \ std::vector<RowsetMetaSharedPtr>\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a75a37b43977ef6de02be8be7174e1a85}{\_stale\_rs\_metas}};}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c758854a5b7117d794d0b003feeee10}{\_in\_restore\_mode}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00236\ \ \ \ \ RowsetTypePB\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa0d13450f05278e3d3af8be20d1ee3d5}{\_preferred\_rowset\_type}}\ =\ BETA\_ROWSET;}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{//\ meta\ for\ cooldown}}
+\DoxyCodeLine{00239\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae7e5aa755c2bfd597fcbd268257fee30}{\_storage\_policy\_id}}\ =\ 0;\ \textcolor{comment}{//\ <=\ 0\ means\ no\ storage\ policy}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{comment}{//\ For\ unique\ key\ data\ model,\ the\ feature\ Merge-\/on-\/Write\ will\ leverage\ a\ primary}}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ key\ index\ and\ a\ delete-\/bitmap\ to\ mark\ duplicate\ keys\ as\ deleted\ in\ load\ stage,}}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ which\ can\ avoid\ the\ merging\ cost\ in\ read\ stage,\ and\ accelerate\ the\ aggregation}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{comment}{//\ query\ performance\ significantly.}}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a05b179eaacd97942cee3099f8d6b8f07}{\_enable\_unique\_key\_merge\_on\_write}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00246\ \ \ \ \ std::shared\_ptr<DeleteBitmap>\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a2842e8d4fd51a5c49fcf5bebfa28d5c4}{\_delete\_bitmap}};}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keyword}{mutable}\ std::shared\_mutex\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa479f8b73cfe99e5b109f5cdb6bb8282}{\_meta\_lock}};}
+\DoxyCodeLine{00249\ \};}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00269\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\ \{}
+\DoxyCodeLine{00270\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{mutable}\ std::shared\_mutex\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_af40eb81400ba119f112df5c19b60617f}{lock}};}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_delete_bitmap_a1f09522fffcf4e52bd8cadd2a5d80134}{SegmentId}}\ =\ uint32\_t;}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_delete_bitmap_af87ef29fb7d130cb11d3812bbcc94451}{Version}}\ =\ uint64\_t;}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\ =\ std::tuple<RowsetId,\ SegmentId,\ Version>;}
+\DoxyCodeLine{00275\ \ \ \ \ std::map<BitmapKey,\ roaring::Roaring>\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_afdf332eb4a6e399664fedf72d78ea272}{delete\_bitmap}};\ \textcolor{comment}{//\ Ordered\ map}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00281\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}(int64\_t\ tablet\_id);}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00286\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ r);}
+\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_adb4232f1f5a93761c45601375824a3d6}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ r);}
+\DoxyCodeLine{00291\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}(\mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\&\ r);}
+\DoxyCodeLine{00292\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_adb4232f1f5a93761c45601375824a3d6}{operator=}}(\mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\&\ r);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00298\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_af86f59235c176fb08e24b068c1844057}{snapshot}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00304\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_af86f59235c176fb08e24b068c1844057}{snapshot}}(\mbox{\hyperlink{classdoris_1_1_delete_bitmap_af87ef29fb7d130cb11d3812bbcc94451}{Version}}\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a4e5a9ce73e8cbaca59f453c1341e6f28}{add}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk,\ uint32\_t\ row\_id);}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a55f3b0d6799a2debdf0943c52bc6c342}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk,\ uint32\_t\ row\_id);}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a55f3b0d6799a2debdf0943c52bc6c342}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ lower\_key,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ upper\_key);}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac3ae4e863fc566cfeb05bff4cbc5f952}{contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk,\ uint32\_t\ row\_id)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_adb325ccb7a72cda8a9c900b2e63e097a}{set}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk,\ \textcolor{keyword}{const}\ roaring::Roaring\&\ segment\_delete\_bitmap);}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a8f4ef674338ccf35f616d2c34d6a685a}{get}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk,\ roaring::Roaring*\ segment\_delete\_bitmap)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keyword}{const}\ roaring::Roaring*\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a8f4ef674338ccf35f616d2c34d6a685a}{get}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_abc09ddfe5ec798f4041895a549c3a819}{subset}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ start,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ end,}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}*\ subset\_delete\_map)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a25e5f8ec45071a6f98820a0f596d0bea}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}\&\ other);}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a80d5bf15f752e0501bda6f74833d8c02}{contains\_agg}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bitmap,\ uint32\_t\ row\_id)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00387\ \ \ \ \ std::shared\_ptr<roaring::Roaring>\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ae569379a0d665fe3b520696000f4dde9}{get\_agg}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac88235435a3b4a824762dc3691f86573}{BitmapKey}}\&\ bmk)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache}{AggCache}}\ \{}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_delete_bitmap_1_1_agg_cache_1_1_value}{Value}}\ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ roaring::Roaring\ \mbox{\hyperlink{structdoris_1_1_delete_bitmap_1_1_agg_cache_1_1_value_a53871626a7143e289c356b6a6a5dd7df}{bitmap}};}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_aa2db129bb457a310d83c7ea6cbba83ff}{AggCache}}(\textcolor{keywordtype}{size\_t}\ size\_in\_bytes)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::once\_flag\ \mbox{\hyperlink{namespacedoris_afac1ec0710b156aa5930e08101c0c65b}{once}};}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ std::call\_once(\mbox{\hyperlink{namespacedoris_afac1ec0710b156aa5930e08101c0c65b}{once}},\ [size\_in\_bytes]\ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tmp\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}(\textcolor{stringliteral}{"{}DeleteBitmap\ AggCache"{}},\ size\_in\_bytes,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a4aa71180778b711338785695df5d7c52}{LRUCacheType::SIZE}},\ 256);}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_a31da992e4e5450aff0e89911c2d767df}{AggCache::s\_repr}}.store(tmp,\ std::memory\_order\_release);}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_a31da992e4e5450aff0e89911c2d767df}{s\_repr}}.load(std::memory\_order\_acquire))\ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}*\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_af9ccf8d4509f47917957acd059f1468a}{repr}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_a31da992e4e5450aff0e89911c2d767df}{s\_repr}}.load(std::memory\_order\_acquire);\ \}}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::atomic<ShardedLRUCache*>\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_1_1_agg_cache_a31da992e4e5450aff0e89911c2d767df}{s\_repr}};}
+\DoxyCodeLine{00409\ \ \ \ \ \};}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keyword}{mutable}\ std::shared\_ptr<AggCache>\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_ac270f743723579eaa1353d904fb567af}{\_agg\_cache}};}
+\DoxyCodeLine{00413\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_delete_bitmap_a8c64882809994d5a843169369bd4277e}{\_tablet\_id}};}
+\DoxyCodeLine{00414\ \};}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{namespacedoris_aa9c2fc8ad25f4d03ad346e9234df55f4}{SEQUENCE\_COL}}\ =\ \textcolor{stringliteral}{"{}\_\_DORIS\_SEQUENCE\_COL\_\_"{}};}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae98baec93bd0c7a5b8bd11dbd9f884f9}{TabletMeta::tablet\_uid}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0d28d57f95347334ca5900b084f72a11}{\_tablet\_uid}};}
+\DoxyCodeLine{00420\ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a0294b12644d410ee7b6e25d85daa1f49}{TabletMeta::table\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a1798c31a73202b7834c3067dd93ce06b}{\_table\_id}};}
+\DoxyCodeLine{00424\ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a729d7fadedbbd9189bd15d20707b0702}{TabletMeta::partition\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa4033d7102999d00f610cabfc9eab73c}{\_partition\_id}};}
+\DoxyCodeLine{00428\ \}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aebbec7014f0cd07f57f939f781c46763}{TabletMeta::tablet\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a8c64882809994d5a843169369bd4277e}{\_tablet\_id}};}
+\DoxyCodeLine{00432\ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9caa16bbfd62c26b708be9b7cea78a35}{TabletMeta::replica\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a214c1d7c547f898c79cdfaf05d903c0a}{\_replica\_id}};}
+\DoxyCodeLine{00436\ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \textcolor{keyword}{inline}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_af97fa4131537c64737ddb6daa35da7e8}{TabletMeta::schema\_hash}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ad02ac837254ed8c54324f1c370bbe773}{\_schema\_hash}};}
+\DoxyCodeLine{00440\ \}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{keyword}{inline}\ int16\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{TabletMeta::shard\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae9418705f80eb28642ea8119f94eae18}{\_shard\_id}};}
+\DoxyCodeLine{00444\ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a47f402139a5907c00986c896b74d5208}{TabletMeta::set\_shard\_id}}(int32\_t\ shard\_id)\ \{}
+\DoxyCodeLine{00447\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae9418705f80eb28642ea8119f94eae18}{\_shard\_id}}\ =\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae27a5046adee74b12fe09fd6d7c68918}{shard\_id}};}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7d1055651e34ec805e9be916388fb79c}{TabletMeta::creation\_time}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ac405c251b8b704e88bac09228ac07484}{\_creation\_time}};}
+\DoxyCodeLine{00452\ \}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9b8e5259515487c8292a606a59a44541}{TabletMeta::set\_creation\_time}}(int64\_t\ creation\_time)\ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ac405c251b8b704e88bac09228ac07484}{\_creation\_time}}\ =\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a7d1055651e34ec805e9be916388fb79c}{creation\_time}};}
+\DoxyCodeLine{00456\ \}}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a13faf61403b03b727f1c5ff76a48a269}{TabletMeta::cumulative\_layer\_point}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aad537728d40139cb389ee4ad45ffd741}{\_cumulative\_layer\_point}};}
+\DoxyCodeLine{00460\ \}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a1351fccd05aeb846b88fa348233dfa7d}{TabletMeta::set\_cumulative\_layer\_point}}(int64\_t\ new\_point)\ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aad537728d40139cb389ee4ad45ffd741}{\_cumulative\_layer\_point}}\ =\ new\_point;}
+\DoxyCodeLine{00464\ \}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a80047a1ccadf053f7df9bbaf2f979102}{TabletMeta::num\_rows}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a80047a1ccadf053f7df9bbaf2f979102}{num\_rows}}\ =\ 0;}
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}})\ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a80047a1ccadf053f7df9bbaf2f979102}{num\_rows}}\ +=\ rs-\/>num\_rows();}
+\DoxyCodeLine{00470\ \ \ \ \ \}}
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a80047a1ccadf053f7df9bbaf2f979102}{num\_rows}};}
+\DoxyCodeLine{00472\ \}}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_aa4f881bd3a2348a07adbf376c88473cb}{TabletMeta::tablet\_footprint}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ total\_size\ =\ 0;}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}})\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ total\_size\ +=\ rs-\/>data\_disk\_size();}
+\DoxyCodeLine{00478\ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{keywordflow}{return}\ total\_size;}
+\DoxyCodeLine{00480\ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a76a06f5e2d7fa8e3f734ed21873c6925}{TabletMeta::tablet\_local\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ total\_size\ =\ 0;}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}})\ \{}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rs-\/>is\_local())\ \{}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ total\_size\ +=\ rs-\/>data\_disk\_size();}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00488\ \ \ \ \ \}}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{keywordflow}{return}\ total\_size;}
+\DoxyCodeLine{00490\ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ac4b54df2cf773bd2c98140ed0456c912}{TabletMeta::tablet\_remote\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ total\_size\ =\ 0;}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}})\ \{}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!rs-\/>is\_local())\ \{}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ total\_size\ +=\ rs-\/>data\_disk\_size();}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00498\ \ \ \ \ \}}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordflow}{return}\ total\_size;}
+\DoxyCodeLine{00500\ \}}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_adca3b988bb5c6510720f1a97a9759832}{TabletMeta::version\_count}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}}.size();}
+\DoxyCodeLine{00504\ \}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab94fe92355804266c215e1891e2d9c14}{TabletMeta::tablet\_state}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3ad33d991d6d138a8066f9f6593dddc9}{\_tablet\_state}};}
+\DoxyCodeLine{00508\ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3a65dd70b370630f5009856ffd5895b8}{TabletMeta::set\_tablet\_state}}(\mbox{\hyperlink{namespacedoris_ac47d7da70b998d59c383d54b81dae3ee}{TabletState}}\ state)\ \{}
+\DoxyCodeLine{00511\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a3ad33d991d6d138a8066f9f6593dddc9}{\_tablet\_state}}\ =\ state;}
+\DoxyCodeLine{00512\ \}}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab1ff5fe0c79b0171ecbe2741d07f6f76}{TabletMeta::in\_restore\_mode}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c758854a5b7117d794d0b003feeee10}{\_in\_restore\_mode}};}
+\DoxyCodeLine{00516\ \}}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a02f7f26fd6cd52b1c7ffa6573bed557d}{TabletMeta::set\_in\_restore\_mode}}(\textcolor{keywordtype}{bool}\ in\_restore\_mode)\ \{}
+\DoxyCodeLine{00519\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c758854a5b7117d794d0b003feeee10}{\_in\_restore\_mode}}\ =\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ab1ff5fe0c79b0171ecbe2741d07f6f76}{in\_restore\_mode}};}
+\DoxyCodeLine{00520\ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4acb2828400cf8ee87dea2b7e9f73fcb}{TabletMeta::tablet\_schema}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00523\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}};}
+\DoxyCodeLine{00524\ \}}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_afd8e782a4eec7c47ea95c6e644ce28a9}{TabletMeta::mutable\_tablet\_schema}}()\ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}}.get();}
+\DoxyCodeLine{00528\ \}}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a720db8a369d03bd8a7f5de6c2ca5b902}{TabletMeta::all\_rs\_metas}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}};}
+\DoxyCodeLine{00532\ \}}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \textcolor{keyword}{inline}\ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a8d5d8e63cfd1116487889dd7d46309ba}{TabletMeta::all\_mutable\_rs\_metas}}()\ \{}
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}};}
+\DoxyCodeLine{00536\ \}}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a4145d78bed35a384af2276823b2709d3}{TabletMeta::all\_stale\_rs\_metas}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00539\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a75a37b43977ef6de02be8be7174e1a85}{\_stale\_rs\_metas}};}
+\DoxyCodeLine{00540\ \}}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_ae4e335ee0baacd0409ca2a4098ab0dea}{TabletMeta::all\_beta}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a01055bbf7d081fddfc7f29a9d562fd07}{\_rs\_metas}})\ \{}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rs-\/>rowset\_type()\ !=\ RowsetTypePB::BETA\_ROWSET)\ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00547\ \ \ \ \ \}}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ rs\ :\ \mbox{\hyperlink{classdoris_1_1_tablet_meta_a75a37b43977ef6de02be8be7174e1a85}{\_stale\_rs\_metas}})\ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rs-\/>rowset\_type()\ !=\ RowsetTypePB::BETA\_ROWSET)\ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00552\ \ \ \ \ \}}
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00554\ \}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ Only\ for\ unit\ test\ now.}}
+\DoxyCodeLine{00557\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_ab33f0267de6136a1a92580b078686834}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ b);}
+\DoxyCodeLine{00558\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_add089166736fe96b6cac4397c5223cfb}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_meta}{TabletMeta}}\&\ b);}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

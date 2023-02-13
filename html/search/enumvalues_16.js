@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['v2_5f0_0',['V2_0',['../d1/d57/classdoris__udf_1_1_function_context.html#a6a9e453bbd2bc4162de539637baf7feaaab8d08e69ae68f69dc8fff4492a18d71',1,'doris_udf::FunctionContext']]],
+  ['value_1',['value',['../db/d53/structdoris_1_1internal_1_1_is_not_ref_counted.html#a385c44f6fb256e5716a2302a5b940388a97de9ab6885342a574053b8f64a563a9',1,'doris::internal::IsNotRefCounted']]],
+  ['vg_5fuserreq_5f_5fclient_5fcall0_2',['VG_USERREQ__CLIENT_CALL0',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a625b135b81630148a8611ad5d5c42176',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fclient_5fcall1_3',['VG_USERREQ__CLIENT_CALL1',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6af86a90dafceed85e67e1bdc5f9bba736',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fclient_5fcall2_4',['VG_USERREQ__CLIENT_CALL2',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6aa119636a6c1f650b008f1bcd4ae8fbb1',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fclient_5fcall3_5',['VG_USERREQ__CLIENT_CALL3',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a9c87c5a674582434f4ca0dff8be88385',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fcount_5ferrors_6',['VG_USERREQ__COUNT_ERRORS',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a365fb6b9c32dae9206010023d6e1d6db',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fcreate_5fmempool_7',['VG_USERREQ__CREATE_MEMPOOL',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a8ea2a3423a7d6664e309bac660e69600',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fdestroy_5fmempool_8',['VG_USERREQ__DESTROY_MEMPOOL',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a0141bfe959f2b2ad7d267620871fd359',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fdiscard_5ftranslations_9',['VG_USERREQ__DISCARD_TRANSLATIONS',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a7509de5de0dc55211e77e670973e90ba',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5ffreelike_5fblock_10',['VG_USERREQ__FREELIKE_BLOCK',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a89d4a62f784767867eb3ea3dbf5a8973',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmalloclike_5fblock_11',['VG_USERREQ__MALLOCLIKE_BLOCK',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a35ee190ec73bb5eb96bef58837ee6587',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmempool_5falloc_12',['VG_USERREQ__MEMPOOL_ALLOC',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a28951fa097b322206628dad65154555f',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmempool_5fchange_13',['VG_USERREQ__MEMPOOL_CHANGE',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a43801a441db597c49bd28f3f44cac292',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmempool_5fexists_14',['VG_USERREQ__MEMPOOL_EXISTS',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6ae1b2c0b4c6139c602394527b9c2768d4',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmempool_5ffree_15',['VG_USERREQ__MEMPOOL_FREE',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6ac94042471bddd726035f4daf20f17408',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmempool_5ftrim_16',['VG_USERREQ__MEMPOOL_TRIM',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6aa049d007ef46f61bb2d643bb87754c40',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fmove_5fmempool_17',['VG_USERREQ__MOVE_MEMPOOL',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a90a8b1ec504ab609c4377969490194f7',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fprintf_18',['VG_USERREQ__PRINTF',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6aa12a2c7bfec5c456147bddf4e2fff0f0',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fprintf_5fbacktrace_19',['VG_USERREQ__PRINTF_BACKTRACE',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a1a6afe13efe088803cd6203f662b0d63',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5frunning_5fon_5fvalgrind_20',['VG_USERREQ__RUNNING_ON_VALGRIND',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a55b6af8461e905a0577061932e3b8fcd',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fstack_5fchange_21',['VG_USERREQ__STACK_CHANGE',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6ac1bc069a4ae00616ce4d5862fd4db6d7',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fstack_5fderegister_22',['VG_USERREQ__STACK_DEREGISTER',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6ac629334e1308792146f312debb419532',1,'valgrind.h']]],
+  ['vg_5fuserreq_5f_5fstack_5fregister_23',['VG_USERREQ__STACK_REGISTER',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6a4242cab6a74b91ef44d780f83227316e',1,'valgrind.h']]]
+];

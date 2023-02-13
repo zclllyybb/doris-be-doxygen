@@ -1,0 +1,815 @@
+\hypertarget{gscoped__ptr_8h_source}{}\doxysection{gscoped\+\_\+ptr.\+h}
+\label{gscoped__ptr_8h_source}\index{/Users/dabowang/be\_all/gutil/gscoped\_ptr.h@{/Users/dabowang/be\_all/gutil/gscoped\_ptr.h}}
+\mbox{\hyperlink{gscoped__ptr_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2012\ The\ Chromium\ Authors.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Use\ of\ this\ source\ code\ is\ governed\ by\ a\ BSD-\/style\ license\ that\ can\ be}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ found\ in\ the\ LICENSE.txt\ file.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Scopers\ help\ you\ manage\ ownership\ of\ a\ pointer,\ helping\ you\ easily\ manage\ the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ a\ pointer\ within\ a\ scope,\ and\ automatically\ destroying\ the\ pointer\ at\ the}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ end\ of\ a\ scope.\ \ There\ are\ two\ main\ classes\ you\ will\ use,\ which\ correspond}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ to\ the\ operators\ new/delete\ and\ new[]/delete[].}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Example\ usage\ (gscoped\_ptr):}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<Foo>\ foo(new\ Foo("{}wee"{}));}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \}\ \ //\ foo\ goes\ out\ of\ scope,\ releasing\ the\ pointer\ with\ it.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<Foo>\ foo;\ \ \ \ \ \ \ \ \ \ //\ No\ pointer\ managed.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ \ \ foo.reset(new\ Foo("{}wee"{}));\ \ \ \ //\ Now\ a\ pointer\ is\ managed.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ \ foo.reset(new\ Foo("{}wee2"{}));\ \ \ //\ Foo("{}wee"{})\ was\ destroyed.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ \ foo.reset(new\ Foo("{}wee3"{}));\ \ \ //\ Foo("{}wee2"{})\ was\ destroyed.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ \ \ foo-\/>Method();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ Foo::Method()\ called.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ \ \ foo.get()-\/>Method();\ \ \ \ \ \ \ \ \ \ //\ Foo::Method()\ called.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ \ SomeFunc(foo.release());\ \ \ \ \ \ //\ SomeFunc\ takes\ ownership,\ foo\ no\ longer}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ manages\ a\ pointer.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ foo.reset(new\ Foo("{}wee4"{}));\ \ \ //\ foo\ manages\ a\ pointer\ again.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ \ foo.reset();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ Foo("{}wee4"{})\ destroyed,\ foo\ no\ longer}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ manages\ a\ pointer.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ \}\ \ //\ foo\ wasn't\ managing\ a\ pointer,\ so\ nothing\ was\ destroyed.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ Example\ usage\ (gscoped\_array):}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ \ gscoped\_array<Foo>\ foo(new\ Foo[100]);}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ \ \ foo.get()-\/>Method();\ \ //\ Foo::Method\ on\ the\ 0th\ element.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ \ \ foo[10].Method();\ \ \ \ \ //\ Foo::Method\ on\ the\ 10th\ element.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ These\ scopers\ also\ implement\ part\ of\ the\ functionality\ of\ C++11\ unique\_ptr}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ in\ that\ they\ are\ "{}movable\ but\ not\ copyable."{}\ \ You\ can\ use\ the\ scopers\ in}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ the\ parameter\ and\ return\ types\ of\ functions\ to\ signify\ ownership\ transfer}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ in\ to\ and\ out\ of\ a\ function.\ \ When\ calling\ a\ function\ that\ has\ a\ scoper}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ as\ the\ argument\ type,\ it\ must\ be\ called\ with\ the\ result\ of\ an\ analogous}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ scoper's\ Pass()\ function\ or\ another\ function\ that\ generates\ a\ temporary;}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ passing\ by\ copy\ will\ NOT\ work.\ \ Here\ is\ an\ example\ using\ gscoped\_ptr:}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ void\ TakesOwnership(gscoped\_ptr<Foo>\ arg)\ \{}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ \ //\ Do\ something\ with\ arg}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ gscoped\_ptr<Foo>\ CreateFoo()\ \{}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ //\ No\ need\ for\ calling\ Pass()\ because\ we\ are\ constructing\ a\ temporary}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ \ //\ for\ the\ return\ value.}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ \ \ return\ gscoped\_ptr<Foo>(new\ Foo("{}new"{}));}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ gscoped\_ptr<Foo>\ PassThru(gscoped\_ptr<Foo>\ arg)\ \{}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ \ return\ std::move(arg);}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<Foo>\ ptr(new\ Foo("{}yay"{}));\ \ //\ ptr\ manages\ Foo("{}yay"{}).}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ \ \ TakesOwnership(std::move(ptr));\ \ \ \ \ \ \ \ \ \ \ //\ ptr\ no\ longer\ owns\ Foo("{}yay"{}).}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<Foo>\ ptr2\ =\ CreateFoo();\ \ \ //\ ptr2\ owns\ the\ return\ Foo.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<Foo>\ ptr3\ =\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ ptr3\ now\ owns\ what\ was\ in\ ptr2.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ PassThru(std::move(ptr2));\ \ \ \ \ \ \ \ \ \ \ \ //\ ptr2\ is\ correspondingly\ NULL.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ Notice\ that\ if\ you\ do\ not\ call\ Pass()\ when\ returning\ from\ PassThru(),\ or}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ when\ invoking\ TakesOwnership(),\ the\ code\ will\ not\ compile\ because\ scopers}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ are\ not\ copyable;\ they\ only\ implement\ move\ semantics\ which\ require\ calling}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ the\ Pass()\ function\ to\ signify\ a\ destructive\ transfer\ of\ state.\ CreateFoo()}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ is\ different\ though\ because\ we\ are\ constructing\ a\ temporary\ on\ the\ return}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ line\ and\ thus\ can\ avoid\ needing\ to\ call\ Pass().}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Pass()\ properly\ handles\ upcast\ in\ assignment,\ i.e.\ you\ can\ assign}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ gscoped\_ptr<Child>\ to\ gscoped\_ptr<Parent>:}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ gscoped\_ptr<Foo>\ foo(new\ Foo());}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ \ \ gscoped\_ptr<FooParent>\ parent\ =\ std::move(foo);}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ PassAs<>()\ should\ be\ used\ to\ upcast\ return\ value\ in\ return\ statement:}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ \ \ gscoped\_ptr<Foo>\ CreateFoo()\ \{}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<FooChild>\ result(new\ FooChild());}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ \ \ \ \ return\ result.PassAs<Foo>();}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ Note\ that\ PassAs<>()\ is\ implemented\ only\ for\ gscoped\_ptr,\ but\ not\ for}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ gscoped\_array.\ This\ is\ because\ casting\ array\ pointers\ may\ not\ be\ safe.}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ Cloudera\ notes:\ this\ should\ be\ used\ in\ preference\ to\ std::unique\_ptr\ since}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ it\ offers\ a\ ::release()\ method\ like\ unique\_ptr.\ We\ unfortunately\ cannot}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ just\ use\ unique\_ptr\ because\ it\ has\ an\ inconsistent\ implementation\ in}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ some\ of\ the\ older\ compilers\ we\ have\ to\ support.}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ This\ is\ an\ implementation\ designed\ to\ match\ the\ anticipated\ future\ TR2}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ implementation\ of\ the\ scoped\_ptr\ class,\ and\ its\ closely-\/related\ brethren,}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ scoped\_array,\ scoped\_ptr\_malloc.}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#include\ <algorithm>}\ \textcolor{comment}{//\ For\ std::swap().}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{basictypes_8h}{gutil/basictypes.h}}"{}}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{move_8h}{gutil/move.h}}"{}}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{template__util_8h}{gutil/template\_util.h}}"{}}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{namespace\ }subtle\ \{}
+\DoxyCodeLine{00114\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1subtle_1_1_ref_counted_base}{RefCountedBase}};}
+\DoxyCodeLine{00115\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1subtle_1_1_ref_counted_thread_safe_base}{RefCountedThreadSafeBase}};}
+\DoxyCodeLine{00116\ \}\ \textcolor{comment}{//\ namespace\ subtle}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ Function\ object\ which\ deletes\ its\ parameter,\ which\ must\ be\ a\ pointer.}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ If\ C\ is\ an\ array\ type,\ invokes\ 'delete[]'\ on\ the\ parameter;\ otherwise,}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ invokes\ 'delete'.\ The\ default\ deleter\ for\ gscoped\_ptr<T>.}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00122\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_default_deleter}{DefaultDeleter}}\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_default_deleter_a3571a3c6bdcb9ab1f2ab2b64fc5c4cca}{DefaultDeleter}}()\ \{\}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00125\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_default_deleter_a7be392ac2de52282cd987b67889f46e9}{DefaultDeleter}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_default_deleter}{DefaultDeleter<U>}}\&\ other)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMPLEMENTATION\ NOTE:\ C++11\ 20.7.1.1.2p2\ only\ provides\ this\ constructor}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ U*\ is\ implicitly\ convertible\ to\ T*\ and\ U\ is\ not\ an\ array\ type.}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Correct\ implementation\ should\ use\ SFINAE\ to\ disable\ this}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constructor.\ However,\ since\ there\ are\ no\ other\ 1-\/argument\ constructors,}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ using\ a\ COMPILE\_ASSERT()\ based\ on\ is\_convertible<>\ and\ requiring}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ complete\ types\ is\ simpler\ and\ will\ cause\ compile\ failures\ for\ equivalent}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ misuses.}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Note,\ the\ is\_convertible<U*,\ T*>\ check\ also\ ensures\ that\ U\ is\ not\ an}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ array.\ T\ is\ guaranteed\ to\ be\ a\ non-\/array,\ so\ any\ U*\ where\ U\ is\ an\ array}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cannot\ convert\ to\ T*.}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ T\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}})\ \};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ U\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(U)\ \};}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}((std::is\_convertible<U*,\ T*>::value),}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ U\_ptr\_must\_implicitly\_convert\_to\_T\_ptr);}
+\DoxyCodeLine{00142\ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_default_deleter_a15eb0c1c26a2c61a530b6ebff08471fe}{operator()}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ type\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}})\ \};}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ptr;}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ Specialization\ of\ DefaultDeleter\ for\ array\ types.}}
+\DoxyCodeLine{00150\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00151\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_default_deleter}{DefaultDeleter}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}[]>\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_default_deleter_3_01_t_0f_0e_4_a15eb0c1c26a2c61a530b6ebff08471fe}{operator()}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ type\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}})\ \};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ ptr;}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ Disable\ this\ operator\ for\ any\ U\ !=\ T\ because\ it\ is\ undefined\ to\ execute}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ an\ array\ delete\ when\ the\ static\ type\ of\ the\ array\ mismatches\ the\ dynamic}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ type.}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ References:}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ \ \ C++98\ [expr.delete]p3}}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ \ \ http://cplusplus.github.com/LWG/lwg-\/defects.html\#938}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_default_deleter_3_01_t_0f_0e_4_a6dfe42681c5f10ca0d56b550fc6d8e42}{operator()}}(U*\ array)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00167\ \};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keywordtype}{int}\ n>}
+\DoxyCodeLine{00170\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_default_deleter}{DefaultDeleter}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}[n]>\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Never\ allow\ someone\ to\ declare\ something\ like\ gscoped\_ptr<int[10]>.}}
+\DoxyCodeLine{00172\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_default_deleter_3_01_t_0fn_0e_4_ac479ec75f23243c992289ffc3ba5ca37}{COMPILE\_ASSERT}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}})\ ==\ -\/1,\ do\_not\_use\_array\_with\_size\_as\_type);}
+\DoxyCodeLine{00173\ \};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{comment}{//\ Function\ object\ which\ invokes\ 'free'\ on\ its\ parameter,\ which\ must\ be}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ a\ pointer.\ Can\ be\ used\ to\ store\ malloc-\/allocated\ pointers\ in\ gscoped\_ptr:}}
+\DoxyCodeLine{00177\ \textcolor{comment}{//}}
+\DoxyCodeLine{00178\ \textcolor{comment}{//\ gscoped\_ptr<int,\ doris::FreeDeleter>\ foo\_ptr(}}
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ \ \ \ \ static\_cast<int*>(malloc(sizeof(int))));}}
+\DoxyCodeLine{00180\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_free_deleter}{FreeDeleter}}\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_free_deleter_a67ed7193a0305d1d34c7790cc4b9ae4b}{operator()}}(\textcolor{keywordtype}{void}*\ ptr)\textcolor{keyword}{\ const\ }\{\ \mbox{\hyperlink{jemalloc__hook_8cpp_a3c12ec6b8e8368e804827d604b2979d7}{free}}(ptr);\ \}}
+\DoxyCodeLine{00182\ \};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00187\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1internal_1_1_is_not_ref_counted}{IsNotRefCounted}}\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1internal_1_1_is_not_ref_counted_a385c44f6fb256e5716a2302a5b940388a97de9ab6885342a574053b8f64a563a9}{value}}\ =\ !std::is\_convertible<T*,\ doris::subtle::RefCountedBase*>::value\ \&\&}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !std::is\_convertible<T*,\ doris::subtle::RefCountedThreadSafeBase*>::value}
+\DoxyCodeLine{00191\ \ \ \ \ \};}
+\DoxyCodeLine{00192\ \};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ Minimal\ implementation\ of\ the\ core\ logic\ of\ gscoped\_ptr,\ suitable\ for}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ reuse\ in\ both\ gscoped\_ptr\ and\ its\ specializations.}}
+\DoxyCodeLine{00196\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D>}
+\DoxyCodeLine{00197\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl}}\ \{}
+\DoxyCodeLine{00198\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ae73b16708ad627c6974b4ac296c21b83}{gscoped\_ptr\_impl}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ p)\ :\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}(p)\ \{\}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ Initializer\ for\ deleters\ that\ have\ data\ parameters.}}
+\DoxyCodeLine{00202\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a59e610a3bc6c842740e91a750a134a00}{gscoped\_ptr\_impl}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ p,\ \textcolor{keyword}{const}\ D\&\ d)\ :\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}(p,\ d)\ \{\}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Templated\ constructor\ that\ destructively\ takes\ the\ value\ from\ another}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{//\ gscoped\_ptr\_impl.}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a5be929c4eb48babb588f40c98288f0ef}{gscoped\_ptr\_impl}}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl<U,\ V>}}*\ other)}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}(other-\/>\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a16c2546e4e201592269d705be40207dc}{release}}(),\ other-\/>\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}())\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ do\ not\ support\ move-\/only\ deleters.\ \ We\ could\ modify\ our\ move}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ emulation\ to\ have\ base::subtle::move()\ and\ base::subtle::forward()}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ functions\ that\ are\ imperfect\ emulations\ of\ their\ C++11\ equivalents,}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ but\ until\ there's\ a\ requirement,\ just\ assume\ deleters\ are\ copyable.}}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a3e2b8a313e40a04f23a52960819468bb}{TakeState}}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl<U,\ V>}}*\ other)\ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ See\ comment\ in\ templated\ constructor\ above\ regarding\ lack\ of\ support}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ move-\/only\ deleters.}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a5c2db5e4938e2215de0e78e0b7e5781f}{reset}}(other-\/>\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a16c2546e4e201592269d705be40207dc}{release}}());}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}()\ =\ other-\/>\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}();}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_afb6f46dc0f0e332674ea9f8b46af10e1}{\string~gscoped\_ptr\_impl}}()\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}\ !=\ NULL)\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ using\ get\_deleter()\ saves\ one\ function\ call\ in\ non-\/optimized}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ builds.}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}D\&\textcolor{keyword}{>}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}})(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a5c2db5e4938e2215de0e78e0b7e5781f}{reset}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ p)\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ a\ self-\/reset,\ which\ is\ no\ longer\ allowed:\ http://crbug.com/162971}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (p\ !=\ NULL\ \&\&\ p\ ==\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}})\ abort();}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ running\ data\_.ptr\ =\ p\ can\ lead\ to\ undefined\ behavior\ if}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ get\_deleter()(get())\ deletes\ this.\ In\ order\ to\ pevent\ this,\ reset()}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ should\ update\ the\ stored\ pointer\ before\ deleting\ its\ old\ value.}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ However,\ changing\ reset()\ to\ use\ that\ behavior\ may\ cause\ current\ code\ to}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ break\ in\ unexpected\ ways.\ If\ the\ destruction\ of\ the\ owned\ object}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dereferences\ the\ gscoped\_ptr\ when\ it\ is\ destroyed\ by\ a\ call\ to\ reset(),}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ then\ it\ will\ incorrectly\ dispatch\ calls\ to\ |p|\ rather\ than\ the\ original}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ value\ of\ |data\_.ptr|.}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ During\ the\ transition\ period,\ set\ the\ stored\ pointer\ to\ NULL\ while}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ deleting\ the\ object.\ Eventually,\ this\ safety\ check\ will\ be\ removed\ to}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ prevent\ the\ scenario\ initially\ described\ from\ occuring\ and}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ http://crbug.com/176091\ can\ be\ closed.}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ old\ =\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}};}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}\ =\ NULL;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\ !=\ NULL)\ \textcolor{keyword}{static\_cast<}D\&\textcolor{keyword}{>}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}})(old);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}\ =\ p;}
+\DoxyCodeLine{00253\ \ \ \ \ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}};\ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ D\&\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}};\ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keyword}{const}\ D\&\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a0dc3127b460f162856d98532dd4e64e2}{get\_deleter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}};\ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ac9eb4d01d85a24f69fa2ef680b99b899}{swap}}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl}}\&\ p2)\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Standard\ swap\ idiom:\ 'using\ std::swap'\ ensures\ that\ std::swap\ is}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ present\ in\ the\ overload\ set,\ but\ we\ call\ swap\ unqualified\ so\ that}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ any\ more-\/specific\ overloads\ can\ be\ used,\ if\ available.}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::swap;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ac9eb4d01d85a24f69fa2ef680b99b899}{swap}}(\textcolor{keyword}{static\_cast<}D\&\textcolor{keyword}{>}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}),\ \textcolor{keyword}{static\_cast<}D\&\textcolor{keyword}{>}(p2.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}));}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ac9eb4d01d85a24f69fa2ef680b99b899}{swap}}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}},\ p2.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}});}
+\DoxyCodeLine{00267\ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a16c2546e4e201592269d705be40207dc}{release}}()\ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ old\_ptr\ =\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}};}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}}.\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}\ =\ NULL;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ old\_ptr;}
+\DoxyCodeLine{00273\ \ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{comment}{//\ Needed\ to\ allow\ type-\/converting\ constructor.}}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl}};}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ Use\ the\ empty\ base\ class\ optimization\ to\ allow\ us\ to\ have\ a\ D}}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ member,\ while\ avoiding\ any\ space\ overhead\ for\ it\ when\ D\ is\ an}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{comment}{//\ empty\ class.\ \ See\ e.g.\ http://www.cantrip.org/emptyopt.html\ for\ a\ good}}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ discussion\ of\ this\ technique.}}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data}{Data}}\ :\ \textcolor{keyword}{public}\ D\ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a19252f67441a0dcdd8ce39766f9de94d}{Data}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr\_in)\ :\ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}(ptr\_in)\ \{\}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_ab78b36d33b2d6d36608c531e14b3a413}{Data}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr\_in,\ D\ other)\ :\ D(std::move(other)),\ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}}(ptr\_in)\ \{\}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data_a4e0fab5bba27ff507e909503f0770e58}{ptr}};}
+\DoxyCodeLine{00288\ \ \ \ \ \};}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1internal_1_1gscoped__ptr__impl_1_1_data}{Data}}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a80b2e4d38194428fb5df918434635bec}{data\_}};}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_acd9c800a95c51faeb540a5bd3b197d46}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{gscoped\_ptr\_impl}});}
+\DoxyCodeLine{00293\ \};}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \textcolor{comment}{//\ A\ gscoped\_ptr<T>\ is\ like\ a\ T*,\ except\ that\ the\ destructor\ of\ gscoped\_ptr<T>}}
+\DoxyCodeLine{00300\ \textcolor{comment}{//\ automatically\ deletes\ the\ pointer\ it\ holds\ (if\ any).}}
+\DoxyCodeLine{00301\ \textcolor{comment}{//\ That\ is,\ gscoped\_ptr<T>\ owns\ the\ T\ object\ that\ it\ points\ to.}}
+\DoxyCodeLine{00302\ \textcolor{comment}{//\ Like\ a\ T*,\ a\ gscoped\_ptr<T>\ may\ hold\ either\ NULL\ or\ a\ pointer\ to\ a\ T\ object.}}
+\DoxyCodeLine{00303\ \textcolor{comment}{//\ Also\ like\ T*,\ gscoped\_ptr<T>\ is\ thread-\/compatible,\ and\ once\ you}}
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ dereference\ it,\ you\ get\ the\ thread\ safety\ guarantees\ of\ T.}}
+\DoxyCodeLine{00305\ \textcolor{comment}{//}}
+\DoxyCodeLine{00306\ \textcolor{comment}{//\ The\ size\ of\ gscoped\_ptr\ is\ small.\ On\ most\ compilers,\ when\ using\ the}}
+\DoxyCodeLine{00307\ \textcolor{comment}{//\ DefaultDeleter,\ sizeof(gscoped\_ptr<T>)\ ==\ sizeof(T*).\ Custom\ deleters\ will}}
+\DoxyCodeLine{00308\ \textcolor{comment}{//\ increase\ the\ size\ proportional\ to\ whatever\ state\ they\ need\ to\ have.\ See}}
+\DoxyCodeLine{00309\ \textcolor{comment}{//\ comments\ inside\ gscoped\_ptr\_impl<>\ for\ details.}}
+\DoxyCodeLine{00310\ \textcolor{comment}{//}}
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ Current\ implementation\ targets\ having\ a\ strict\ subset\ of\ \ C++11's}}
+\DoxyCodeLine{00312\ \textcolor{comment}{//\ unique\_ptr<>\ features.\ Known\ deficiencies\ include\ not\ supporting\ move-\/only}}
+\DoxyCodeLine{00313\ \textcolor{comment}{//\ deleteres,\ function\ pointers\ as\ deleters,\ and\ deleters\ with\ reference}}
+\DoxyCodeLine{00314\ \textcolor{comment}{//\ types.}}
+\DoxyCodeLine{00315\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D\ =\ doris::DefaultDeleter<T>>}
+\DoxyCodeLine{00316\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \mbox{\hyperlink{move_8h_a61a5eb10792a88c8cefa14e99913948f}{MOVE\_ONLY\_TYPE\_FOR\_CPP\_03}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}},\ RValue)}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(\mbox{\hyperlink{namespacedoris}{doris}}::internal::IsNotRefCounted<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}>::\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ T\_is\_refcounted\_type\_and\_needs\_scoped\_refptr);}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ public:}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{comment}{//\ The\ element\ and\ deleter\ types.}}
+\DoxyCodeLine{00324\ \ \ \ \ typedef\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}};}
+\DoxyCodeLine{00325\ \ \ \ \ typedef\ D\ \mbox{\hyperlink{classgscoped__ptr_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Defaults\ to\ initializing\ with\ NULL.}}
+\DoxyCodeLine{00328\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}()\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(NULL)\ \{\}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Takes\ ownership\ of\ p.}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__ptr_a959f7c1c4f770585fde19acfc5d428a2}{gscoped\_ptr}}(\mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ p)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(p)\ \{\}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Allows\ initialization\ of\ a\ stateful\ deleter.}}
+\DoxyCodeLine{00334\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_aa98ecc7f646d7c00ed1d37f930a62431}{gscoped\_ptr}}(\mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ p,\ \textcolor{keyword}{const}\ D\&\ d)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(p,\ d)\ \{\}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Allows\ construction\ from\ a\ gscoped\_ptr\ rvalue\ for\ a}}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{comment}{//\ convertible\ type\ and\ deleter.}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ IMPLEMENTATION\ NOTE:\ C++11\ unique\_ptr<>\ keeps\ this\ constructor\ distinct}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//\ from\ the\ normal\ move\ constructor.\ By\ C++11\ 20.7.1.2.1.21,\ this\ constructor}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ has\ different\ post-\/conditions\ if\ D\ is\ a\ reference\ type.\ Since\ this}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{comment}{//\ implementation\ does\ not\ support\ deleters\ with\ reference\ type,}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{comment}{//\ we\ do\ not\ need\ a\ separate\ move\ constructor\ allowing\ us\ to\ avoid\ one}}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ use\ of\ SFINAE.\ You\ only\ need\ to\ care\ about\ this\ if\ you\ modify\ the}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{//\ implementation\ of\ gscoped\_ptr.}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00347\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_a8aadaf057ac58a47f4dd7c5a1ffed4eb}{gscoped\_ptr}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U,\ V>}}\ other)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(\&other.\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}})\ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(!std::is\_array<U>::value,\ U\_cannot\_be\_an\_array);}
+\DoxyCodeLine{00349\ \ \ \ \ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Move\ constructor\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00352\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_a814c478a6d14522551d306799fe4e006}{gscoped\_ptr}}(RValue\ rvalue)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(\&rvalue.object-\/>\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}})\ \{\}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{comment}{//\ operator=.\ \ Allows\ assignment\ from\ a\ gscoped\_ptr\ rvalue\ for\ a\ convertible}}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{comment}{//\ type\ and\ deleter.}}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{comment}{//\ IMPLEMENTATION\ NOTE:\ C++11\ unique\_ptr<>\ keeps\ this\ operator=\ distinct\ from}}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{comment}{//\ the\ normal\ move\ assignment\ operator.\ By\ C++11\ 20.7.1.2.3.4,\ this\ templated}}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ form\ has\ different\ requirements\ on\ for\ move-\/only\ Deleters.\ Since\ this}}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ implementation\ does\ not\ support\ move-\/only\ Deleters,\ we\ do\ not\ need\ a}}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{comment}{//\ separate\ move\ assignment\ operator\ allowing\ us\ to\ avoid\ one\ use\ of\ SFINAE.}}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ You\ only\ need\ to\ care\ about\ this\ if\ you\ modify\ the\ implementation\ of}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{comment}{//\ gscoped\_ptr.}}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}\&\ \mbox{\hyperlink{classgscoped__ptr_a9d48eeb8972746442597147b72ff58d5}{operator=}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U,\ V>}}\ rhs)\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{macros_8h_a52d78863c5180209f6587dc8bd02de12}{COMPILE\_ASSERT}}(!std::is\_array<U>::value,\ U\_cannot\_be\_an\_array);}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a3e2b8a313e40a04f23a52960819468bb}{TakeState}}(\&rhs.\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}});}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00369\ \ \ \ \ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{comment}{//\ Reset.\ \ Deletes\ the\ currently\ owned\ object,\ if\ any.}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ Then\ takes\ ownership\ of\ a\ new\ object,\ if\ given.}}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_a96c49ced7d029837a28e3c05d0da9e8d}{reset}}(\mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ p\ =\ NULL)\ \{\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a5c2db5e4938e2215de0e78e0b7e5781f}{reset}}(p);\ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ Accessors\ to\ get\ the\ owned\ object.}}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{comment}{//\ operator*\ and\ operator-\/>\ will\ assert()\ if\ there\ is\ no\ current\ object.}}
+\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_a0011afef76845375ccf536b7b2191de4}{operator*}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ !=\ NULL);}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}();}
+\DoxyCodeLine{00380\ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ \mbox{\hyperlink{classgscoped__ptr_af149e712b7f8b122ae4b1471c44f8458}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ !=\ NULL);}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}();}
+\DoxyCodeLine{00384\ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ \mbox{\hyperlink{classgscoped__ptr_a7f037fb9354a6119eaad9999945e84e4}{get}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}();\ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ Access\ to\ the\ deleter.}}
+\DoxyCodeLine{00388\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_a05e7557ba281dac6ccaa4c36f618df54}{get\_deleter}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}();\ \}}
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_ac153c6620599410f50b4a4f367489c27}{get\_deleter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}();\ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{comment}{//\ Allow\ gscoped\_ptr<element\_type>\ to\ be\ used\ in\ boolean\ expressions,\ but\ not}}
+\DoxyCodeLine{00392\ \ \ \ \ \textcolor{comment}{//\ implicitly\ convertible\ to\ a\ real\ bool\ (which\ is\ dangerous).}}
+\DoxyCodeLine{00393\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{doris::internal::gscoped\_ptr\_impl<element\_type,\ deleter\_type>}}\ \mbox{\hyperlink{classgscoped__ptr_a818cb6b4dd2eea2c2ee6c031a50f67c0}{gscoped\_ptr}}::*\mbox{\hyperlink{classgscoped__ptr_acb87e05bb57e6a31338ba20b61f9715c}{Testable}};}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keyword}{operator}\ \mbox{\hyperlink{classgscoped__ptr_acb87e05bb57e6a31338ba20b61f9715c}{Testable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ ?\ \&\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{gscoped\_ptr::impl\_}}\ :\ NULL;\ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{//\ Comparison\ operators.}}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{comment}{//\ These\ return\ whether\ two\ gscoped\_ptr\ refer\ to\ the\ same\ object,\ not\ just\ to}}
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{comment}{//\ two\ different\ but\ equal\ objects.}}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_a735cb28725905ee7e726048b75ca8e5c}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ ==\ p;\ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_ae39ac5591fa72442cfa7fcc798db9c0e}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ !=\ p;\ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ Swap\ two\ scoped\ pointers.}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_a74608c864bbf0f5fb3cb8d7b1bc1bb67}{swap}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}\&\ p2)\ \{\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ac9eb4d01d85a24f69fa2ef680b99b899}{swap}}(p2.\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}});\ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ Release\ a\ pointer.}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ The\ return\ value\ is\ the\ current\ pointer\ held\ by\ this\ object.}}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{comment}{//\ If\ this\ object\ holds\ a\ NULL\ pointer,\ the\ return\ value\ is\ NULL.}}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{comment}{//\ After\ this\ operation,\ this\ object\ will\ hold\ a\ NULL\ pointer,}}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//\ and\ will\ not\ own\ the\ object\ any\ more.}}
+\DoxyCodeLine{00413\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ \mbox{\hyperlink{classgscoped__ptr_a8a0deb7c57f280a67d0f392d3c31037c}{release}}()\ \mbox{\hyperlink{status_8h_a4e0e2d9e1ee0f401844b5b6ff8338f82}{WARN\_UNUSED\_RESULT}}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a16c2546e4e201592269d705be40207dc}{release}}();\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{comment}{//\ C++98\ doesn't\ support\ functions\ templates\ with\ default\ parameters\ which}}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{comment}{//\ makes\ it\ hard\ to\ write\ a\ PassAs()\ that\ understands\ converting\ the\ deleter}}
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{comment}{//\ while\ preserving\ simple\ calling\ semantics.}}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{comment}{//\ Until\ there\ is\ a\ use\ case\ for\ PassAs()\ with\ custom\ deleters,\ just\ ignore}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{comment}{//\ the\ custom\ deleter.}}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ PassAsType>}
+\DoxyCodeLine{00422\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<PassAsType>}}\ \mbox{\hyperlink{classgscoped__ptr_a5335bd04251c2bf30eec42c6a0edc26f}{PassAs}}()\ \{}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<PassAsType>}}(Pass());}
+\DoxyCodeLine{00424\ \ \ \ \ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ Needed\ to\ reach\ into\ |impl\_|\ in\ the\ constructor.}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}};}
+\DoxyCodeLine{00430\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{doris::internal::gscoped\_ptr\_impl<element\_type,\ deleter\_type>}}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}};}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{comment}{//\ Forbid\ comparison\ of\ gscoped\_ptr\ types.\ \ If\ U\ !=\ T,\ it\ totally}}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{comment}{//\ doesn't\ make\ sense,\ and\ if\ U\ ==\ T,\ it\ still\ doesn't\ make\ sense}}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ because\ you\ should\ never\ have\ the\ same\ object\ owned\ by\ two\ different}}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{comment}{//\ gscoped\_ptrs.}}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_ae52af052e3b13f3d4065b2c11d35ac9c}{operator==}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00438\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_acb581fa78d64db04b0f722897ab719b7}{operator!=}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00440\ \};}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D>}
+\DoxyCodeLine{00443\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}[],\ D>\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \mbox{\hyperlink{move_8h_a61a5eb10792a88c8cefa14e99913948f}{MOVE\_ONLY\_TYPE\_FOR\_CPP\_03}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}},\ RValue)}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ The\ element\ and\ deleter\ types.}}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}};}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{typedef}\ D\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}};}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Defaults\ to\ initializing\ with\ NULL.}}
+\DoxyCodeLine{00452\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a15dd7bde59abbd5192fbe9f7802ae068}{gscoped\_ptr}}()\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(NULL)\ \{\}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ Stores\ the\ given\ array.\ Note\ that\ the\ argument's\ type}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//\ must\ exactly\ match\ T*.\ In\ particular:}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{comment}{//\ -\/\ it\ cannot\ be\ a\ pointer\ to\ a\ type\ derived\ from\ T,\ because\ it\ is}}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{comment}{//\ \ \ inherently\ unsafe\ in\ the\ general\ case\ to\ access\ an\ array\ through\ a}}
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{comment}{//\ \ \ pointer\ whose\ dynamic\ type\ does\ not\ match\ its\ static\ type\ (eg.,\ if}}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{comment}{//\ \ \ T\ and\ the\ derived\ types\ had\ different\ sizes\ access\ would\ be}}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{comment}{//\ \ \ incorrectly\ calculated).\ Deletion\ is\ also\ always\ undefined}}
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{comment}{//\ \ \ (C++98\ [expr.delete]p3).\ If\ you're\ doing\ this,\ fix\ your\ code.}}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{comment}{//\ -\/\ it\ cannot\ be\ NULL,\ because\ NULL\ is\ an\ integral\ expression,\ not\ a}}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{comment}{//\ \ \ pointer\ to\ T.\ Use\ the\ no-\/argument\ version\ instead\ of\ explicitly}}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{comment}{//\ \ \ passing\ NULL.}}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{comment}{//\ -\/\ it\ cannot\ be\ const-\/qualified\ differently\ from\ T\ per\ unique\_ptr\ spec}}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{comment}{//\ \ \ (http://cplusplus.github.com/LWG/lwg-\/active.html\#2118).\ Users\ wanting}}
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{comment}{//\ \ \ to\ work\ around\ this\ may\ use\ implicit\_cast<const\ T*>().}}
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{comment}{//\ \ \ However,\ because\ of\ the\ first\ bullet\ in\ this\ comment,\ users\ MUST}}
+\DoxyCodeLine{00469\ \ \ \ \ \textcolor{comment}{//\ \ \ NOT\ use\ implicit\_cast<Base*>()\ to\ upcast\ the\ static\ type\ of\ the\ array.}}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a902f99380f035c46db7aa25fde806ebd}{gscoped\_ptr}}(\mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ array)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(array)\ \{\}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Move\ constructor\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00473\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a814c478a6d14522551d306799fe4e006}{gscoped\_ptr}}(RValue\ rvalue)\ :\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}(\&rvalue.object-\/>\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}})\ \{\}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{comment}{//\ operator=.\ \ Move\ operator=\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00476\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}\&\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a8c1500839b5561e4a7897d7e1160b9d0}{operator=}}(RValue\ rhs)\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a3e2b8a313e40a04f23a52960819468bb}{TakeState}}(\&rhs.object-\/>impl\_);}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00479\ \ \ \ \ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{comment}{//\ Reset.\ \ Deletes\ the\ currently\ owned\ array,\ if\ any.}}
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ Then\ takes\ ownership\ of\ a\ new\ object,\ if\ given.}}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_aa9f977b5a1cf57b7a26fd9eac3bf2297}{reset}}(\mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ array\ =\ NULL)\ \{\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a5c2db5e4938e2215de0e78e0b7e5781f}{reset}}(array);\ \}}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ Accessors\ to\ get\ the\ owned\ array.}}
+\DoxyCodeLine{00486\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_acc1f56bfa6acca0b06b517d0b9006b34}{operator[]}}(\textcolor{keywordtype}{size\_t}\ i)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ !=\ NULL);}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()[i];}
+\DoxyCodeLine{00489\ \ \ \ \ \}}
+\DoxyCodeLine{00490\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a7f037fb9354a6119eaad9999945e84e4}{get}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}();\ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{comment}{//\ Access\ to\ the\ deleter.}}
+\DoxyCodeLine{00493\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a05e7557ba281dac6ccaa4c36f618df54}{get\_deleter}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}();\ \}}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a896fcb36e1a2d1906be154e531d70769}{deleter\_type}}\&\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ac153c6620599410f50b4a4f367489c27}{get\_deleter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a47e18919ecb5deff808f8748ad06879d}{get\_deleter}}();\ \}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{comment}{//\ Allow\ gscoped\_ptr<element\_type>\ to\ be\ used\ in\ boolean\ expressions,\ but\ not}}
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{comment}{//\ implicitly\ convertible\ to\ a\ real\ bool\ (which\ is\ dangerous).}}
+\DoxyCodeLine{00498\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{doris::internal::gscoped\_ptr\_impl<element\_type,\ deleter\_type>}}\ \mbox{\hyperlink{classgscoped__ptr_a818cb6b4dd2eea2c2ee6c031a50f67c0}{gscoped\_ptr}}::*\mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_acb87e05bb57e6a31338ba20b61f9715c}{Testable}};}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keyword}{operator}\ \mbox{\hyperlink{classgscoped__ptr_acb87e05bb57e6a31338ba20b61f9715c}{Testable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ ?\ \&\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{gscoped\_ptr::impl\_}}\ :\ NULL;\ \}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{comment}{//\ Comparison\ operators.}}
+\DoxyCodeLine{00505\ \ \ \ \ \textcolor{comment}{//\ These\ return\ whether\ two\ gscoped\_ptr\ refer\ to\ the\ same\ object,\ not\ just\ to}}
+\DoxyCodeLine{00506\ \ \ \ \ \textcolor{comment}{//\ two\ different\ but\ equal\ objects.}}
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a8580a9089b4f8496ed7682ade2acf83e}{operator==}}(\mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ array)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ ==\ array;\ \}}
+\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a1a0943468a04c8205a2112ea5bf407a1}{operator!=}}(\mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ array)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_aed182ab5a4742a6fc2f9fe79773c12e1}{get}}()\ !=\ array;\ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ \textcolor{comment}{//\ Swap\ two\ scoped\ pointers.}}
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a74608c864bbf0f5fb3cb8d7b1bc1bb67}{swap}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr}}\&\ p2)\ \{\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_ac9eb4d01d85a24f69fa2ef680b99b899}{swap}}(p2.\mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}});\ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \ \ \textcolor{comment}{//\ Release\ a\ pointer.}}
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{comment}{//\ The\ return\ value\ is\ the\ current\ pointer\ held\ by\ this\ object.}}
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{comment}{//\ If\ this\ object\ holds\ a\ NULL\ pointer,\ the\ return\ value\ is\ NULL.}}
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{comment}{//\ After\ this\ operation,\ this\ object\ will\ hold\ a\ NULL\ pointer,}}
+\DoxyCodeLine{00517\ \ \ \ \ \textcolor{comment}{//\ and\ will\ not\ own\ the\ object\ any\ more.}}
+\DoxyCodeLine{00518\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae37fb942067e67c711beb897e7b7b5de}{element\_type}}*\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a8a0deb7c57f280a67d0f392d3c31037c}{release}}()\ \mbox{\hyperlink{status_8h_a4e0e2d9e1ee0f401844b5b6ff8338f82}{WARN\_UNUSED\_RESULT}}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}}.\mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl_a16c2546e4e201592269d705be40207dc}{release}}();\ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00521\ \ \ \ \ \textcolor{comment}{//\ Force\ element\_type\ to\ be\ a\ complete\ type.}}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ type\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classgscoped__ptr_ae37fb942067e67c711beb897e7b7b5de}{element\_type}})\ \};}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{comment}{//\ Actually\ hold\ the\ data.}}
+\DoxyCodeLine{00525\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1internal_1_1gscoped__ptr__impl}{doris::internal::gscoped\_ptr\_impl<element\_type,\ deleter\_type>}}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae258d5593d4616cee25fcd9baa4df8bf}{impl\_}};}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{comment}{//\ Disable\ initialization\ from\ any\ type\ other\ than\ element\_type*,\ by}}
+\DoxyCodeLine{00528\ \ \ \ \ \textcolor{comment}{//\ providing\ a\ constructor\ that\ matches\ such\ an\ initialization,\ but\ is}}
+\DoxyCodeLine{00529\ \ \ \ \ \textcolor{comment}{//\ private\ and\ has\ no\ definition.\ This\ is\ disabled\ because\ it\ is\ not\ safe\ to}}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{comment}{//\ call\ delete[]\ on\ an\ array\ whose\ static\ type\ does\ not\ match\ its\ dynamic}}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{comment}{//\ type.}}
+\DoxyCodeLine{00532\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a7693d16f448806465a5833659a3a469c}{gscoped\_ptr}}(U*\ array);}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ab5ae1319544cb5f5bd9ba8f8379cc09a}{gscoped\_ptr}}(\textcolor{keywordtype}{int}\ disallow\_construction\_from\_null);}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \textcolor{comment}{//\ Disable\ reset()\ from\ any\ type\ other\ than\ element\_type*,\ for\ the\ same}}
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{comment}{//\ reasons\ as\ the\ constructor\ above.}}
+\DoxyCodeLine{00538\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00539\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_aff7d1db0159c57b87a6c6be02d4f9439}{reset}}(U*\ array);}
+\DoxyCodeLine{00540\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_a25bdedf07928e3680dcfcfaed321d764}{reset}}(\textcolor{keywordtype}{int}\ disallow\_reset\_from\_null);}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \ \ \ \ \textcolor{comment}{//\ Forbid\ comparison\ of\ gscoped\_ptr\ types.\ \ If\ U\ !=\ T,\ it\ totally}}
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{comment}{//\ doesn't\ make\ sense,\ and\ if\ U\ ==\ T,\ it\ still\ doesn't\ make\ sense}}
+\DoxyCodeLine{00544\ \ \ \ \ \textcolor{comment}{//\ because\ you\ should\ never\ have\ the\ same\ object\ owned\ by\ two\ different}}
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{comment}{//\ gscoped\_ptrs.}}
+\DoxyCodeLine{00546\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_ae52af052e3b13f3d4065b2c11d35ac9c}{operator==}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00549\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr_3_01_t_0f_0e_00_01_d_01_4_acb581fa78d64db04b0f722897ab719b7}{operator!=}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<U>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00550\ \};}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{comment}{//\ Free\ functions}}
+\DoxyCodeLine{00553\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D>}
+\DoxyCodeLine{00554\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T,\ D>}}\&\ p1,\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T,\ D>}}\&\ p2)\ \{}
+\DoxyCodeLine{00555\ \ \ \ \ p1.\mbox{\hyperlink{classgscoped__ptr_a74608c864bbf0f5fb3cb8d7b1bc1bb67}{swap}}(p2);}
+\DoxyCodeLine{00556\ \}}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D>}
+\DoxyCodeLine{00559\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a5d4d2d5b63e93d8583dec8abbd267176}{operator==}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ p1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T,\ D>}}\&\ p2)\ \{}
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keywordflow}{return}\ p1\ ==\ p2.\mbox{\hyperlink{classgscoped__ptr_a7f037fb9354a6119eaad9999945e84e4}{get}}();}
+\DoxyCodeLine{00561\ \}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ D>}
+\DoxyCodeLine{00564\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a3252c2d7cf6c5de663917f75bbf03093}{operator!=}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ p1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T,\ D>}}\&\ p2)\ \{}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{keywordflow}{return}\ p1\ !=\ p2.\mbox{\hyperlink{classgscoped__ptr_a7f037fb9354a6119eaad9999945e84e4}{get}}();}
+\DoxyCodeLine{00566\ \}}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \textcolor{comment}{//\ DEPRECATED:\ Use\ gscoped\_ptr<C[]>\ instead.}}
+\DoxyCodeLine{00569\ \textcolor{comment}{//}}
+\DoxyCodeLine{00570\ \textcolor{comment}{//\ gscoped\_array<C>\ is\ like\ gscoped\_ptr<C>,\ except\ that\ the\ caller\ must\ allocate}}
+\DoxyCodeLine{00571\ \textcolor{comment}{//\ with\ new\ []\ and\ the\ destructor\ deletes\ objects\ with\ delete\ [].}}
+\DoxyCodeLine{00572\ \textcolor{comment}{//}}
+\DoxyCodeLine{00573\ \textcolor{comment}{//\ As\ with\ gscoped\_ptr<C>,\ a\ gscoped\_array<C>\ either\ points\ to\ an\ object}}
+\DoxyCodeLine{00574\ \textcolor{comment}{//\ or\ is\ NULL.\ \ A\ gscoped\_array<C>\ owns\ the\ object\ that\ it\ points\ to.}}
+\DoxyCodeLine{00575\ \textcolor{comment}{//\ gscoped\_array<T>\ is\ thread-\/compatible,\ and\ once\ you\ index\ into\ it,}}
+\DoxyCodeLine{00576\ \textcolor{comment}{//\ the\ returned\ objects\ have\ only\ the\ thread\ safety\ guarantees\ of\ T.}}
+\DoxyCodeLine{00577\ \textcolor{comment}{//}}
+\DoxyCodeLine{00578\ \textcolor{comment}{//\ Size:\ sizeof(gscoped\_array<C>)\ ==\ sizeof(C*)}}
+\DoxyCodeLine{00579\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C>}
+\DoxyCodeLine{00580\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classgscoped__array}{gscoped\_array}}\ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \mbox{\hyperlink{move_8h_a61a5eb10792a88c8cefa14e99913948f}{MOVE\_ONLY\_TYPE\_FOR\_CPP\_03}}(\mbox{\hyperlink{classgscoped__array}{gscoped\_array}},\ RValue)}
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00583\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{comment}{//\ The\ element\ type}}
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ \mbox{\hyperlink{classgscoped__array_a5dc19505c7739facdd200071af169ddb}{element\_type}};}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Defaults\ to\ initializing\ with\ NULL.}}
+\DoxyCodeLine{00588\ \ \ \ \ \textcolor{comment}{//\ There\ is\ no\ way\ to\ create\ an\ uninitialized\ gscoped\_array.}}
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{comment}{//\ The\ input\ parameter\ must\ be\ allocated\ with\ new\ [].}}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__array_aa7fdf835d5641629811fadf8433d2fb5}{gscoped\_array}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p\ =\ NULL)\ :\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}(p)\ \{\}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Move\ constructor\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00593\ \ \ \ \ \mbox{\hyperlink{classgscoped__array_a9fa6ea77abcfa295209361772eea65b9}{gscoped\_array}}(RValue\ rvalue)\ :\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}(rvalue.object-\/>\mbox{\hyperlink{classgscoped__array_ac8128030d0c328b1fd71dad40ded93de}{release}}())\ \{\}}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{comment}{//\ Destructor.\ \ If\ there\ is\ a\ C\ object,\ delete\ it.}}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{comment}{//\ We\ don't\ need\ to\ test\ ptr\_\ ==\ NULL\ because\ C++\ does\ that\ for\ us.}}
+\DoxyCodeLine{00597\ \ \ \ \ \mbox{\hyperlink{classgscoped__array_af5afb235339df0ae0da61733752dfa54}{\string~gscoped\_array}}()\ \{}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ type\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}})\ \};}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00600\ \ \ \ \ \}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \textcolor{comment}{//\ operator=.\ \ Move\ operator=\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00603\ \ \ \ \ \mbox{\hyperlink{classgscoped__array}{gscoped\_array}}\&\ \mbox{\hyperlink{classgscoped__array_a034609cf80ed08b32d418a3293c8823c}{operator=}}(RValue\ rhs)\ \{}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__array_a870f83e6d7f3696d5302fd3449c84ae3}{reset}}(rhs.object-\/>release());}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00606\ \ \ \ \ \}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \ \ \textcolor{comment}{//\ Reset.\ \ Deletes\ the\ current\ owned\ object,\ if\ any.}}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{comment}{//\ Then\ takes\ ownership\ of\ a\ new\ object,\ if\ given.}}
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{comment}{//\ this-\/>reset(this-\/>get())\ works.}}
+\DoxyCodeLine{00611\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__array_a870f83e6d7f3696d5302fd3449c84ae3}{reset}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p\ =\ NULL)\ \{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (p\ !=\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}})\ \{}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{\ type\_must\_be\_complete\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}})\ \};}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ =\ p;}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00617\ \ \ \ \ \}}
+\DoxyCodeLine{00618\ }
+\DoxyCodeLine{00619\ \ \ \ \ \textcolor{comment}{//\ Get\ one\ element\ of\ the\ current\ object.}}
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{comment}{//\ Will\ assert()\ if\ there\ is\ no\ current\ object,\ or\ index\ i\ is\ negative.}}
+\DoxyCodeLine{00621\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\&\ \mbox{\hyperlink{classgscoped__array_a75c11596e50004df5ca1b2cfb0d8c57e}{operator[]}}(ptrdiff\_t\ i)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ assert(i\ >=\ 0);}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ !=\ NULL);}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}[i];}
+\DoxyCodeLine{00625\ \ \ \ \ \}}
+\DoxyCodeLine{00626\ }
+\DoxyCodeLine{00627\ \ \ \ \ \textcolor{comment}{//\ Get\ a\ pointer\ to\ the\ zeroth\ element\ of\ the\ current\ object.}}
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{comment}{//\ If\ there\ is\ no\ current\ object,\ return\ NULL.}}
+\DoxyCodeLine{00629\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__array_a0aa175b22090a2b5df6abd89e12da846}{get}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};\ \}}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{comment}{//\ Allow\ gscoped\_array<C>\ to\ be\ used\ in\ boolean\ expressions,\ but\ not}}
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{comment}{//\ implicitly\ convertible\ to\ a\ real\ bool\ (which\ is\ dangerous).}}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__array}{gscoped\_array}}::*\mbox{\hyperlink{classgscoped__array_ac9a94486da82c88cdde7f53da278c189}{Testable}};}
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{keyword}{operator}\ \mbox{\hyperlink{classgscoped__array_ac9a94486da82c88cdde7f53da278c189}{Testable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ ?\ \&\mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{gscoped\_array::array\_}}\ :\ NULL;\ \}}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{comment}{//\ Comparison\ operators.}}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{comment}{//\ These\ return\ whether\ two\ gscoped\_array\ refer\ to\ the\ same\ object,\ not\ just\ to}}
+\DoxyCodeLine{00638\ \ \ \ \ \textcolor{comment}{//\ two\ different\ but\ equal\ objects.}}
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__array_a612dc216e19487f5cd2dd14d1ccc686a}{operator==}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ ==\ p;\ \}}
+\DoxyCodeLine{00640\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__array_a785ab7d2c1a4898272bb518ccbacd0c8}{operator!=}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ !=\ p;\ \}}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{comment}{//\ Swap\ two\ scoped\ arrays.}}
+\DoxyCodeLine{00643\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__array_a6fc119ccd4642bab76dcf83205f0a95f}{swap}}(\mbox{\hyperlink{classgscoped__array}{gscoped\_array}}\&\ p2)\ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ tmp\ =\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ =\ p2.\mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ p2.\mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ =\ tmp;}
+\DoxyCodeLine{00647\ \ \ \ \ \}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{comment}{//\ Release\ an\ array.}}
+\DoxyCodeLine{00650\ \ \ \ \ \textcolor{comment}{//\ The\ return\ value\ is\ the\ current\ pointer\ held\ by\ this\ object.}}
+\DoxyCodeLine{00651\ \ \ \ \ \textcolor{comment}{//\ If\ this\ object\ holds\ a\ NULL\ pointer,\ the\ return\ value\ is\ NULL.}}
+\DoxyCodeLine{00652\ \ \ \ \ \textcolor{comment}{//\ After\ this\ operation,\ this\ object\ will\ hold\ a\ NULL\ pointer,}}
+\DoxyCodeLine{00653\ \ \ \ \ \textcolor{comment}{//\ and\ will\ not\ own\ the\ object\ any\ more.}}
+\DoxyCodeLine{00654\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__array_ac8128030d0c328b1fd71dad40ded93de}{release}}()\ \mbox{\hyperlink{status_8h_a4e0e2d9e1ee0f401844b5b6ff8338f82}{WARN\_UNUSED\_RESULT}}\ \{}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ retVal\ =\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}}\ =\ NULL;}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ retVal;}
+\DoxyCodeLine{00658\ \ \ \ \ \}}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00661\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__array_a0514a9ff1c726fb73b3f662d653a2d7f}{array\_}};}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \ \ \ \ \textcolor{comment}{//\ Forbid\ comparison\ of\ different\ gscoped\_array\ types.}}
+\DoxyCodeLine{00664\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C2>}
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__array_ac6dd2a1b415f104798e020abe4f838f5}{operator==}}(\mbox{\hyperlink{classgscoped__array}{gscoped\_array<C2>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00666\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C2>}
+\DoxyCodeLine{00667\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__array_a0028eade717bd38f37747a24262795f3}{operator!=}}(\mbox{\hyperlink{classgscoped__array}{gscoped\_array<C2>}}\ \textcolor{keyword}{const}\&\ p2)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00668\ \};}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \textcolor{comment}{//\ Free\ functions}}
+\DoxyCodeLine{00671\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C>}
+\DoxyCodeLine{00672\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classgscoped__array}{gscoped\_array<C>}}\&\ p1,\ \mbox{\hyperlink{classgscoped__array}{gscoped\_array<C>}}\&\ p2)\ \{}
+\DoxyCodeLine{00673\ \ \ \ \ p1.\mbox{\hyperlink{classgscoped__array_a6fc119ccd4642bab76dcf83205f0a95f}{swap}}(p2);}
+\DoxyCodeLine{00674\ \}}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C>}
+\DoxyCodeLine{00677\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a5d4d2d5b63e93d8583dec8abbd267176}{operator==}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__array}{gscoped\_array<C>}}\&\ p2)\ \{}
+\DoxyCodeLine{00678\ \ \ \ \ \textcolor{keywordflow}{return}\ p1\ ==\ p2.\mbox{\hyperlink{classgscoped__array_a0aa175b22090a2b5df6abd89e12da846}{get}}();}
+\DoxyCodeLine{00679\ \}}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C>}
+\DoxyCodeLine{00682\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a3252c2d7cf6c5de663917f75bbf03093}{operator!=}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__array}{gscoped\_array<C>}}\&\ p2)\ \{}
+\DoxyCodeLine{00683\ \ \ \ \ \textcolor{keywordflow}{return}\ p1\ !=\ p2.\mbox{\hyperlink{classgscoped__array_a0aa175b22090a2b5df6abd89e12da846}{get}}();}
+\DoxyCodeLine{00684\ \}}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \textcolor{comment}{//\ DEPRECATED:\ Use\ gscoped\_ptr<C,\ doris::FreeDeleter>\ instead.}}
+\DoxyCodeLine{00687\ \textcolor{comment}{//}}
+\DoxyCodeLine{00688\ \textcolor{comment}{//\ gscoped\_ptr\_malloc<>\ is\ similar\ to\ gscoped\_ptr<>,\ but\ it\ accepts\ a}}
+\DoxyCodeLine{00689\ \textcolor{comment}{//\ second\ template\ argument,\ the\ functor\ used\ to\ free\ the\ object.}}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C,\ \textcolor{keyword}{class}\ FreeProc\ =\ doris::FreeDeleter>}
+\DoxyCodeLine{00692\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc}}\ \{}
+\DoxyCodeLine{00693\ \ \ \ \ \mbox{\hyperlink{move_8h_a61a5eb10792a88c8cefa14e99913948f}{MOVE\_ONLY\_TYPE\_FOR\_CPP\_03}}(\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc}},\ RValue)}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{comment}{//\ The\ element\ type}}
+\DoxyCodeLine{00697\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a5dc19505c7739facdd200071af169ddb}{element\_type}};}
+\DoxyCodeLine{00698\ }
+\DoxyCodeLine{00699\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Defaults\ to\ initializing\ with\ NULL.}}
+\DoxyCodeLine{00700\ \ \ \ \ \textcolor{comment}{//\ There\ is\ no\ way\ to\ create\ an\ uninitialized\ gscoped\_ptr.}}
+\DoxyCodeLine{00701\ \ \ \ \ \textcolor{comment}{//\ The\ input\ parameter\ must\ be\ allocated\ with\ an\ allocator\ that\ matches\ the}}
+\DoxyCodeLine{00702\ \ \ \ \ \textcolor{comment}{//\ Free\ functor.\ \ For\ the\ default\ Free\ functor,\ this\ is\ malloc,\ calloc,\ or}}
+\DoxyCodeLine{00703\ \ \ \ \ \textcolor{comment}{//\ realloc.}}
+\DoxyCodeLine{00704\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a43d95620dd6934c9302acc9f347d0e68}{gscoped\_ptr\_malloc}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p\ =\ NULL)\ :\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}(p)\ \{\}}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \ \ \ \ \textcolor{comment}{//\ Constructor.\ \ Move\ constructor\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00707\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_af8f1de1c7b16ade41f44bb2ced70e586}{gscoped\_ptr\_malloc}}(RValue\ rvalue)\ :\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}(rvalue.object-\/>\mbox{\hyperlink{classgscoped__ptr__malloc_ac8128030d0c328b1fd71dad40ded93de}{release}}())\ \{\}}
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{comment}{//\ Destructor.\ \ If\ there\ is\ a\ C\ object,\ call\ the\ Free\ functor.}}
+\DoxyCodeLine{00710\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_a2afbde7e6d6e2dfeb65371f36a02cc60}{\string~gscoped\_ptr\_malloc}}()\ \{\ \mbox{\hyperlink{classgscoped__ptr__malloc_a870f83e6d7f3696d5302fd3449c84ae3}{reset}}();\ \}}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \ \ \ \textcolor{comment}{//\ operator=.\ \ Move\ operator=\ for\ C++03\ move\ emulation\ of\ this\ type.}}
+\DoxyCodeLine{00713\ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc}}\&\ \mbox{\hyperlink{classgscoped__ptr__malloc_a8480a172b7ba1362ca8b1e922796e0d3}{operator=}}(RValue\ rhs)\ \{}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_a870f83e6d7f3696d5302fd3449c84ae3}{reset}}(rhs.object-\/>release());}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00716\ \ \ \ \ \}}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \ \ \ \ \textcolor{comment}{//\ Reset.\ \ Calls\ the\ Free\ functor\ on\ the\ current\ owned\ object,\ if\ any.}}
+\DoxyCodeLine{00719\ \ \ \ \ \textcolor{comment}{//\ Then\ takes\ ownership\ of\ a\ new\ object,\ if\ given.}}
+\DoxyCodeLine{00720\ \ \ \ \ \textcolor{comment}{//\ this-\/>reset(this-\/>get())\ works.}}
+\DoxyCodeLine{00721\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a870f83e6d7f3696d5302fd3449c84ae3}{reset}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p\ =\ NULL)\ \{}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ !=\ p)\ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ !=\ NULL)\ \{}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ FreeProc\ free\_proc;}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ free\_proc(\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}});}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ =\ p;}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00729\ \ \ \ \ \}}
+\DoxyCodeLine{00730\ }
+\DoxyCodeLine{00731\ \ \ \ \ \textcolor{comment}{//\ Get\ the\ current\ object.}}
+\DoxyCodeLine{00732\ \ \ \ \ \textcolor{comment}{//\ operator*\ and\ operator-\/>\ will\ cause\ an\ assert()\ failure\ if\ there\ is}}
+\DoxyCodeLine{00733\ \ \ \ \ \textcolor{comment}{//\ no\ current\ object.}}
+\DoxyCodeLine{00734\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\&\ \mbox{\hyperlink{classgscoped__ptr__malloc_a4d76a5b3798d45b638f3e1dba39775ed}{operator*}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ !=\ NULL);}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00737\ \ \ \ \ \}}
+\DoxyCodeLine{00738\ }
+\DoxyCodeLine{00739\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__ptr__malloc_a35dad1fdce8522cbebb2f0717e481f33}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ !=\ NULL);}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00742\ \ \ \ \ \}}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__ptr__malloc_a0aa175b22090a2b5df6abd89e12da846}{get}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};\ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ \ \textcolor{comment}{//\ Allow\ gscoped\_ptr\_malloc<C>\ to\ be\ used\ in\ boolean\ expressions,\ but\ not}}
+\DoxyCodeLine{00747\ \ \ \ \ \textcolor{comment}{//\ implicitly\ convertible\ to\ a\ real\ bool\ (which\ is\ dangerous).}}
+\DoxyCodeLine{00748\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc}}::*\mbox{\hyperlink{classgscoped__ptr__malloc_a61ea24a0cff4171bd10b2451d3a38188}{Testable}};}
+\DoxyCodeLine{00749\ \ \ \ \ \textcolor{keyword}{operator}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a61ea24a0cff4171bd10b2451d3a38188}{Testable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ ?\ \&\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{gscoped\_ptr\_malloc::ptr\_}}\ :\ NULL;\ \}}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ \ \ \ \ \textcolor{comment}{//\ Comparison\ operators.}}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{comment}{//\ These\ return\ whether\ a\ gscoped\_ptr\_malloc\ and\ a\ plain\ pointer\ refer}}
+\DoxyCodeLine{00753\ \ \ \ \ \textcolor{comment}{//\ to\ the\ same\ object,\ not\ just\ to\ two\ different\ but\ equal\ objects.}}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{comment}{//\ For\ compatibility\ with\ the\ boost-\/derived\ implementation,\ these}}
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{comment}{//\ take\ non-\/const\ arguments.}}
+\DoxyCodeLine{00756\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a612dc216e19487f5cd2dd14d1ccc686a}{operator==}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ ==\ p;\ \}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a785ab7d2c1a4898272bb518ccbacd0c8}{operator!=}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ !=\ p;\ \}}
+\DoxyCodeLine{00759\ }
+\DoxyCodeLine{00760\ \ \ \ \ \textcolor{comment}{//\ Swap\ two\ scoped\ pointers.}}
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classgscoped__ptr__malloc_aca43f52cd61dada90f63f9a9cab611b3}{swap}}(\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc}}\&\ b)\ \{}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ tmp\ =\ b.\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ b.\mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ =\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ =\ tmp;}
+\DoxyCodeLine{00765\ \ \ \ \ \}}
+\DoxyCodeLine{00766\ }
+\DoxyCodeLine{00767\ \ \ \ \ \textcolor{comment}{//\ Release\ a\ pointer.}}
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{comment}{//\ The\ return\ value\ is\ the\ current\ pointer\ held\ by\ this\ object.}}
+\DoxyCodeLine{00769\ \ \ \ \ \textcolor{comment}{//\ If\ this\ object\ holds\ a\ NULL\ pointer,\ the\ return\ value\ is\ NULL.}}
+\DoxyCodeLine{00770\ \ \ \ \ \textcolor{comment}{//\ After\ this\ operation,\ this\ object\ will\ hold\ a\ NULL\ pointer,}}
+\DoxyCodeLine{00771\ \ \ \ \ \textcolor{comment}{//\ and\ will\ not\ own\ the\ object\ any\ more.}}
+\DoxyCodeLine{00772\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__ptr__malloc_ac8128030d0c328b1fd71dad40ded93de}{release}}()\ \mbox{\hyperlink{status_8h_a4e0e2d9e1ee0f401844b5b6ff8338f82}{WARN\_UNUSED\_RESULT}}\ \{}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ tmp\ =\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}}\ =\ NULL;}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tmp;}
+\DoxyCodeLine{00776\ \ \ \ \ \}}
+\DoxyCodeLine{00777\ }
+\DoxyCodeLine{00778\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00779\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classgscoped__ptr__malloc_aff47734e81640fd3cc303eea98851013}{ptr\_}};}
+\DoxyCodeLine{00780\ }
+\DoxyCodeLine{00781\ \ \ \ \ \textcolor{comment}{//\ no\ reason\ to\ use\ these:\ each\ gscoped\_ptr\_malloc\ should\ have\ its\ own\ object}}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C2,\ \textcolor{keyword}{class}\ GP>}
+\DoxyCodeLine{00783\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr__malloc_ab32006bf181da59e39759bd5d044f696}{operator==}}(\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C2,\ GP>}}\ \textcolor{keyword}{const}\&\ p)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C2,\ \textcolor{keyword}{class}\ GP>}
+\DoxyCodeLine{00785\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classgscoped__ptr__malloc_a3dfa08a987ce4dbf9aed3d0ac84e7362}{operator!=}}(\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C2,\ GP>}}\ \textcolor{keyword}{const}\&\ p)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00786\ \};}
+\DoxyCodeLine{00787\ }
+\DoxyCodeLine{00788\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C,\ \textcolor{keyword}{class}\ FP>}
+\DoxyCodeLine{00789\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C,\ FP>}}\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ \mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C,\ FP>}}\&\ b)\ \{}
+\DoxyCodeLine{00790\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}.swap(b);}
+\DoxyCodeLine{00791\ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C,\ \textcolor{keyword}{class}\ FP>}
+\DoxyCodeLine{00794\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a5d4d2d5b63e93d8583dec8abbd267176}{operator==}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C,\ FP>}}\&\ b)\ \{}
+\DoxyCodeLine{00795\ \ \ \ \ \textcolor{keywordflow}{return}\ p\ ==\ b.\mbox{\hyperlink{classgscoped__ptr__malloc_a0aa175b22090a2b5df6abd89e12da846}{get}}();}
+\DoxyCodeLine{00796\ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ C,\ \textcolor{keyword}{class}\ FP>}
+\DoxyCodeLine{00799\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{gscoped__ptr_8h_a3252c2d7cf6c5de663917f75bbf03093}{operator!=}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ p,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classgscoped__ptr__malloc}{gscoped\_ptr\_malloc<C,\ FP>}}\&\ b)\ \{}
+\DoxyCodeLine{00800\ \ \ \ \ \textcolor{keywordflow}{return}\ p\ !=\ b.\mbox{\hyperlink{classgscoped__ptr__malloc_a0aa175b22090a2b5df6abd89e12da846}{get}}();}
+\DoxyCodeLine{00801\ \}}
+\DoxyCodeLine{00802\ }
+\DoxyCodeLine{00803\ \textcolor{comment}{//\ A\ function\ to\ convert\ T*\ into\ gscoped\_ptr<T>}}
+\DoxyCodeLine{00804\ \textcolor{comment}{//\ Doing\ e.g.\ make\_gscoped\_ptr(new\ FooBarBaz<type>(arg))\ is\ a\ shorter\ notation}}
+\DoxyCodeLine{00805\ \textcolor{comment}{//\ for\ gscoped\_ptr<FooBarBaz<type>>(new\ FooBarBaz<type>(arg))}}
+\DoxyCodeLine{00806\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00807\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T>}}\ \mbox{\hyperlink{gscoped__ptr_8h_a79fd02948cee78724385bb67b2cf86f6}{make\_gscoped\_ptr}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr)\ \{}
+\DoxyCodeLine{00808\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classgscoped__ptr}{gscoped\_ptr<T>}}(ptr);}
+\DoxyCodeLine{00809\ \}}
+
+\end{DoxyCode}

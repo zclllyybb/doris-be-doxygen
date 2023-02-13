@@ -1,0 +1,299 @@
+\hypertarget{thread_8h_source}{}\doxysection{thread.\+h}
+\label{thread_8h_source}\index{/Users/dabowang/be\_all/util/thread.h@{/Users/dabowang/be\_all/util/thread.h}}
+\mbox{\hyperlink{thread_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/util/thread.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{syscall_8h}{syscall.h}}>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <pthread.h>}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{web__page__handler_8h}{http/web\_page\_handler.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{countdown__latch_8h}{util/countdown\_latch.h}}"{}}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread}{Thread}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_ref_counted_thread_safe}{RefCountedThreadSafe}}<Thread>\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415ea}{CreateFlags}}\ \{\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}}\ =\ 0,\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaaa0994f1ea00d25ab3fe38c5a20ec12d6}{NO\_STACK\_WATCHDOG}}\ =\ 1\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F>}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_aa0329a5708638962e09120ec10ab2c52}{create\_with\_flags}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ F\&\ f,\ uint64\_t\ flags,\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ f,\ flags,\ holder);}
+\DoxyCodeLine{00046\ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F>}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_a991176d829e294c2d9ceb42a692cb762}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ f,\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00052\ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1>}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_a321667c95beb97b69da637faf6b1e991}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00058\ \ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1,\ \textcolor{keyword}{class}\ A2>}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_a6ab3cad2fcec0518d91d0b29c25a11a7}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \textcolor{keyword}{const}\ A2\&\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00064\ \ \ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1,\ \textcolor{keyword}{class}\ A2,\ \textcolor{keyword}{class}\ A3>}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_af62baa041ac9a178a22028698e557ead}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \textcolor{keyword}{const}\ A2\&\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \textcolor{keyword}{const}\ A3\&\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1,\ \textcolor{keyword}{class}\ A2,\ \textcolor{keyword}{class}\ A3,\ \textcolor{keyword}{class}\ A4>}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_ada3838bab4841fa5a7eff709117bb56d}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \textcolor{keyword}{const}\ A2\&\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \textcolor{keyword}{const}\ A3\&\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \textcolor{keyword}{const}\ A4\&\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}},}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00077\ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1,\ \textcolor{keyword}{class}\ A2,\ \textcolor{keyword}{class}\ A3,\ \textcolor{keyword}{class}\ A4,\ \textcolor{keyword}{class}\ A5>}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_a14aeb001b12fd870ea327338012e3664}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \textcolor{keyword}{const}\ A2\&\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \textcolor{keyword}{const}\ A3\&\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \textcolor{keyword}{const}\ A4\&\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}},\ \textcolor{keyword}{const}\ A5\&\ \mbox{\hyperlink{lgamma_8c_a7553aaa23a92941271efe358b35957ed}{a5}},}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}},\ \mbox{\hyperlink{lgamma_8c_a7553aaa23a92941271efe358b35957ed}{a5}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00084\ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ A1,\ \textcolor{keyword}{class}\ A2,\ \textcolor{keyword}{class}\ A3,\ \textcolor{keyword}{class}\ A4,\ \textcolor{keyword}{class}\ A5,\ \textcolor{keyword}{class}\ A6>}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_a61b5d731501dbf1dffea83d732c625d0}{create}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keyword}{const}\ F\&\ f,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A1\&\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \textcolor{keyword}{const}\ A2\&\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \textcolor{keyword}{const}\ A3\&\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \textcolor{keyword}{const}\ A4\&\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}},\ \textcolor{keyword}{const}\ A5\&\ \mbox{\hyperlink{lgamma_8c_a7553aaa23a92941271efe358b35957ed}{a5}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ A6\&\ \mbox{\hyperlink{lgamma_8c_a3cb3d3cf42664f2cfda77622320da13c}{a6}},\ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder)\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::bind(f,\ \mbox{\hyperlink{lgamma_8c_ae00751647bfa59b71ac1818706053d30}{a1}},\ \mbox{\hyperlink{lgamma_8c_a98d3a479fc05565d44275a28469584d5}{a2}},\ \mbox{\hyperlink{lgamma_8c_a3b7eac6ef8b6289f7bc4b4e8cf51b8e3}{a3}},\ \mbox{\hyperlink{lgamma_8c_a37c466bea472a8cbc8ad8a3a4482adf5}{a4}},\ \mbox{\hyperlink{lgamma_8c_a7553aaa23a92941271efe358b35957ed}{a5}},\ \mbox{\hyperlink{lgamma_8c_a3cb3d3cf42664f2cfda77622320da13c}{a6}}),\ \mbox{\hyperlink{classdoris_1_1_thread_a0a414920fb12316586d248c1ad2415eaa37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}},\ holder);}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_a5df167bb648973dd735dda38e8341e76}{set\_self\_name}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}});}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#ifndef\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_a98aff024afce36973e27036e638701d3}{set\_idle\_sched}}();}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a87a9c69a69ee4b13cb1ec5772f6d32ad}{\string~Thread}}();}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ Blocks\ until\ this\ thread\ finishes\ execution.\ Once\ this\ method\ returns,\ the\ thread}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ will\ be\ unregistered\ with\ the\ ThreadMgr\ and\ will\ not\ appear\ in\ the\ debug\ UI.}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_a6c7abfff648dad193674fc432ad4840d}{join}}();}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ The\ thread\ ID\ assigned\ to\ this\ thread\ by\ the\ operating\ system.\ If\ the\ thread}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ has\ not\ yet\ started\ running,\ returns\ INVALID\_TID.}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ this\ may\ block\ for\ a\ short\ amount\ of\ time\ if\ the\ thread\ has\ just\ been}}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ started.}}
+\DoxyCodeLine{00110\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_thread_ab31a6deb635379ffbcabeac994cb27c2}{tid}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ thread's\ pthread\ ID.}}
+\DoxyCodeLine{00113\ \ \ \ \ pthread\_t\ \mbox{\hyperlink{classdoris_1_1_thread_af6b990a6a639086f9ea2d4bb8c6db8a0}{pthread\_id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00117\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ The\ current\ thread\ of\ execution,\ or\ nullptr\ if\ the\ current\ thread\ isn't\ a\ doris::Thread.}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ This\ call\ is\ signal-\/safe.}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_thread}{Thread}}*\ \mbox{\hyperlink{classdoris_1_1_thread_aa911a06009814301864d76ef7586bf3c}{current\_thread}}();}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ unique,\ stable\ identifier\ for\ this\ thread.\ Note\ that\ this\ is\ a\ static}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ method\ and\ thus\ can\ be\ used\ on\ any\ thread,\ including\ the\ main\ thread\ of\ the}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ process.}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ In\ general,\ this\ should\ be\ used\ when\ a\ value\ is\ required\ that\ is\ unique\ to}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ a\ thread\ and\ must\ work\ on\ any\ thread\ including\ the\ main\ process\ thread.}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ this\ is\ \_not\_\ the\ TID,\ but\ rather\ a\ unique\ value\ assigned\ by\ the}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ thread\ implementation.\ So,\ this\ value\ should\ not\ be\ presented\ to\ the\ user}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ in\ log\ messages,\ etc.}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_thread_a3139f5089a3a2a1c799ae28c3994d3f7}{unique\_thread\_id}}();}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ system\ thread\ ID\ (tid\ on\ Linux)\ for\ the\ current\ thread.\ Note}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ that\ this\ is\ a\ static\ method\ and\ thus\ can\ be\ used\ from\ any\ thread,}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ including\ the\ main\ thread\ of\ the\ process.\ This\ is\ in\ contrast\ to}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ Thread::tid(),\ which\ only\ works\ on\ doris::Threads.}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ Thread::tid()\ will\ return\ the\ same\ value,\ but\ the\ value\ is\ cached\ in\ the}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Thread\ object,\ so\ will\ be\ faster\ to\ call.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ Thread::unique\_thread\_id()\ (or\ Thread::tid())\ should\ be\ preferred\ for}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ performance\ sensitive\ code,\ however\ it\ is\ only\ guaranteed\ to\ return\ a}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ unique\ and\ stable\ thread\ ID,\ not\ necessarily\ the\ system\ thread\ ID.}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_thread_a2cef1e84c944d396ac5a65f05fb487e7}{current\_thread\_id}}();}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_ab48899087cc647f0f791ed0c459adc53a55791be20ef304b6321b057320206ae9}{INVALID\_TID}}\ =\ -\/1,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_ab48899087cc647f0f791ed0c459adc53a2a5da97323f56118bdee73726e7fbd76}{PARENT\_WAITING\_TID}}\ =\ -\/2,}
+\DoxyCodeLine{00154\ \ \ \ \ \};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ User\ function\ to\ be\ executed\ by\ this\ thread.}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{typedef}\ std::function<void()>\ \mbox{\hyperlink{classdoris_1_1_thread_a24b888f197612c06ad7b0d6af2253d5b}{ThreadFunctor}};}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a13397b415cff29b5edf4911652d360c1}{Thread}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \mbox{\hyperlink{classdoris_1_1_thread_a24b888f197612c06ad7b0d6af2253d5b}{ThreadFunctor}}\ functor)}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_thread_a859aaaeb66d91038f3ffecf34b11ae00}{\_thread}}(0),}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a20f4b668fe3746e1dbed00dc5ab08dae}{\_tid}}(\mbox{\hyperlink{classdoris_1_1_thread_ab48899087cc647f0f791ed0c459adc53a55791be20ef304b6321b057320206ae9}{INVALID\_TID}}),}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a6612562f44fb0077e3a2df1c16c29fd1}{\_functor}}(std::move(functor)),}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_aa253ce681984be4fae394d967959e555}{\_category}}(std::move(\mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}})),}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}}(std::move(\mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}})),}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a64b9f9c41ba3940758d1e711f2f37e63}{\_done}}(1),}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_a3ce21f0a5baca42d21cd09f3104a2285}{\_joinable}}(false)\ \{\}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ Library-\/specific\ thread\ ID.}}
+\DoxyCodeLine{00168\ \ \ \ \ pthread\_t\ \mbox{\hyperlink{classdoris_1_1_thread_a859aaaeb66d91038f3ffecf34b11ae00}{\_thread}};}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ OS-\/specific\ thread\ ID.\ Once\ the\ constructor\ finishes\ start\_thread(),}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ guaranteed\ to\ be\ set\ either\ to\ a\ non-\/negative\ integer,\ or\ to\ INVALID\_TID.}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ The\ tid\_\ member\ goes\ through\ the\ following\ states:}}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//\ 1.\ INVALID\_TID:\ the\ thread\ has\ not\ been\ started,\ or\ has\ already\ exited.}}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ 2.\ PARENT\_WAITING\_TID:\ the\ parent\ has\ started\ the\ thread,\ but\ the}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ \ \ \ thread\ has\ not\ yet\ begun\ running.\ Therefore\ the\ TID\ is\ not\ yet\ known}}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ \ \ \ but\ it\ will\ be\ set\ once\ the\ thread\ starts.}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ 3.\ <positive\ value>:\ the\ thread\ is\ running.}}
+\DoxyCodeLine{00179\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_thread_a20f4b668fe3746e1dbed00dc5ab08dae}{\_tid}};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_a24b888f197612c06ad7b0d6af2253d5b}{ThreadFunctor}}\ \mbox{\hyperlink{classdoris_1_1_thread_a6612562f44fb0077e3a2df1c16c29fd1}{\_functor}};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_aa253ce681984be4fae394d967959e555}{\_category}};}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{//\ Joiners\ wait\ on\ this\ latch\ to\ be\ notified\ if\ the\ thread\ is\ done.}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Note\ that\ Joiners\ must\ additionally\ pthread\_join(),\ otherwise\ certain}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ resources\ that\ callers\ expect\ to\ be\ destroyed\ (like\ TLS)\ may\ still\ be}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ alive\ when\ a\ Joiner\ finishes.}}
+\DoxyCodeLine{00191\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_count_down_latch}{CountDownLatch}}\ \mbox{\hyperlink{classdoris_1_1_thread_a64b9f9c41ba3940758d1e711f2f37e63}{\_done}};}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_a3ce21f0a5baca42d21cd09f3104a2285}{\_joinable}};}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ Thread\ local\ pointer\ to\ the\ current\ thread\ of\ execution.\ Will\ be\ nullptr\ if\ the\ current}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ thread\ is\ not\ a\ Thread.}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keyword}{static}\ \_\_thread\ \mbox{\hyperlink{classdoris_1_1_thread}{Thread}}*\ \mbox{\hyperlink{classdoris_1_1_thread_a17e1bf5dfd537a855b6708faab3e4a16}{\_tls}};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ the\ running\ thread\ to\ publish\ its\ tid.}}
+\DoxyCodeLine{00200\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_thread_a858d4cdf8f14c9f7bf3936151db145ac}{wait\_for\_tid}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ Starts\ the\ thread\ running\ supervise\_thread(),\ and\ returns\ once\ that\ thread\ has}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ initialised\ and\ its\ TID\ has\ been\ read.\ Waits\ for\ notification\ from\ the\ started}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ thread\ that\ initialisation\ is\ complete\ before\ returning.\ On\ success,\ stores\ a}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{//\ reference\ to\ the\ thread\ in\ holder.}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_acef0f500ecf2a00e9eda98254ff48704}{start\_thread}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a062636dfb373c6c8bf29861121bef9b8}{category}},\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_thread_a24dcbf29c0d6cd766009a182a6484e3b}{name}},}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_a24b888f197612c06ad7b0d6af2253d5b}{ThreadFunctor}}\&\ functor,\ uint64\_t\ flags,}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}*\ holder);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ Wrapper\ for\ the\ user-\/supplied\ function.\ Invoked\ from\ the\ new\ thread,}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ with\ the\ Thread\ as\ its\ only\ argument.\ Executes\ \_functor,\ but\ before}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ doing\ so\ registers\ with\ the\ global\ ThreadMgr\ and\ reads\ the\ thread's}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ system\ ID.\ After\ \_functor\ terminates,\ unregisters\ with\ the\ ThreadMgr.}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Always\ returns\ nullptr.}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ supervise\_thread()\ notifies\ start\_thread()\ when\ thread\ initialisation\ is}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ completed\ via\ the\ \_tid,\ which\ is\ set\ to\ the\ new\ thread's\ system\ ID.}}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ By\ that\ point\ in\ time\ supervise\_thread()\ has\ also\ taken\ a\ reference\ to}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ the\ Thread\ object,\ allowing\ it\ to\ safely\ refer\ to\ it\ even\ after\ the}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ caller\ drops\ its\ reference.}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ Additionally,\ start\_thread()\ notifies\ supervise\_thread()\ when\ the\ actual}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ Thread\ object\ has\ been\ assigned\ (supervise\_thread()\ is\ spinning\ during}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ this\ time).\ Without\ this,\ the\ new\ thread\ may\ reference\ the\ actual}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{//\ Thread\ object\ before\ it\ has\ been\ assigned\ by\ start\_thread().\ See}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ KUDU-\/11\ for\ more\ details.}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris_1_1_thread_a16246b6cad0b9889ed2c2fccebf1d0b7}{supervise\_thread}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ Invoked\ when\ the\ user-\/supplied\ function\ finishes\ or\ in\ the\ case\ of\ an}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ abrupt\ exit\ (i.e.\ pthread\_exit()).\ Cleans\ up\ after\ supervise\_thread().}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_ac35ff2d46560b9a0736fd67daef4e0aa}{finish\_thread}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_a24972e9182906498b3b509f1e41f8e8b}{init\_threadmgr}}();}
+\DoxyCodeLine{00234\ \};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{comment}{//\ Utility\ to\ join\ on\ a\ thread,\ printing\ warning\ messages\ if\ it}}
+\DoxyCodeLine{00237\ \textcolor{comment}{//\ takes\ too\ long.\ For\ example:}}
+\DoxyCodeLine{00238\ \textcolor{comment}{//}}
+\DoxyCodeLine{00239\ \textcolor{comment}{//\ \ \ ThreadJoiner(\&my\_thread,\ "{}processing\ thread"{})}}
+\DoxyCodeLine{00240\ \textcolor{comment}{//\ \ \ \ \ .warn\_after\_ms(1000)}}
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ \ \ \ \ .warn\_every\_ms(5000)}}
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ \ \ \ \ .Join();}}
+\DoxyCodeLine{00243\ \textcolor{comment}{//}}
+\DoxyCodeLine{00244\ \textcolor{comment}{//\ TODO:\ would\ be\ nice\ to\ offer\ a\ way\ to\ use\ ptrace()\ or\ signals\ to}}
+\DoxyCodeLine{00245\ \textcolor{comment}{//\ dump\ the\ stack\ trace\ of\ the\ thread\ we're\ trying\ to\ join\ on\ if\ it}}
+\DoxyCodeLine{00246\ \textcolor{comment}{//\ gets\ stuck.\ But,\ after\ looking\ for\ 20\ minutes\ or\ so,\ it\ seems}}
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ pretty\ complicated\ to\ get\ right.}}
+\DoxyCodeLine{00248\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}}\ \{}
+\DoxyCodeLine{00249\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}}(\mbox{\hyperlink{classdoris_1_1_thread}{Thread}}*\ thread);}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{comment}{//\ Start\ emitting\ warnings\ after\ this\ many\ milliseconds.}}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{comment}{//\ Default:\ 1000\ ms.}}
+\DoxyCodeLine{00255\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a34e40f80a32f2fd13e6573935b5f13fa}{warn\_after\_ms}}(\textcolor{keywordtype}{int}\ ms);}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{comment}{//\ After\ the\ warnings\ after\ started,\ emit\ another\ warning\ at\ the}}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{comment}{//\ given\ interval.}}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{comment}{//\ Default:\ 1000\ ms.}}
+\DoxyCodeLine{00261\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a38de00333999cd24a63055e5876c1198}{warn\_every\_ms}}(\textcolor{keywordtype}{int}\ ms);}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{//\ If\ the\ thread\ has\ not\ stopped\ after\ this\ number\ of\ milliseconds,\ give\ up}}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ joining\ on\ it\ and\ return\ Status::Aborted.}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{comment}{//\ -\/1\ (the\ default)\ means\ to\ wait\ forever\ trying\ to\ join.}}
+\DoxyCodeLine{00267\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_abc62104d8660b66569f0a0c231ec6f50}{give\_up\_after\_ms}}(\textcolor{keywordtype}{int}\ ms);}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{comment}{//\ Join\ the\ thread,\ subject\ to\ the\ above\ parameters.\ If\ the\ thread\ joining}}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{//\ fails\ for\ any\ reason,\ returns\ RuntimeError.\ If\ it\ times\ out,\ returns}}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ Aborted.}}
+\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a0d48c708dd5785bb3098720344f88f2c}{join}}();}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a458e651af6690959efa2afb96be7d609aa577ab02e610c9976f56e7f433332a15}{kDefaultWarnAfterMs}}\ =\ 1000,}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a458e651af6690959efa2afb96be7d609a5acc0da5c4bdb3b39d921b436b597992}{kDefaultWarnEveryMs}}\ =\ 1000,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a458e651af6690959efa2afb96be7d609accc7c220235da171a752d2bf360bacf0}{kDefaultGiveUpAfterMs}}\ =\ -\/1\ \textcolor{comment}{//\ forever}}
+\DoxyCodeLine{00279\ \ \ \ \ \};}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread}{Thread}}*\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a69916ebcbe741158266c7d910c7b077e}{\_thread}};}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a5fc1ab12d7a3bc3691c691106d12c495}{\_warn\_after\_ms}};}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a7448641ab7fd3d701c461b4a9d28cbd1}{\_warn\_every\_ms}};}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a5e65cb177cb79abe2f592deeb094b21f}{\_give\_up\_after\_ms}};}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_joiner_a75d91bc80788bea86a128755b08ce5ca}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_thread_joiner}{ThreadJoiner}});}
+\DoxyCodeLine{00288\ \};}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \textcolor{comment}{//\ Registers\ /threadz\ with\ the\ debug\ webserver.}}
+\DoxyCodeLine{00291\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacedoris_ae883899878e5829bac7c4b37cd27c956}{register\_thread\_display\_page}}(\mbox{\hyperlink{classdoris_1_1_web_page_handler}{WebPageHandler}}*\ web\_page\_handler);}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \}\ \textcolor{comment}{//namespace\ doris}}
+
+\end{DoxyCode}

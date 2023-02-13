@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.6"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ppl_util: /Users/dabowang/be_all/olap/rowset/segment_v2/inverted_index_writer.cpp 文件参考</title>
+<link href="../../tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../jquery.js"></script>
+<script type="text/javascript" src="../../dynsections.js"></script>
+<link href="../../search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../search/searchdata.js"></script>
+<script type="text/javascript" src="../../search/search.js"></script>
+<link href="../../doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">ppl_util
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.6 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "../../search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="../../menudata.js"></script>
+<script type="text/javascript" src="../../menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('../../',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="../../dir_8eac97cde2fee0634bdd38dda0a21780.html">be_all</a></li><li class="navelem"><a class="el" href="../../dir_fd13cd9924173dabc19edd1b98708655.html">olap</a></li><li class="navelem"><a class="el" href="../../dir_7b769e92145a79526887c3d1084dd9e6.html">rowset</a></li><li class="navelem"><a class="el" href="../../dir_e0285e53f4afebe74b59fa495a465769.html">segment_v2</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">类</a> &#124;
+<a href="#namespaces">命名空间</a> &#124;
+<a href="#define-members">宏定义</a> &#124;
+<a href="#var-members">变量</a>  </div>
+  <div class="headertitle"><div class="title">inverted_index_writer.cpp 文件参考</div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><code>#include &quot;<a class="el" href="../../da/dcc/inverted__index__writer_8h_source.html">olap/rowset/segment_v2/inverted_index_writer.h</a>&quot;</code><br />
+<code>#include &lt;CLucene.h&gt;</code><br />
+<code>#include &lt;CLucene/analysis/LanguageBasedAnalyzer.h&gt;</code><br />
+<code>#include &lt;CLucene/util/bkd/bkd_writer.h&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/de1/olap_2field_8h_source.html">olap/field.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../db/d47/olap_2olap__common_8h_source.html">olap/olap_common.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dc/d54/common_8h_source.html">olap/rowset/segment_v2/common.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/deb/inverted__index__cache_8h_source.html">olap/rowset/segment_v2/inverted_index_cache.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../da/d15/inverted__index__compound__directory_8h_source.html">olap/rowset/segment_v2/inverted_index_compound_directory.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d7/d3f/inverted__index__desc_8h_source.html">olap/rowset/segment_v2/inverted_index_desc.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d4/da2/tablet__schema_8h_source.html">olap/tablet_schema.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/d70/string__util_8h_source.html">util/string_util.h</a>&quot;</code><br />
+</div><div class="textblock"><div class="dynheader">
+inverted_index_writer.cpp 的引用(Include)关系图:</div>
+<div class="dyncontent">
+<div class="center"><div class="zoom"><iframe scrolling="no" frameborder="0" src="../../de/d6e/inverted__index__writer_8cpp__incl.svg" width="100%" height="600"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+</div>
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+类</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d5c/classdoris_1_1segment__v2_1_1_inverted_index_column_writer_impl.html">InvertedIndexColumnWriterImpl&lt; field_type &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+命名空间</h2></td></tr>
+<tr class="memitem:d6/d94/namespacedoris"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d94/namespacedoris.html">doris</a></td></tr>
+<tr class="memdesc:d6/d94/namespacedoris"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utilities for collecting timings. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:d3/d11/namespacedoris_1_1segment__v2"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html">doris::segment_v2</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+宏定义</h2></td></tr>
+<tr class="memitem:a0edb09222e2cb967dce7c4607103564d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d90/inverted__index__writer_8cpp.html#a0edb09222e2cb967dce7c4607103564d">FINALIZE_OUTPUT</a>(x)</td></tr>
+<tr class="separator:a0edb09222e2cb967dce7c4607103564d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16c9a3d54ce8b4d02946770d2425cafc"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d90/inverted__index__writer_8cpp.html#a16c9a3d54ce8b4d02946770d2425cafc">FINALLY_FINALIZE_OUTPUT</a>(x)</td></tr>
+<tr class="separator:a16c9a3d54ce8b4d02946770d2425cafc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+变量</h2></td></tr>
+<tr class="memitem:a972f7edf4435596d77915e209091bced"><td class="memItemLeft" align="right" valign="top">const int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a972f7edf4435596d77915e209091bced">MAX_FIELD_LEN</a> = 0x7FFFFFFFL</td></tr>
+<tr class="separator:a972f7edf4435596d77915e209091bced"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19f102bdf3694d0ca16d736cdce36a12"><td class="memItemLeft" align="right" valign="top">const int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a19f102bdf3694d0ca16d736cdce36a12">MAX_BUFFER_DOCS</a> = 100000000</td></tr>
+<tr class="separator:a19f102bdf3694d0ca16d736cdce36a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d97256be2d1864fbce13c2122fe4f58"><td class="memItemLeft" align="right" valign="top">const int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a1d97256be2d1864fbce13c2122fe4f58">MERGE_FACTOR</a> = 100000000</td></tr>
+<tr class="separator:a1d97256be2d1864fbce13c2122fe4f58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dbb2d630087890455b20e2cbc3ba14b"><td class="memItemLeft" align="right" valign="top">const int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a5dbb2d630087890455b20e2cbc3ba14b">MAX_LEAF_COUNT</a> = 1024</td></tr>
+<tr class="separator:a5dbb2d630087890455b20e2cbc3ba14b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91bd3be3ff6086d304df5f22c7ed31c4"><td class="memItemLeft" align="right" valign="top">const float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a91bd3be3ff6086d304df5f22c7ed31c4">MAXMBSortInHeap</a> = 512.0 * 8</td></tr>
+<tr class="separator:a91bd3be3ff6086d304df5f22c7ed31c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e110a3af0a9770e2b0e753c3447eb14"><td class="memItemLeft" align="right" valign="top">const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#a5e110a3af0a9770e2b0e753c3447eb14">DIMS</a> = 1</td></tr>
+<tr class="separator:a5e110a3af0a9770e2b0e753c3447eb14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad17cfbd2c975534ad511e97f9a51dbd1"><td class="memItemLeft" align="right" valign="top">const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d11/namespacedoris_1_1segment__v2.html#ad17cfbd2c975534ad511e97f9a51dbd1">empty_value</a></td></tr>
+<tr class="separator:ad17cfbd2c975534ad511e97f9a51dbd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<h2 class="groupheader">宏定义说明</h2>
+<a id="a0edb09222e2cb967dce7c4607103564d" name="a0edb09222e2cb967dce7c4607103564d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0edb09222e2cb967dce7c4607103564d">&#9670;&#160;</a></span>FINALIZE_OUTPUT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define FINALIZE_OUTPUT</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">x</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>值:</b><div class="fragment"><div class="line">    <span class="keywordflow">if</span> (x != <span class="keyword">nullptr</span>) {    \</div>
+<div class="line">        x-&gt;close();        \</div>
+<div class="line">        _CLDELETE(x);      \</div>
+<div class="line">    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a16c9a3d54ce8b4d02946770d2425cafc" name="a16c9a3d54ce8b4d02946770d2425cafc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16c9a3d54ce8b4d02946770d2425cafc">&#9670;&#160;</a></span>FINALLY_FINALIZE_OUTPUT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define FINALLY_FINALIZE_OUTPUT</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">x</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>值:</b><div class="fragment"><div class="line">    <span class="keywordflow">try</span> {                          \</div>
+<div class="line">        FINALIZE_OUTPUT(x)         \</div>
+<div class="line">    } <span class="keywordflow">catch</span> (...) {                \</div>
+<div class="line">    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.6
+</small></address>
+</body>
+</html>

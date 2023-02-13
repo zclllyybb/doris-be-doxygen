@@ -1,0 +1,404 @@
+\hypertarget{thread__context_8h_source}{}\doxysection{thread\+\_\+context.\+h}
+\label{thread__context_8h_source}\index{/Users/dabowang/be\_all/runtime/thread\_context.h@{/Users/dabowang/be\_all/runtime/thread\_context.h}}
+\mbox{\hyperlink{thread__context_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <bthread/bthread.h>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging_8h}{common/logging.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/PaloInternalService\_types.h"{}}\ \textcolor{comment}{//\ for\ TQueryType}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__mem__tracker__mgr_8h}{runtime/memory/thread\_mem\_tracker\_mgr.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{threadlocal_8h}{runtime/threadlocal.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tracing_8h}{util/debug/tracing.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{defer__op_8h}{util/defer\_op.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pipeline__task_8h}{pipeline/pipeline\_task.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tracing_8h}{util/debug/tracing.h}}"{}}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Used\ to\ observe\ the\ memory\ usage\ of\ the\ specified\ code\ segment}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#ifdef\ USE\_MEM\_TRACKER}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Count\ a\ code\ segment\ memory\ (memory\ malloc\ -\/\ memory\ free)\ to\ int64\_t}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Usage\ example:\ int64\_t\ scope\_mem\ =\ 0;\ \{\ SCOPED\_MEM\_COUNT(\&scope\_mem);\ xxx;\ xxx;\ \}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ SCOPED\_MEM\_COUNT(scope\_mem)\ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ auto\ VARNAME\_LINENUM(scope\_mem\_count)\ =\ doris::ScopeMemCount(scope\_mem)}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Count\ a\ code\ segment\ memory\ (memory\ malloc\ -\/\ memory\ free)\ to\ MemTracker.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ Compared\ to\ count\ `scope\_mem`,\ MemTracker\ is\ easier\ to\ observe\ from\ the\ outside\ and\ is\ thread-\/safe.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Usage\ example:\ std::unique\_ptr<MemTracker>\ tracker\ =\ std::make\_unique<MemTracker>("{}first\_tracker"{});}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ SCOPED\_CONSUME\_MEM\_TRACKER(\_mem\_tracker.get());\ xxx;\ xxx;\ \}}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Usually\ used\ to\ record\ query\ more\ detailed\ memory,\ including\ ExecNode\ operators.}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ SCOPED\_CONSUME\_MEM\_TRACKER(mem\_tracker)\ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ auto\ VARNAME\_LINENUM(add\_mem\_consumer)\ =\ doris::AddThreadMemTrackerConsumer(mem\_tracker)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ SCOPED\_MEM\_COUNT(scope\_mem)\ (void)0}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ SCOPED\_CONSUME\_MEM\_TRACKER(mem\_tracker)\ (void)0}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ Used\ to\ observe\ query/load/compaction/e.g.\ execution\ thread\ memory\ usage\ and\ respond\ when\ memory\ exceeds\ the\ limit.}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#ifdef\ USE\_MEM\_TRACKER}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ Attach\ to\ query/load/compaction/e.g.\ when\ thread\ starts.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ This\ will\ save\ some\ info\ about\ a\ working\ thread\ in\ the\ thread\ context.}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ And\ count\ the\ memory\ during\ thread\ execution\ (is\ actually\ also\ the\ code\ segment\ that\ executes\ the\ function)}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ to\ specify\ MemTrackerLimiter,\ and\ expect\ to\ handle\ when\ the\ memory\ exceeds\ the\ limit,\ for\ example\ cancel\ query.}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ Usage\ is\ similar\ to\ SCOPED\_CONSUME\_MEM\_TRACKER.}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#define\ SCOPED\_ATTACH\_TASK(arg1,\ ...)\ \(\backslash\)}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ \ \ auto\ VARNAME\_LINENUM(attach\_task)\ =\ AttachTask(arg1,\ \#\#\_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ Switch\ MemTrackerLimiter\ for\ count\ memory\ during\ thread\ execution.}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Usually\ used\ after\ SCOPED\_ATTACH\_TASK,\ in\ order\ to\ count\ the\ memory\ of\ the\ specified\ code\ segment\ into\ another}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ MemTrackerLimiter\ instead\ of\ the\ MemTrackerLimiter\ added\ by\ the\ attach\ task.}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#define\ SCOPED\_SWITCH\_THREAD\_MEM\_TRACKER\_LIMITER(mem\_tracker\_limiter)\ \(\backslash\)}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\ \ \ \ auto\ VARNAME\_LINENUM(switch\_mem\_tracker)\ =\ SwitchThreadMemTrackerLimiter(mem\_tracker\_limiter)}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ If\ you\ don't\ want\ to\ cancel\ query\ after\ thread\ MemTrackerLimiter\ exceed\ limit\ in\ a\ code\ segment,\ then\ use\ it.}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ Usually\ used\ after\ SCOPED\_ATTACH\_TASK.}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#define\ STOP\_CHECK\_THREAD\_MEM\_TRACKER\_LIMIT()\ \(\backslash\)}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\ \ \ \ auto\ VARNAME\_LINENUM(stop\_check\_limit)\ =\ StopCheckThreadMemTrackerLimit()}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ If\ the\ thread\ MemTrackerLimiter\ exceeds\ the\ limit,\ an\ error\ status\ is\ returned.}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ Usually\ used\ after\ SCOPED\_ATTACH\_TASK,\ during\ query\ execution.}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#define\ RETURN\_LIMIT\_EXCEEDED(state,\ msg,\ ...)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\ \ \ \ return\ doris::thread\_context()-\/>thread\_mem\_tracker()-\/>fragment\_mem\_limit\_exceeded(\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ state,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ fmt::format("{}exec\ node:<\{\}>,\ \{\}"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>last\_consumer\_tracker(),\ \(\backslash\)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ msg),\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \#\#\_\_VA\_ARGS\_\_);}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#define\ SCOPED\_ATTACH\_TASK(arg1,\ ...)\ (void)0}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#define\ SCOPED\_SWITCH\_THREAD\_MEM\_TRACKER\_LIMITER(mem\_tracker\_limiter)\ (void)0}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ STOP\_CHECK\_THREAD\_MEM\_TRACKER\_LIMIT()\ (void)0}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#define\ RETURN\_LIMIT\_EXCEEDED(state,\ msg,\ ...)\ (void)0}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{class\ }TUniqueId;}
+\DoxyCodeLine{00090\ \textcolor{keyword}{class\ }ThreadContext;}
+\DoxyCodeLine{00091\ \textcolor{keyword}{namespace\ }debug\{}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1debug_1_1_event_buffer}{EventBuffer}};}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{extern}\ bthread\_key\_t\ \mbox{\hyperlink{namespacedoris_a25bce985ec9093e2a15fbcb0dc41d77e}{btls\_key}};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ Using\ gcc11\ compiles\ thread\_local\ variable\ on\ lower\ versions\ of\ GLIBC\ will\ report\ an\ error,}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ see\ https://github.com/apache/doris/pull/7911}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ If\ we\ want\ to\ avoid\ this\ error,}}
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ 1.\ For\ non-\/trivial\ variables\ in\ thread\_local,\ such\ as\ std::string,\ you\ need\ to\ store\ them\ as\ pointers\ to}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ \ \ \ ensure\ that\ thread\_local\ is\ trivial,\ these\ non-\/trivial\ pointers\ will\ uniformly\ call\ destructors\ elsewhere.}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ 2.\ The\ default\ destructor\ of\ the\ thread\_local\ variable\ cannot\ be\ overridden.}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ This\ is\ difficult\ to\ implement.\ Because\ the\ destructor\ is\ not\ overwritten,\ it\ means\ that\ the\ outside\ cannot}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ be\ notified\ when\ the\ thread\ terminates,\ and\ the\ non-\/trivial\ pointers\ in\ thread\_local\ cannot\ be\ released\ in\ time.}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ The\ func\ provided\ by\ pthread\ and\ std::thread\ doesn't\ help\ either.}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ So,\ kudu\ Class-\/scoped\ static\ thread\ local\ implementation\ was\ introduced.\ Solve\ the\ above\ problem\ by}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ Thread-\/scoped\ thread\ local\ +\ Class-\/scoped\ thread\ local.}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ This\ may\ look\ very\ trick,\ but\ it's\ the\ best\ way\ I\ can\ find.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//}}
+\DoxyCodeLine{00115\ \textcolor{comment}{//\ refer\ to:}}
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ \ https://gcc.gnu.org/onlinedocs/gcc-\/3.3.1/gcc/Thread-\/Local.html}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ \ https://stackoverflow.com/questions/12049684/}}
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ \ https://sourceware.org/glibc/wiki/Destructor\%20support\%20for\%20thread\_local\%20variables}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ \ https://www.jianshu.com/p/756240e837dd}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ \ https://man7.org/linux/man-\/pages/man3/pthread\_tryjoin\_np.3.html}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_context_ptr}{ThreadContextPtr}}\ \{}
+\DoxyCodeLine{00122\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a8601280cdb5add0292cf6690042e178b}{ThreadContextPtr}}();}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ Cannot\ add\ destructor\ `\string~ThreadContextPtr`,\ otherwise\ it\ will\ no\ longer\ be\ of\ type\ POD,\ the\ reason\ is\ as\ above.}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ TCMalloc\ hook\ is\ triggered\ during\ ThreadContext\ construction,\ which\ may\ lead\ to\ deadlock.}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a50300ba6e38ec30121edcc07ebac42c6}{init}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a49eb89ea2a1d4f5a4f8693dadbd4f6c7}{DECLARE\_STATIC\_THREAD\_LOCAL}}(\mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}},\ \_ptr);}
+\DoxyCodeLine{00130\ \};}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \mbox{\hyperlink{classdoris_1_1_thread_context_ptr}{ThreadContextPtr}}\ \mbox{\hyperlink{namespacedoris_a4ce45b5aeb024ff259888cbdc3fddd92}{thread\_context\_ptr}};}
+\DoxyCodeLine{00133\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_a21a47b46c497d4e73372a36a77b712e3}{enable\_thread\_catch\_bad\_alloc}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ To\ avoid\ performance\ problems\ caused\ by\ frequently\ calling\ `bthread\_getspecific`\ to\ obtain\ bthread\ TLS}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//\ in\ tcmalloc\ hook,\ cache\ the\ key\ and\ value\ of\ bthread\ TLS\ in\ pthread\ TLS.}}
+\DoxyCodeLine{00137\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}}*\ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}};}
+\DoxyCodeLine{00138\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ bthread\_t\ \mbox{\hyperlink{namespacedoris_a97cfde243d678f40e09dcbce78d0dd8c}{bthread\_id}};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ The\ thread\ context\ saves\ some\ info\ about\ a\ working\ thread.}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ 2\ required\ info:}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ \ \ 1.\ thread\_id:\ \ \ Current\ thread\ id,\ Auto\ generated.}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ \ \ 2.\ type:\ \ \ \ \ \ \ \ The\ type\ is\ a\ enum\ value\ indicating\ which\ type\ of\ task\ current\ thread\ is\ running.}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ For\ example:\ QUERY,\ LOAD,\ COMPACTION,\ ...}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ \ \ 3.\ task\ id:\ \ \ \ \ A\ unique\ id\ to\ identify\ this\ task.\ maybe\ query\ id,\ load\ job\ id,\ etc.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ There\ may\ be\ other\ optional\ info\ to\ be\ added\ later.}}
+\DoxyCodeLine{00148\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}}\ \{}
+\DoxyCodeLine{00149\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00150\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a2d791d33c1bdb786f0e9dc593e8459a1}{ThreadContext}}()\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_thread_mem_tracker_mgr}{ThreadMemTrackerMgr}}());}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_exec_env_a920023e1afb35093f05bf7b69cc5e889}{ExecEnv::GetInstance}}()-\/>initialized())\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>init();}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a53e6ef122113004106c1cf4fb7d04835}{\string~ThreadContext}}()\ \{\ \mbox{\hyperlink{namespacedoris_a4ce45b5aeb024ff259888cbdc3fddd92}{thread\_context\_ptr}}.\mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a50300ba6e38ec30121edcc07ebac42c6}{init}}\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_context_a3ec7c51530efd3d1a4fcfee56775b530}{attach\_task}}(\textcolor{keyword}{const}\ std::string\&\ task\_id,\ \textcolor{keyword}{const}\ TUniqueId\&\ \mbox{\hyperlink{classdoris_1_1_thread_context_a4798bb17802cd5fd4af6a751af70f361}{fragment\_instance\_id}},}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<MemTrackerLimiter>\&\ mem\_tracker)\ \{}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#ifndef\ BE\_TEST}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ will\ only\ attach\_task\ at\ the\ beginning\ of\ the\ thread\ function,\ there\ should\ be\ no\ duplicate\ attach\_task.}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ DCHECK(mem\_tracker);}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Orphan\ is\ thread\ default\ tracker.}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{classdoris_1_1_thread_context_acd4fe0e172e3c056b3dca46b886ecc0a}{thread\_mem\_tracker}}()-\/>label()\ ==\ \textcolor{stringliteral}{"{}Orphan"{}})}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ attach\ mem\ tracker\ label:\ "{}}\ <<\ mem\_tracker-\/>label();}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a51de76043932d5f9a79ba2f9788af2ee}{\_task\_id}}\ =\ task\_id;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a969d360d5b2bf368cef4a6a1041b9141}{\_fragment\_instance\_id}}\ =\ \mbox{\hyperlink{classdoris_1_1_thread_context_a4798bb17802cd5fd4af6a751af70f361}{fragment\_instance\_id}};}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>attach\_limiter\_tracker(mem\_tracker,\ \mbox{\hyperlink{classdoris_1_1_thread_context_a4798bb17802cd5fd4af6a751af70f361}{fragment\_instance\_id}});}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_context_a14d6909b14d506da3cec4784b3c151b3}{detach\_task}}()\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a51de76043932d5f9a79ba2f9788af2ee}{\_task\_id}}\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a969d360d5b2bf368cef4a6a1041b9141}{\_fragment\_instance\_id}}\ =\ TUniqueId();}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>detach\_limiter\_tracker();}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{const}\ TUniqueId\&\ \mbox{\hyperlink{classdoris_1_1_thread_context_a4798bb17802cd5fd4af6a751af70f361}{fragment\_instance\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_context_a969d360d5b2bf368cef4a6a1041b9141}{\_fragment\_instance\_id}};\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_context_aba532940df77bb2847dcabd25caf5b59}{get\_thread\_id}}()\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ std::stringstream\ ss;}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ ss\ <<\ std::this\_thread::get\_id();}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ss.str();}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ After\ thread\_mem\_tracker\_mgr\ is\ initialized,\ the\ current\ thread\ TCMalloc\ Hook\ starts\ to}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ consume/release\ mem\_tracker.}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ Note\ that\ the\ use\ of\ shared\_ptr\ will\ cause\ a\ crash.\ The\ guess\ is\ that\ there\ is\ an}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ intermediate\ state\ during\ the\ copy\ construction\ of\ shared\_ptr.\ Shared\_ptr\ is\ not\ equal}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ to\ nullptr,\ but\ the\ object\ it\ points\ to\ is\ not\ initialized.\ At\ this\ time,\ when\ the\ memory}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ is\ released\ somewhere,\ the\ TCMalloc\ hook\ is\ triggered\ to\ cause\ the\ crash.}}
+\DoxyCodeLine{00193\ \ \ \ \ std::unique\_ptr<ThreadMemTrackerMgr>\ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}};}
+\DoxyCodeLine{00194\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ \mbox{\hyperlink{classdoris_1_1_thread_context_acd4fe0e172e3c056b3dca46b886ecc0a}{thread\_mem\_tracker}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>limiter\_mem\_tracker\_raw();}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ any\ time\ we\ need\ the\ trace\ context\ of\ current\ query/fragment/task...,\ tls\_trace\_ctx\ is\ it.}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_QUERY\_DEBUG\_TRACE}}
+\DoxyCodeLine{00200\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1debug_1_1_query_trace_context}{debug::QueryTraceContext}}\ tls\_trace\_ctx;}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00204\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_context_a51de76043932d5f9a79ba2f9788af2ee}{\_task\_id}};}
+\DoxyCodeLine{00205\ \ \ \ \ TUniqueId\ \mbox{\hyperlink{classdoris_1_1_thread_context_a969d360d5b2bf368cef4a6a1041b9141}{\_fragment\_instance\_id}};}
+\DoxyCodeLine{00206\ \};}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \mbox{\hyperlink{classdoris_1_1debug_1_1_query_trace_context}{debug::QueryTraceContext}}\&\ \mbox{\hyperlink{namespacedoris_ac83655030800897650bb4e335683617e}{get\_tls\_trace\_ctx}}()\{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}-\/>tls\_trace\_ctx;}
+\DoxyCodeLine{00210\ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ Cache\ the\ pointer\ of\ bthread\ local\ in\ pthead\ local,}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ Avoid\ calling\ bthread\_getspecific\ frequently\ to\ get\ bthread\ local,\ which\ has\ performance\ problems.}}
+\DoxyCodeLine{00214\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacedoris_acdf6d015bf6270fe1af78c95cf27ab78}{pthread\_attach\_bthread}}()\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97cfde243d678f40e09dcbce78d0dd8c}{bthread\_id}}\ =\ bthread\_self();}
+\DoxyCodeLine{00216\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}}*\textcolor{keyword}{>}(bthread\_getspecific(\mbox{\hyperlink{namespacedoris_a25bce985ec9093e2a15fbcb0dc41d77e}{btls\_key}}));}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ new\ bthread\ starts,\ two\ scenarios:}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ First\ call\ to\ bthread\_getspecific\ (and\ before\ any\ bthread\_setspecific)\ returns\ NULL}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2.\ There\ are\ not\ enough\ reusable\ btls\ in\ btls\ pool.}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ else,\ two\ scenarios:}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ A\ new\ bthread\ starts,\ but\ get\ a\ reuses\ btls.}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2.\ A\ pthread\ switch\ occurs.\ Because\ the\ pthread\ switch\ cannot\ be\ accurately\ identified\ at\ the\ moment.}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ So\ tracker\ call\ reset\ 0\ like\ reuses\ btls.}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}};}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ brpc\ server\ should\ respond\ as\ quickly\ as\ possible.}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>disable\_wait\_gc();}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ data\ so\ that\ next\ time\ bthread\_getspecific\ in\ the\ thread\ returns\ the\ data.}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ CHECK\_EQ(0,\ bthread\_setspecific(\mbox{\hyperlink{namespacedoris_a25bce985ec9093e2a15fbcb0dc41d77e}{btls\_key}},\ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}}));}
+\DoxyCodeLine{00230\ \ \ \ \ \}}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_thread_context}{ThreadContext}}*\ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{thread\_context}}()\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{if}\ (bthread\_self()\ !=\ 0)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bthread\_self()\ !=\ \mbox{\hyperlink{namespacedoris_a97cfde243d678f40e09dcbce78d0dd8c}{bthread\_id}})\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ new\ bthread\ starts\ or\ pthread\ switch\ occurs,\ during\ this\ period,\ stop\ the\ use\ of\ thread\_context.}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a4ce45b5aeb024ff259888cbdc3fddd92}{thread\_context\_ptr}}.\mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a50300ba6e38ec30121edcc07ebac42c6}{init}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_acdf6d015bf6270fe1af78c95cf27ab78}{pthread\_attach\_bthread}}();}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a4ce45b5aeb024ff259888cbdc3fddd92}{thread\_context\_ptr}}.\mbox{\hyperlink{classdoris_1_1_thread_context_ptr_a50300ba6e38ec30121edcc07ebac42c6}{init}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_a17d08faa86e82da29ca5c5cf2b33a5bb}{bthread\_context}};}
+\DoxyCodeLine{00242\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_a4ce45b5aeb024ff259888cbdc3fddd92}{thread\_context\_ptr}}.\_ptr;}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scope_mem_count}{ScopeMemCount}}\ \{}
+\DoxyCodeLine{00248\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_scope_mem_count}{ScopeMemCount}}(int64\_t*\ scope\_mem);}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scope_mem_count_a6a8381e5b9d5dc92fd6f02525d5db219}{\string~ScopeMemCount}}();}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00254\ \ \ \ \ int64\_t*\ \mbox{\hyperlink{classdoris_1_1_scope_mem_count_ace352c18b4092de4b718144aa70e3249}{\_scope\_mem}};}
+\DoxyCodeLine{00255\ \};}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_attach_task}{AttachTask}}\ \{}
+\DoxyCodeLine{00258\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_attach_task}{AttachTask}}(\textcolor{keyword}{const}\ std::shared\_ptr<MemTrackerLimiter>\&\ mem\_tracker,}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ task\_id\ =\ \textcolor{stringliteral}{"{}"{}},}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TUniqueId\&\ fragment\_instance\_id\ =\ TUniqueId());}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_attach_task}{AttachTask}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ runtime\_state);}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_attach_task_a6e281cf61c2e8686f2febf7559137d9e}{\string~AttachTask}}();}
+\DoxyCodeLine{00266\ \};}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_switch_thread_mem_tracker_limiter}{SwitchThreadMemTrackerLimiter}}\ \{}
+\DoxyCodeLine{00269\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_switch_thread_mem_tracker_limiter}{SwitchThreadMemTrackerLimiter}}(\textcolor{keyword}{const}\ std::shared\_ptr<MemTrackerLimiter>\&\ mem\_tracker);}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_switch_thread_mem_tracker_limiter_a947a2c1d9c2381c121b79a4b16b7485c}{\string~SwitchThreadMemTrackerLimiter}}();}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00275\ \ \ \ \ std::shared\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_switch_thread_mem_tracker_limiter_aed1f3166228f37533518ef8572dbc479}{\_old\_mem\_tracker}};}
+\DoxyCodeLine{00276\ \};}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer}{AddThreadMemTrackerConsumer}}\ \{}
+\DoxyCodeLine{00279\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ The\ owner\ and\ user\ of\ MemTracker\ are\ in\ the\ same\ thread,\ and\ the\ raw\ pointer\ is\ faster.}}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ If\ mem\_tracker\ is\ nullptr,\ do\ nothing.}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer}{AddThreadMemTrackerConsumer}}(\mbox{\hyperlink{classdoris_1_1_mem_tracker}{MemTracker}}*\ mem\_tracker);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{comment}{//\ The\ owner\ and\ user\ of\ MemTracker\ are\ in\ different\ threads.\ If\ mem\_tracker\ is\ nullptr,\ do\ nothing.}}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer}{AddThreadMemTrackerConsumer}}(\textcolor{keyword}{const}\ std::shared\_ptr<MemTracker>\&\ mem\_tracker);}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer_a99999d4107ca1fe19c1a45eedfa95af3}{\string~AddThreadMemTrackerConsumer}}();}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00290\ \ \ \ \ std::shared\_ptr<MemTracker>\ \mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer_aa8fe1dfdcaa71c1dd164d67c6f3cc910}{\_mem\_tracker}}\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ Avoid\ mem\_tracker\ being\ released\ midway.}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_add_thread_mem_tracker_consumer_abeee1e2f5f40297bd3955b78c264499b}{\_need\_pop}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00292\ \};}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit}{StopCheckThreadMemTrackerLimit}}\ \{}
+\DoxyCodeLine{00295\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit_a334a709f8159178c8f37d034b62ce3d8}{StopCheckThreadMemTrackerLimit}}()\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit_a27a782424fb4bc3154ad36938c4e335e}{\_pre}}\ =\ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>check\_limit();}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>set\_check\_limit(\textcolor{keyword}{false});}
+\DoxyCodeLine{00299\ \ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit_a57086ff12a71a2388055987bb9cd4b52}{\string~StopCheckThreadMemTrackerLimit}}()\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>set\_check\_limit(\mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit_a27a782424fb4bc3154ad36938c4e335e}{\_pre}});}
+\DoxyCodeLine{00303\ \ \ \ \ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_stop_check_thread_mem_tracker_limit_a27a782424fb4bc3154ad36938c4e335e}{\_pre}};}
+\DoxyCodeLine{00307\ \};}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \textcolor{comment}{//\ Basic\ macros\ for\ mem\ tracker,\ usually\ do\ not\ need\ to\ be\ modified\ and\ used.}}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#ifdef\ USE\_MEM\_TRACKER}}
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ For\ the\ memory\ that\ cannot\ be\ counted\ by\ mem\ hook,\ manually\ count\ it\ into\ the\ mem\ tracker,\ such\ as\ mmap.}}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#define\ CONSUME\_THREAD\_MEM\_TRACKER(size)\ \(\backslash\)}}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>consume(size)}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#define\ TRY\_CONSUME\_THREAD\_MEM\_TRACKER(size)\ \(\backslash\)}}
+\DoxyCodeLine{00315\ \textcolor{preprocessor}{\ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>try\_consume(size)}}
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\#define\ RELEASE\_THREAD\_MEM\_TRACKER(size)\ \(\backslash\)}}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>consume(-\/size)}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ used\ to\ fix\ the\ tracking\ accuracy\ of\ caches.}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#define\ THREAD\_MEM\_TRACKER\_TRANSFER\_TO(size,\ tracker)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>limiter\_mem\_tracker\_raw()-\/>transfer\_to(\ \(\backslash\)}}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ size,\ tracker)}}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#define\ THREAD\_MEM\_TRACKER\_TRANSFER\_FROM(size,\ tracker)\ \(\backslash\)}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\ \ \ \ tracker-\/>transfer\_to(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ size,\ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>limiter\_mem\_tracker\_raw())}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{comment}{//\ Consider\ catching\ other\ memory\ errors,\ such\ as\ memset\ failure,\ etc.}}
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\#define\ RETURN\_IF\_CATCH\_BAD\_ALLOC(stmt)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>clear\_exceed\_mem\_limit\_msg();\ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (doris::enable\_thread\_catch\_bad\_alloc)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ try\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ stmt;\ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00334\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \}\ catch\ (std::bad\_alloc\ const\&\ e)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker()-\/>print\_log\_usage(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00336\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>exceed\_mem\_limit\_msg());\ \ \(\backslash\)}}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ Status::MemoryLimitExceeded(fmt::format(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00338\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}PreCatch\ \{\},\ \{\}"{}},\ e.what(),\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>exceed\_mem\_limit\_msg()));\ \(\backslash\)}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ try\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::enable\_thread\_catch\_bad\_alloc\ =\ true;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Defer\ defer\ \{[\&]()\ \{\ doris::enable\_thread\_catch\_bad\_alloc\ =\ false;\ \}\};\ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ stmt;\ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ catch\ (std::bad\_alloc\ const\&\ e)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker()-\/>print\_log\_usage(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>exceed\_mem\_limit\_msg());\ \ \(\backslash\)}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ Status::MemoryLimitExceeded(fmt::format(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}PreCatch\ \{\},\ \{\}"{},\ e.what(),\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>exceed\_mem\_limit\_msg()));\ \(\backslash\)}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00354\ \ \ \ \ \}\ while\ (0)}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{comment}{//\ Mem\ Hook\ to\ consume\ thread\ mem\ tracker}}
+\DoxyCodeLine{00357\ \textcolor{comment}{//\ TODO:\ In\ the\ original\ design,\ the\ MemTracker\ consume\ method\ is\ called\ before\ the\ memory\ is\ allocated.}}
+\DoxyCodeLine{00358\ \textcolor{comment}{//\ If\ the\ consume\ succeeds,\ the\ memory\ is\ actually\ allocated,\ otherwise\ an\ exception\ is\ thrown.}}
+\DoxyCodeLine{00359\ \textcolor{comment}{//\ But\ the\ statistics\ of\ memory\ through\ TCMalloc\ new/delete\ Hook\ are\ after\ the\ memory\ is\ actually\ allocated,}}
+\DoxyCodeLine{00360\ \textcolor{comment}{//\ which\ is\ different\ from\ the\ previous\ behavior.}}
+\DoxyCodeLine{00361\ \textcolor{preprocessor}{\#define\ CONSUME\_MEM\_TRACKER(size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00362\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (doris::thread\_context\_ptr.init)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>consume(size);\ \(\backslash\)}}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00367\ \textcolor{comment}{//\ NOTE,\ The\ LOG\ cannot\ be\ printed\ in\ the\ mem\ hook.\ If\ the\ LOG\ statement\ triggers\ the\ mem\ hook\ LOG,}}
+\DoxyCodeLine{00368\ \textcolor{comment}{//\ the\ nested\ LOG\ may\ cause\ an\ unknown\ crash.}}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#define\ TRY\_CONSUME\_MEM\_TRACKER(size,\ fail\_ret)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (doris::thread\_context\_ptr.init)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ if\ (doris::enable\_thread\_catch\_bad\_alloc)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (!doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>try\_consume(size))\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ fail\_ret;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00377\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>consume(size);\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00380\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\#define\ RELEASE\_MEM\_TRACKER(size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (doris::thread\_context\_ptr.init)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00384\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::thread\_context()-\/>thread\_mem\_tracker\_mgr-\/>consume(-\/size);\ \(\backslash\)}}
+\DoxyCodeLine{00385\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00388\ \textcolor{preprocessor}{\#define\ CONSUME\_THREAD\_MEM\_TRACKER(size)\ (void)0}}
+\DoxyCodeLine{00389\ \textcolor{preprocessor}{\#define\ TRY\_CONSUME\_THREAD\_MEM\_TRACKER(size)\ true}}
+\DoxyCodeLine{00390\ \textcolor{preprocessor}{\#define\ RELEASE\_THREAD\_MEM\_TRACKER(size)\ (void)0}}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\#define\ THREAD\_MEM\_TRACKER\_TRANSFER\_TO(size,\ tracker)\ (void)0}}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#define\ THREAD\_MEM\_TRACKER\_TRANSFER\_FROM(size,\ tracker)\ (void)0}}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#define\ CONSUME\_MEM\_TRACKER(size)\ (void)0}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#define\ TRY\_CONSUME\_MEM\_TRACKER(size,\ fail\_ret)\ (void)0}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\#define\ RELEASE\_MEM\_TRACKER(size)\ (void)0}}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\#define\ RETURN\_IF\_CATCH\_BAD\_ALLOC(stmt)\ (stmt)}}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00398\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

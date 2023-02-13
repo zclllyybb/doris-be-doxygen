@@ -1,0 +1,200 @@
+\hypertarget{number__traits_8h_source}{}\doxysection{number\+\_\+traits.\+h}
+\label{number__traits_8h_source}\index{/Users/dabowang/be\_all/vec/data\_types/number\_traits.h@{/Users/dabowang/be\_all/vec/data\_types/number\_traits.h}}
+\mbox{\hyperlink{number__traits_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/DataTypes/NumberTraits.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__decimal_8h}{vec/columns/column\_decimal.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__vector_8h}{vec/columns/column\_vector.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{uint128_8h}{vec/common/uint128.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }NumberTraits\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_error}{Error}}\ \{\};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_af1ab5c62870ef41746b13408c0376df2}{max}}(\textcolor{keywordtype}{size\_t}\ x,\ \textcolor{keywordtype}{size\_t}\ y)\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordflow}{return}\ x\ >\ y\ ?\ x\ :\ y;}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_a1f31e97a4d1bc247dcd15c7706900d85}{min}}(\textcolor{keywordtype}{size\_t}\ x,\ \textcolor{keywordtype}{size\_t}\ y)\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordflow}{return}\ x\ <\ y\ ?\ x\ :\ y;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ only\ largeint\ as\ argument\ should\ return\ 16}}
+\DoxyCodeLine{00049\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_a3b1c6241ed020e4bcde31faf06332539}{next\_size}}(\textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordflow}{return}\ size\ >\ 8\ ?\ 16\ :\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_a1f31e97a4d1bc247dcd15c7706900d85}{min}}(size\ *\ 2,\ 8);}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ is\_\textcolor{keywordtype}{signed},\ \textcolor{keywordtype}{bool}\ is\_\textcolor{keywordtype}{float}ing,\ \textcolor{keywordtype}{size\_t}\ size>}
+\DoxyCodeLine{00054\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_error}{Type}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_error}{Error}};}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00059\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ false,\ 1>\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01false_00_011_01_4_ae200ea7929fcf22549411eaf3b1bdd94}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a34b6ab118920674a47e4b36db0fd1437}{Int16}};}
+\DoxyCodeLine{00061\ \};}
+\DoxyCodeLine{00062\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00063\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ false,\ 2>\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01false_00_012_01_4_af022bb6240953ae5c42ae15d6e53e4cb}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac524bdfeb5d781872485d9321c881920}{Int32}};}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00067\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ false,\ 4>\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01false_00_014_01_4_a47fe869f0e84010b99e1e136a2ac28ff}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a51b4c1b67123dbb4903672fa753e6dd1}{Int64}};}
+\DoxyCodeLine{00069\ \};}
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ false,\ 8>\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01false_00_018_01_4_a645eaab0bae9ad1bad3b4bd65497ad51}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aeaa392671300adb30bdafd242ac2d21b}{Int128}};}
+\DoxyCodeLine{00073\ \};}
+\DoxyCodeLine{00074\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00075\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ false,\ 16>\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01false_00_0116_01_4_a645eaab0bae9ad1bad3b4bd65497ad51}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aeaa392671300adb30bdafd242ac2d21b}{Int128}};}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00079\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ true,\ 1>\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01true_00_011_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00081\ \};}
+\DoxyCodeLine{00082\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00083\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ true,\ 2>\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01true_00_012_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00085\ \};}
+\DoxyCodeLine{00086\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00087\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ true,\ 4>\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01true_00_014_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00089\ \};}
+\DoxyCodeLine{00090\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00091\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<false,\ true,\ 8>\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01false_00_01true_00_018_01_4_a5b47497dd69bcef557855382d6e4c83d}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aff1ad2ef3e4296df77f3849483964f56}{Float64}};}
+\DoxyCodeLine{00093\ \};}
+\DoxyCodeLine{00094\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00095\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ false,\ 1>\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01false_00_011_01_4_a84cae35748efe955956e1a145dc5db19}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_abd9d6136b23781adcdb9cb689efe123d}{Int8}};}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00099\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ false,\ 2>\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01false_00_012_01_4_ae200ea7929fcf22549411eaf3b1bdd94}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a34b6ab118920674a47e4b36db0fd1437}{Int16}};}
+\DoxyCodeLine{00101\ \};}
+\DoxyCodeLine{00102\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00103\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ false,\ 4>\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01false_00_014_01_4_af022bb6240953ae5c42ae15d6e53e4cb}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac524bdfeb5d781872485d9321c881920}{Int32}};}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00107\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ false,\ 8>\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01false_00_018_01_4_a47fe869f0e84010b99e1e136a2ac28ff}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a51b4c1b67123dbb4903672fa753e6dd1}{Int64}};}
+\DoxyCodeLine{00109\ \};}
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00111\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ false,\ 16>\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01false_00_0116_01_4_a645eaab0bae9ad1bad3b4bd65497ad51}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aeaa392671300adb30bdafd242ac2d21b}{Int128}};}
+\DoxyCodeLine{00113\ \};}
+\DoxyCodeLine{00114\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00115\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ true,\ 1>\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01true_00_011_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00117\ \};}
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00119\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ true,\ 2>\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01true_00_012_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00121\ \};}
+\DoxyCodeLine{00122\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00123\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ true,\ 4>\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01true_00_014_01_4_af6b6a83d427d4c03164fd2c2d5f4abaf}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad162481edb5550c2ffae5639522b4452}{Float32}};}
+\DoxyCodeLine{00125\ \};}
+\DoxyCodeLine{00126\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00127\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ true,\ 8>\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01true_00_018_01_4_a5b47497dd69bcef557855382d6e4c83d}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aff1ad2ef3e4296df77f3849483964f56}{Float64}};}
+\DoxyCodeLine{00129\ \};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00132\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct}}<true,\ true,\ 16>\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct_3_01true_00_01true_00_0116_01_4_a5b47497dd69bcef557855382d6e4c83d}{Type}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aff1ad2ef3e4296df77f3849483964f56}{Float64}};}
+\DoxyCodeLine{00134\ \};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00143\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_addition_multiplication}{ResultOfAdditionMultiplication}}\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_addition_multiplication_a7d6020a42f3404a0e645bb8d6c8a9927}{Type}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<std::is\_signed\_v<A>}}\ ||\ std::is\_signed\_v<B>,}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_floating\_point\_v<A>\ ||\ std::is\_floating\_point\_v<B>,}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_a3b1c6241ed020e4bcde31faf06332539}{next\_size}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_af1ab5c62870ef41746b13408c0376df2}{max}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}})))>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_addition_multiplication_a7d6020a42f3404a0e645bb8d6c8a9927}{::Type}};}
+\DoxyCodeLine{00147\ \};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00150\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_subtraction}{ResultOfSubtraction}}\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_subtraction_a0a9d2d9c0b9dc6099de3908ec652682a}{Type}}\ =}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<true,\ std::is\_floating\_point\_v<A>}}\ ||\ std::is\_floating\_point\_v<B>,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_a3b1c6241ed020e4bcde31faf06332539}{next\_size}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_af1ab5c62870ef41746b13408c0376df2}{max}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}})))>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_subtraction_a0a9d2d9c0b9dc6099de3908ec652682a}{::Type}};}
+\DoxyCodeLine{00154\ \};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00158\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00159\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_floating_point_division}{ResultOfFloatingPointDivision}}\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_floating_point_division_a1838be60050fb864e7e94a50fe6b624e}{Type}}\ =\ std::conditional\_t<IsDecimalNumber<A>,\ \mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}},}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::conditional\_t<IsDecimalNumber<B>,\ \mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}},\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aff1ad2ef3e4296df77f3849483964f56}{Float64}}>>;}
+\DoxyCodeLine{00162\ \};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00167\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_integer_division}{ResultOfIntegerDivision}}\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_integer_division_a08b675466553b25df4083f9fe80068b2}{Type}}\ =}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<std::is\_signed\_v<A>}}\ ||\ std::is\_signed\_v<B>,\ \textcolor{keyword}{false},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}})>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_integer_division_a08b675466553b25df4083f9fe80068b2}{::Type}};}
+\DoxyCodeLine{00170\ \};}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00174\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00175\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_modulo}{ResultOfModulo}}\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_modulo_a42eb42870148421a56661dcd19d45000}{Type}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<std::is\_signed\_v<A>}}\ ||\ std::is\_signed\_v<B>,}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_floating\_point\_v<A>\ ||\ std::is\_floating\_point\_v<B>,}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_af1ab5c62870ef41746b13408c0376df2}{max}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}))>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_modulo_a42eb42870148421a56661dcd19d45000}{::Type}};}
+\DoxyCodeLine{00179\ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>}
+\DoxyCodeLine{00182\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_abs}{ResultOfAbs}}\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_abs_ad0bc0b9cc4b4da86983fe986bdb5692b}{Type}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<false,\ std::is\_floating\_point\_v<A>}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}})>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_abs_ad0bc0b9cc4b4da86983fe986bdb5692b}{::Type}};}
+\DoxyCodeLine{00184\ \};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00188\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00189\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit}{ResultOfBit}}\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit_af6eddf3f42744041dffa2f3c10493706}{Type}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<std::is\_signed\_v<A>}}\ ||\ std::is\_signed\_v<B>,\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_floating\_point\_v<A>\ ||\ std::is\_floating\_point\_v<B>}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ 8}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_number_traits_af1ab5c62870ef41746b13408c0376df2}{max}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}}),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a111da81ae5883147168bbb8366377b10}{B}}))>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit_af6eddf3f42744041dffa2f3c10493706}{::Type}};}
+\DoxyCodeLine{00194\ \};}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>}
+\DoxyCodeLine{00197\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit_not}{ResultOfBitNot}}\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit_not_a1b81f4d952c420a7efe4d49987c706df}{Type}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_construct}{Construct<std::is\_signed\_v<A>}},\ \textcolor{keyword}{false},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{log_8c_a955f504eccf76b4eb2489c0adab03121}{A}})>\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_result_of_bit_not_a1b81f4d952c420a7efe4d49987c706df}{::Type}};}
+\DoxyCodeLine{00199\ \};}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>}
+\DoxyCodeLine{00202\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits}{BinaryOperatorTraits}}\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_ac17c09a6b9ada16f0b4c78f4a1dbcf3b}{ColumnVectorA}}\ =\ std::conditional\_t<IsDecimalNumber<A>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal}{ColumnDecimal<A>}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<A>}}>;}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a7c84074592d4085a4e61ca27aa1a8174}{ColumnVectorB}}\ =\ std::conditional\_t<IsDecimalNumber<B>,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_decimal}{ColumnDecimal<B>}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<B>}}>;}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a9bfa82749155173aa36591b5f86fb240}{ArrayA}}\ =\ \textcolor{keyword}{typename}\ ColumnVectorA::Container;}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_number_traits_1_1_binary_operator_traits_a04e0d4c09b2895b428ea4086f762767a}{ArrayB}}\ =\ \textcolor{keyword}{typename}\ ColumnVectorB::Container;}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ArrayNull}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<UInt8>}};}
+\DoxyCodeLine{00208\ \};}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \}\ \textcolor{comment}{//\ namespace\ NumberTraits}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

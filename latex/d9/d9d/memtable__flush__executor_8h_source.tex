@@ -1,0 +1,122 @@
+\hypertarget{memtable__flush__executor_8h_source}{}\doxysection{memtable\+\_\+flush\+\_\+executor.\+h}
+\label{memtable__flush__executor_8h_source}\index{/Users/dabowang/be\_all/olap/memtable\_flush\_executor.h@{/Users/dabowang/be\_all/olap/memtable\_flush\_executor.h}}
+\mbox{\hyperlink{memtable__flush__executor_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/olap\_file.pb.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__define_8h}{olap/olap\_define.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{threadpool_8h}{util/threadpool.h}}"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }DataDir;}
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }DeltaWriter;}
+\DoxyCodeLine{00032\ \textcolor{keyword}{class\ }ExecEnv;}
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }MemTable;}
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }MemTrackerLimiter;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ the\ statistic\ of\ a\ certain\ flush\ handler.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ use\ atomic\ because\ it\ may\ be\ updated\ by\ multi\ threads}}
+\DoxyCodeLine{00038\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_flush_statistic}{FlushStatistic}}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_acaeb84895ecbacd8e5d9507bb331f2ac}{flush\_time\_ns}}\ =\ 0;}
+\DoxyCodeLine{00040\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_acf51a0657dd48735d46df4a78bb43fa1}{flush\_running\_count}}\ =\ 0;}
+\DoxyCodeLine{00041\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_a7042d40e044d52a63cd0f59d2b32928c}{flush\_finish\_count}}\ =\ 0;}
+\DoxyCodeLine{00042\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_a240a5e101661f33854e51f55e2836bf0}{flush\_size\_bytes}}\ =\ 0;}
+\DoxyCodeLine{00043\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_ab7176aa56e5625dc205ba23a424bc713}{flush\_disk\_size\_bytes}}\ =\ 0;}
+\DoxyCodeLine{00044\ \ \ \ \ std::atomic\_uint64\_t\ \mbox{\hyperlink{structdoris_1_1_flush_statistic_a759193aafde0ddf59ffe7015ec5bc807}{flush\_wait\_time\_ns}}\ =\ 0;}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ std::ostream\&\ operator<<(std::ostream\&\ os,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_flush_statistic}{FlushStatistic}}\&\ stat);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ A\ thin\ wrapper\ of\ ThreadPoolToken\ to\ submit\ task.}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ For\ a\ tablet,\ there\ may\ be\ multiple\ memtables,\ which\ will\ be\ flushed\ to\ disk}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ one\ by\ one\ in\ the\ order\ of\ generation.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ If\ a\ memtable\ flush\ fails,\ then:}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ 1.\ Immediately\ disallow\ submission\ of\ any\ subsequent\ memtable}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ 2.\ For\ the\ memtables\ that\ have\ already\ been\ submitted,\ there\ is\ no\ need\ to\ flush,}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \ because\ the\ entire\ job\ will\ definitely\ fail;}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_flush_token}{FlushToken}}\ \{}
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_flush_token_aa152f8b87c95b4e13cb485f6a04034d1}{FlushToken}}(std::unique\_ptr<ThreadPoolToken>\ flush\_pool\_token)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_flush_token_ae65150eda074a3efca6a375c15c2c220}{\_flush\_token}}(std::move(flush\_pool\_token)),\ \mbox{\hyperlink{classdoris_1_1_flush_token_a8b3a66317b8bea7f3a8b2ac9dff25f44}{\_flush\_status}}(ErrorCode::\mbox{\hyperlink{namespacedoris_a70d2d802a61ea92a685c471e0ccc63daa2bc49ec37d6a5715dd23e85f1ff5bb59}{OK}})\ \{\}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_flush_token_a28d88733fe147256315de085f907da96}{submit}}(std::unique\_ptr<MemTable>\ mem\_table);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ error\ has\ happens,\ so\ we\ cancel\ this\ token}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ And\ remove\ all\ tasks\ in\ the\ queue.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_flush_token_a02d5fa6b14e221f3012a794b905be166}{cancel}}();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ wait\ all\ tasks\ in\ token\ to\ be\ completed.}}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_flush_token_abaef81919370ecc3e3d5b3bdf1ba1ecd}{wait}}();}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ get\ flush\ operations'\ statistics}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_flush_statistic}{FlushStatistic}}\&\ \mbox{\hyperlink{classdoris_1_1_flush_token_a11a08ab479bd1527c09c52686242174c}{get\_stats}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_flush_token_a3a8fe4a98bdb99d1cb32357e8ff62949}{\_stats}};\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_memtable_flush_task}{MemtableFlushTask}};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_flush_token_a8f3185822d60093e3616b6dd2c8ad5e7}{\_flush\_memtable}}(\mbox{\hyperlink{classdoris_1_1_mem_table}{MemTable}}*\ mem\_table,\ int64\_t\ submit\_task\_time);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_flush_token_ae65150eda074a3efca6a375c15c2c220}{\_flush\_token}};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ Records\ the\ current\ flush\ status\ of\ the\ tablet.}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ Note:\ Once\ its\ value\ is\ set\ to\ Failed,\ it\ cannot\ return\ to\ SUCCESS.}}
+\DoxyCodeLine{00082\ \ \ \ \ std::atomic<int>\ \mbox{\hyperlink{classdoris_1_1_flush_token_a8b3a66317b8bea7f3a8b2ac9dff25f44}{\_flush\_status}};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_flush_statistic}{FlushStatistic}}\ \mbox{\hyperlink{classdoris_1_1_flush_token_a3a8fe4a98bdb99d1cb32357e8ff62949}{\_stats}};}
+\DoxyCodeLine{00085\ \};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ MemTableFlushExecutor\ is\ responsible\ for\ flushing\ memtables\ to\ disk.}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ It\ encapsulate\ a\ ThreadPool\ to\ handle\ all\ tasks.}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ Usage\ Example:}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ \ \ \ ...}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ \ \ \ std::shared\_ptr<FlushHandler>\ flush\_handler;}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \ \ \ \ memTableFlushExecutor.create\_flush\_token(\&flush\_handler);}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ \ \ \ \ \ ...}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ \ \ \ \ \ flush\_token-\/>submit(memtable)}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ \ \ \ \ \ ...}}
+\DoxyCodeLine{00096\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor}{MemTableFlushExecutor}}\ \{}
+\DoxyCodeLine{00097\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_ae2a7221f9c222e302b1199680318ccc1}{MemTableFlushExecutor}}()\ \{\}}
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_aae03fc0581b6e7ff6d2a1ed8c32e9d01}{\string~MemTableFlushExecutor}}()\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_adaa28e8787516382e3327d9cf2025c5a}{\_flush\_pool}}-\/>shutdown();}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_abcb7f9ec3608154daacb3bcc4fdf4f6d}{\_high\_prio\_flush\_pool}}-\/>shutdown();}
+\DoxyCodeLine{00102\ \ \ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ init\ should\ be\ called\ after\ storage\ engine\ is\ opened,}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ because\ it\ needs\ path\ hash\ of\ each\ data\ dir.}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_a6c8f9bc53e33770b00f8ff45832e3bbc}{init}}(\textcolor{keyword}{const}\ std::vector<DataDir*>\&\ data\_dirs);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_a03e22b21481a22976f744f19c1d70038}{create\_flush\_token}}(std::unique\_ptr<FlushToken>*\ flush\_token,\ RowsetTypePB\ rowset\_type,}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ should\_serial,\ \textcolor{keywordtype}{bool}\ is\_high\_priority);}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00112\ \ \ \ \ std::unique\_ptr<ThreadPool>\ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_adaa28e8787516382e3327d9cf2025c5a}{\_flush\_pool}};}
+\DoxyCodeLine{00113\ \ \ \ \ std::unique\_ptr<ThreadPool>\ \mbox{\hyperlink{classdoris_1_1_mem_table_flush_executor_abcb7f9ec3608154daacb3bcc4fdf4f6d}{\_high\_prio\_flush\_pool}};}
+\DoxyCodeLine{00114\ \};}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

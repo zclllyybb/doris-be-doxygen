@@ -1,0 +1,972 @@
+\hypertarget{process__hash__table__probe__impl_8h_source}{}\doxysection{process\+\_\+hash\+\_\+table\+\_\+probe\+\_\+impl.\+h}
+\label{process__hash__table__probe__impl_8h_source}\index{/Users/dabowang/be\_all/vec/exec/join/process\_hash\_table\_probe\_impl.h@{/Users/dabowang/be\_all/vec/exec/join/process\_hash\_table\_probe\_impl.h}}
+\mbox{\hyperlink{process__hash__table__probe__impl_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{process__hash__table__probe_8h}{process\_hash\_table\_probe.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vhash__join__node_8h}{vhash\_join\_node.h}}"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae23208365ff8be192c29fcdeb668fa5e}{PREFETCH\_STEP}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_hash_join_node_ae23208365ff8be192c29fcdeb668fa5e}{HashJoinNode::PREFETCH\_STEP}};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00029\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_a5a1f5457bdff9e67c817a4520e1b6606}{ProcessHashTableProbe<JoinOpType>::ProcessHashTableProbe}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_hash_join_node}{HashJoinNode}}*\ join\_node,\ \textcolor{keywordtype}{int}\ batch\_size)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ :\ \_join\_node(join\_node),}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \_batch\_size(batch\_size),}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \_build\_blocks(*join\_node-\/>\_build\_blocks),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_left\_flags(join\_node-\/>\_is\_outer\_join}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ \&(reinterpret\_cast<\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnUInt8}}\&>(}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *join\_node-\/>\_tuple\_is\_null\_left\_flag\_column)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{uint24_8h_a2548205c24a5abb8e9a504a1f8cf5862}{get\_data}}())}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ nullptr),}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_right\_flags(}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ join\_node-\/>\_is\_outer\_join}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ \&(reinterpret\_cast<\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnUInt8}}\&>(}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *join\_node-\/>\_tuple\_is\_null\_right\_flag\_column)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{uint24_8h_a2548205c24a5abb8e9a504a1f8cf5862}{get\_data}}())}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ nullptr),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \_rows\_returned\_counter(join\_node-\/>\_rows\_returned\_counter),}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \_search\_hashtable\_timer(join\_node-\/>\_search\_hashtable\_timer),}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \_build\_side\_output\_timer(join\_node-\/>\_build\_side\_output\_timer),}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \_probe\_side\_output\_timer(join\_node-\/>\_probe\_side\_output\_timer)\ \{\}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ have\_other\_join\_conjunct>}
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_a3850b66885c1c4d558d55d0df301c1ff}{ProcessHashTableProbe<JoinOpType>::build\_side\_output\_column}}(}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a3904a5cfbe6dcfc82d31783ef44b8f9c}{MutableColumns}}\&\ mcol,\ \textcolor{keywordtype}{int}\ column\_offset,\ \textcolor{keywordtype}{int}\ column\_length,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<bool>\&\ output\_slot\_flags,\ \textcolor{keywordtype}{int}\ size)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ is\_semi\_anti\_join\ =\ JoinOpType\ ==\ TJoinOp::RIGHT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN\ ||}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::NULL\_AWARE\_LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_SEMI\_JOIN;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ probe\_all\ =}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_OUTER\_JOIN\ ||\ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!is\_semi\_anti\_join\ ||\ have\_other\_join\_conjunct)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_build\_blocks.size()\ ==\ 1)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column\_length;\ i++)\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\ =\ *\_build\_blocks[0].get\_by\_position(i).column;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (output\_slot\_flags[i])\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_indices\_from(column,\ \_build\_block\_rows.data(),}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.data()\ +\ size);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_many\_defaults(size);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column\_length;\ i++)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (output\_slot\_flags[i])\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ size;\ j++)\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_build\_block\_offsets[j]\ ==\ -\/1)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(mcol[i\ +\ column\_offset]-\/>is\_nullable());}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<ColumnNullable*>(mcol[i\ +\ column\_offset].\mbox{\hyperlink{namespacedoris_1_1vectorized_a15491adacffd97f9c5b6efe5dd58f657}{get}}())}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>insert\_default();}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\ =\ *\_build\_blocks[\_build\_block\_offsets[j]]}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get\_by\_position(i)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .column;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_from(column,\ \_build\_block\_rows[j]);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_build\_block\_offsets[j]\ ==\ -\/1)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ only\ case\ to\ reach\ here:}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ left\ anti\ join\ with\ other\ conjuncts,\ and}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2.\ equal\ conjuncts\ does\ not\ match}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ since\ nullptr\ is\ emplaced\ back\ to\ visited\_map,}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ output\ value\ of\ the\ build\ side\ does\ not\ matter,}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ insert\ default\ value}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_default();}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\ =\ *\_build\_blocks[\_build\_block\_offsets[j]]}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get\_by\_position(i)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .column;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_from(column,\ \_build\_block\_rows[j]);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i\ +\ column\_offset]-\/>insert\_many\_defaults(size);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ Dispose\ right\ tuple\ is\ null\ flags\ columns}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all\ \&\&\ !have\_other\_join\_conjunct)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_right\_flags-\/>resize(size);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ null\_data\ =\ \_tuple\_is\_null\_right\_flags-\/>data();}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ null\_data[i]\ =\ \_build\_block\_rows[i]\ ==\ -\/1;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \}}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00124\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_ad20a5b93ae0a2faf710f20ab9ef6a11f}{ProcessHashTableProbe<JoinOpType>::probe\_side\_output\_column}}(}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a3904a5cfbe6dcfc82d31783ef44b8f9c}{MutableColumns}}\&\ mcol,\ \textcolor{keyword}{const}\ std::vector<bool>\&\ output\_slot\_flags,\ \textcolor{keywordtype}{int}\ size,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ last\_probe\_index,\ \textcolor{keywordtype}{size\_t}\ probe\_size,\ \textcolor{keywordtype}{bool}\ all\_match\_one,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ have\_other\_join\_conjunct)\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_block\ =\ \_join\_node-\/>\_probe\_block;}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ output\_slot\_flags.size();\ ++i)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (output\_slot\_flags[i])\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\ =\ probe\_block.get\_by\_position(i).column;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (all\_match\_one)\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i]-\/>insert\_range\_from(*column,\ last\_probe\_index,\ probe\_size);}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK\_GE(\_items\_counts.size(),\ last\_probe\_index\ +\ probe\_size);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column-\/>replicate(\&\_items\_counts[0],\ size,\ *mcol[i],\ last\_probe\_index,\ probe\_size);}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i]-\/>insert\_many\_defaults(size);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_OUTER\_JOIN)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!have\_other\_join\_conjunct)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_left\_flags-\/>resize\_fill(size,\ 0);}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00151\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ need\_null\_map\_for\_probe,\ \textcolor{keywordtype}{bool}\ ignore\_null,\ \textcolor{keyword}{typename}\ HashTableType>}
+\DoxyCodeLine{00152\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_a27ccfb1b4be10e18f0a82048b325435c}{ProcessHashTableProbe<JoinOpType>::do\_process}}(HashTableType\&\ hash\_table\_ctx,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ConstNullMapPtr}}\ null\_map,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block}{MutableBlock}}\&\ mutable\_block,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}*\ output\_block,\ \textcolor{keywordtype}{size\_t}\ probe\_rows,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_mark\_join)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_index\ =\ \_join\_node-\/>\_probe\_index;}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_raw\_ptrs\ =\ \_join\_node-\/>\_probe\_columns;}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ ==\ 0\ \&\&\ \_items\_counts.size()\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \_items\_counts.resize(probe\_rows);}
+\DoxyCodeLine{00161\ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (\_build\_block\_rows.size()\ <\ probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE)\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \_build\_block\_rows.resize(probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE);}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \_build\_block\_offsets.resize(probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE);}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{using\ }KeyGetter\ =\ \textcolor{keyword}{typename}\ HashTableType::State;}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keyword}{using\ }Mapped\ =\ \textcolor{keyword}{typename}\ HashTableType::Mapped;}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_idx\ =}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_is\_right\_semi\_anti\ ?\ 0\ :\ \_join\_node-\/>\_left\_table\_data\_types.size();}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_len\ =\ \_join\_node-\/>\_right\_table\_data\_types.size();}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ KeyGetter\ key\_getter(probe\_raw\_ptrs,\ \_join\_node-\/>\_probe\_key\_sz,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ ==\ 0)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ old\_probe\_keys\_memory\_usage\ =\ 0;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_arena)\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ old\_probe\_keys\_memory\_usage\ =\ \_arena-\/>size();}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \_arena.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}());}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_is_pre_serialized_keys_hash_method_traits}{ColumnsHashing::IsPreSerializedKeysHashMethodTraits<KeyGetter>::value}})\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_probe\_keys.size()\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_probe\_keys.resize(probe\_rows);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ keys\_size\ =\ probe\_raw\_ptrs.size();}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ probe\_rows;\ ++i)\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_probe\_keys[i]\ =}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad06a10d235b14b3215446ac8d89b158e}{serialize\_keys\_to\_pool\_contiguous}}(i,\ keys\_size,\ probe\_raw\_ptrs,\ *\_arena);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_probe\_arena\_memory\_usage-\/>add(\_arena-\/>size()\ -\/}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_probe\_keys\_memory\_usage);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_is_pre_serialized_keys_hash_method_traits}{ColumnsHashing::IsPreSerializedKeysHashMethodTraits<KeyGetter>::value}})\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ key\_getter.set\_serialized\_keys(\_probe\_keys.data());}
+\DoxyCodeLine{00198\ \ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{auto}\&\ mcol\ =\ mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_aeb23bab6dc837fedc89a6c62ed84a161}{mutable\_columns}}();}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordtype}{int}\ current\_offset\ =\ 0;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ is\_right\_semi\_anti\_join\ =}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::RIGHT\_ANTI\_JOIN\ ||\ JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ probe\_all\ =}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_OUTER\_JOIN\ ||\ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN;}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordtype}{bool}\ all\_match\_one\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{int}\ last\_probe\_index\ =\ probe\_index;}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ probe\_size\ =\ 0;}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_row\_match\_iter\ =}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ std::get<ForwardIterator<Mapped>>(\_join\_node-\/>\_probe\_row\_match\_iter);}
+\DoxyCodeLine{00214\ \ \ \ \ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaa9a2971c6368e3ddd3f5140a0295eb7}{SCOPED\_TIMER}}(\_search\_hashtable\_timer);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!is\_right\_semi\_anti\_join)\ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ handle\ ramaining\ matched\ rows\ from\ last\ probe\ row}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_row\_match\_iter.ok())\ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ probe\_row\_match\_iter.ok()\ \&\&\ current\_offset\ <\ \_batch\_size;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_row\_match\_iter)\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ probe\_row\_match\_iter-\/>block\_offset;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ probe\_row\_match\_iter-\/>row\_num;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(probe\_row\_match\_iter-\/>block\_offset);}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(probe\_row\_match\_iter-\/>row\_num);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index]\ =\ current\_offset;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one\ \&=\ (current\_offset\ ==\ 1);}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!probe\_row\_match\_iter.ok())\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_size\ =\ 1;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_offset\ <\ \_batch\_size)\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (probe\_index\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (ignore\_null\ \&\&\ need\_null\_map\_for\_probe)\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*null\_map)[probe\_index])\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index++]\ =\ (uint32\_t)1;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ full\ outer\ /\ left\ outer\ need\ insert\ the\ data\ of\ right\ table}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(-\/1);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(-\/1);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index++]\ =\ (uint32\_t)0;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all)\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_offset\ >=\ \_batch\_size)\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ last\_offset\ =\ current\_offset;}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ find\_result\ =\ !need\_null\_map\_for\_probe}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ key\_getter.find\_key(hash\_table\_ctx.hash\_table,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_index,\ *\_arena)}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (*null\_map)[probe\_index]}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ \textcolor{keyword}{decltype}(key\_getter.find\_key(hash\_table\_ctx.hash\_table,}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_index,}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\_arena))\ \{\textcolor{keyword}{nullptr},\ \textcolor{keyword}{false}\}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ key\_getter.find\_key(hash\_table\_ctx.hash\_table,}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_index,\ *\_arena);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae23208365ff8be192c29fcdeb668fa5e}{PREFETCH\_STEP}}\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key\_getter.template\ prefetch<true>(hash\_table\_ctx.hash\_table,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_index\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae23208365ff8be192c29fcdeb668fa5e}{PREFETCH\_STEP}},\ *\_arena);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ current\_probe\_index\ =\ probe\_index;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::NULL\_AWARE\_LEFT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_mark\_join)\ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<doris::vectorized::ColumnVector<UInt8>\&>(*mcol[mcol.size()\ -\/\ 1])}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{uint24_8h_a2548205c24a5abb8e9a504a1f8cf5862}{get\_data}}()}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ push\_back(!find\_result.is\_found());}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!find\_result.is\_found())\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_SEMI\_JOIN)\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_mark\_join)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<doris::vectorized::ColumnVector<UInt8>\&>(*mcol[mcol.size()\ -\/\ 1])}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{uint24_8h_a2548205c24a5abb8e9a504a1f8cf5862}{get\_data}}()}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ push\_back(find\_result.is\_found());}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (find\_result.is\_found())\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(!is\_mark\_join);}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (find\_result.is\_found())\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mapped\ =\ find\_result.get\_mapped();}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ Iterators\ are\ currently\ considered\ to\ be\ a\ heavy\ operation\ and\ have\ a\ certain\ impact\ on\ performance.}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ should\ rethink\ whether\ to\ use\ this\ iterator\ mode\ in\ the\ future.\ Now\ just\ opt\ the\ one\ row\ case}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mapped.get\_row\_count()\ ==\ 1)\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<Mapped,\ RowRefListWithFlag>)\ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mapped.visited\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!is\_right\_semi\_anti\_join)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ mapped.block\_offset;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ mapped.row\_num;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(mapped.block\_offset);}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(mapped.row\_num);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!is\_right\_semi\_anti\_join)\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ mapped.begin();}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ it.ok()\ \&\&\ current\_offset\ <\ \_batch\_size;\ ++it)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ it-\/>block\_offset;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ it-\/>row\_num;}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(it-\/>block\_offset);}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(it-\/>row\_num);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_row\_match\_iter\ =\ it;}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!it.ok())\ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ all\ matched\ rows\ for\ the\ current\ probe\ row\ are\ handled,}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ advance\ to\ next\ probe\ row.}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ not(which\ means\ it\ excceed\ batch\ size),\ probe\_index\ is\ not\ increased\ and}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ remaining\ matched\ rows\ for\ the\ current\ probe\ row\ will\ be}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ handled\ in\ the\ next\ call\ of\ this\ function}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<Mapped,\ RowRefListWithFlag>)\ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mapped.visited\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ full\ outer\ /\ left\ outer\ need\ insert\ the\ data\ of\ right\ table}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(-\/1);}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(-\/1);}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++probe\_index;}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ count\ =\ (uint32\_t)(current\_offset\ -\/\ last\_offset);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[current\_probe\_index]\ =\ count;}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one\ \&=\ (count\ ==\ 1);}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_offset\ >=\ \_batch\_size)\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ probe\_size\ =\ probe\_index\ -\/\ last\_probe\_index\ +\ (probe\_row\_match\_iter.ok()\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaa9a2971c6368e3ddd3f5140a0295eb7}{SCOPED\_TIMER}}(\_build\_side\_output\_timer);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ build\_side\_output\_column(mcol,\ right\_col\_idx,\ right\_col\_len,}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_right\_output\_slot\_flags,\ current\_offset);}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ !=\ TJoinOp::RIGHT\_SEMI\_JOIN\ \&\&}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ !=\ TJoinOp::RIGHT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaa9a2971c6368e3ddd3f5140a0295eb7}{SCOPED\_TIMER}}(\_probe\_side\_output\_timer);}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ probe\_side\_output\_column(mcol,\ \_join\_node-\/>\_left\_output\_slot\_flags,\ current\_offset,}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ last\_probe\_index,\ probe\_size,\ all\_match\_one,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00396\ \ \ \ \ \}}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a7c22bac5327618d6ac842348fe2a3780}{swap}}(mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_a0a4af389bbb4d5df4512d66a4531c02a}{to\_block}}());}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00401\ \}}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00404\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ need\_null\_map\_for\_probe,\ \textcolor{keywordtype}{bool}\ ignore\_null,\ \textcolor{keyword}{typename}\ HashTableType>}
+\DoxyCodeLine{00405\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_a20674340124eff0c4add89be72f3a1c6}{ProcessHashTableProbe<JoinOpType>::do\_process\_with\_other\_join\_conjuncts}}(}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ HashTableType\&\ hash\_table\_ctx,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ConstNullMapPtr}}\ null\_map,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block}{MutableBlock}}\&\ mutable\_block,}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}*\ output\_block,\ \textcolor{keywordtype}{size\_t}\ probe\_rows,\ \textcolor{keywordtype}{bool}\ is\_mark\_join)\ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_index\ =\ \_join\_node-\/>\_probe\_index;}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{auto}\&\ probe\_raw\_ptrs\ =\ \_join\_node-\/>\_probe\_columns;}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ ==\ 0\ \&\&\ \_items\_counts.size()\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \_items\_counts.resize(probe\_rows);}
+\DoxyCodeLine{00412\ \ \ \ \ \}}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keywordflow}{if}\ (\_build\_block\_rows.size()\ <\ probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE)\ \{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \_build\_block\_rows.resize(probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \_build\_block\_offsets.resize(probe\_rows\ *\ PROBE\_SIDE\_EXPLODE\_RATE);}
+\DoxyCodeLine{00416\ \ \ \ \ \}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{using\ }KeyGetter\ =\ \textcolor{keyword}{typename}\ HashTableType::State;}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keyword}{using\ }Mapped\ =\ \textcolor{keyword}{typename}\ HashTableType::Mapped;}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<Mapped,\ RowRefListWithFlags>)\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ probe\_all\ =}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_OUTER\_JOIN\ ||\ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ KeyGetter\ key\_getter(probe\_raw\_ptrs,\ \_join\_node-\/>\_probe\_key\_sz,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ ==\ 0)\ \{}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ old\_probe\_keys\_memory\_usage\ =\ 0;}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_arena)\ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_probe\_keys\_memory\_usage\ =\ \_arena-\/>size();}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \_arena.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}());}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_is_pre_serialized_keys_hash_method_traits}{ColumnsHashing::IsPreSerializedKeysHashMethodTraits<KeyGetter>::value}})\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_probe\_keys.size()\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_probe\_keys.resize(probe\_rows);}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ keys\_size\ =\ probe\_raw\_ptrs.size();}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ probe\_rows;\ ++i)\ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_probe\_keys[i]\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ad06a10d235b14b3215446ac8d89b158e}{serialize\_keys\_to\_pool\_contiguous}}(i,\ keys\_size,\ probe\_raw\_ptrs,}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\_arena);}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_probe\_arena\_memory\_usage-\/>add(\_arena-\/>size()\ -\/}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_probe\_keys\_memory\_usage);}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_is_pre_serialized_keys_hash_method_traits}{ColumnsHashing::IsPreSerializedKeysHashMethodTraits<KeyGetter>::value}})\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ key\_getter.set\_serialized\_keys(\_probe\_keys.data());}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_idx\ =\ \_join\_node-\/>\_left\_table\_data\_types.size();}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_len\ =\ \_join\_node-\/>\_right\_table\_data\_types.size();}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mcol\ =\ mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_aeb23bab6dc837fedc89a6c62ed84a161}{mutable\_columns}}();}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ use\ in\ right\ join\ to\ change\ visited\ state\ after}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ exec\ the\ vother\ join\ conjunct}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ std::vector<bool*>\ visited\_map;}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ visited\_map.reserve(1.2\ *\ \_batch\_size);}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ std::vector<bool>\ same\_to\_prev;}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ same\_to\_prev.reserve(1.2\ *\ \_batch\_size);}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ current\_offset\ =\ 0;}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ all\_match\_one\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ last\_probe\_index\ =\ probe\_index;}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (probe\_index\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ignore\ null\ rows}}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (ignore\_null\ \&\&\ need\_null\_map\_for\_probe)\ \{}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*null\_map)[probe\_index])\ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (probe\_all)\ \{}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index++]\ =\ (uint32\_t)1;}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_to\_prev.emplace\_back(\textcolor{keyword}{false});}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_map.emplace\_back(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ full\ outer\ /\ left\ outer\ need\ insert\ the\ data\ of\ right\ table}}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(-\/1);}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(-\/1);}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index++]\ =\ (uint32\_t)0;}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ last\_offset\ =\ current\_offset;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ find\_result\ =}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !need\_null\_map\_for\_probe}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ key\_getter.find\_key(hash\_table\_ctx.hash\_table,\ probe\_index,\ *\_arena)}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (*null\_map)[probe\_index]}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ \textcolor{keyword}{decltype}(key\_getter.find\_key(hash\_table\_ctx.hash\_table,\ probe\_index,}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\_arena))\ \{\textcolor{keyword}{nullptr},\ \textcolor{keyword}{false}\}}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ key\_getter.find\_key(hash\_table\_ctx.hash\_table,\ probe\_index,\ *\_arena);}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_index\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae23208365ff8be192c29fcdeb668fa5e}{PREFETCH\_STEP}}\ <\ probe\_rows)\ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key\_getter.template\ prefetch<true>(hash\_table\_ctx.hash\_table,}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ probe\_index\ +\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ae23208365ff8be192c29fcdeb668fa5e}{PREFETCH\_STEP}},\ *\_arena);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (find\_result.is\_found())\ \{}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mapped\ =\ find\_result.get\_mapped();}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ origin\_offset\ =\ current\_offset;}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ Iterators\ are\ currently\ considered\ to\ be\ a\ heavy\ operation\ and\ have\ a\ certain\ impact\ on\ performance.}}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ should\ rethink\ whether\ to\ use\ this\ iterator\ mode\ in\ the\ future.\ Now\ just\ opt\ the\ one\ row\ case}}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mapped.get\_row\_count()\ ==\ 1)\ \{}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ mapped.block\_offset;}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ mapped.row\_num;}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(mapped.block\_offset);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(mapped.row\_num);}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_map.emplace\_back(\&mapped.visited);}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ mapped.begin();\ it.ok();\ ++it)\ \{}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ it-\/>block\_offset;}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ it-\/>row\_num;}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(it-\/>block\_offset);}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(it-\/>row\_num);}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_map.emplace\_back(\&it-\/>visited);}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_to\_prev.emplace\_back(\textcolor{keyword}{false});}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ current\_offset\ -\/\ origin\_offset\ -\/\ 1;\ ++i)\ \{}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_to\_prev.emplace\_back(\textcolor{keyword}{true});}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_OUTER\_JOIN\ ||}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN\ ||}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::NULL\_AWARE\_LEFT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_to\_prev.emplace\_back(\textcolor{keyword}{false});}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_map.emplace\_back(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ full\ outer\ /\ left\ outer\ need\ insert\ the\ data\ of\ right\ table}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ left\ anti\ use\ -\/1\ use\ a\ default\ value}}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(current\_offset\ <\ \_build\_block\_rows.size()))\ \{}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows[current\_offset]\ =\ -\/1;}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_offsets.emplace\_back(-\/1);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_build\_block\_rows.emplace\_back(-\/1);}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++current\_offset;}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ other\ join,\ no\ nothing}}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ count\ =\ (uint32\_t)(current\_offset\ -\/\ last\_offset);}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ \_items\_counts[probe\_index++]\ =\ count;}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one\ \&=\ (count\ ==\ 1);}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_offset\ >=\ \_batch\_size\ \&\&\ !all\_match\_one)\ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaa9a2971c6368e3ddd3f5140a0295eb7}{SCOPED\_TIMER}}(\_build\_side\_output\_timer);}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ build\_side\_output\_column<true>(mcol,\ right\_col\_idx,\ right\_col\_len,}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_right\_output\_slot\_flags,\ current\_offset);}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaa9a2971c6368e3ddd3f5140a0295eb7}{SCOPED\_TIMER}}(\_probe\_side\_output\_timer);}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ probe\_side\_output\_column(mcol,\ \_join\_node-\/>\_left\_output\_slot\_flags,\ current\_offset,}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ last\_probe\_index,\ probe\_index\ -\/\ last\_probe\_index,}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\_match\_one,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ num\_cols\ =\ mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_a08f559e5612203aeedf927d660e77b67}{columns}}();}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a7c22bac5327618d6ac842348fe2a3780}{swap}}(mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_a0a4af389bbb4d5df4512d66a4531c02a}{to\_block}}());}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dispose\ the\ other\ join\ conjunct\ exec}}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a9be86262d8ec3739dba5e0910c2339ad}{rows}}())\ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ result\_column\_id\ =\ -\/1;}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ orig\_columns\ =\ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a08f559e5612203aeedf927d660e77b67}{columns}}();}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}((*\_join\_node-\/>\_vother\_join\_conjunct\_ptr)}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>execute(output\_block,\ \&result\_column\_id));}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ column\ =\ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result\_column\_id).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}};}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_OUTER\_JOIN\ ||}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN)\ \{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ new\_filter\_column\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<UInt8>::create}}();}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ filter\_map\ =\ new\_filter\_column-\/>get\_data();}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\_column\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<UInt8>::create}}(column-\/>size(),\ 0);}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ null\_map\_data\ =\ null\_map\_column-\/>get\_data().data();}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ join\_hit\ =\ visited\_map[i]\ !=\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ other\_hit\ =\ column-\/>get\_bool(i);}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!other\_hit)\ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ right\_col\_len;\ ++j)\ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ typeid\_cast<ColumnNullable*>(}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::move(*output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(j\ +\ right\_col\_idx)}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}})}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .assume\_mutable()}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get())}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>get\_null\_map\_data()[i]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_map\_data[i]\ =\ !join\_hit\ ||\ !other\_hit;}
+\DoxyCodeLine{00606\ }
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (join\_hit)\ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *visited\_map[i]\ |=\ other\_hit;}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(other\_hit\ ||\ !same\_to\_prev[i]\ ||}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (!column-\/>get\_bool(i\ -\/\ 1)\ \&\&\ filter\_map.back()));}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Here\ to\ keep\ only\ hit\ join\ conjunct\ and\ other\ join\ conjunt\ is\ true\ need\ to\ be\ output.}}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ not,\ only\ some\ key\ must\ keep\ one\ row\ will\ output\ will\ null\ right\ table\ column}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (same\_to\_prev[i]\ \&\&\ filter\_map.back()\ \&\&\ !column-\/>get\_bool(i\ -\/\ 1))\ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(\textcolor{keyword}{true});}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00620\ }
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (filter\_map[i])\ \{}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_right\_flags-\/>emplace\_back(null\_map\_data[i]);}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result\_column\_id).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}\ =}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::move(new\_filter\_column);}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_SEMI\_JOIN)\ \{}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ new\_filter\_column\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<UInt8>::create}}();}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ filter\_map\ =\ new\_filter\_column-\/>get\_data();}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!column-\/>empty())\ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.emplace\_back(column-\/>get\_bool(0));}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (column-\/>get\_bool(i)\ ||\ (same\_to\_prev[i]\ \&\&\ filter\_map[i\ -\/\ 1]))\ \{}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ last\ same\ element\ is\ true,\ output\ last\ one}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(\textcolor{keyword}{true});}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ !same\_to\_prev[i]\ \&\&\ filter\_map[i\ -\/\ 1];}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(\textcolor{keyword}{false});}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_mark\_join)\ \{}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ matched\_map\ =\ assert\_cast<doris::vectorized::ColumnVector<UInt8>\&>(}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(num\_cols\ -\/\ 1)}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}-\/>assume\_mutable()))}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get\_data();}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ mark\ join,\ we\ only\ filter\ rows\ which\ have\ duplicate\ join\ keys.}}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ And\ then,\ we\ set\ matched\_map\ to\ the\ join\ result\ to\ do\ the\ mark\ join's\ filtering.}}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 1;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!same\_to\_prev[i])\ \{}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ matched\_map.push\_back(filter\_map[i\ -\/\ 1]);}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ matched\_map.push\_back(filter\_map[filter\_map.size()\ -\/\ 1]);}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[filter\_map.size()\ -\/\ 1]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00661\ }
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result\_column\_id).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}\ =}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::move(new\_filter\_column);}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::NULL\_AWARE\_LEFT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ new\_filter\_column\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<UInt8>::create}}();}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ filter\_map\ =\ new\_filter\_column-\/>get\_data();}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!column-\/>empty())\ \{}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Both\ equal\ conjuncts\ and\ other\ conjuncts\ are\ true}}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.emplace\_back(column-\/>get\_bool(0)\ \&\&\ visited\_map[0]);}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((visited\_map[i]\ \&\&\ column-\/>get\_bool(i))\ ||}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (same\_to\_prev[i]\ \&\&\ filter\_map[i\ -\/\ 1]))\ \{}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ either\ of\ two\ conditions\ is\ meet:}}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ Both\ equal\ conjuncts\ and\ other\ conjuncts\ are\ true\ or\ same\_to\_prev}}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2.\ This\ row\ is\ joined\ from\ the\ same\ build\ side\ row\ as\ the\ previous\ row}}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ filter\_map[i]\ to\ true\ and\ filter\_map[i\ -\/\ 1]\ to\ false\ if\ same\_to\_prev[i]}}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ is\ true.}}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(\textcolor{keyword}{true});}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ !same\_to\_prev[i]\ \&\&\ filter\_map[i\ -\/\ 1];}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map.push\_back(\textcolor{keyword}{false});}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_mark\_join)\ \{}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ matched\_map\ =}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<doris::vectorized::ColumnVector<UInt8>\&>(}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a08f559e5612203aeedf927d660e77b67}{columns}}()\ -\/\ 1)}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}-\/>assume\_mutable()))}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get\_data();}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ same\_to\_prev.size();\ ++i)\ \{}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!same\_to\_prev[i])\ \{}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ matched\_map.push\_back(!filter\_map[i\ -\/\ 1]);}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ matched\_map.push\_back(filter\_map[filter\_map.size()\ -\/\ 1]);}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[filter\_map.size()\ -\/\ 1]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Same\ to\ the\ semi\ join,\ but\ change\ the\ last\ value\ to\ opposite\ value}}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ same\_to\_prev.size();\ ++i)\ \{}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!same\_to\_prev[i])\ \{}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[i\ -\/\ 1]\ =\ !filter\_map[i\ -\/\ 1];}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_map[same\_to\_prev.size()\ -\/\ 1]\ =\ !filter\_map[same\_to\_prev.size()\ -\/\ 1];}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result\_column\_id).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}\ =}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::move(new\_filter\_column);}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN\ ||}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::RIGHT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(visited\_map[i]);}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *visited\_map[i]\ |=\ column-\/>get\_bool(i);}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_OUTER\_JOIN)\ \{}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ filter\_size\ =\ 0;}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ column-\/>size();\ ++i)\ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(visited\_map[i]);}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ result\ =\ column-\/>get\_bool(i);}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *visited\_map[i]\ |=\ result;}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ filter\_size\ +=\ result;}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_left\_flags-\/>resize\_fill(filter\_size,\ 0);}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ inner\ join\ do\ nothing}}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00732\ }
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN\ ||}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::RIGHT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_ac8bb3912a3ce86b15842e79d0b421204}{clear}}();}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::LEFT\_SEMI\_JOIN\ ||}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::LEFT\_ANTI\_JOIN\ ||}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::NULL\_AWARE\_LEFT\_ANTI\_JOIN)\ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ orig\_columns\ =\ right\_col\_idx;}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_mark\_join)\ \{}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a7eb80c38778d1cf2cf2cf25fcbd30eaf}{Block::filter\_block}}(output\_block,\ result\_column\_id,\ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a08f559e5612203aeedf927d660e77b67}{columns}}());}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a7eb80c38778d1cf2cf2cf25fcbd30eaf}{Block::filter\_block}}(output\_block,\ result\_column\_id,\ orig\_columns);}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00751\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ RowRefList"{}};}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InvalidArgument(\textcolor{stringliteral}{"{}Invalid\ RowRefList"{}});}
+\DoxyCodeLine{00754\ \ \ \ \ \}}
+\DoxyCodeLine{00755\ \}}
+\DoxyCodeLine{00756\ }
+\DoxyCodeLine{00757\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ JoinOpType>}
+\DoxyCodeLine{00758\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ HashTableType>}
+\DoxyCodeLine{00759\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_process_hash_table_probe_a5edeb040e385364cfeefcb927d83d44a}{ProcessHashTableProbe<JoinOpType>::process\_data\_in\_hashtable}}(HashTableType\&\ hash\_table\_ctx,}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block}{MutableBlock}}\&\ mutable\_block,}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}*\ output\_block,}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ eos)\ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \textcolor{keyword}{using\ }Mapped\ =\ \textcolor{keyword}{typename}\ HashTableType::Mapped;}
+\DoxyCodeLine{00764\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<Mapped,\ RowRefListWithFlag>\ ||}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_same\_v<Mapped,\ RowRefListWithFlags>)\ \{}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ hash\_table\_ctx.init\_once();}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mcol\ =\ mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_aeb23bab6dc837fedc89a6c62ed84a161}{mutable\_columns}}();}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ right\_semi\_anti\_without\_other\ =}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_join\_node-\/>\_is\_right\_semi\_anti\ \&\&\ !\_join\_node-\/>\_have\_other\_join\_conjunct;}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_idx\ =}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ right\_semi\_anti\_without\_other\ ?\ 0\ :\ \_join\_node-\/>\_left\_table\_data\_types.size();}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ right\_col\_len\ =\ \_join\_node-\/>\_right\_table\_data\_types.size();}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ iter\ =\ hash\_table\_ctx.iter;}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ block\_size\ =\ 0;}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ visited\_iter\ =\ \_join\_node-\/>\_outer\_join\_pull\_visited\_iter;}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ insert\_from\_hash\_table\ =\ [\&](uint8\_t\ offset,\ uint32\_t\ row\_num)\ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ block\_size++;}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ right\_col\_len;\ ++j)\ \{}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\ =\ *\_build\_blocks[offset].get\_by\_position(j).column;}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[j\ +\ right\_col\_idx]-\/>insert\_from(column,\ row\_num);}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00786\ }
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (visited\_iter.ok())\ \{}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK((std::is\_same\_v<Mapped,\ RowRefListWithFlag>));}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ visited\_iter.ok()\ \&\&\ block\_size\ <\ \_batch\_size;\ ++visited\_iter)\ \{}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ insert\_from\_hash\_table(visited\_iter-\/>block\_offset,\ visited\_iter-\/>row\_num);}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!visited\_iter.ok())\ \{}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++iter;}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00796\ }
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ iter\ !=\ hash\_table\_ctx.hash\_table.end()\ \&\&\ block\_size\ <\ \_batch\_size;\ ++iter)\ \{}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mapped\ =\ iter-\/>get\_second();}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<Mapped,\ RowRefListWithFlag>)\ \{}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mapped.visited)\ \{}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ mapped.begin();\ it.ok();\ ++it)\ \{}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN)\ \{}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ insert\_from\_hash\_table(it-\/>block\_offset,\ it-\/>row\_num);}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ !=\ TJoinOp::RIGHT\_SEMI\_JOIN)\ \{}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_iter\ =\ mapped.begin();}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ visited\_iter.ok()\ \&\&\ block\_size\ <\ \_batch\_size;\ ++visited\_iter)\ \{}
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ insert\_from\_hash\_table(visited\_iter-\/>block\_offset,}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ visited\_iter-\/>row\_num);}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (visited\_iter.ok())\ \{}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ block\_size\ >=\ \_batch\_size,\ quit\ for\ loop}}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ mapped.begin();\ it.ok();\ ++it)\ \{}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_SEMI\_JOIN)\ \{}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>visited)\ \{}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ insert\_from\_hash\_table(it-\/>block\_offset,\ it-\/>row\_num);}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!it-\/>visited)\ \{}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ insert\_from\_hash\_table(it-\/>block\_offset,\ it-\/>row\_num);}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ resize\ the\ left\ table\ column\ in\ case\ with\ other\ conjunct\ to\ make\ block\ size\ is\ not\ zero}}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_join\_node-\/>\_is\_right\_semi\_anti\ \&\&\ \_join\_node-\/>\_have\_other\_join\_conjunct)\ \{}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ target\_size\ =\ mcol[right\_col\_idx]-\/>size();}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ right\_col\_idx;\ ++i)\ \{}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mcol[i]-\/>resize(target\_size);}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00841\ }
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ right\ outer\ join\ /\ full\ join\ need\ insert\ data\ of\ left\ table}}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (JoinOpType\ ==\ TJoinOp::RIGHT\_OUTER\_JOIN\ ||}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ JoinOpType\ ==\ TJoinOp::FULL\_OUTER\_JOIN)\ \{}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ right\_col\_idx;\ ++i)\ \{}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<ColumnNullable*>(mcol[i].\mbox{\hyperlink{namespacedoris_1_1vectorized_a15491adacffd97f9c5b6efe5dd58f657}{get}}())-\/>insert\_many\_defaults(block\_size);}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ \_tuple\_is\_null\_left\_flags-\/>resize\_fill(block\_size,\ 1);}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ *eos\ =\ iter\ ==\ hash\_table\_ctx.hash\_table.end();}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ output\_block-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a7c22bac5327618d6ac842348fe2a3780}{swap}}(}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mutable\_block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_mutable_block_a0a4af389bbb4d5df4512d66a4531c02a}{to\_block}}(right\_semi\_anti\_without\_other\ ?\ right\_col\_idx\ :\ 0));}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00854\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Invalid\ RowRefList"{}};}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InvalidArgument(\textcolor{stringliteral}{"{}Invalid\ RowRefList"{}});}
+\DoxyCodeLine{00857\ \ \ \ \ \}}
+\DoxyCodeLine{00858\ \}}
+\DoxyCodeLine{00859\ }
+\DoxyCodeLine{00860\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00861\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_extract_type}{ExtractType}};}
+\DoxyCodeLine{00862\ }
+\DoxyCodeLine{00863\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00864\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_extract_type}{ExtractType}}<\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}(U)>\ \{}
+\DoxyCodeLine{00865\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_extract_type_3_01_t_07_u_08_4_a9c9aa5434cd10b6317e1ca036acf0887}{Type}}\ =\ U;}
+\DoxyCodeLine{00866\ \};}
+\DoxyCodeLine{00867\ }
+\DoxyCodeLine{00868\ \textcolor{preprocessor}{\#define\ INSTANTIATION(JoinOpType,\ T)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00869\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00870\ \textcolor{preprocessor}{\ \ \ \ ProcessHashTableProbe<JoinOpType>::do\_process<false,\ false,\ ExtractType<void(T)>::Type>(\ \ \(\backslash\)}}
+\DoxyCodeLine{00871\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00872\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00873\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00874\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00875\ \textcolor{preprocessor}{\ \ \ \ ProcessHashTableProbe<JoinOpType>::do\_process<false,\ true,\ ExtractType<void(T)>::Type>(\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00876\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00877\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00878\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00879\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00880\ \textcolor{preprocessor}{\ \ \ \ ProcessHashTableProbe<JoinOpType>::do\_process<true,\ false,\ ExtractType<void(T)>::Type>(\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00881\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00882\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00883\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00884\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00885\ \textcolor{preprocessor}{\ \ \ \ ProcessHashTableProbe<JoinOpType>::do\_process<true,\ true,\ ExtractType<void(T)>::Type>(\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00886\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00887\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00888\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00889\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00890\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ ProcessHashTableProbe<JoinOpType>::do\_process\_with\_other\_join\_conjuncts<\ \ \(\backslash\)}}
+\DoxyCodeLine{00891\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ false,\ false,\ ExtractType<void(T)>::Type>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00892\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00893\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00894\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00895\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ ProcessHashTableProbe<JoinOpType>::do\_process\_with\_other\_join\_conjuncts<\ \ \(\backslash\)}}
+\DoxyCodeLine{00896\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ false,\ true,\ ExtractType<void(T)>::Type>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00897\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00898\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00899\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00900\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ ProcessHashTableProbe<JoinOpType>::do\_process\_with\_other\_join\_conjuncts<\ \ \(\backslash\)}}
+\DoxyCodeLine{00901\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ true,\ false,\ ExtractType<void(T)>::Type>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00902\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00903\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00904\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00905\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ ProcessHashTableProbe<JoinOpType>::do\_process\_with\_other\_join\_conjuncts<\ \ \(\backslash\)}}
+\DoxyCodeLine{00906\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ true,\ true,\ ExtractType<void(T)>::Type>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00907\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ ConstNullMapPtr\ null\_map,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00908\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableBlock\ \&\ mutable\_block,\ Block\ *\ output\_block,\ size\_t\ probe\_rows,\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00909\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ bool\ is\_mark\_join);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00910\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00911\ \textcolor{preprocessor}{\ \ \ \ template\ Status\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00912\ \textcolor{preprocessor}{\ \ \ \ ProcessHashTableProbe<JoinOpType>::process\_data\_in\_hashtable<ExtractType<void(T)>::Type>(\ \(\backslash\)}}
+\DoxyCodeLine{00913\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ExtractType<void(T)>::Type\ \&\ hash\_table\_ctx,\ MutableBlock\ \&\ mutable\_block,\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00914\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ Block\ *\ output\_block,\ bool*\ eos)}}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ \textcolor{preprocessor}{\#define\ INSTANTIATION\_FOR(JoinOpType)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00917\ \textcolor{preprocessor}{\ \ \ \ template\ struct\ ProcessHashTableProbe<JoinOpType>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00918\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00919\ \textcolor{preprocessor}{\ \ \ \ template\ void\ ProcessHashTableProbe<JoinOpType>::build\_side\_output\_column<false>(\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00920\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableColumns\ \&\ mcol,\ int\ column\_offset,\ int\ column\_length,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00921\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ const\ std::vector<bool>\&\ output\_slot\_flags,\ int\ size);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00922\ \textcolor{preprocessor}{\ \ \ \ template\ void\ ProcessHashTableProbe<JoinOpType>::build\_side\_output\_column<true>(\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00923\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ MutableColumns\ \&\ mcol,\ int\ column\_offset,\ int\ column\_length,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00924\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ const\ std::vector<bool>\&\ output\_slot\_flags,\ int\ size);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00925\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00926\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (SerializedHashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00927\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I8HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00928\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I16HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00929\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I32HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00930\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00931\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00932\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256HashTableContext<RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00933\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<true,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00934\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<false,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00935\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<true,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00936\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<false,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00937\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<true,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00938\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<false,\ RowRefList>));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00939\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (SerializedHashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00940\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I8HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00941\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I16HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00942\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I32HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00943\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00944\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00945\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256HashTableContext<RowRefListWithFlag>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00946\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<true,\ RowRefListWithFlag>));\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00947\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<false,\ RowRefListWithFlag>));\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00948\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<true,\ RowRefListWithFlag>));\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00949\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<false,\ RowRefListWithFlag>));\ \ \(\backslash\)}}
+\DoxyCodeLine{00950\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<true,\ RowRefListWithFlag>));\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00951\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<false,\ RowRefListWithFlag>));\ \ \(\backslash\)}}
+\DoxyCodeLine{00952\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (SerializedHashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00953\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I8HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00954\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I16HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00955\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I32HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00956\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00957\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00958\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256HashTableContext<RowRefListWithFlags>));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00959\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<true,\ RowRefListWithFlags>));\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00960\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I64FixedKeyHashTableContext<false,\ RowRefListWithFlags>));\ \ \(\backslash\)}}
+\DoxyCodeLine{00961\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<true,\ RowRefListWithFlags>));\ \ \(\backslash\)}}
+\DoxyCodeLine{00962\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I128FixedKeyHashTableContext<false,\ RowRefListWithFlags>));\ \(\backslash\)}}
+\DoxyCodeLine{00963\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<true,\ RowRefListWithFlags>));\ \ \(\backslash\)}}
+\DoxyCodeLine{00964\ \textcolor{preprocessor}{\ \ \ \ INSTANTIATION(JoinOpType,\ (I256FixedKeyHashTableContext<false,\ RowRefListWithFlags>))}}
+\DoxyCodeLine{00965\ }
+\DoxyCodeLine{00966\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

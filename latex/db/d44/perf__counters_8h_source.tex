@@ -1,0 +1,174 @@
+\hypertarget{perf__counters_8h_source}{}\doxysection{perf\+\_\+counters.\+h}
+\label{perf__counters_8h_source}\index{/Users/dabowang/be\_all/util/perf\_counters.h@{/Users/dabowang/be\_all/util/perf\_counters.h}}
+\mbox{\hyperlink{perf__counters_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/util/perf-\/counters.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{debug__util_8h}{util/debug\_util.h}}"{}}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ This\ is\ a\ utility\ class\ that\ aggregates\ counters\ from\ the\ kernel.\ \ These\ counters}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ come\ from\ different\ sources.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ -\/\ perf\ counter\ syscall\ (/usr/include/linux/perf\_event.h"{})}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ -\/\ /proc/self/io:\ io\ stats}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ -\/\ /proc/self/status:\ memory\ stats}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ The\ complexity\ here\ is\ that\ all\ these\ sources\ have\ data\ in\ a\ different\ and\ not}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ easy\ to\ get\ at\ format.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ A\ typical\ usage\ pattern\ would\ be:}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ PerfCounters\ counters;}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ counters.add\_default\_counters();}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ counters.snapshot("{}After\ Init"{});}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ <do\ your\ work>}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ counters.snapshot("{}After\ Work"{});}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ counters.PrettyPrint(cout);}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ TODO:\ Expect\ PerfCounters\ to\ be\ refactored\ to\ ProcessState.}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_perf_counters}{PerfCounters}}\ \{}
+\DoxyCodeLine{00050\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}}\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a71bd0a2b846ea4fa4e3d498b2f6f3931}{PERF\_COUNTER\_SW\_CPU\_CLOCK}},}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a3dda12c81b5c44637ec65ec9eb6ea09b}{PERF\_COUNTER\_SW\_PAGE\_FAULTS}},}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a5bc6a84b28991298b6a7f1eba635c684}{PERF\_COUNTER\_SW\_CONTEXT\_SWITCHES}},}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a34f95626494b612879b64e7c59aa54ac}{PERF\_COUNTER\_SW\_CPU\_MIGRATIONS}},}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a493600f901867f5e27cd23f79aeef4fb}{PERF\_COUNTER\_HW\_CPU\_CYCLES}},}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8afaf759457df95d97ae35c105f80cdfa9}{PERF\_COUNTER\_HW\_INSTRUCTIONS}},}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8aecb3f1f39f4c400cc885336a58db4daf}{PERF\_COUNTER\_HW\_CACHE\_HIT}},}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a9af986b93bd401af0cfceb04477bf25f}{PERF\_COUNTER\_HW\_CACHE\_MISSES}},}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a2d34d95ac259fe68a3361b874b6f3f4d}{PERF\_COUNTER\_HW\_BRANCHES}},}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a1d56812481f6296369d5ba40d4ab5937}{PERF\_COUNTER\_HW\_BRANCH\_MISSES}},}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a59f150d34735692655636dbd1ec89bcd}{PERF\_COUNTER\_HW\_BUS\_CYCLES}},}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a774a4bd26ed6f2913d2f2c4509c65f31}{PERF\_COUNTER\_VM\_USAGE}},}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8ab127cc8c63f2ec76b5bd357aebd2636b}{PERF\_COUNTER\_VM\_PEAK\_USAGE}},}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a6e153d9cbb204ff16ac9542c5952a2a7}{PERF\_COUNTER\_RESIDENT\_SET\_SIZE}},}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a04126daaeef050223c2f7d302ba82b1f}{PERF\_COUNTER\_BYTES\_READ}},}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a193cb013505a88a3dafcafaab2ad1848}{PERF\_COUNTER\_BYTES\_WRITE}},}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a97cc148d35147b23fcaf863f0874bd39}{PERF\_COUNTER\_DISK\_READ}},}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8a11a6f186ae81830787564f191069e324}{PERF\_COUNTER\_DISK\_WRITE}},}
+\DoxyCodeLine{00073\ \ \ \ \ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Add\ the\ 'default'\ counters\ as\ ones\ to\ collect.\ \ Returns\ false\ if\ any\ of\ those}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ counters\ are\ not\ available.}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Counters\ cannot\ be\ added\ after\ a\ snapshot\ has\ been\ taken.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a8cd3c9d25454698473fe5c377c35207c}{add\_default\_counters}}();}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ specific\ counter\ to\ watch.\ \ Return\ false\ if\ that\ counter\ is\ not\ available.}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ Counters\ cannot\ be\ added\ after\ a\ snapshot\ has\ been\ taken.}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a774d4e6007c1d5ae8df2dacdeb606aba}{add\_counter}}(\mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}});}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ Take\ a\ snapshot\ of\ all\ the\ counters\ and\ store\ it.\ \ The\ caller\ can\ specify\ a\ name}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ for\ the\ snapshot.}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_af69a801a98fee3a58d82572230f1d0ff}{snapshot}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ results\ of\ that\ snapshot}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<int64\_t>*\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a500c8046217ccc185e196c95ae116aa4}{counters}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_af69a801a98fee3a58d82572230f1d0ff}{snapshot}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Returns\ readable\ names\ for\ the\ added\ counters}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<std::string>*\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a3b0cc7f3ab58a96ef8f989e5fa44a075}{counter\_names}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classdoris_1_1_perf_counters_ac5233610e16365dd27d195101599fb74}{\_counter\_names}};\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Prints\ out\ the\ names\ and\ results\ for\ all\ snapshots\ to\ 'out'}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21c28532ee025d8957b2473385ca8356}{pretty\_print}}(std::ostream*\ out)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_aeaa935ef114e6c4506b07bc68ff5e6d2}{PerfCounters}}();}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_aa853ff3a16dfc0c1bbdf9bda87aeb358}{\string~PerfCounters}}();}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ Refactor}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_proc_status}{ProcStatus}}\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_proc_status_ad5665c523d6d9fc9ead66bf9c985703a}{vm\_size}}\ =\ 0;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_proc_status_acbff9cd29dbfa81e26114f413c080bc7}{vm\_peak}}\ =\ 0;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_proc_status_a4333915ab60b9a6a8e4523e0dbf31723}{vm\_rss}}\ =\ 0;}
+\DoxyCodeLine{00106\ \ \ \ \ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a7e51fa6729f2e963a21376394ec5692c}{parse\_int}}(\textcolor{keyword}{const}\ std::string\&\ state\_key);}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a68e2d9a9228cb37eb281a31439d55732}{parse\_int64}}(\textcolor{keyword}{const}\ std::string\&\ state\_key);}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_perf_counters_afe0e6f278dbe46748e30150bf36a0839}{parse\_string}}(\textcolor{keyword}{const}\ std::string\&\ state\_key);}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ Original\ data's\ unit\ is\ B\ or\ KB.}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_perf_counters_add8e6bfcaa01fd7c8e42f12c82553da8}{parse\_bytes}}(\textcolor{keyword}{const}\ std::string\&\ state\_key);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ Flush\ cached\ process\ status\ info\ from\ `/proc/self/status`.}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac75691d9a00ae644f6f1e83e11376242}{refresh\_proc\_status}}();}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_aec7fcac96f41de2bc46525a059b26c4d}{get\_proc\_status}}(\mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_proc_status}{ProcStatus}}*\ out);}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ process\ actual\ physical\ memory\ in\ bytes.}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a8e6d5083a1ea075837a99f0b4beaf6cd}{get\_vm\_rss}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a11b8f5d3713212f0c5b96f06f2df9ad0}{\_vm\_rss}};\ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ std::string\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a558d49056acbc3eb10480c0e0261a4ec}{get\_vm\_rss\_str}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a1d0b93efedf03f4ae2d5febec6765bb9}{\_vm\_rss\_str}};\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ Copy\ constructor\ and\ assignment\ not\ allowed}}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a1fc97b1cf0eab7b4b1a6a514f3476a21}{PerfCounters}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_perf_counters}{PerfCounters}}\&);}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters}{PerfCounters}}\&\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a7fcfabfb35bc30422e0374812e096eb6}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_perf_counters}{PerfCounters}}\&);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_adc767008df262168af9f9f2f3733dc63}{init\_sys\_counter}}(\mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}}\ counter);}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_acad57f515005248d73074cfc061e8d8c}{init\_proc\_self\_io\_counter}}(\mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}}\ counter);}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_adfc1153e7c8c7d43311f87357a970cc1}{init\_proc\_self\_status\_counter}}(\mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}}\ counter);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a5848b04ed22483331d8f6ee80878eb1a}{get\_sys\_counters}}(std::vector<int64\_t>\&\ \mbox{\hyperlink{classdoris_1_1_perf_counters_af69a801a98fee3a58d82572230f1d0ff}{snapshot}});}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a1305590fe97acb1b887a5195630571f1}{get\_proc\_self\_io\_counters}}(std::vector<int64\_t>\&\ \mbox{\hyperlink{classdoris_1_1_perf_counters_af69a801a98fee3a58d82572230f1d0ff}{snapshot}});}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_ab4d2feeb155be7d2ddfbf90ead06f30e}{get\_proc\_self\_status\_counters}}(std::vector<int64\_t>\&\ \mbox{\hyperlink{classdoris_1_1_perf_counters_af69a801a98fee3a58d82572230f1d0ff}{snapshot}});}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac409d3942abd5b826fb1508efc119564}{DataSource}}\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac409d3942abd5b826fb1508efc119564adea8c91f5620c3e84c0c452705df1cd2}{SYS\_PERF\_COUNTER}},}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac409d3942abd5b826fb1508efc119564a0c97a09695bf79c77ea7f64d569e7eb5}{PROC\_SELF\_IO}},}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac409d3942abd5b826fb1508efc119564a571d16bb8efcac4a4067b677fc7f39da}{PROC\_SELF\_STATUS}},}
+\DoxyCodeLine{00138\ \ \ \ \ \};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data}{CounterData}}\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_a21825f37e76fb1b4cf8d02dd17f0cba8}{Counter}}\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_aced7a0a9f79ca57189a6dad49235721c}{counter}};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac409d3942abd5b826fb1508efc119564}{DataSource}}\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_a4547904a221ab95441fc4ea57c7ff384}{source}};}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ TUnit::type\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_a36c1e5af98ae8dff83f3db5b1ab9be89}{type}};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ DataSource\ specific\ data.\ \ This\ is\ used\ to\ pull\ the\ counter\ values.}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keyword}{union\ }\{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ SYS\_PERF\_COUNTER.\ File\ descriptor\ where\ the\ counter\ value\ is\ stored.}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_a6f8059414f0228f0256115e024eeed4b}{fd}};}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ PROC\_SELF\_IO.\ \ Line\ number\ from\ /proc/self/io\ file\ with\ this\ counter's\ value}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_ae43cc74362a92759a88b01286d79c8d4}{proc\_io\_line\_number}};}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ PROC\_SELF\_STATUS.\ \ Field\ name\ for\ counter}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_perf_counters_1_1_counter_data_ad542d0a85ea7f5680fc1aa184c021e5a}{proc\_status\_field}};}
+\DoxyCodeLine{00154\ \ \ \ \ \};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ std::vector<CounterData>\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a6c25f4a2b0be982a32d69c4dd03cc8c8}{\_counters}};}
+\DoxyCodeLine{00157\ \ \ \ \ std::vector<std::string>\ \mbox{\hyperlink{classdoris_1_1_perf_counters_ac5233610e16365dd27d195101599fb74}{\_counter\_names}};}
+\DoxyCodeLine{00158\ \ \ \ \ std::vector<std::string>\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a212fcacc2f38af30fa2cf6cf2934d466}{\_snapshot\_names}};}
+\DoxyCodeLine{00159\ \ \ \ \ std::vector<std::vector<int64\_t>>\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a06b0f949815f244f249257dbd2a3f677}{\_snapshots}};}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ System\ perf\ counters\ can\ be\ grouped\ together.\ \ The\ OS\ will\ update\ all\ grouped\ counters}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ at\ the\ same\ time.\ \ This\ is\ useful\ to\ better\ correlate\ counter\ values.}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_perf_counters_afe92419ed85d70ec63c231064f476bff}{\_group\_fd}};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a11b8f5d3713212f0c5b96f06f2df9ad0}{\_vm\_rss}};}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_perf_counters_a1d0b93efedf03f4ae2d5febec6765bb9}{\_vm\_rss\_str}};}
+\DoxyCodeLine{00166\ \};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,97 @@
+\hypertarget{result__buffer__mgr_8h_source}{}\doxysection{result\+\_\+buffer\+\_\+mgr.\+h}
+\label{result__buffer__mgr_8h_source}\index{/Users/dabowang/be\_all/runtime/result\_buffer\_mgr.h@{/Users/dabowang/be\_all/runtime/result\_buffer\_mgr.h}}
+\mbox{\hyperlink{result__buffer__mgr_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Types\_types.h"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__util_8hpp}{util/hash\_util.hpp}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread_8h}{util/thread.h}}"{}}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }TFetchDataResult;}
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }BufferControlBlock;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{struct\ }GetResultBatchCtx;}
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }PUniqueId;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ manage\ all\ result\ buffer\ control\ block\ in\ one\ backend}}
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_result_buffer_mgr}{ResultBufferMgr}}\ \{}
+\DoxyCodeLine{00041\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a5cb06ff1cec68898b57f6ff89c3f6670}{ResultBufferMgr}}();}
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a844aeb15f1acff881e4ceb0e092bba9b}{\string~ResultBufferMgr}}();}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ init\ Result\ Buffer\ Mgr,\ start\ cancel\ thread}}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a223508714f7b7c2a338265d09a23a25f}{init}}();}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ create\ one\ result\ sender\ for\ this\ query\_id}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ the\ returned\ sender\ do\ not\ need\ release}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ sender\ is\ not\ used\ when\ call\ cancel\ or\ unregister}}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ab160c85e541c5101cdc66a6b736be143}{create\_sender}}(\textcolor{keyword}{const}\ TUniqueId\&\ query\_id,\ \textcolor{keywordtype}{int}\ buffer\_size,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::shared\_ptr<BufferControlBlock>*\ sender,\ \textcolor{keywordtype}{bool}\ enable\_pipeline,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ query\_timeout);}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ fetch\ data,\ used\ by\ RPC}}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ae156dd0d4522c5b324982c34789fb986}{fetch\_data}}(\textcolor{keyword}{const}\ TUniqueId\&\ fragment\_id,\ TFetchDataResult*\ result);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ae156dd0d4522c5b324982c34789fb986}{fetch\_data}}(\textcolor{keyword}{const}\ PUniqueId\&\ finst\_id,\ \mbox{\hyperlink{structdoris_1_1_get_result_batch_ctx}{GetResultBatchCtx}}*\ ctx);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ cancel}}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a69e67178cc878f550b75416afea72b52}{cancel}}(\textcolor{keyword}{const}\ TUniqueId\&\ fragment\_id);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ cancel\ one\ query\ at\ a\ future\ time.}}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_afaf8f59524990b494a70a3959941cd0c}{cancel\_at\_time}}(time\_t\ cancel\_time,\ \textcolor{keyword}{const}\ TUniqueId\&\ query\_id);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ae7850ef2639676d169da7b9a7ebd131f}{BufferMap}}\ =\ std::unordered\_map<TUniqueId,\ std::shared\_ptr<BufferControlBlock>>;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a60e8fece7757ca66833a3b0719135985}{TimeoutMap}}\ =\ std::map<time\_t,\ std::vector<TUniqueId>>;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ std::shared\_ptr<BufferControlBlock>\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a2bf4f400fba23da758dfa66459a7683c}{find\_control\_block}}(\textcolor{keyword}{const}\ TUniqueId\&\ query\_id);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ used\ to\ erase\ the\ buffer\ that\ fe\ not\ clears}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ when\ fe\ crush,\ this\ thread\ clear\ the\ buffer\ avoid\ memory\ leak\ in\ this\ backend}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a16fa46baae16f84a464ede1ba3d28a6f}{cancel\_thread}}();}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ lock\ for\ buffer\ map}}
+\DoxyCodeLine{00074\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ buffer\ block\ map}}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ae7850ef2639676d169da7b9a7ebd131f}{BufferMap}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_ad9f299bd486e2294a77ab97b79f4eb5c}{\_buffer\_map}};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ lock\ for\ timeout\ map}}
+\DoxyCodeLine{00079\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_aeccb83ed6f746fdfdbb1984bba83c162}{\_timeout\_lock}};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ map\ (cancel\_time\ :\ query\ to\ be\ cancelled),}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ cancel\ time\ maybe\ equal,\ so\ use\ one\ list}}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a60e8fece7757ca66833a3b0719135985}{TimeoutMap}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a7f9d70a6c24cb3d298aa7a31d804e642}{\_timeout\_map}};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_count_down_latch}{CountDownLatch}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_a80fc65099569991d39f4b4962819519b}{\_stop\_background\_threads\_latch}};}
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{classscoped__refptr}{scoped\_refptr<Thread>}}\ \mbox{\hyperlink{classdoris_1_1_result_buffer_mgr_adbc44e3437ac0dff514eff2fdbfd8882}{\_clean\_thread}};}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ TUniqueId\ hash\ function\ used\ for\ std::unordered\_map}}
+\DoxyCodeLine{00090\ std::size\_t\ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}}(\textcolor{keyword}{const}\ TUniqueId\&\ fragment\_id);}
+\DoxyCodeLine{00091\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

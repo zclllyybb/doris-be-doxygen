@@ -1,0 +1,218 @@
+\hypertarget{block__bloom__filter_8hpp_source}{}\doxysection{block\+\_\+bloom\+\_\+filter.\+hpp}
+\label{block__bloom__filter_8hpp_source}\index{/Users/dabowang/be\_all/exprs/block\_bloom\_filter.hpp@{/Users/dabowang/be\_all/exprs/block\_bloom\_filter.hpp}}
+\mbox{\hyperlink{block__bloom__filter_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/kudu/blob/master/src/kudu/util/block\_bloom\_filter.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}fmt/format.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__util_8hpp}{util/hash\_util.hpp}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebutil}{butil}}\ \{}
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }IOBufAsZeroCopyInputStream;}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ https://github.com/apache/kudu/blob/master/src/kudu/util/block\_bloom\_filter.h}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ BlockBloomFilter\ is\ modified\ based\ on\ Impala's\ BlockBloomFilter.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ For\ general\ Bloomfilter\ implementations,\ this\ implementation\ is}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ more\ friendly\ to\ CPU\ Cache,\ and\ it\ is\ easier\ to\ use\ SIMD\ instructions\ to}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ speed\ up\ the\ implementation.}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ BlockBloomFilter\ will\ not\ store\ null\ values,\ and\ will\ always\ return\ a\ false\ if\ the\ input\ is\ null.}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}\ \{}
+\DoxyCodeLine{00043\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ab47518e5dbd9bbb9f734e17d238df58b}{BlockBloomFilter}}();}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a94f11827de7c83b03ae2fb6da2f1fdf2}{\string~BlockBloomFilter}}();}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ad496ea62c6e69bfdaa63814389571246}{BlockBloomFilter}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}\&\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a99e92d306fdf274642c504907a3e0a25}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a5d6511529ebadb41d27ebaaf73f16353}{init}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aacb1f753a4447fdb1de792075e13deda}{log\_space\_bytes}},\ uint32\_t\ hash\_seed);}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Initialize\ the\ BlockBloomFilter\ from\ a\ populated\ "{}directory"{}\ structure.}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ Useful\ for\ initializing\ the\ BlockBloomFilter\ by\ de-\/serializing\ a\ custom\ protobuf\ message.}}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aa498fd0f93c1d8add0c89f393cde097a}{init\_from\_directory}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aacb1f753a4447fdb1de792075e13deda}{log\_space\_bytes}},\ butil::IOBufAsZeroCopyInputStream*\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ data\_size,\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a42c01dbd2f91c73db362ad5c67b46f74}{always\_false}},\ uint32\_t\ hash\_seed);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a5ae591df94fc66ccb85cbb6565368bca}{close}}();}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ Adds\ an\ element\ to\ the\ BloomFilter.\ The\ function\ used\ to\ generate\ 'hash'\ need\ not}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ have\ good\ uniformity,\ but\ it\ should\ have\ low\ collision\ probability.\ For\ instance,\ if}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ the\ set\ of\ values\ is\ 32-\/bit\ ints,\ the\ identity\ function\ is\ a\ valid\ hash\ function\ for}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ this\ Bloom\ filter,\ since\ the\ collision\ probability\ (the\ probability\ that\ two}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ non-\/equal\ values\ will\ have\ the\ same\ hash\ value)\ is\ 0.}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aafadbb7b3a0755519cd47aced9ef521e}{insert}}(uint32\_t\ hash)\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ above\ with\ convenience\ of\ hashing\ the\ key.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aa3fb42cee487a0a35d0692d85f111eae}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ key)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key.data)\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aafadbb7b3a0755519cd47aced9ef521e}{insert}}(\mbox{\hyperlink{classdoris_1_1_hash_util_a647e4fde948e33c989d31843feeae7ea}{HashUtil::murmur\_hash3\_32}}(key.data,\ key.size,\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ad7324cddfec0b7486c01e233c22c412c}{\_hash\_seed}}));}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Finds\ an\ element\ in\ the\ BloomFilter,\ returning\ true\ if\ it\ is\ found\ and\ false\ (with}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ high\ probability)\ if\ it\ is\ not.}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a4cfd474f1422d2a0a926e5cc9988f0f2}{find}}(uint32\_t\ hash)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ above\ with\ convenience\ of\ hashing\ the\ key.}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_adb789246e8b2c53af062ad01ab92353a}{find}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ key)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key.data)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a4cfd474f1422d2a0a926e5cc9988f0f2}{find}}(\mbox{\hyperlink{classdoris_1_1_hash_util_a647e4fde948e33c989d31843feeae7ea}{HashUtil::murmur\_hash3\_32}}(key.data,\ key.size,\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ad7324cddfec0b7486c01e233c22c412c}{\_hash\_seed}}));}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Computes\ the\ logical\ OR\ of\ this\ filter\ with\ 'other'\ and\ stores\ the\ result\ in\ this}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ filter.}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ Notes:}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ -\/\ The\ directory\ sizes\ of\ the\ Bloom\ filters\ must\ match.}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ -\/\ Or'ing\ with\ kAlwaysTrueFilter\ is\ disallowed.}}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a9c337d1ed433937a4cbe45c370b808c8}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}\&\ other);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ Computes\ out[i]\ |=\ in[i]\ for\ the\ arrays\ 'in'\ and\ 'out'\ of\ length\ 'n'\ bytes\ where\ 'n'}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ is\ multiple\ of\ 32-\/bytes.}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a798a18b7fd430fa60a4bc7a67c3cc4f5}{or\_equal\_array}}(\textcolor{keywordtype}{size\_t}\ n,\ \textcolor{keyword}{const}\ uint8\_t*\ \_\_restrict\_\_\ in,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t*\ \_\_restrict\_\_\ out);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ Returns\ whether\ the\ Bloom\ filter\ is\ empty\ and\ hence\ would\ return\ false\ for\ all\ lookups.}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a42c01dbd2f91c73db362ad5c67b46f74}{always\_false}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a8dd1915172ff1e5ae445449ebe83759e}{\_always\_false}};\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Returns\ amount\ of\ space\ used\ in\ log2\ bytes.}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aacb1f753a4447fdb1de792075e13deda}{log\_space\_bytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a6ae832512f883a81c6e69bb8f1ff512a}{\_log\_num\_buckets}}\ +\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a18d957a3c48c6752e84618cff32ca869}{kLogBucketByteSize}};\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ directory\ structure.\ Useful\ for\ serializing\ the\ BlockBloomFilter\ to}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ a\ custom\ protobuf\ message.}}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a743de9435db979c1794a9aebfae2454f}{directory}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }uint8\_t*\textcolor{keyword}{>}(\mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a6bebf35b712a77d9ce68954dca87b652}{\_directory}}),\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a1c7c9f86294db72a1e282e6925931975}{directory\_size}}());}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ Representation\ of\ a\ filter\ which\ allows\ all\ elements\ to\ pass.}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter}{BlockBloomFilter}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a119e1e78f1f9d3c0e180194eb39702f3}{kAlwaysTrueFilter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ \_always\_false\ is\ true\ when\ the\ bloom\ filter\ hasn't\ had\ any\ elements\ inserted.}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a8dd1915172ff1e5ae445449ebe83759e}{\_always\_false}};}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ The\ BloomFilter\ is\ divided\ up\ into\ Buckets\ and\ each\ Bucket\ comprises\ of\ 8\ BucketWords\ of}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ 4\ bytes\ each.}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a54b585a2a534c3b785c16540ae1e270a}{kBucketWords}}\ =\ 8;}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{typedef}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a06671aedfcbbf18eb3d767e89729ebb3}{BucketWord}};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ log2(number\ of\ bits\ in\ a\ BucketWord)}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_af8270ec359ad59561dd575108386e7cb}{kLogBucketWordBits}}\ =\ 5;}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a06671aedfcbbf18eb3d767e89729ebb3}{BucketWord}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a0e1bae53abe6c45e447f81a2e063478c}{kBucketWordMask}}\ =\ (1\ <<\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_af8270ec359ad59561dd575108386e7cb}{kLogBucketWordBits}})\ -\/\ 1;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ log2(number\ of\ bytes\ in\ a\ bucket)}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a18d957a3c48c6752e84618cff32ca869}{kLogBucketByteSize}}\ =\ 5;}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ Bucket\ size\ in\ bytes.}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a53a110dac8a617634ef88dca46371219}{kBucketByteSize}}\ =\ 1UL\ <<\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a18d957a3c48c6752e84618cff32ca869}{kLogBucketByteSize}};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{static\_assert}(}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ (1\ <<\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_af8270ec359ad59561dd575108386e7cb}{kLogBucketWordBits}})\ ==\ std::numeric\_limits<BucketWord>::digits,}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BucketWord\ must\ have\ a\ bit-\/width\ that\ is\ be\ a\ power\ of\ 2,\ like\ 64\ for\ uint64\_t."{}});}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a06671aedfcbbf18eb3d767e89729ebb3}{BucketWord}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ab57f14ec4a67d3d85408d675b7335927}{Bucket}}[\mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a54b585a2a534c3b785c16540ae1e270a}{kBucketWords}}];}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ log\_num\_buckets\_\ is\ the\ log\ (base\ 2)\ of\ the\ number\ of\ buckets\ in\ the\ directory.}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a6ae832512f883a81c6e69bb8f1ff512a}{\_log\_num\_buckets}};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ \_directory\_mask\ is\ (1\ <<\ log\_num\_buckets\_)\ -\/\ 1.\ It\ is\ precomputed\ for}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ efficiency\ reasons.}}
+\DoxyCodeLine{00139\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a6d8884e1da7ea1dd8da0a511c4daf494}{\_directory\_mask}};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ab57f14ec4a67d3d85408d675b7335927}{Bucket}}*\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a6bebf35b712a77d9ce68954dca87b652}{\_directory}};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ Seed\ used\ with\ hash\ algorithm.}}
+\DoxyCodeLine{00144\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ad7324cddfec0b7486c01e233c22c412c}{\_hash\_seed}};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ Helper\ function\ for\ public\ Init()\ variants.}}
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_ae650e4a3f9c1f9f6865108ecfd7c0480}{init\_internal}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aacb1f753a4447fdb1de792075e13deda}{log\_space\_bytes}},\ uint32\_t\ hash\_seed);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ Insert(),\ but\ skips\ the\ CPU\ check\ and\ assumes\ that\ AVX2\ is\ not\ available.}}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a38b9b57c2a504d4cd699efa1ddafb4ec}{insert\_no\_avx2}}(uint32\_t\ hash)\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ Does\ the\ actual\ work\ of\ Insert().\ bucket\_idx\ is\ the\ index\ of\ the\ bucket\ to\ insert}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ into\ and\ 'hash'\ is\ the\ value\ passed\ to\ Insert().}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_abac98ad4f320adfe63959c0a22ceb983}{bucket\_insert}}(uint32\_t\ bucket\_idx,\ uint32\_t\ hash)\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a283a902dd33fd63cdb8c3bfd8c0b1b75}{bucket\_find}}(uint32\_t\ bucket\_idx,\ uint32\_t\ hash)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ Computes\ out[i]\ |=\ in[i]\ for\ the\ arrays\ 'in'\ and\ 'out'\ of\ length\ 'n'\ without\ using\ AVX2}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ operations.}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a1921a85e3f0c3f045bec2bd3015bec4b}{or\_equal\_array\_no\_avx2}}(\textcolor{keywordtype}{size\_t}\ n,\ \textcolor{keyword}{const}\ uint8\_t*\ \_\_restrict\_\_\ in,}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t*\ \_\_restrict\_\_\ out);}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ Helper\ function\ for\ OrEqualArray\ functions\ that\ encapsulates\ AVX2\ v/s\ non-\/AVX2\ logic\ to}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ invoke\ the\ right\ function.}}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a7bb9f6b08592f221a52608c9517fc664}{or\_equal\_array\_internal}}(\textcolor{keywordtype}{size\_t}\ n,\ \textcolor{keyword}{const}\ uint8\_t*\ \_\_restrict\_\_\ in,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t*\ \_\_restrict\_\_\ out);}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#ifdef\ \_\_AVX2\_\_}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ Insert(),\ but\ skips\ the\ CPU\ check\ and\ assumes\ that\ AVX2\ is\ available.}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{void}\ insert\_avx2(uint32\_t\ hash)\ \textcolor{keyword}{noexcept}\ \mbox{\hyperlink{namespacedoris_ac94a4f420e9be2395a84d23a78a82341}{\_\_attribute\_\_}}((\_\_target\_\_(\textcolor{stringliteral}{"{}avx2"{}})));}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ A\ faster\ SIMD\ version\ of\ BucketInsert().}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{void}\ bucket\_insert\_avx2(uint32\_t\ bucket\_idx,\ uint32\_t\ hash)\ \textcolor{keyword}{noexcept}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac94a4f420e9be2395a84d23a78a82341}{\_\_attribute\_\_}}((\_\_target\_\_(\textcolor{stringliteral}{"{}avx2"{}})));}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ A\ faster\ SIMD\ version\ of\ BucketFind().}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{bool}\ bucket\_find\_avx2(uint32\_t\ bucket\_idx,\ uint32\_t\ hash)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ac94a4f420e9be2395a84d23a78a82341}{\_\_attribute\_\_}}((\_\_target\_\_(\textcolor{stringliteral}{"{}avx2"{}})));}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ Computes\ out[i]\ |=\ in[i]\ for\ the\ arrays\ 'in'\ and\ 'out'\ of\ length\ 'n'\ using\ AVX2}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//\ instructions.\ 'n'\ must\ be\ a\ multiple\ of\ 32.}}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ or\_equal\_array\_avx2(\textcolor{keywordtype}{size\_t}\ n,\ \textcolor{keyword}{const}\ uint8\_t*\ \_\_restrict\_\_\ in,}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t*\ \_\_restrict\_\_\ out)\ \mbox{\hyperlink{namespacedoris_ac94a4f420e9be2395a84d23a78a82341}{\_\_attribute\_\_}}((target(\textcolor{stringliteral}{"{}avx2"{}})));}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ the\ internal\ directory\ structure\ in\ bytes.}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a1c7c9f86294db72a1e282e6925931975}{directory\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1ULL\ <<\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_aacb1f753a4447fdb1de792075e13deda}{log\_space\_bytes}}();\ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Some\ constants\ used\ in\ hashing.\ \#defined\ for\ efficiency\ reasons.}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#define\ BLOOM\_HASH\_CONSTANTS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\ \ \ \ 0x47b6137bU,\ 0x44974d91U,\ 0x8824ad5bU,\ 0xa2b7289dU,\ 0x705495c7U,\ 0x2df1424bU,\ 0x9efc4947U,\ \(\backslash\)}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ 0x5c6bfb31U}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ kRehash\ is\ used\ as\ 8\ odd\ 32-\/bit\ unsigned\ ints.\ \ See\ Dietzfelbinger\ et\ al.'s\ "{}A}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ reliable\ randomized\ algorithm\ for\ the\ closest-\/pair\ problem"{}.}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ kRehash[8]\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_af4270d0bb7cf1be5dece71fa701a0726}{\_\_attribute\_\_}}((aligned(32)))\ =\ \{\mbox{\hyperlink{block__bloom__filter_8hpp_a9a0f5647e0f1c7575aec6da11a6c4461}{BLOOM\_HASH\_CONSTANTS}}\};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//\ Get\ 32\ more\ bits\ of\ randomness\ from\ a\ 32-\/bit\ hash:}}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_block_bloom_filter_a53780214e2943279246768160a0be2d1}{rehash32to32}}(\textcolor{keyword}{const}\ uint32\_t\ hash)\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Constants\ generated\ by\ uuidgen(1)\ with\ the\ -\/r\ flag}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint64\_t\ m\ =\ 0x7850f11ec6d14889ULL;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint64\_t\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ =\ 0x6773610597ca4c63ULL;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ strongly\ universal\ hashing\ following\ Dietzfelbinger's\ "{}Universal\ hashing}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ k-\/wise\ independent\ random\ variables\ via\ integer\ arithmetic\ without\ primes"{}.\ As}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ such,\ for\ any\ two\ distinct\ uint32\_t's\ hash1\ and\ hash2,\ the\ probability\ (over\ the}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ randomness\ of\ the\ constants)\ that\ any\ subset\ of\ bit\ positions\ of}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Rehash32to32(hash1)\ is\ equal\ to\ the\ same\ subset\ of\ bit\ positions}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Rehash32to32(hash2)\ is\ minimal.}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(hash)\ *\ m\ +\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}})\ >>\ 32U;}
+\DoxyCodeLine{00209\ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \};}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

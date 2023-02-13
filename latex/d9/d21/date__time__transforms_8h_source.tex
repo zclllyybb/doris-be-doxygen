@@ -1,0 +1,415 @@
+\hypertarget{date__time__transforms_8h_source}{}\doxysection{date\+\_\+time\+\_\+transforms.\+h}
+\label{date__time__transforms_8h_source}\index{/Users/dabowang/be\_all/vec/functions/date\_time\_transforms.h@{/Users/dabowang/be\_all/vec/functions/date\_time\_transforms.h}}
+\mbox{\hyperlink{date__time__transforms_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Functions/DateTimeTransforms.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__state_8h}{runtime/runtime\_state.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{udf__internal_8h}{udf/udf\_internal.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{binary__cast_8hpp}{util/binary\_cast.hpp}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{type__traits_8h}{util/type\_traits.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__nullable_8h}{vec/columns/column\_nullable.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__string_8h}{vec/columns/column\_string.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__vector_8h}{vec/columns/column\_vector.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block_8h}{vec/core/block.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__numbers_8h}{vec/core/column\_numbers.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__date__time_8h}{vec/data\_types/data\_type\_date\_time.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__string_8h}{vec/data\_types/data\_type\_string.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vdatetime__value_8h}{vec/runtime/vdatetime\_value.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{util_8hpp}{vec/utils/util.hpp}}"{}}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#define\ TIME\_FUNCTION\_IMPL(CLASS,\ UNIT,\ FUNCTION)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ template\ <typename\ ArgType>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ struct\ CLASS\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ using\ OpArgType\ =\ ArgType;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ constexpr\ auto\ name\ =\ \#UNIT;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ inline\ auto\ execute(const\ ArgType\&\ t)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ const\ auto\&\ date\_time\_value\ =\ (typename\ DateTraits<ArgType>::T\&)(t);\ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ return\ date\_time\_value.FUNCTION;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ DataTypes\ get\_variadic\_argument\_types()\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ return\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ TO\_TIME\_FUNCTION(CLASS,\ UNIT)\ TIME\_FUNCTION\_IMPL(CLASS,\ UNIT,\ UNIT())}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToYearImpl,\ year);}
+\DoxyCodeLine{00060\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToQuarterImpl,\ quarter);}
+\DoxyCodeLine{00061\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToMonthImpl,\ month);}
+\DoxyCodeLine{00062\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToDayImpl,\ day);}
+\DoxyCodeLine{00063\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToHourImpl,\ hour);}
+\DoxyCodeLine{00064\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToMinuteImpl,\ minute);}
+\DoxyCodeLine{00065\ \mbox{\hyperlink{date__time__transforms_8h_a1d6635742b67120193e44bc40cd929e6}{TO\_TIME\_FUNCTION}}(ToSecondImpl,\ second);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(WeekOfYearImpl,\ weekofyear,\ week(\mbox{\hyperlink{namespacedoris_1_1vectorized_ac53d5cd7eaf7777dc14b5204a2f43388}{mysql\_week\_mode}}(3)));}
+\DoxyCodeLine{00068\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(DayOfYearImpl,\ dayofyear,\ day\_of\_year());}
+\DoxyCodeLine{00069\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(DayOfMonthImpl,\ dayofmonth,\ day());}
+\DoxyCodeLine{00070\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(DayOfWeekImpl,\ dayofweek,\ day\_of\_week());}
+\DoxyCodeLine{00071\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(WeekDayImpl,\ weekday,\ weekday());}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ TODO:\ the\ method\ should\ be\ always\ not\ nullable}}
+\DoxyCodeLine{00073\ \mbox{\hyperlink{date__time__transforms_8h_a4230e552cf786e74ad8f87d4ccbe343d}{TIME\_FUNCTION\_IMPL}}(ToDaysImpl,\ to\_days,\ daynr());}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#define\ TIME\_FUNCTION\_ONE\_ARG\_IMPL(CLASS,\ UNIT,\ FUNCTION)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\ \ \ \ template\ <typename\ ArgType>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\ \ \ \ struct\ CLASS\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ using\ OpArgType\ =\ ArgType;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ constexpr\ auto\ name\ =\ \#UNIT;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ inline\ auto\ execute(const\ ArgType\&\ t)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ const\ auto\&\ date\_time\_value\ =\ (typename\ DateTraits<ArgType>::T\&)(t);\ \(\backslash\)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ return\ date\_time\_value.FUNCTION;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\ DataTypes\ get\_variadic\_argument\_types()\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ return\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};\ \(\backslash\)}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \mbox{\hyperlink{date__time__transforms_8h_a67cc0edef645e773fb9ae5f439bf3b9b}{TIME\_FUNCTION\_ONE\_ARG\_IMPL}}(ToWeekOneArgImpl,\ week,\ week(\mbox{\hyperlink{namespacedoris_1_1vectorized_ac53d5cd7eaf7777dc14b5204a2f43388}{mysql\_week\_mode}}(0)));}
+\DoxyCodeLine{00092\ \mbox{\hyperlink{date__time__transforms_8h_a67cc0edef645e773fb9ae5f439bf3b9b}{TIME\_FUNCTION\_ONE\_ARG\_IMPL}}(ToYearWeekOneArgImpl,\ yearweek,\ \mbox{\hyperlink{namespacedoris_a9aa82b9495a09e44fd0d716ddec1597a}{year\_week}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_ac53d5cd7eaf7777dc14b5204a2f43388}{mysql\_week\_mode}}(0)));}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00095\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl}{ToDateImpl}}\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl_afe597a9428d05034ac52e9fbdb68bdb3}{OpArgType}}\ =\ ArgType;}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl_a39e8552e58ac70e500a50c88eead9aa2}{T}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<ArgType>::T}};}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}to\_date"{}};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl_a67fbceb2f41dc9bad609dbaabe7cd921}{execute}}(\textcolor{keyword}{const}\ ArgType\&\ t)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dt\ =\ binary\_cast<ArgType,\ T>(t);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ DateV2Value<DateV2ValueType>>)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ binary\_cast<T,\ ArgType>(dt);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ VecDateTimeValue>)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ dt.cast\_to\_date();}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ binary\_cast<T,\ ArgType>(dt);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{namespacedoris_1_1vectorized_a16bda7e33183fb876dbb944cbb556702}{UInt32}})(binary\_cast<T,\ ArgType>(dt)\ >>\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a71f394edab15167adaddec3b62a990af}{TIME\_PART\_LENGTH}});}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl_aa34623d1507de27022b19a02584b91fb}{get\_variadic\_argument\_types}}()\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00118\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_impl}{DateImpl}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_to_date_impl}{ToDateImpl}}<ArgType>\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}date"{}};}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ TODO:\ This\ function\ look\ like\ no\ need\ do\ indeed\ copy\ here,\ we\ should\ optimize}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ this\ function}}
+\DoxyCodeLine{00124\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00125\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl}{TimeStampImpl}}\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl_afe597a9428d05034ac52e9fbdb68bdb3}{OpArgType}}\ =\ ArgType;}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}timestamp"{}};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl_a4359b70f034111819e326e6a25c9f5c0}{execute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl_afe597a9428d05034ac52e9fbdb68bdb3}{OpArgType}}\&\ t)\ \{\ \textcolor{keywordflow}{return}\ t;\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_time_stamp_impl_aa34623d1507de27022b19a02584b91fb}{get\_variadic\_argument\_types}}()\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00137\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl}{DayNameImpl}}\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl_afe597a9428d05034ac52e9fbdb68bdb3}{OpArgType}}\ =\ ArgType;}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}dayname"{}};}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl_a8ccbd2485213918c8bb088b7a1c2e7ec}{max\_size}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a53b1d7959aa0286e534e6dfa1860659e}{MAX\_DAY\_NAME\_LEN}};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl_a1381d6ee0458994cf3723eef32bf703e}{execute}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<ArgType>::T}}\&\ dt,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,\ \textcolor{keywordtype}{size\_t}\&\ offset)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ day\_name\ =\ dt.day\_name();}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (day\_name\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ len\ =\ strlen(day\_name);}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&res\_data[offset],\ day\_name,\ len);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ +=\ len;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ offset;}
+\DoxyCodeLine{00151\ \ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_day_name_impl_aa34623d1507de27022b19a02584b91fb}{get\_variadic\_argument\_types}}()\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \};}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00159\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl}{MonthNameImpl}}\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl_afe597a9428d05034ac52e9fbdb68bdb3}{OpArgType}}\ =\ ArgType;}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}monthname"{}};}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl_a8ccbd2485213918c8bb088b7a1c2e7ec}{max\_size}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a9ff481a951a3f1fe908a1e21993c9a68}{MAX\_MONTH\_NAME\_LEN}};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl_a1381d6ee0458994cf3723eef32bf703e}{execute}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<ArgType>::T}}\&\ dt,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,\ \textcolor{keywordtype}{size\_t}\&\ offset)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ month\_name\ =\ dt.month\_name();}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (month\_name\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ len\ =\ strlen(month\_name);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&res\_data[offset],\ month\_name,\ len);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ +=\ len;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ offset;}
+\DoxyCodeLine{00173\ \ \ \ \ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_month_name_impl_aa34623d1507de27022b19a02584b91fb}{get\_variadic\_argument\_types}}()\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{std::make\_shared<typename\ DateTraits<ArgType>::DateType>()\};}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DateType,\ \textcolor{keyword}{typename}\ ArgType>}
+\DoxyCodeLine{00181\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl}{DateFormatImpl}}\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl_a581806b70370c307e628fdac444f1f9f}{FromType}}\ =\ ArgType;}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}date\_format"{}};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl_a13e3e2fc5c82d44e2ef3233bd1a4363e}{execute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl_a581806b70370c307e628fdac444f1f9f}{FromType}}\&\ t,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ format,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\&\ offset)\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ dt\ =\ (DateType\&)t;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}}\ >\ 128)\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ buf[128];}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!dt.to\_format\_string(format.\mbox{\hyperlink{structdoris_1_1_string_ref_a8f64897c7ccc5c13f276d1d07c4e7095}{data}},\ format.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}},\ buf))\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ len\ =\ strlen(buf);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ res\_data.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_aedb71f31112ab88423d646d22ac3450f}{insert}}(buf,\ buf\ +\ len);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ offset\ +=\ len;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_format_impl_aa34623d1507de27022b19a02584b91fb}{get\_variadic\_argument\_types}}()\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::vector<DataTypePtr>\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::dynamic\_pointer\_cast<const\ IDataType>(}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<\textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<ArgType>::DateType}}>()),}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::dynamic\_pointer\_cast<const\ IDataType>(}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<vectorized::DataTypeString>())\};}
+\DoxyCodeLine{00209\ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \};}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ TODO:\ This\ function\ should\ be\ depend\ on\ arguments\ not\ always\ nullable}}
+\DoxyCodeLine{00213\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DateType>}
+\DoxyCodeLine{00214\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_from_unix_time_impl}{FromUnixTimeImpl}}\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_from_unix_time_impl_ae3eac79ea25e8bc5c1cf120d5835df42}{FromType}}\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac524bdfeb5d781872485d9321c881920}{Int32}};}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_from_unix_time_impl_a857a20970ce2f860323316fcaad16cb0}{name}}\ =\ \textcolor{stringliteral}{"{}from\_unixtime"{}};}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_from_unix_time_impl_af5f773963d2ae4162da1758fabd73466}{execute}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_from_unix_time_impl_ae3eac79ea25e8bc5c1cf120d5835df42}{FromType}}\ val,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ format,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\&\ offset,\ \textcolor{keyword}{const}\ cctz::time\_zone\&\ time\_zone)\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ DateType\ dt;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}}\ >\ 128\ ||\ val\ <\ 0\ ||\ val\ >\ INT\_MAX\ ||\ !dt.from\_unixtime(val,\ time\_zone))\ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ buf[128];}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!dt.to\_format\_string(format.\mbox{\hyperlink{structdoris_1_1_string_ref_a8f64897c7ccc5c13f276d1d07c4e7095}{data}},\ format.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}},\ buf))\ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ len\ =\ strlen(buf);}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ res\_data.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_aedb71f31112ab88423d646d22ac3450f}{insert}}(buf,\ buf\ +\ len);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ offset\ +=\ len;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::pair\ \{offset,\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{00235\ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \};}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Transform>}
+\DoxyCodeLine{00239\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_to_string_one_argument}{TransformerToStringOneArgument}}\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_to_string_one_argument_a04fe3e37490d348be4273b0ba28ceb1f}{vector}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<typename\ Transform::OpArgType>}}\&\ ts,}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,\ ColumnString::Offsets\&\ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}},}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ len\ =\ ts.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ res\_data.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(len\ *\ Transform::max\_size);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}.resize(len);}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ null\_map.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(len);}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset\ =\ 0;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ len;\ ++i)\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ t\ =\ ts[i];}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ date\_time\_value\ =}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }typename\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<typename\ Transform::OpArgType>::T}}\&\textcolor{keyword}{>}(}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}[i]\ =\ Transform::execute(date\_time\_value,\ res\_data,\ offset);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ !date\_time\_value.is\_valid\_date();}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_to_string_one_argument_a537ace786d9836638f0e26c15ba20026}{vector}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<typename\ Transform::OpArgType>}}\&\ ts,}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,\ ColumnString::Offsets\&\ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}})\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ len\ =\ ts.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ res\_data.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(len\ *\ Transform::max\_size);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}.resize(len);}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset\ =\ 0;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ len;\ ++i)\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ t\ =\ ts[i];}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ date\_time\_value\ =}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }typename\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<typename\ Transform::OpArgType>::T}}\&\textcolor{keyword}{>}(}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}[i]\ =\ Transform::execute(date\_time\_value,\ res\_data,\ offset);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(date\_time\_value.is\_valid\_date());}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \};}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Transform>}
+\DoxyCodeLine{00280\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_to_string_two_argument}{TransformerToStringTwoArgument}}\ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_to_string_two_argument_a1b2d5b435816459cae46cb20670e839f}{vector\_constant}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<typename\ Transform::FromType>}}\&\ ts,}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ format,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{ColumnString::Chars}}\&\ res\_data,}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ColumnString::Offsets\&\ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}},}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<UInt8>}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ len\ =\ ts.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}.resize(len);}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ res\_data.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_aa5a2bd4e24261d8f10f2f4e5d82fccf6}{reserve}}(len\ *\ format.size()\ +\ len);}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ null\_map.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_a8289b71720c1c4224cb0f57023d5ba91}{resize\_fill}}(len,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset\ =\ 0;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ len;\ ++i)\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ t\ =\ ts[i];}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_offset;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_null;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_specialization\_of\_v<Transform,\ FromUnixTimeImpl>)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::tie(new\_offset,\ is\_null)\ =}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Transform::execute(t,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}(format.c\_str(),\ format.size()),\ res\_data,}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offset,\ context-\/>\mbox{\hyperlink{classdoris__udf_1_1_function_context_a2f99439b2b338f042ef7ea16325a96e8}{impl}}()-\/>\mbox{\hyperlink{classdoris_1_1_function_context_impl_a2ccf49be12555d373b883be1aa7b6709}{state}}()-\/>\mbox{\hyperlink{classdoris_1_1_runtime_state_aaed01805340af1362c3ab00262c56780}{timezone\_obj}}());}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::tie(new\_offset,\ is\_null)\ =\ Transform::execute(}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}(format.c\_str(),\ format.size()),\ res\_data,\ offset);}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{columns__common_8cpp_ad4717de0efdaa9dd428aa499a4542c30}{res\_offsets}}[i]\ =\ new\_offset;}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ is\_null;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \};}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ FromType,\ \textcolor{keyword}{typename}\ ToType,\ \textcolor{keyword}{typename}\ Transform>}
+\DoxyCodeLine{00311\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer}{Transformer}}\ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_ac7a3b87be4c0f0ebbc436f4dbc919585}{vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<FromType>}}\&\ vec\_from,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ToType>}}\&\ vec\_to,}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ null\_map.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ vec\_to[i]\ =\ Transform::execute(vec\_from[i]);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ null\_map[i]\ =\ !((\textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<typename\ Transform::OpArgType>::T}}\&)(vec\_from[i]))}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .is\_valid\_date();}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \ \ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_a5fcf6ce682e02d63c56080a40e13e2ad}{vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<FromType>}}\&\ vec\_from,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ToType>}}\&\ vec\_to)\ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ vec\_to[i]\ =\ Transform::execute(vec\_from[i]);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(((\textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_traits}{DateTraits<typename\ Transform::OpArgType>::T}}\&)(vec\_from[i]))}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .is\_valid\_date());}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \};}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ FromType,\ \textcolor{keyword}{typename}\ ToType>}
+\DoxyCodeLine{00338\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer}{Transformer}}<FromType,\ ToType,\ ToYearImpl<FromType>>\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_3_01_from_type_00_01_to_type_00_01_to_year_impl_3_01_from_type_01_4_01_4_ac7a3b87be4c0f0ebbc436f4dbc919585}{vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<FromType>}}\&\ vec\_from,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ToType>}}\&\ vec\_to,}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ null\_map)\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ null\_map.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ to\_ptr\ =\ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ from\_ptr\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ null\_map\_ptr\ =\ null\_map.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ to\_ptr[i]\ =\ ToYearImpl<FromType>::execute(from\_ptr[i]);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ null\_map\_ptr[i]\ =\ to\_ptr[i]\ >\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a1a499db697459919df420c4c0d02f926}{MAX\_YEAR}};}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer_3_01_from_type_00_01_to_type_00_01_to_year_impl_3_01_from_type_01_4_01_4_a5fcf6ce682e02d63c56080a40e13e2ad}{vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<FromType>}}\&\ vec\_from,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<ToType>}}\&\ vec\_to)\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a259cb5a711406a8c3e5d937eb9350cca}{size}}();}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_base_a0c895d2dd381326acf54873d9d3a5aa5}{resize}}(size);}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ to\_ptr\ =\ vec\_to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \_\_restrict\ from\_ptr\ =\ vec\_from.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_adc1e16b293a89a9ccc9541058b5ca560}{data}}();}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ to\_ptr[i]\ =\ ToYearImpl<FromType>::execute(from\_ptr[i]);}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \ \ \ \ \}}
+\DoxyCodeLine{00369\ \};}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ FromType,\ \textcolor{keyword}{typename}\ ToType,\ \textcolor{keyword}{typename}\ Transform>}
+\DoxyCodeLine{00372\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_time_transform_impl}{DateTimeTransformImpl}}\ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_date_time_transform_impl_a157635e555b473b22c2f9209881184f8}{execute}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{Block}}\&\ block,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a69df8cb2bb6bcd07aa3b387782deb8f1}{ColumnNumbers}}\&\ arguments,\ \textcolor{keywordtype}{size\_t}\ result,}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ input\_rows\_count)\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Op\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_transformer}{Transformer<FromType,\ ToType,\ Transform>}};}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ is\_nullable\ =\ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(result).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_a3391f0a6478e445446c9d838b61c8789}{type}}-\/>is\_nullable();}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aa1d7b67012985a9197efd18f7dd48e51}{ColumnPtr}}\ source\_col\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a174d35d751f410a19f4bfe649d3cc3a4}{remove\_nullable}}(block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}});}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ sources\ =\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a843f4a4b1795a64d05252b3ef036d904}{check\_and\_get\_column}}<\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<FromType>}}>(source\_col.get()))\ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ col\_to\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<ToType>::create}}();}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nullable)\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ null\_map\ =\ \mbox{\hyperlink{class_c_o_w_helper_aa14023f47995d24ce0ea777e90a4cb23}{ColumnVector<UInt8>::create}}(input\_rows\_count);}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Op::vector(sources-\/>get\_data(),\ col\_to-\/>get\_data(),\ null\_map-\/>get\_data());}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ nullable\_col\ =\ check\_and\_get\_column<ColumnNullable>(}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}.get()))\ \{}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ result\_null\_map\ =\ assert\_cast<ColumnUInt8\&>(*null\_map).get\_data();}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{NullMap}}\&\ src\_null\_map\ =}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<const\ ColumnUInt8\&>(nullable\_col-\/>get\_null\_map\_column())}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .get\_data();}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_vectorized_utils_ac4259bd03926909fe68afe8e1592ebf9}{VectorizedUtils::update\_null\_map}}(result\_null\_map,\ src\_null\_map);}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a0f83afb1e34b7b73db116622fa569508}{replace\_by\_position}}(}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ result,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa56bff67215caba11a6411e09b739913}{ColumnNullable::create}}(std::move(col\_to),\ std::move(null\_map)));}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Op::vector(sources-\/>get\_data(),\ col\_to-\/>get\_data());}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a0f83afb1e34b7b73db116622fa569508}{replace\_by\_position}}(result,\ std::move(col\_to));}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::RuntimeError(\textcolor{stringliteral}{"{}Illegal\ column\ \{\}\ of\ first\ argument\ of\ function\ \{\}"{}},}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block_a54f8f7eae676dfa49029fff7c7ce8f05}{get\_by\_position}}(arguments[0]).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_column_with_type_and_name_aa89d995364ccfc1a11c2f34d08e89b2b}{column}}-\/>get\_name(),}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Transform::name);}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00406\ \ \ \ \ \}}
+\DoxyCodeLine{00407\ \};}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

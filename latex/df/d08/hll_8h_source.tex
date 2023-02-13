@@ -1,0 +1,379 @@
+\hypertarget{hll_8h_source}{}\doxysection{hll.\+h}
+\label{hll_8h_source}\index{/Users/dabowang/be\_all/olap/hll.h@{/Users/dabowang/be\_all/olap/hll.h}}
+\mbox{\hyperlink{hll_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <parallel\_hashmap/phmap.h>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#ifdef\ \_\_x86\_64\_\_}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <immintrin.h>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{struct\ }Slice;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_af10f5c8d6ca9efa2ce43bdce434e494a}{HLL\_COLUMN\_PRECISION}}\ =\ 14;}
+\DoxyCodeLine{00039\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a08f6402348c7c1c8a9095526c00df27d}{HLL\_ZERO\_COUNT\_BITS}}\ =\ (64\ -\/\ \mbox{\hyperlink{namespacedoris_af10f5c8d6ca9efa2ce43bdce434e494a}{HLL\_COLUMN\_PRECISION}});}
+\DoxyCodeLine{00040\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a175ba81a1694495eb08f8c0cd0ce2c09}{HLL\_EXPLICIT\_INT64\_NUM}}\ =\ 160;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a2405336f5b93ebe21ab5df1095fbc3f6}{HLL\_SPARSE\_THRESHOLD}}\ =\ 4096;}
+\DoxyCodeLine{00042\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}}\ =\ 16\ *\ 1024;}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ maximum\ size\ in\ byte\ of\ serialized\ HLL:\ type(1)\ +\ registers\ (2\string^14)}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a121e884dda8ccfef9b7d6f435fb08870}{HLL\_COLUMN\_DEFAULT\_LEN}}\ =\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}}\ +\ 1;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ 1\ for\ type;\ 1\ for\ hash\ values\ count;\ 8\ for\ hash\ value}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_aa10e3fc7b6776af89490072744c1e177}{HLL\_SINGLE\_VALUE\_SIZE}}\ =\ 10;}
+\DoxyCodeLine{00048\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_afbfa998a39f35ad164871719b3c913cf}{HLL\_EMPTY\_SIZE}}\ =\ 1;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Hyperloglog\ distinct\ estimate\ algorithm.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ See\ these\ papers\ for\ more\ details.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ 1)\ Hyperloglog:\ The\ analysis\ of\ a\ near-\/optimal\ cardinality\ estimation}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ algorithm\ (2007)}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ 2)\ HyperLogLog\ in\ Practice\ (paper\ from\ google\ with\ some\ improvements)}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ Each\ HLL\ value\ is\ a\ set\ of\ values.\ To\ save\ space,\ Doris\ store\ HLL\ value}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ in\ different\ format\ according\ to\ its\ cardinality.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ HLL\_DATA\_EMPTY:\ when\ set\ is\ empty.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ HLL\_DATA\_EXPLICIT:\ when\ there\ is\ only\ few\ values\ in\ set,\ store\ these\ values\ explicit.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ If\ the\ number\ of\ hash\ values\ is\ not\ greater\ than\ 160,\ set\ is\ encoded\ in\ this\ format.}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ The\ max\ space\ occupied\ is\ (1\ +\ 1\ +\ 160\ *\ 8)\ =\ 1282.\ I\ don't\ know\ why\ 160\ is\ chosen,}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ maybe\ can\ be\ other\ number.\ If\ you\ are\ interested,\ you\ can\ try\ other\ number\ and\ see}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ if\ it\ will\ be\ better.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ HLL\_DATA\_SPARSE:\ only\ store\ non-\/zero\ registers.\ If\ the\ number\ of\ non-\/zero\ registers}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ is\ not\ greater\ than\ 4096,\ set\ is\ encoded\ in\ this\ format.\ The\ max\ space\ occupied\ is}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ (1\ +\ 4\ +\ 3\ *\ 4096)\ =\ 12293.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ HLL\_DATA\_FULL:\ most\ space-\/consuming,\ store\ all\ registers}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ A\ HLL\ value\ will\ change\ in\ the\ sequence\ empty\ -\/>\ explicit\ -\/>\ sparse\ -\/>\ full,\ and\ not}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ allow\ reverse.}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ NOTE:\ This\ values\ are\ persisted\ in\ storage\ devices,\ so\ don't\ change\ exist}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ enum\ values.}}
+\DoxyCodeLine{00078\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30}{HllDataType}}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}\ =\ 0,}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}\ =\ 1,}
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}\ =\ 2,}
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}\ =\ 3,}
+\DoxyCodeLine{00083\ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\ \{}
+\DoxyCodeLine{00086\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a22b2412008483f8d973a13eabff96502}{HyperLogLog}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a5d6789a71f8b18ab73952b4dc11e8e1f}{HyperLogLog}}(uint64\_t\ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}})\ :\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}(\mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}})\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}.emplace(\mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}});}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a22b2412008483f8d973a13eabff96502}{HyperLogLog}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ src);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a20aa3677d165554b8562d50b41dafce3}{HyperLogLog}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\ other)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}})\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}:\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}\ =\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}:\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{new}\ uint8\_t[\mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}}];}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}},\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}},\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a0e65d6e87f32f1fdfb2eeeb52b1fdbcc}{HyperLogLog}}(\mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\&\ other)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ other.\_type;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (other.\_type)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}:}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}:\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}\ =\ std::move(other.\_hash\_set);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ other.\_type\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}:\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ other.\_registers;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ other.\_registers\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ other.\_type\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a467f977fb8b6e0fed8d2c326aff101e4}{operator=}}(\mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\&\ other)\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{this}\ !=\ \&other)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ other.\_type;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (other.\_type)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}:}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}:\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}\ =\ std::move(other.\_hash\_set);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.\_type\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}:\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ other.\_registers;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.\_registers\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.\_type\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00163\ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a0794060eb538dd95d819d6e2276e4f7c}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\ other)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{this}\ !=\ \&other)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}};}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}};}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}})\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}:}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}:\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}\ =\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}};}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}:\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{new}\ uint8\_t[\mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}}];}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}},\ other.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}},\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}});}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00191\ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ae95cf086a157a470b94db62c0f04cf8f}{\string~HyperLogLog}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ac8bb3912a3ce86b15842e79d0b421204}{clear}}();\ \}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ac8bb3912a3ce86b15842e79d0b421204}{clear}}()\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}.clear();}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_aa0a4b5d0a98b801e038fef6346c390dc}{SetTypeValueType}};}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keyword}{typedef}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a1947adea7f4ecefa1266b004ee8dba8c}{SparseLengthValueType}};}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{typedef}\ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ab5d1216b8f4c8b2f06ede50060c46c51}{SparseIndexType}};}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a0db31d19eb95279c2eb33663d3f62c78}{SparseValueType}};}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ hash\ value\ to\ this\ HLL\ value}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ input\ must\ be\ a\ hash\_value}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ad6f544fc5bdcfdc12eb8347077adb437}{update}}(uint64\_t\ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}});}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a71afb173abeaf103603fd213b407aa05}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\&\ other);}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ Return\ max\ size\ of\ serialized\ binary}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a6af4ab01162517109c2c2f1b77df745c}{max\_serialized\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a88ddc375569e5ed61c747db2c563490a}{memory\_consumed}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ \textcolor{keyword}{sizeof}(*this);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ ==\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}})}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}.size()\ *\ \textcolor{keyword}{sizeof}(uint64\_t);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ ==\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}\ ||\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ ==\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}})}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}};}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ size;}
+\DoxyCodeLine{00222\ \ \ \ \ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ Input\ slice\ should\ has\ enough\ capacity\ for\ serialize,\ which}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{//\ can\ be\ get\ through\ max\_serialized\_size().\ If\ insufficient\ buffer}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ is\ given,\ this\ will\ cause\ process\ crash.}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ Return\ actual\ size\ of\ serialized\ binary.}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_add25f3a0d610584aa01a2488d8e2ab9b}{serialize}}(uint8\_t*\ dst)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ Now,\ only\ empty\ HLL\ support\ this\ function.}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a1f41f7f1683d985ffe04e2e8d5cde80c}{deserialize}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}});}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_aafa1a03186e88af9d346ed5417da7d6a}{estimate\_cardinality}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ac88ed65e8378f45cd90067f1753d7606}{empty}}()\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log}{HyperLogLog}}\ hll;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ std::string\ buf;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ buf.resize(\mbox{\hyperlink{namespacedoris_afbfa998a39f35ad164871719b3c913cf}{HLL\_EMPTY\_SIZE}});}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ hll.\mbox{\hyperlink{classdoris_1_1_hyper_log_log_add25f3a0d610584aa01a2488d8e2ab9b}{serialize}}((uint8\_t*)buf.c\_str());}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ buf;}
+\DoxyCodeLine{00241\ \ \ \ \ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ Check\ if\ input\ slice\ is\ a\ valid\ serialized\ binary\ of\ HyperLogLog.}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{comment}{//\ This\ function\ only\ check\ the\ encoded\ type\ in\ slice,\ whose\ complex}}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{comment}{//\ function\ is\ O(1).}}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a2c0309ba9b0f648e53770bf1fcb0bb58}{is\_valid}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}});}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ only\ for\ debug}}
+\DoxyCodeLine{00249\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_aa454ec5a80b6918ee2a68181f2d14476}{to\_string}}()\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}})\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}:}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a6873f21892f0d425431ce672f14bcad7}{HLL\_DATA\_EXPLICIT}}:}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a2c9f845c3916cb3399f4a44262f4fce7}{HLL\_DATA\_SPARSE}}:}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a1bc4b26c49e5035e948f9eabd3a0b307}{HLL\_DATA\_FULL}}:\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ str\ \{\textcolor{stringliteral}{"{}hash\ set\ size:\ "{}}\};}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ str.append(std::to\_string(\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}}.size()));}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ str.append(\textcolor{stringliteral}{"{}\(\backslash\)ncardinality:\(\backslash\)t"{}});}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ str.append(std::to\_string(\mbox{\hyperlink{classdoris_1_1_hyper_log_log_aafa1a03186e88af9d346ed5417da7d6a}{estimate\_cardinality}}()));}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ str.append(\textcolor{stringliteral}{"{}\(\backslash\)ntype:\(\backslash\)t"{}});}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ str.append(std::to\_string(\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}));}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ str;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00270\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30}{HllDataType}}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a3e827c10e280b753fd74bdb2c3b86a04}{\_type}}\ =\ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}};}
+\DoxyCodeLine{00271\ \ \ \ \ phmap::flat\_hash\_set<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a4f4be55f7c2c51933aac6cd5fbe5fc0b}{\_hash\_set}};}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{comment}{//\ This\ field\ is\ much\ space\ consuming(HLL\_REGISTERS\_COUNT),\ we\ create}}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//\ it\ only\ when\ it\ is\ really\ needed.}}
+\DoxyCodeLine{00275\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_ae469a422c10192ec78afa01684d7e8a5}{\_convert\_explicit\_to\_register}}();}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ update\ one\ hash\ value\ into\ this\ registers}}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_aa73b3da8037f28443b846183eaeb83e3}{\_update\_registers}}(uint64\_t\ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}})\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ the\ lower\ bits\ to\ index\ into\ the\ number\ of\ streams\ and\ then}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ first\ 1\ bit\ after\ the\ index\ bits.}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ =\ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}}\ \%\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}};}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}}\ >>=\ \mbox{\hyperlink{namespacedoris_af10f5c8d6ca9efa2ce43bdce434e494a}{HLL\_COLUMN\_PRECISION}};}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ make\ sure\ max\ first\_one\_bit\ is\ HLL\_ZERO\_COUNT\_BITS\ +\ 1}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}}\ |=\ ((uint64\_t)1\ <<\ \mbox{\hyperlink{namespacedoris_a08f6402348c7c1c8a9095526c00df27d}{HLL\_ZERO\_COUNT\_BITS}});}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ uint8\_t\ first\_one\_bit\ =\ \_\_builtin\_ctzl(\mbox{\hyperlink{namespacedoris_aeb0d928c4739fd3061b7be2ac4047b03}{hash\_value}})\ +\ 1;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}]\ =\ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}]\ <\ first\_one\_bit\ ?\ first\_one\_bit\ :\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}]);}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{comment}{//\ absorb\ other\ registers\ into\ this\ registers}}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a6e725a542ee3606fa6fd67bb5e673b13}{\_merge\_registers}}(\textcolor{keyword}{const}\ uint8\_t*\ other\_registers)\ \{}
+\DoxyCodeLine{00294\ \textcolor{preprocessor}{\#ifdef\ \_\_AVX2\_\_}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ loop\ =\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}}\ /\ 32;\ \textcolor{comment}{//\ 32\ =\ 256/8}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ uint8\_t*\ dst\ =\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}};}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t*\ src\ =\ other\_registers;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ loop;\ i++)\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \_\_m256i\ xa\ =\ \_mm256\_loadu\_si256((\textcolor{keyword}{const}\ \_\_m256i*)dst);}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \_\_m256i\ xb\ =\ \_mm256\_loadu\_si256((\textcolor{keyword}{const}\ \_\_m256i*)src);}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \_mm256\_storeu\_si256((\_\_m256i*)dst,\ \_mm256\_max\_epu8(xa,\ xb));}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ src\ +=\ 32;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ dst\ +=\ 32;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{namespacedoris_a96c247f7a58a648b9a24564941554466}{HLL\_REGISTERS\_COUNT}};\ ++i)\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[i]\ =}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[i]\ <\ other\_registers[i]\ ?\ other\_registers[i]\ :\ \mbox{\hyperlink{classdoris_1_1_hyper_log_log_a230eaf63009df91ac0e6580a2d9992cb}{\_registers}}[i]);}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00311\ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \};}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{comment}{//\ todo(kks):\ remove\ this\ when\ dpp\_sink\ class\ was\ removed}}
+\DoxyCodeLine{00315\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_hll_set_resolver}{HllSetResolver}}\ \{}
+\DoxyCodeLine{00316\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00317\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a972829d55773aaf4bdc597f10298e5b8}{HllSetResolver}}()}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a40ae85216b2f85587dea5664ef3b97e8}{\_buf\_ref}}(nullptr),}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a01ec68454f6e7086341652478741c4b6}{\_buf\_len}}(0),}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afbc3fb49ffe7e362b15801ca5c9f548b}{\_set\_type}}(\mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30a8ee1bfd7c11001e654fb2dccf9eac68d}{HLL\_DATA\_EMPTY}}),}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_aed2a1ae863593ea34d0aa54cf264f3ad}{\_full\_value\_position}}(nullptr),}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afe54ccadd320d960f450cf391e21dab2}{\_explicit\_value}}(nullptr),}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae0a73ea3d731ce87f2233155f04dfd08}{\_explicit\_num}}(0)\ \{\}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ab9e3409f605ae3f5ffade5a4741678b2}{\string~HllSetResolver}}()\ \{\}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_aa0a4b5d0a98b801e038fef6346c390dc}{SetTypeValueType}};}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae3de9d0f09a264c981ef6af230f77689}{ExplicitLengthValueType}};}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keyword}{typedef}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a1947adea7f4ecefa1266b004ee8dba8c}{SparseLengthValueType}};}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keyword}{typedef}\ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ab5d1216b8f4c8b2f06ede50060c46c51}{SparseIndexType}};}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keyword}{typedef}\ uint8\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a0db31d19eb95279c2eb33663d3f62c78}{SparseValueType}};}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{//\ only\ save\ pointer}}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a7a4009a14a53c301aaee84b2101ad8cb}{init}}(\textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ len)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a40ae85216b2f85587dea5664ef3b97e8}{\_buf\_ref}}\ =\ buf;}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a01ec68454f6e7086341652478741c4b6}{\_buf\_len}}\ =\ len;}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ hll\ set\ type}}
+\DoxyCodeLine{00340\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30}{HllDataType}}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_aac84f97909236954ed878c0af6e05688}{get\_hll\_data\_type}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afbc3fb49ffe7e362b15801ca5c9f548b}{\_set\_type}};\ \}}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{comment}{//\ explicit\ value\ num}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a7177cfb51823d8bd8a5cdff43dd5f408}{get\_explicit\_count}}()\ \{\ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae0a73ea3d731ce87f2233155f04dfd08}{\_explicit\_num}};\ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{//\ get\ explicit\ index\ value\ 64bit}}
+\DoxyCodeLine{00346\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a61835847e29ec0a03e1a44833f1e4cec}{get\_explicit\_value}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}})\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}\ >=\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae0a73ea3d731ce87f2233155f04dfd08}{\_explicit\_num}})\ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afe54ccadd320d960f450cf391e21dab2}{\_explicit\_value}}[\mbox{\hyperlink{column__vector_8cpp_a9d57133bec333a3eac9e3c1693a5ee38}{index}}];}
+\DoxyCodeLine{00351\ \ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{comment}{//\ get\ full\ register\ value}}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_adf5d370b91b1c114c8cd4f03df1ec038}{get\_full\_value}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_aed2a1ae863593ea34d0aa54cf264f3ad}{\_full\_value\_position}};\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{comment}{//\ get\ (index,\ value)\ map}}
+\DoxyCodeLine{00357\ \ \ \ \ std::map<SparseIndexType,\ SparseValueType>\&\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a97a9a53f7253af94f73529023c1b7ee9}{get\_sparse\_map}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_adf04a8e664aa738346a03adc6eb71c6c}{\_sparse\_map}};\ \}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ parse\ set\ ,\ call\ after\ copy()\ or\ init()}}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ad7c704b34912678d95c13243cacf9d7f}{parse}}();}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a40ae85216b2f85587dea5664ef3b97e8}{\_buf\_ref}};\ \ \ \ \ \ \ \ \textcolor{comment}{//\ set}}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a01ec68454f6e7086341652478741c4b6}{\_buf\_len}};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ len}}
+\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab221bd435c5dd7d9daa7eee704c36d30}{HllDataType}}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afbc3fb49ffe7e362b15801ca5c9f548b}{\_set\_type}};\ \textcolor{comment}{//set\ type}}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_aed2a1ae863593ea34d0aa54cf264f3ad}{\_full\_value\_position}};}
+\DoxyCodeLine{00367\ \ \ \ \ uint64\_t*\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_afe54ccadd320d960f450cf391e21dab2}{\_explicit\_value}};}
+\DoxyCodeLine{00368\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae3de9d0f09a264c981ef6af230f77689}{ExplicitLengthValueType}}\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_ae0a73ea3d731ce87f2233155f04dfd08}{\_explicit\_num}};}
+\DoxyCodeLine{00369\ \ \ \ \ std::map<SparseIndexType,\ SparseValueType>\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_adf04a8e664aa738346a03adc6eb71c6c}{\_sparse\_map}};}
+\DoxyCodeLine{00370\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a1947adea7f4ecefa1266b004ee8dba8c}{SparseLengthValueType}}*\ \mbox{\hyperlink{classdoris_1_1_hll_set_resolver_a274b6409fcdf867ebc7dc8f0ed2a6406}{\_sparse\_count}};}
+\DoxyCodeLine{00371\ \};}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

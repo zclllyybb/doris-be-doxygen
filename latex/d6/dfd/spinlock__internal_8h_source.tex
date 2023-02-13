@@ -1,0 +1,67 @@
+\hypertarget{spinlock__internal_8h_source}{}\doxysection{spinlock\+\_\+internal.\+h}
+\label{spinlock__internal_8h_source}\index{/Users/dabowang/be\_all/gutil/spinlock\_internal.h@{/Users/dabowang/be\_all/gutil/spinlock\_internal.h}}
+\mbox{\hyperlink{spinlock__internal_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ -\/*-\/\ Mode:\ C++;\ c-\/basic-\/offset:\ 2;\ indent-\/tabs-\/mode:\ nil\ -\/*-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{/*\ Copyright\ (c)\ 2010,\ Google\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ met:}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ copyright\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ in\ the\ documentation\ and/or\ other\ materials\ provided\ with\ the}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ distribution.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ \ *\ Neither\ the\ name\ of\ Google\ Inc.\ nor\ the\ names\ of\ its}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ contributors\ may\ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ this\ software\ without\ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ "{}AS\ IS"{}\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ LIMITED\ TO,\ THE\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ A\ PARTICULAR\ PURPOSE\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ -\/-\/-\/}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ This\ file\ is\ an\ internal\ part\ spinlock.cc\ and\ once.cc}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ It\ may\ not\ be\ used\ directly\ by\ code\ outside\ of\ //base.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops_8h}{gutil/atomicops.h}}"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{basictypes_8h}{gutil/basictypes.h}}"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ SpinLockWait()\ waits\ until\ it\ can\ perform\ one\ of\ several\ transitions\ from}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ "{}from"{}\ to\ "{}to"{}.\ \ It\ returns\ when\ it\ performs\ a\ transition\ where\ done==true.}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structbase_1_1internal_1_1_spin_lock_wait_transition}{SpinLockWaitTransition}}\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{structbase_1_1internal_1_1_spin_lock_wait_transition_aad78da8b8a452012c452a287ebcb00fb}{from}};}
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{structbase_1_1internal_1_1_spin_lock_wait_transition_afb5f4184078c7f8606cede3b50a3354e}{to}};}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structbase_1_1internal_1_1_spin_lock_wait_transition_a1d39aac66e12dae50a24cd7a9100ef33}{done}};}
+\DoxyCodeLine{00050\ \};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ Wait\ until\ *w\ can\ transition\ from\ trans[i].from\ to\ trans[i].to\ for\ some\ i}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ satisfying\ 0<=i<n\ \&\&\ trans[i].done,\ atomically\ make\ the\ transition,}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ then\ return\ the\ old\ value\ of\ *w.\ \ \ Make\ any\ other\ atomic\ transitions}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ where\ !trans[i].done,\ but\ continue\ waiting.}}
+\DoxyCodeLine{00056\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{namespacebase_1_1internal_a353f6a942c0f13ec11d36e7096395c9c}{SpinLockWait}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ w,\ \textcolor{keywordtype}{int}\ n,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structbase_1_1internal_1_1_spin_lock_wait_transition}{SpinLockWaitTransition}}\ trans[]);}
+\DoxyCodeLine{00057\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1internal_ac0750da5757c8aaa1889deb0aaf1d833}{SpinLockWake}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ w,\ \textcolor{keywordtype}{bool}\ all);}
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1internal_ae842ba0907f41a878dc0c2cec6f64587}{SpinLockDelay}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ w,\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{int}\ loop);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00061\ \}\ \textcolor{comment}{//\ namespace\ base}}
+
+\end{DoxyCode}

@@ -1,0 +1,186 @@
+\hypertarget{substitute_8h_source}{}\doxysection{substitute.\+h}
+\label{substitute_8h_source}\index{/Users/dabowang/be\_all/gutil/strings/substitute.h@{/Users/dabowang/be\_all/gutil/strings/substitute.h}}
+\mbox{\hyperlink{substitute_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2008\ Google\ Inc.\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00008\ \textcolor{keyword}{using\ }std::string;}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{basictypes_8h}{gutil/basictypes.h}}"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{numbers_8h}{gutil/strings/numbers.h}}"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stringpiece_8h}{gutil/strings/stringpiece.h}}"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacestrings}{strings}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ strings::Substitute()}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ strings::SubstituteAndAppend()}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ Kind\ of\ like\ StringPrintf,\ but\ different.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ Example:}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ \ string\ GetMessage(string\ first\_name,\ string\ last\_name,\ int\ age)\ \{}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ \ \ return\ strings::Substitute("{}My\ name\ is\ \$0\ \$1\ and\ I\ am\ \$2\ years\ old."{},}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ first\_name,\ last\_name,\ age);}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ Differences\ from\ StringPrintf:}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ *\ The\ format\ string\ does\ not\ identify\ the\ types\ of\ arguments.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \ \ Instead,\ the\ magic\ of\ C++\ deals\ with\ this\ for\ us.\ \ See\ below}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ \ for\ a\ list\ of\ accepted\ types.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ *\ Substitutions\ in\ the\ format\ string\ are\ identified\ by\ a\ '\$'}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ \ \ followed\ by\ a\ digit.\ \ So,\ you\ can\ use\ arguments\ out-\/of-\/order\ and}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ \ \ use\ the\ same\ argument\ multiple\ times.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ *\ '\$\$'\ in\ the\ format\ string\ means\ output\ a\ literal\ '\$'\ character.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ *\ It's\ much\ faster\ than\ StringPrintf.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ Supported\ types:}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ *\ StringPiece\ (const\ char*,\ const\ string\&)\ (NULL\ is\ equivalent\ to\ "{}"{})}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ \ \ \ *\ Note\ that\ this\ means\ you\ do\ not\ have\ to\ add\ .c\_str()\ to\ all\ of}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ \ \ your\ strings.\ \ In\ fact,\ you\ shouldn't;\ it\ will\ be\ slower.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ *\ int32,\ int64,\ uint32,\ uint64}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ *\ float,\ double}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ *\ bool:\ \ Printed\ as\ "{}true"{}\ or\ "{}false"{}.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ *\ pointer\ types\ other\ than\ char*:\ Printed\ as\ "{}0x<lower\ case\ hex\ string>"{},}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ except\ that\ NULL\ is\ printed\ as\ "{}NULL"{}.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ If\ not\ enough\ arguments\ are\ supplied,\ a\ LOG(DFATAL)\ will\ be\ issued\ and}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ the\ empty\ string\ will\ be\ returned.\ If\ too\ many\ arguments\ are\ supplied,}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ just\ the\ first\ ones\ will\ be\ used\ (no\ warning).}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ SubstituteAndAppend()\ is\ like\ Substitute()\ but\ appends\ the\ result\ to}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ *output.\ \ Example:}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ string\ str;}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \ \ strings::SubstituteAndAppend(\&str,}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}My\ name\ is\ \$0\ \$1\ and\ I\ am\ \$2\ years\ old."{},}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ first\_name,\ last\_name,\ age);}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ Substitute()\ is\ significantly\ faster\ than\ StringPrintf().\ \ For\ very}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ large\ strings,\ it\ may\ be\ orders\ of\ magnitude\ faster.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{namespace\ }internal\ \{\ \textcolor{comment}{//\ Implementation\ details.}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ This\ class\ has\ implicit\ constructors.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ Style\ guide\ exception\ granted:}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ http://goto/style-\/guide-\/exception-\/20978288}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{SubstituteArg}}\ \{}
+\DoxyCodeLine{00070\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ We\ must\ explicitly\ overload\ char*\ so\ that\ the\ compiler\ doesn't\ try\ to}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ cast\ it\ to\ bool\ to\ construct\ a\ DynamicSubstituteArg.\ \ Might\ as\ well}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ overload\ const\ string\&\ as\ well,\ since\ this\ allows\ us\ to\ avoid\ a\ temporary}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ object.}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6a2f2ce928885fd0a2d09431e0d88252}{SubstituteArg}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ ==\ NULL\ ?\ 0\ :\ strlen(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}))\ \{\}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a19c41a6605a4163c7fcb8354a240d364}{SubstituteArg}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aa3affb1becdd976aba1036a161a3134d}{data}}()),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_af9593d4a5ff4274efaf429cb4f9e57cc}{size}}())\ \{\}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aa2f3cc3c223c580c2edb852af5e1852e}{SubstituteArg}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aa3affb1becdd976aba1036a161a3134d}{data}}()),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_af9593d4a5ff4274efaf429cb4f9e57cc}{size}}())\ \{\}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ Primitives}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ We\ don't\ overload\ for\ signed\ and\ unsigned\ char\ because\ if\ people\ are}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ explicitly\ declaring\ their\ chars\ as\ signed\ or\ unsigned\ then\ they\ are}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ probably\ actually\ using\ them\ as\ 8-\/bit\ integers\ and\ would\ probably}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ prefer\ an\ integer\ representation.\ \ But,\ we\ don't\ really\ know.\ \ So,\ we}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ make\ the\ caller\ decide\ what\ to\ do.}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a5d3e23913c8888fc7c075da1ef58231e}{SubstituteArg}}(\textcolor{keywordtype}{char}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(1)\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}[0]\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aba17fb3b64d133b89ad9e51d775377ff}{SubstituteArg}}(\textcolor{keywordtype}{short}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_ac36c878785d770bda691ef55e6cb680c}{FastInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a08d1e3fea16d3967723a44a93f9714df}{SubstituteArg}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_ad3fbc66cec830eacf66642f10e14217d}{FastUInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a84bca9014cb1d257fa79e843179804ec}{SubstituteArg}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_ac36c878785d770bda691ef55e6cb680c}{FastInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a5bbfe6f605cff35d9defe813eabba16f}{SubstituteArg}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_ad3fbc66cec830eacf66642f10e14217d}{FastUInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a7146fad35a6b1fecfdf964b67b563ab9}{SubstituteArg}}(\textcolor{keywordtype}{long}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}((sizeof(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ ==\ 4\ ?\ \mbox{\hyperlink{numbers_8cc_ac36c878785d770bda691ef55e6cb680c}{FastInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{numbers_8cc_ac81124216aa92e2544aa67e8bf09d625}{FastInt64ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}))\ -\/}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a4b4a1b743239d0249260acc27f966465}{SubstituteArg}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}((sizeof(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ ==\ 4\ ?\ \mbox{\hyperlink{numbers_8cc_ad3fbc66cec830eacf66642f10e14217d}{FastUInt32ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{numbers_8cc_aba8c19df6c987cae847df5d776e6a789}{FastUInt64ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}))\ -\/}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0e19c48bab7d5c3200fd1ee0d1dd0c7e}{SubstituteArg}}(\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_ac81124216aa92e2544aa67e8bf09d625}{FastInt64ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a9b73e2fdd580c0221796d2d4a8871ce7}{SubstituteArg}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(\mbox{\hyperlink{numbers_8cc_aba8c19df6c987cae847df5d776e6a789}{FastUInt64ToBufferLeft}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})\ \{\}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_ac267e3497d80cce1804cfd8f6ee049e5}{SubstituteArg}}(\textcolor{keywordtype}{float}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{numbers_8cc_ac2182bf3346bcfd8202bca6da04f03da}{FloatToBuffer}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(strlen(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}))\ \{\}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_ab68477d4a11013f97f09ac36ae08aa19}{SubstituteArg}}(\textcolor{keywordtype}{double}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{numbers_8cc_a8fbff0cd6ee60bd326c4a19625bfb452}{DoubleToBuffer}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}})),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(strlen(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}))\ \{\}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aba60b81865f0cf3363845c799305a623}{SubstituteArg}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ ?\ \textcolor{stringliteral}{"{}true"{}}\ :\ \textcolor{stringliteral}{"{}false"{}}),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(strlen(\mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}))\ \{\}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ void*\ values,\ with\ the\ exception\ of\ char*,\ are\ printed\ as}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//\ StringPrintf\ with\ format\ "{}\%p"{}\ would\ ("{}0x<hex\ value>"{}),\ with\ the}}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ exception\ of\ NULL,\ which\ is\ printed\ as\ "{}NULL"{}.}}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aab214c549907ec40c663bdfff4b4b1dd}{SubstituteArg}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});\ \textcolor{comment}{//\ NOLINT(runtime/explicit)}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aa3affb1becdd976aba1036a161a3134d}{data}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}};\ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_af9593d4a5ff4274efaf429cb4f9e57cc}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}};\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Indicates\ that\ no\ argument\ was\ given.}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{SubstituteArg}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{NoArg}};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aab214c549907ec40c663bdfff4b4b1dd}{SubstituteArg}}()\ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}}(NULL),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}}(-\/1)\ \{\}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a0c7614ee2b2411d06636f340c38dc6b7}{text\_}};}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a6947fa5d6ba628dd62d59ffbad8b8d80}{size\_}};}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_aeb2afc22d719004f7e9da4ec3a8a464e}{scratch\_}}[\mbox{\hyperlink{numbers_8h_a69a15a679857538c6fc89bc3b1491a51}{kFastToBufferSize}}];}
+\DoxyCodeLine{00137\ \};}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ Return\ the\ length\ of\ the\ resulting\ string\ after\ performing\ the\ given}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ substitution.}}
+\DoxyCodeLine{00141\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacestrings_1_1internal_a66584c96f5c0a12fdac96740662c6962}{SubstitutedSize}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ format,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{SubstituteArg}}*\ \textcolor{keyword}{const}*\ args\_array);}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ Perform\ the\ given\ substitution\ into\ 'target'.\ 'target'\ must\ have}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ space\ for\ the\ result\ -\/-\/\ use\ SubstitutedSize()\ to\ determine\ how\ many}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ bytes\ are\ required.\ \ Returns\ a\ pointer\ to\ the\ next\ byte\ following}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ the\ result\ in\ 'target'.}}
+\DoxyCodeLine{00147\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacestrings_1_1internal_a2b8297646e16e65e7d2d8c0ba9d6e04d}{SubstituteToBuffer}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ format,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{SubstituteArg}}*\ \textcolor{keyword}{const}*\ args\_array,\ \textcolor{keywordtype}{char}*\ target);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacestrings_ab41a4a9d46a87a619ed25ce45f201137}{SubstituteAndAppend}}(\textcolor{keywordtype}{string}*\ output,\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ format,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg0\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg1\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg2\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg3\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg4\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg5\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg6\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg7\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg8\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg9\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}});}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacestrings_a4f3ca92d957daf4bd11169509bdb79ef}{Substitute}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ format,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg0\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg1\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg2\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg3\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg4\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg5\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg6\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg7\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg8\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{internal::SubstituteArg}}\&\ arg9\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{internal::SubstituteArg::NoArg}})\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{string}\ result;}
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{namespacestrings_ab41a4a9d46a87a619ed25ce45f201137}{SubstituteAndAppend}}(\&result,\ format,\ arg0,\ arg1,\ arg2,\ arg3,\ arg4,\ arg5,\ arg6,\ arg7,\ arg8,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arg9);}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \}\ \textcolor{comment}{//\ namespace\ strings}}
+
+\end{DoxyCode}

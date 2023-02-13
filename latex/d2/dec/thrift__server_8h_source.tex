@@ -1,0 +1,155 @@
+\hypertarget{thrift__server_8h_source}{}\doxysection{thrift\+\_\+server.\+h}
+\label{thrift__server_8h_source}\index{/Users/dabowang/be\_all/util/thrift\_server.h@{/Users/dabowang/be\_all/util/thrift\_server.h}}
+\mbox{\hyperlink{thrift__server_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <thrift/TProcessor.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <thrift/server/TServer.h>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{metrics_8h}{util/metrics.h}}"{}}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ Utility\ class\ for\ all\ Thrift\ servers.\ Runs\ a\ TNonblockingServer(default)\ or\ a}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ TThreadPoolServer\ with,\ by\ default,\ 2\ worker\ threads,\ that\ exposes\ the\ interface}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ described\ by\ a\ user-\/supplied\ TProcessor\ object.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ If\ TNonblockingServer\ is\ used,\ client\ must\ use\ TFramedTransport.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ If\ TThreadPoolServer\ is\ used,\ client\ must\ use\ TSocket\ as\ transport.}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thrift_server}{ThriftServer}}\ \{}
+\DoxyCodeLine{00037\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{//\ An\ opaque\ identifier\ for\ the\ current\ session,\ which\ identifies\ a\ client\ connection.}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{typedef}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1c8dde50cf9d4e779986b4f8e76e7758}{SessionKey}};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{comment}{//\ Interface\ class\ for\ receiving\ session\ creation\ /\ termination\ events.}}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_session_handler_if}{SessionHandlerIf}}\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Called\ when\ a\ session\ is\ established\ (when\ a\ client\ connects).}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_session_handler_if_a63fce5b1c1f9c0e74398a3b70f3fcca0}{session\_start}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1c8dde50cf9d4e779986b4f8e76e7758}{SessionKey}}\&\ session\_key)\ =\ 0;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Called\ when\ a\ session\ is\ terminated\ (when\ a\ client\ closes\ the\ connection).}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ After\ this\ callback\ returns,\ the\ memory\ session\_key\ references\ is\ no\ longer\ valid}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ clients\ must\ not\ refer\ to\ it\ again.}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_session_handler_if_a6372aaf2a5756417159662f29fe0b215}{session\_end}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1c8dde50cf9d4e779986b4f8e76e7758}{SessionKey}}\&\ session\_key)\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ \ \ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_af6944cec1d73faf646a99edbbebf94b7}{DEFAULT\_WORKER\_THREADS}}\ =\ 2;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ There\ are\ 3\ servers\ supported\ by\ Thrift\ with\ different\ threading\ models.}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ THREAD\_POOL\ \ -\/-\/\ Allocates\ a\ fixed\ number\ of\ threads.\ A\ thread\ is\ used\ by\ a}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ connection\ until\ it\ closes.}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ THREADED\ \ \ \ \ -\/-\/\ Allocates\ 1\ thread\ per\ connection,\ as\ needed.}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ NON\_BLOCKING\ -\/-\/\ Threads\ are\ allocated\ to\ a\ connection\ only\ when\ the\ server}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\ working\ on\ behalf\ of\ the\ connection.}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944ce}{ServerType}}\ \{\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea55fdb2365a146991bbc5fd17a473beb9}{THREAD\_POOL}}\ =\ 0,\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea8735efe9eeee38d87a31f93789ebeab1}{THREADED}},\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea7f2834532c17968dfdcc1505e4bf5376}{NON\_BLOCKING}}\ \};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ Creates,\ but\ does\ not\ start,\ a\ new\ server\ on\ the\ specified\ port}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ that\ exports\ the\ supplied\ interface.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ name:\ human-\/readable\ name\ of\ this\ server.\ Should\ not\ contain\ spaces}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ processor:\ Thrift\ processor\ to\ handle\ RPCs}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ port:\ The\ port\ the\ server\ will\ listen\ for\ connections\ on}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ num\_worker\_threads:\ the\ number\ of\ worker\ threads\ to\ use\ in\ any\ thread\ pool}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ server\_type:\ the\ type\ of\ IO\ strategy\ this\ server\ should\ employ}}
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server}{ThriftServer}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<apache::thrift::TProcessor>\&\ processor,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1f39e1fa88e061ddd4dc15a3be1a0450}{port}},}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ num\_worker\_threads\ =\ \mbox{\hyperlink{classdoris_1_1_thrift_server_af6944cec1d73faf646a99edbbebf94b7}{DEFAULT\_WORKER\_THREADS}},}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944ce}{ServerType}}\ server\_type\ =\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944cea8735efe9eeee38d87a31f93789ebeab1}{THREADED}});}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_ada89d4e54efd48fd317278216b18fe4e}{\string~ThriftServer}}()\ \{\}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1f39e1fa88e061ddd4dc15a3be1a0450}{port}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a5cc37d2eb4f4e3fce88c482586cbe058}{\_port}};\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a8c528baf37154d347366083f0f816846}{stop}}();}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ Blocks\ until\ the\ server\ stops\ and\ exits\ its\ main\ thread.}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a6c7abfff648dad193674fc432ad4840d}{join}}();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ FOR\ TESTING\ ONLY;\ stop\ the\ server\ and\ block\ until\ the\ server\ is\ stopped;\ use\ it}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ only\ if\ it\ is\ a\ Threaded\ server.}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a0e8f113dcd4db4437a89b310a82d40e5}{stop\_for\_testing}}();}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ Starts\ the\ main\ server\ thread.\ Once\ this\ call\ returns,\ clients}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ may\ connect\ to\ this\ server\ and\ issue\ RPCs.\ May\ not\ be\ called\ more}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ than\ once.}}
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1ece7b40dc52b67186533a0ec4dadc49}{start}}();}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ Sets\ the\ session\ handler\ which\ receives\ events\ when\ sessions\ are\ created\ or\ closed.}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_ad528ab40f93721dcff73a2c41b889ed6}{set\_session\_handler}}(\mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_session_handler_if}{SessionHandlerIf}}*\ session)\ \{\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a60f77e4d6de1e116a9b0309cae4ba8ca}{\_session\_handler}}\ =\ session;\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ unique\ identifier\ for\ the\ current\ session.\ A\ session\ is}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ identified\ with\ the\ lifetime\ of\ a\ socket\ connection\ to\ this\ server.}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ It\ is\ only\ safe\ to\ call\ this\ method\ during\ a\ Thrift\ processor\ RPC}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ implementation.\ Otherwise,\ the\ result\ of\ calling\ this\ method\ is\ undefined.}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ It\ is\ also\ only\ safe\ to\ reference\ the\ returned\ value\ during\ an\ RPC\ method.}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1c8dde50cf9d4e779986b4f8e76e7758}{SessionKey}}*\ \mbox{\hyperlink{classdoris_1_1_thrift_server_ab05ee2ccfd7f7917f2928ed1d6ddea6b}{get\_thread\_session\_key}}();}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ True\ if\ the\ server\ has\ been\ successfully\ started,\ for\ internal\ use\ only}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a6fadbe5bb545f2b4064782ac0b634fee}{\_started}};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ The\ port\ on\ which\ the\ server\ interface\ is\ exposed}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a5cc37d2eb4f4e3fce88c482586cbe058}{\_port}};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ How\ many\ worker\ threads\ to\ use\ to\ serve\ incoming\ requests}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ (requests\ are\ queued\ if\ no\ thread\ is\ immediately\ available)}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1010ad8ef293d7b27d34acde27043cfc}{\_num\_worker\_threads}};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ ThreadPool\ or\ NonBlocking\ server}}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_a41c33b4ffaf72c197b6cf85a599944ce}{ServerType}}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_ac4a53603f7803cbb045a0b99bbb26384}{\_server\_type}};}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ User-\/specified\ identifier\ that\ shows\ up\ in\ logs}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ Thread\ that\ runs\ the\ TNonblockingServer::serve\ loop}}
+\DoxyCodeLine{00120\ \ \ \ \ std::unique\_ptr<std::thread>\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a89db1571b51d8ef7036641af865a1894}{\_server\_thread}};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ Thrift\ housekeeping}}
+\DoxyCodeLine{00123\ \ \ \ \ std::unique\_ptr<apache::thrift::server::TServer>\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a4c118e92f75fcd24ad61850ece258cf7}{\_server}};}
+\DoxyCodeLine{00124\ \ \ \ \ std::shared\_ptr<apache::thrift::TProcessor>\ \mbox{\hyperlink{classdoris_1_1_thrift_server_ac27d990bfb5fd9b67178b75c474b7a68}{\_processor}};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ If\ not\ nullptr,\ called\ when\ session\ events\ happen.\ Not\ owned\ by\ us.}}
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_session_handler_if}{SessionHandlerIf}}*\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a60f77e4d6de1e116a9b0309cae4ba8ca}{\_session\_handler}};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Protects\ \_session\_keys}}
+\DoxyCodeLine{00130\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a5fffb0d32aa90c89f6e5063ff601105b}{\_session\_keys\_lock}};}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Map\ of\ active\ session\ keys\ to\ shared\_ptr\ containing\ that\ key;\ when\ a\ key\ is}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ removed\ it\ is\ automatically\ freed.}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<SessionKey*,\ std::shared\_ptr<SessionKey>>\ \mbox{\hyperlink{classdoris_1_1_thrift_server_aff21d7969dea5e773020bba0a7cdf5bb}{SessionKeySet}};}
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thrift_server_aff21d7969dea5e773020bba0a7cdf5bb}{SessionKeySet}}\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a8e761e0d054f1654d7fdf1dc7d5f4a8c}{\_session\_keys}};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ Helper\ class\ which\ monitors\ starting\ servers.\ Needs\ access\ to\ internal\ members,\ and}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ is\ not\ used\ outside\ of\ this\ class.}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_thrift_server_event_processor}{ThriftServerEventProcessor}};}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thrift_server_1_1_thrift_server_event_processor}{ThriftServerEventProcessor}};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ std::shared\_ptr<MetricEntity>\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a38b0463c1945e5486b5d785f5a79057c}{\_thrift\_server\_metric\_entity}};}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ currently\ active\ connections}}
+\DoxyCodeLine{00144\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a99549161104528da32336e9069a4b33d}{thrift\_current\_connections}};}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ Total\ connections\ made\ over\ the\ lifetime\ of\ this\ server}}
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_core_local_counter}{IntCounter}}*\ \mbox{\hyperlink{classdoris_1_1_thrift_server_a4f639dc8d2c45715037b3e3ed86a6710}{thrift\_connections\_total}};}
+\DoxyCodeLine{00147\ \};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

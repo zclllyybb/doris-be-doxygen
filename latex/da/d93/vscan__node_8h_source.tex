@@ -1,0 +1,358 @@
+\hypertarget{vscan__node_8h_source}{}\doxysection{vscan\+\_\+node.\+h}
+\label{vscan__node_8h_source}\index{/Users/dabowang/be\_all/vec/exec/scan/vscan\_node.h@{/Users/dabowang/be\_all/vec/exec/scan/vscan\_node.h}}
+\mbox{\hyperlink{vscan__node_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exec__node_8h}{exec/exec\_node.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exec_2olap__common_8h}{exec/olap\_common.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{function__filter_8h}{exprs/function\_filter.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__filter_8h}{exprs/runtime\_filter.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{scanner__context_8h}{vec/exec/scan/scanner\_context.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vectorized__fn__call_8h}{vec/exprs/vectorized\_fn\_call.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vexpr_8h}{vec/exprs/vexpr.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vin__predicate_8h}{vec/exprs/vin\_predicate.h}}"{}}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1pipeline}{doris::pipeline}}\ \{}
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }ScanOperator;}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }VScanner;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }VSlotRef;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_filter_predicates}{FilterPredicates}}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ Save\ all\ runtime\ filter\ predicates\ which\ may\ be\ pushed\ down\ to\ data\ source.}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{//\ column\ name\ -\/>\ bloom\ filter\ function}}
+\DoxyCodeLine{00041\ \ \ \ \ std::vector<std::pair<std::string,\ std::shared\_ptr<BloomFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_filter_predicates_ac9e5025a48d47c3d33ff56b74c76c5a3}{bloom\_filters}};}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ std::vector<std::pair<std::string,\ std::shared\_ptr<BitmapFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_filter_predicates_a10dc4dd2931d960f9674570415df7851}{bitmap\_filters}};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ std::vector<std::pair<std::string,\ std::shared\_ptr<HybridSetBase>>>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_filter_predicates_a95734d53cc21ce37d7900b4b65e4b0ea}{in\_filters}};}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node}{VScanNode}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_exec_node}{ExecNode}}\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac7b04aa0e21beed8e2f396931ef736ee}{VScanNode}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ TPlanNode\&\ tnode,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}\&\ descs)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_exec_node}{ExecNode}}(pool,\ tnode,\ descs),\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac2c0cf2bcf2b02cefeee032b489c541e}{\_runtime\_filter\_descs}}(tnode.runtime\_filters)\ \{\}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_abef0107368343d1bd576065c3275ba74}{\string~VScanNode}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scanner}{VScanner}};}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_new_olap_scanner}{NewOlapScanner}};}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_file_scanner}{VFileScanner}};}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_new_jdbc_scanner}{NewJdbcScanner}};}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_scanner_context}{ScannerContext}};}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1pipeline_1_1_scan_operator}{doris::pipeline::ScanOperator}};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a1be6bfdf0749477f7f8da2a1e8212143}{init}}(\textcolor{keyword}{const}\ TPlanNode\&\ tnode,\ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state\ =\ \textcolor{keyword}{nullptr})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aa1a9d3c8096a7d5dc7ae0b91b62b7e34}{prepare}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a019f7d127e3f74f7fea421a226699777}{open}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad1fd4b3e99fed9505e9555a55391a449}{set\_scan\_ranges}}(\textcolor{keyword}{const}\ std::vector<TScanRangeParams>\&\ scan\_ranges)\ \{\}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ Get\ next\ block.}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ If\ eos\ is\ true,\ no\ more\ data\ will\ be\ read\ and\ block\ should\ be\ empty.}}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab2daaaf8f56f1ccb03a4734289dfca53}{get\_next}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \textcolor{keywordtype}{bool}*\ eos)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a94e154ac4fd84ce32f92eb5dfac932d8}{close}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ae58ce72bd95bd12d200a4167f8b4c50b}{set\_no\_agg\_finalize}}()\ \{\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Try\ append\ late\ arrived\ runtime\ filters.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Return\ num\ of\ filters\ which\ are\ applied\ already.}}
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a1c646a59c98db456c379ff2f3e525f11}{try\_append\_late\_arrival\_runtime\_filter}}(\textcolor{keywordtype}{int}*\ arrived\_rf\_num);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ Clone\ current\ vconjunct\_ctx\ to\ \_vconjunct\_ctx,\ if\ exists.}}
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aef76b6ff899332577cbfc23a05d54566}{clone\_vconjunct\_ctx}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}**\ \_vconjunct\_ctx);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a48347708bc5906e30d881e116710090b}{runtime\_filter\_num}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac0946c91f8dc560c52fa411b45c4cd70}{\_runtime\_filter\_ctxs}}.size();\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{namespacedoris_af9761743716a2ef166e2272df9525811}{TupleId}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a0be3ac332a4536fe32e60355d31b8b8d}{input\_tuple\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a3285e5e39aaf383d8a28c342982f1b48}{\_input\_tuple\_id}};\ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{namespacedoris_af9761743716a2ef166e2272df9525811}{TupleId}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a4d2890f1dc6584cc0186e4b36b51c415}{output\_tuple\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2704ef6a1f77ec7741c066df32ebba7d}{\_output\_tuple\_id}};\ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a6e3b2b737667aa20cd91aba4d0bcba2f}{input\_tuple\_desc}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a64c0d08290a05e24655ac487059a9240}{\_input\_tuple\_desc}};\ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2c3df0e8dce7646864a19ba7ce90623a}{output\_tuple\_desc}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a87f5435a52651132da1791ac0d25ef3e}{\_output\_tuple\_desc}};\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a4563a8abb973cbbc4904c263665bb0fe}{alloc\_resource}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2313d4299d3fa11834e3516fb942c8cf}{release\_resource}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aa909cc2d9bc3f6e48c689169833466fa}{runtime\_filters\_are\_ready\_or\_timeout}}();}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a064da7bb1b79696ecfb8810151e11a1f}{try\_close}}();}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ predicate\ can\ not\ be\ pushed\ down\ to\ data\ source}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adbabdc88d68cc7463a61eae1e49d6d834a1}{UNACCEPTABLE}},}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ predicate\ can\ be\ pushed\ down\ to\ data\ source}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ the\ data\ source\ can\ fully\ evaludate\ it}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adba78aa19f5e1158a3dbdb595d55c814542}{ACCEPTABLE}},}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ predicate\ can\ be\ pushed\ down\ to\ data\ source}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ but\ the\ data\ source\ can\ not\ fully\ evaluate\ it.}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adba7fecf6a00d6c4215bb756e8cfa63d0d6}{PARTIAL\_ACCEPTABLE}}}
+\DoxyCodeLine{00106\ \ \ \ \ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Different\ data\ sources\ register\ different\ profiles\ by\ implementing\ this\ method}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2c98b6012034e9553eb0afca4aceb1ea}{\_init\_profile}}();}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ Process\ predicates,\ extract\ the\ predicates\ in\ the\ conjuncts\ that\ can\ be\ pushed\ down}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ to\ the\ data\ source,\ and\ convert\ them\ into\ common\ expressions\ structure\ ColumnPredicate.}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ There\ are\ currently\ 3\ types\ of\ predicates\ that\ can\ be\ pushed\ down\ to\ data\ sources:}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ 1.\ Simple\ predicate,\ with\ column\ on\ left\ and\ constant\ on\ right,\ such\ as\ "{}a=1"{},\ "{}b\ in\ (1,2,3)"{}\ etc.}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ 2.\ Bloom\ Filter,\ predicate\ condition\ generated\ by\ runtime\ filter}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ 3.\ Function\ Filter,\ some\ data\ sources\ can\ accept\ function\ conditions,\ such\ as\ "{}a\ like\ 'abc\%'"{}}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ Predicates\ that\ can\ be\ fully\ processed\ by\ the\ data\ source\ will\ be\ removed\ from\ conjuncts}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a64cef8a2c5d23e14d1cf4fedbf1466e2}{\_process\_conjuncts}}()\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a3cf358fea89473aeb40a2605ff8c58d8}{\_normalize\_conjuncts}}());}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00124\ \ \ \ \ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ list\ of\ scanners.}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ The\ number\ of\ scanners\ is\ related\ to\ the\ implementation\ of\ the\ data\ source,}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ predicate\ conditions,\ and\ scheduling\ strategy.}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ So\ this\ method\ needs\ to\ be\ implemented\ separately\ by\ the\ subclass\ of\ ScanNode.}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ Finally,\ a\ set\ of\ scanners\ that\ have\ been\ prepared\ are\ returned.}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab0e99d4035272226f035f930f9bf7469}{\_init\_scanners}}(std::list<VScanner*>*\ scanners)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ \ Different\ data\ sources\ can\ implement\ the\ following\ 3\ methods\ to\ determine\ whether\ a\ predicate}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ \ can\ be\ pushed\ down\ to\ the\ data\ source.}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ \ 3\ types:}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 1.\ binary\ predicate}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 2.\ in/not\ in\ predicate}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 3.\ function\ predicate}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ \ TODO:\ these\ interfaces\ should\ be\ change\ to\ become\ more\ common.}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a140118c787026b10301d9fce01789e6f}{\_should\_push\_down\_binary\_predicate}}(}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_vectorized_fn_call}{VectorizedFnCall}}*\ fn\_call,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}*\ constant\_val,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}*\ slot\_ref\_child,\ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{bool}(\textcolor{keyword}{const}\ std::string\&)>\&\ fn\_checker,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\&\ pdt);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aab90275a05d214312c3c5fa5469386a0}{\_should\_push\_down\_in\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_in_predicate}{VInPredicate}}*\ in\_pred,}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \textcolor{keywordtype}{bool}\ is\_not\_in);}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac88d96856aa6ce6e297a04d05898cc0f}{\_should\_push\_down\_function\_filter}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_vectorized_fn_call}{VectorizedFnCall}}*\ fn\_call,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}*\ constant\_str,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context}{doris\_udf::FunctionContext}}**\ fn\_ctx,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\&\ pdt)\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ pdt\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adbabdc88d68cc7463a61eae1e49d6d834a1}{PushDownType::UNACCEPTABLE}};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a5b91865053f342f0b9111ba51addbb7f}{\_should\_push\_down\_bloom\_filter}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adbabdc88d68cc7463a61eae1e49d6d834a1}{PushDownType::UNACCEPTABLE}};\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a7697ad37d97c70610f986a893dcd0b72}{\_should\_push\_down\_bitmap\_filter}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adbabdc88d68cc7463a61eae1e49d6d834a1}{PushDownType::UNACCEPTABLE}};\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a0b2e3fdb859421dfbf2d417550163776}{\_should\_push\_down\_is\_null\_predicate}}()\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adbabdc88d68cc7463a61eae1e49d6d834a1}{PushDownType::UNACCEPTABLE}};}
+\DoxyCodeLine{00163\ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ it\ is\ a\ key\ column.}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Only\ predicate\ on\ key\ column\ can\ be\ pushed\ down.}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a9968d3d61885b0c31e661a819d2f98cb}{\_is\_key\_column}}(\textcolor{keyword}{const}\ std::string\&\ col\_name)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a91f2150e84757ffe2be5129f52c9e85a}{\_state}};}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ For\ load\ scan\ node,\ there\ should\ be\ both\ input\ and\ output\ tuple\ descriptor.}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ For\ query\ scan\ node,\ there\ is\ only\ output\_tuple\_desc.}}
+\DoxyCodeLine{00173\ \ \ \ \ \mbox{\hyperlink{namespacedoris_af9761743716a2ef166e2272df9525811}{TupleId}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a3285e5e39aaf383d8a28c342982f1b48}{\_input\_tuple\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00174\ \ \ \ \ \mbox{\hyperlink{namespacedoris_af9761743716a2ef166e2272df9525811}{TupleId}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2704ef6a1f77ec7741c066df32ebba7d}{\_output\_tuple\_id}}\ =\ -\/1;}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a64c0d08290a05e24655ac487059a9240}{\_input\_tuple\_desc}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a87f5435a52651132da1791ac0d25ef3e}{\_output\_tuple\_desc}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ These\ two\ values\ are\ from\ query\_options}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab94dff9245a095f917ec8898aaf709da}{\_max\_scan\_key\_num}};}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a82791ca212ff99ef3958dd85fb0f91b9}{\_max\_pushdown\_conditions\_per\_column}};}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ For\ runtime\ filters}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context}{RuntimeFilterContext}}\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_ad18ebc371aacd5c1183dffd7b74034c6}{RuntimeFilterContext}}()\ :\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a666e0e81b1d31f540dad4ec377e7a634}{apply\_mark}}(false),\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a05618f2ae9f54369b505d37788979ca8}{runtime\_filter}}(nullptr)\ \{\}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a4b245bd316626001f9301bd036c30075}{RuntimeFilterContext}}(\mbox{\hyperlink{classdoris_1_1_i_runtime_filter}{IRuntimeFilter}}*\ rf)\ :\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a666e0e81b1d31f540dad4ec377e7a634}{apply\_mark}}(false),\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a05618f2ae9f54369b505d37788979ca8}{runtime\_filter}}(rf)\ \{\}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ to\ true\ if\ this\ runtime\ filter\ is\ already\ applied\ to\ vconjunct\_ctx\_ptr}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a666e0e81b1d31f540dad4ec377e7a634}{apply\_mark}};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_i_runtime_filter}{IRuntimeFilter}}*\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_v_scan_node_1_1_runtime_filter_context_a05618f2ae9f54369b505d37788979ca8}{runtime\_filter}};}
+\DoxyCodeLine{00189\ \ \ \ \ \};}
+\DoxyCodeLine{00190\ \ \ \ \ std::vector<RuntimeFilterContext>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac0946c91f8dc560c52fa411b45c4cd70}{\_runtime\_filter\_ctxs}};}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ std::vector<TRuntimeFilterDesc>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac2c0cf2bcf2b02cefeee032b489c541e}{\_runtime\_filter\_descs}};}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ Set\ to\ true\ if\ the\ runtime\ filter\ is\ ready.}}
+\DoxyCodeLine{00194\ \ \ \ \ std::vector<bool>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a82ebfef62d54e1229526289adbcd96a3}{\_runtime\_filter\_ready\_flag}};}
+\DoxyCodeLine{00195\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a482fe0394aa2477e6475a208f8273098}{\_rf\_locks}};}
+\DoxyCodeLine{00196\ \ \ \ \ std::map<int,\ RuntimeFilterContext*>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a72489e9d1e5a2582610ecca874e7d5c0}{\_conjunct\_id\_to\_runtime\_filter\_ctxs}};}
+\DoxyCodeLine{00197\ \ \ \ \ phmap::flat\_hash\_set<VExpr*>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_acaa28f9f3c8ac3da47ab671b648ec532}{\_rf\_vexpr\_set}};}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ True\ means\ all\ runtime\ filters\ are\ applied\ to\ scanners}}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac7c6419609e39f020335a88354ca947d}{\_is\_all\_rf\_applied}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ Each\ scan\ node\ will\ generates\ a\ ScannerContext\ to\ manage\ all\ Scanners.}}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ See\ comments\ of\ ScannerContext\ for\ more\ details}}
+\DoxyCodeLine{00203\ \ \ \ \ std::shared\_ptr<ScannerContext>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a60fd038d790d31b270a5973b799ce303}{\_scanner\_ctx}};}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Save\ all\ scanner\ objects.}}
+\DoxyCodeLine{00205\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a5375352d9666117ceb151d10ffce4e7c}{\_scanner\_pool}};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ indicate\ this\ scan\ node\ has\ no\ more\ data\ to\ return}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a59e729bde2d28f3c28241aa2f6d36167}{\_eos}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ae88db3cbbde90179920202b95639fbb9}{\_opened}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_filter_predicates}{FilterPredicates}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad566fdfe19e10eaa3a0d589c8035f52d}{\_filter\_predicates}}\ \{\};}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ Save\ all\ function\ predicates\ which\ may\ be\ pushed\ down\ to\ data\ source.}}
+\DoxyCodeLine{00214\ \ \ \ \ std::vector<FunctionFilter>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a427ae701e007a155d0dbe8a725300044}{\_push\_down\_functions}};}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ slot\ id\ -\/>\ ColumnValueRange}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ Parsed\ from\ conjuncts}}
+\DoxyCodeLine{00218\ \ \ \ \ phmap::flat\_hash\_map<int,\ std::pair<SlotDescriptor*,\ ColumnValueRangeType>>}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aa311e53d41d667f5bdf9570723c25087}{\_slot\_id\_to\_value\_range}};}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ column\ -\/>\ ColumnValueRange}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ We\ use\ \_colname\_to\_value\_range\ to\ store\ a\ column\ and\ its\ conresponding\ value\ ranges.}}
+\DoxyCodeLine{00222\ \ \ \ \ std::unordered\_map<std::string,\ ColumnValueRangeType>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a483a00de08220da58f20bc48c31d3570}{\_colname\_to\_value\_range}};}
+\DoxyCodeLine{00235\ \ \ \ \ std::vector<ColumnValueRangeType>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a4cd19894338ab3f2e661d5eec3d195fe}{\_compound\_value\_ranges}};}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ But\ if\ a\ col\ is\ with\ value\ range,\ eg:\ 1\ <\ col\ <\ 10,\ which\ is\ "{}!is\_fixed\_range"{},}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ in\ this\ case\ we\ can\ not\ merge\ "{}1\ <\ col\ <\ 10"{}\ with\ "{}col\ not\ in\ (2)"{}.}}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{//\ So\ we\ have\ to\ save\ "{}col\ not\ in\ (2)"{}\ to\ another\ structure:\ "{}\_not\_in\_value\_ranges"{}.}}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{comment}{//\ When\ the\ data\ source\ try\ to\ use\ the\ value\ ranges,\ it\ should\ use\ both\ ranges\ in}}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{//\ "{}\_colname\_to\_value\_range"{}\ and\ in\ "{}\_not\_in\_value\_ranges"{}}}
+\DoxyCodeLine{00241\ \ \ \ \ std::vector<ColumnValueRangeType>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a6c39a643ba4a2ea43d18c567bdecdb50}{\_not\_in\_value\_ranges}};}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a65a24bc6cff123d6ba88e4a7da1b9970}{\_blocked\_by\_rf}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{comment}{//\ Every\ time\ vconjunct\_ctx\_ptr\ is\ updated,\ the\ old\ ctx\ will\ be\ stored\ in\ this\ vector}}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{comment}{//\ so\ that\ it\ will\ be\ destroyed\ uniformly\ at\ the\ end\ of\ the\ query.}}
+\DoxyCodeLine{00248\ \ \ \ \ std::vector<std::unique\_ptr<VExprContext*>>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac203cdf6a45d4eb92b68c6de15599bd6}{\_stale\_vexpr\_ctxs}};}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{//\ If\ sort\ info\ is\ set,\ push\ limit\ to\ each\ scanner;}}
+\DoxyCodeLine{00251\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a732d9af154f379954befb01edacea0da}{\_limit\_per\_scanner}}\ =\ -\/1;}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00254\ \ \ \ \ std::unique\_ptr<RuntimeProfile>\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_afe57da4b54940205bfc8673d5a284972}{\_scanner\_profile}};}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{comment}{//\ rows\ read\ from\ the\ scanner\ (including\ those\ discarded\ by\ (pre)filters)}}
+\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a264f665c70d09cd20e81072ab5dfd11e}{\_rows\_read\_counter}};}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{comment}{//\ Wall\ based\ aggregate\ read\ throughput\ [rows/sec]}}
+\DoxyCodeLine{00259\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab77acba41f68aeeff969c58d804f5b8d}{\_total\_throughput\_counter}};}
+\DoxyCodeLine{00260\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a84cc7806c54e9f4632c0a056c3904388}{\_num\_scanners}};}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a70f914b16212bbadaa07bd75a9b393a8}{\_get\_next\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00263\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a6148688fb3eaf5a5fc8860f078cad49e}{\_acquire\_runtime\_filter\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ time\ of\ get\ block\ from\ scanner}}
+\DoxyCodeLine{00265\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2c392b052d15e78da7ce2c1890689798}{\_scan\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00266\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a9e514342e0fe813900fbc7db09701475}{\_scan\_cpu\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ time\ of\ prefilter\ input\ block\ from\ scanner}}
+\DoxyCodeLine{00268\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad1b49718f36fc90a89f59f908f0e4577}{\_prefilter\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{comment}{//\ time\ of\ convert\ input\ block\ to\ output\ block\ from\ scanner}}
+\DoxyCodeLine{00270\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a79408fdc6b715ee136b779846ef39634}{\_convert\_block\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ time\ of\ filter\ output\ block\ from\ scanner}}
+\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a218a2aae7d4ac85dbb52ad2bd4408224}{\_filter\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_af0f27c6ea587bac7dad9deac795fcb52}{\_scanner\_sched\_counter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_af1431808cf7171cc8fc122f18fafdd49}{\_scanner\_ctx\_sched\_counter}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00276\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a119bcf79da71fc911e67fd4714a9a6b1}{\_scanner\_wait\_batch\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00277\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a77a9698e4ddac2eb7ee9d4251a796301}{\_scanner\_wait\_worker\_timer}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ Num\ of\ pre\ allocated\ free\ blocks}}
+\DoxyCodeLine{00279\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ae64c52b59d26a49a1e85b8ac2162b682}{\_pre\_alloc\_free\_blocks\_num}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ Num\ of\ newly\ created\ free\ blocks\ when\ running\ query}}
+\DoxyCodeLine{00281\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a6430c858524c5df1bad1bf2cf2ce9b43}{\_newly\_create\_free\_blocks\_num}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{comment}{//\ Max\ num\ of\ scanner\ thread}}
+\DoxyCodeLine{00283\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a4585f447f2a27efbc117861d1a3f0198}{\_max\_scanner\_thread\_num}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter}{RuntimeProfile::HighWaterMarkCounter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a63a757c5f0e369bc101e61da47ee1925}{\_queued\_blocks\_memory\_usage}};}
+\DoxyCodeLine{00286\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter}{RuntimeProfile::HighWaterMarkCounter}}*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a504e1a478553b6faf609ffeebeae0a27}{\_free\_blocks\_memory\_usage}};}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{comment}{//\ Register\ and\ get\ all\ runtime\ filters\ at\ Init\ phase.}}
+\DoxyCodeLine{00290\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a092ffba4489d907549a5158fd5a4b7f7}{\_register\_runtime\_filter}}();}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ Get\ all\ arrived\ runtime\ filters\ at\ Open\ phase.}}
+\DoxyCodeLine{00292\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2c8dfb47021346f4f478dc3c2317505c}{\_acquire\_runtime\_filter}}(\textcolor{keywordtype}{bool}\ wait\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ Append\ late-\/arrival\ runtime\ filters\ to\ the\ vconjunct\_ctx.}}
+\DoxyCodeLine{00294\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a70a0d3a5447f687e58d91e5e051f2a08}{\_append\_rf\_into\_conjuncts}}(std::vector<VExpr*>\&\ vexprs);}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a3cf358fea89473aeb40a2605ff8c58d8}{\_normalize\_conjuncts}}();}
+\DoxyCodeLine{00297\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ac79e0ebd9e6804b899c0337752bf97fe}{\_normalize\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ conjunct\_expr\_root,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**\ output\_expr);}
+\DoxyCodeLine{00298\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a19c7c419355fb2b96aeb9bc8f271666f}{\_eval\_const\_conjuncts}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ vexpr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab0d00cbc2458d9f52289d0793805fcd7}{\_normalize\_bloom\_filter}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a2e1a8a88b1392c938de9e62b820a2a9b}{\_normalize\_bitmap\_filter}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a11f9d56ee2521947f3f449ffd350b897}{\_normalize\_function\_filters}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a5cf05331229485508b98a11e672c510e}{\_is\_predicate\_acting\_on\_slot}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}*\ expr,}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{bool}(\textcolor{keyword}{const}\ std::vector<VExpr*>\&,}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_slot_ref}{VSlotRef}}**,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**)>\&\ checker,}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}**\ slot\_desc,\ \mbox{\hyperlink{namespacedoris_a9f9a89210e8050f18684d17d9a9e5c49}{ColumnValueRangeType}}**\ range);}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00315\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a8045add38d6efabcf111e507a0f2739e}{\_normalize\_in\_and\_eq\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00319\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_add0e37d9f7f2b5a5d8bed742fbb533c9}{\_normalize\_not\_in\_and\_not\_eq\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00324\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a0a7f702fc393c27c4883dd8bbf15e81f}{\_normalize\_noneq\_binary\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aeeae81386cd2fbe03d1efce94449a83e}{\_normalize\_compound\_predicate}}(}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt,}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{bool}(\textcolor{keyword}{const}\ std::vector<VExpr*>\&,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_slot_ref}{VSlotRef}}**,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**)>\&}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ in\_predicate\_checker,}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{bool}(\textcolor{keyword}{const}\ std::vector<VExpr*>\&,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_slot_ref}{VSlotRef}}**,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{VExpr}}**)>\&}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eq\_predicate\_checker);}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00336\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a112ae421293aee691191ffbf924962f4}{\_normalize\_binary\_in\_compound\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00341\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a441cb1816d5c086398d1123fd4d8a9d7}{\_normalize\_match\_in\_compound\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00346\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a7856b5d634dfe5f278392b51c33c8838}{\_normalize\_is\_null\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keyword}{template}\ <PrimitiveType\ T>}
+\DoxyCodeLine{00351\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_aab57252ed752036603793e49597a111b}{\_normalize\_match\_predicate}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ expr,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{VExprContext}}*\ expr\_ctx,}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_slot_descriptor}{SlotDescriptor}}*\ slot,\ \mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<T>}}\&\ range,}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ab6552d0df7d81bbd512db642d5377adb}{PushDownType}}*\ pdt);}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ IsFixed,\ PrimitiveType\ PrimitiveType,\ \textcolor{keyword}{typename}\ ChangeFixedValueRangeFunc>}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_ad31d18e992bef3615c88b68f644114ce}{\_change\_value\_range}}(\mbox{\hyperlink{classdoris_1_1_column_value_range}{ColumnValueRange<PrimitiveType>}}\&\ range,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChangeFixedValueRangeFunc\&\ func,}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fn\_name,\ \textcolor{keywordtype}{int}\ slot\_ref\_child\ =\ -\/1);}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ Submit\ the\ scanner\ to\ the\ thread\ pool\ and\ start\ execution}}
+\DoxyCodeLine{00361\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_scan_node_a3163e2690c44151ce749dc6b24b2c871}{\_start\_scanners}}(\textcolor{keyword}{const}\ std::list<VScanner*>\&\ scanners);}
+\DoxyCodeLine{00362\ \};}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

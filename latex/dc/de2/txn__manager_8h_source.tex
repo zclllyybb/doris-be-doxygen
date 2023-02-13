@@ -1,0 +1,269 @@
+\hypertarget{txn__manager_8h_source}{}\doxysection{txn\+\_\+manager.\+h}
+\label{txn__manager_8h_source}\index{/Users/dabowang/be\_all/olap/txn\_manager.h@{/Users/dabowang/be\_all/olap/txn\_manager.h}}
+\mbox{\hyperlink{txn__manager_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <pthread.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <rapidjson/document.h>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/AgentService\_types.h"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/BackendService\_types.h"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/MasterService\_types.h"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{lru__cache_8h}{olap/lru\_cache.h}}"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2olap__common_8h}{olap/olap\_common.h}}"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__define_8h}{olap/olap\_define.h}}"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__meta_8h}{olap/olap\_meta.h}}"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{options_8h}{olap/options.h}}"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset_8h}{olap/rowset/rowset.h}}"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__meta_8h}{olap/rowset/rowset\_meta.h}}"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{segment_8h}{olap/rowset/segment\_v2/segment.h}}"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__meta_8h}{olap/tablet\_meta.h}}"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{time_8h}{util/time.h}}"{}}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }DeltaWriter;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_txn_info}{TabletTxnInfo}}\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ PUniqueId\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}};}
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}};}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ac2087a990d537038f706f65963175dfe}{unique\_key\_merge\_on\_write}};}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9eac641d2af334ef0f001d2ca2a498a4}{DeleteBitmapPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a3b1dfed7f54e75f00e13c0d22462192a}{delete\_bitmap}};}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ records\ rowsets\ calc\ in\ commit\ txn}}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a0d50dca2f3b30fd0086b9918026b0714}{RowsetIdUnorderedSet}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a50161c600c5843a3a17b613ee56cb842}{rowset\_ids}};}
+\DoxyCodeLine{00060\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ab9f165b120bcdcf57a4c5c571e5294d9}{creation\_time}};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a25708e10d65482a92d57a942b1dfa2a3}{TabletTxnInfo}}(PUniqueId\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}},\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}})}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}}(\mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}}),}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}}(\mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}}),}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ac2087a990d537038f706f65963175dfe}{unique\_key\_merge\_on\_write}}(false),}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ab9f165b120bcdcf57a4c5c571e5294d9}{creation\_time}}(\mbox{\hyperlink{namespacedoris_a861bdd21603512ebea0673529e0a9e65}{UnixSeconds}}())\ \{\}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_adfac459ec5044df38f238fab2b8254af}{TabletTxnInfo}}(PUniqueId\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}},\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}},\ \textcolor{keywordtype}{bool}\ merge\_on\_write,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9eac641d2af334ef0f001d2ca2a498a4}{DeleteBitmapPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a3b1dfed7f54e75f00e13c0d22462192a}{delete\_bitmap}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a0d50dca2f3b30fd0086b9918026b0714}{RowsetIdUnorderedSet}}\&\ ids)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}}(\mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a0d5cddebc852fc133949a4f391e9340c}{load\_id}}),}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}}(\mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a49fad3393d650b35608764e5b72d4184}{rowset}}),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ac2087a990d537038f706f65963175dfe}{unique\_key\_merge\_on\_write}}(merge\_on\_write),}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a3b1dfed7f54e75f00e13c0d22462192a}{delete\_bitmap}}(\mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a3b1dfed7f54e75f00e13c0d22462192a}{delete\_bitmap}}),}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_a50161c600c5843a3a17b613ee56cb842}{rowset\_ids}}(ids),}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_ab9f165b120bcdcf57a4c5c571e5294d9}{creation\_time}}(\mbox{\hyperlink{namespacedoris_a861bdd21603512ebea0673529e0a9e65}{UnixSeconds}}())\ \{\}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_txn_info_afaf0d1349788d81a9f2b7a5e7d2d9924}{TabletTxnInfo}}()\ \{\}}
+\DoxyCodeLine{00078\ \};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ txn\ manager\ is\ used\ to\ manage\ mapping\ between\ tablet\ and\ txns}}
+\DoxyCodeLine{00081\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_txn_manager}{TxnManager}}\ \{}
+\DoxyCodeLine{00082\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager}{TxnManager}}(int32\_t\ txn\_map\_shard\_size,\ int32\_t\ txn\_shard\_size);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_a46b8b4befe7d3e4b850da0295a6ada01}{\string~TxnManager}}()\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9e978df56774073d0661509b3b558fd8}{\_txn\_tablet\_maps}};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a957c695914d79b2ab5d0b2a67bcba141}{\_txn\_partition\_maps}};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a6ffbc836c38dc8bdfde03dd38daecf6c}{\_txn\_map\_locks}};}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a2e6a7827c9a496c793efe1c1ff8a06ba}{\_txn\_mutex}};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9b03c13905591016324e72390c3b31e9}{\_txn\_tablet\_delta\_writer\_map}};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a88335bd7f1c20a0d5a8568a7c2d4cefa}{\_txn\_tablet\_delta\_writer\_map\_locks}};}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a757329844e457124ba5b31a02e956d28}{prepare\_txn}}(TPartitionId\ partition\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTransactionId\ transaction\_id,\ \textcolor{keyword}{const}\ PUniqueId\&\ load\_id);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_abb8a9fd989123e66de3d49e0538112b6}{commit\_txn}}(TPartitionId\ partition\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTransactionId\ transaction\_id,\ \textcolor{keyword}{const}\ PUniqueId\&\ load\_id,}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\&\ rowset\_ptr,\ \textcolor{keywordtype}{bool}\ is\_recovery);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_af9dd0a4bae8f96d47a24fe221fbec6fe}{publish\_txn}}(TPartitionId\ partition\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTransactionId\ transaction\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}});}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ delete\ the\ txn\ from\ manager\ if\ it\ is\ not\ committed(not\ have\ a\ valid\ rowset)}}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a30ccefc4822c43f4b40c3f7c8757b5e7}{rollback\_txn}}(TPartitionId\ partition\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTransactionId\ transaction\_id);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ae7934e183681594dd5f7dca99213475d}{delete\_txn}}(TPartitionId\ partition\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\&\ tablet,}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTransactionId\ transaction\_id);}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ add\ a\ txn\ to\ manager}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ partition\ id\ is\ useful\ in\ publish\ version\ stage\ because\ version\ is\ associated\ with\ partition}}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a757329844e457124ba5b31a02e956d28}{prepare\_txn}}(TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PUniqueId\&\ load\_id);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_abb8a9fd989123e66de3d49e0538112b6}{commit\_txn}}(\mbox{\hyperlink{classdoris_1_1_olap_meta}{OlapMeta}}*\ meta,\ TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PUniqueId\&\ load\_id,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\&\ rowset\_ptr,}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_recovery);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ remove\ a\ txn\ from\ txn\ manager}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ not\ persist\ rowset\ meta\ because}}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_af9dd0a4bae8f96d47a24fe221fbec6fe}{publish\_txn}}(\mbox{\hyperlink{classdoris_1_1_olap_meta}{OlapMeta}}*\ meta,\ TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\&\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}});}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ delete\ the\ txn\ from\ manager\ if\ it\ is\ not\ committed(not\ have\ a\ valid\ rowset)}}
+\DoxyCodeLine{00129\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a30ccefc4822c43f4b40c3f7c8757b5e7}{rollback\_txn}}(TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid);}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ remove\ the\ txn\ from\ txn\ manager}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ delete\ the\ related\ rowset\ if\ it\ is\ not\ null}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ delete\ rowset\ related\ data\ if\ it\ is\ not\ null}}
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ae7934e183681594dd5f7dca99213475d}{delete\_txn}}(\mbox{\hyperlink{classdoris_1_1_olap_meta}{OlapMeta}}*\ meta,\ TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a1d7f93c599ad669808a9a8009694d4a9}{get\_tablet\_related\_txns}}(TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t*\ partition\_id,\ std::set<int64\_t>*\ transaction\_ids);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ac9d347956c68b44803d58668d83a8dee}{get\_txn\_related\_tablets}}(\textcolor{keyword}{const}\ TTransactionId\ transaction\_id,\ TPartitionId\ partition\_ids,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::map<TabletInfo,\ RowsetSharedPtr>*\ tablet\_infos);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a66f9e59c4a92262f06210a7ec2aff92a}{get\_all\_related\_tablets}}(std::set<TabletInfo>*\ tablet\_infos);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ Just\ check\ if\ the\ txn\ exists.}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a7f0b39824007fe6056cbed275e6fc3b1}{has\_txn}}(TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,\ TTabletId\ tablet\_id,}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid);}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Get\ all\ expired\ txns\ and\ save\ them\ in\ expire\_txn\_map.}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ This\ is\ currently\ called\ before\ reporting\ all\ tablet\ info,\ to\ avoid\ iterating\ txn\ map\ for\ every\ tablets.}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a5ab581eefcb196906ece672a8d6c9f7a}{build\_expire\_txn\_map}}(std::map<\mbox{\hyperlink{structdoris_1_1_tablet_info}{TabletInfo}},\ std::vector<int64\_t>>*\ expire\_txn\_map);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a0bd82dfeec543c19882169aa4b67448c}{force\_rollback\_tablet\_related\_txns}}(\mbox{\hyperlink{classdoris_1_1_olap_meta}{OlapMeta}}*\ meta,\ TTabletId\ tablet\_id,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,\ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid);}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a017d1b36e870898f5cd3716fea9b0ce4}{get\_partition\_ids}}(\textcolor{keyword}{const}\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<TPartitionId>*\ partition\_ids);}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_aaec3d506d7e61552d487fa0c2c87c72f}{add\_txn\_tablet\_delta\_writer}}(int64\_t\ transaction\_id,\ int64\_t\ tablet\_id,}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delta_writer}{DeltaWriter}}*\ delta\_writer);}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ac3f8f8221764868935c7ce4d3c9a5f0a}{clear\_txn\_tablet\_delta\_writer}}(int64\_t\ transaction\_id);}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a8baf670bb80a7b0a767232bcc23ac865}{finish\_slave\_tablet\_pull\_rowset}}(int64\_t\ transaction\_id,\ int64\_t\ tablet\_id,\ int64\_t\ node\_id,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_succeed);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a7e7a2f6fc64639fa204d115f55df7c15}{set\_txn\_related\_delete\_bitmap}}(TPartitionId\ partition\_id,\ TTransactionId\ transaction\_id,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TTabletId\ tablet\_id,\ \mbox{\hyperlink{namespacedoris_a3cd8a48a3db066d42dda70e1a7528ae8}{SchemaHash}}\ schema\_hash,}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_unique_id}{TabletUid}}\ tablet\_uid,\ \textcolor{keywordtype}{bool}\ unique\_key\_merge\_on\_write,}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9eac641d2af334ef0f001d2ca2a498a4}{DeleteBitmapPtr}}\ delete\_bitmap,}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a0d50dca2f3b30fd0086b9918026b0714}{RowsetIdUnorderedSet}}\&\ rowset\_ids);}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_txn_manager_a4b2db0980a99c37df62fdc71a88d7410}{TxnKey}}\ =\ std::pair<int64\_t,\ int64\_t>;\ \textcolor{comment}{//\ partition\_id,\ transaction\_id;}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ Implement\ TxnKey\ hash\ function\ to\ support\ TxnKey\ as\ a\ key\ for\ `unordered\_map`.}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_txn_manager_1_1_txn_key_hash}{TxnKeyHash}}\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_txn_manager_1_1_txn_key_hash_afabc0d859655d0359e35acc79deb8791}{operator()}}(\textcolor{keyword}{const}\ std::pair<T,\ U>\&\ e)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::hash<T>()(e.first)\ \string^\ std::hash<U>()(e.second);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ Implement\ TxnKey\ equal\ function\ to\ support\ TxnKey\ as\ a\ key\ for\ `unordered\_map`.}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_txn_manager_1_1_txn_key_equal}{TxnKeyEqual}}\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_txn_manager_1_1_txn_key_equal_a27518ba44379c90798ba8160eab38013}{operator()}}(\textcolor{keyword}{const}\ std::pair<T,\ U>\&\ l,\ \textcolor{keyword}{const}\ std::pair<T,\ U>\&\ r)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l.first\ ==\ r.first\ \&\&\ l.second\ ==\ r.second;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \};}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<TxnKey,\ std::map<TabletInfo,\ TabletTxnInfo>,\ TxnKeyHash,\ TxnKeyEqual>}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_a16e193755d58a0b8ba69dea39deb8822}{txn\_tablet\_map\_t}};}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<int64\_t,\ std::unordered\_set<int64\_t>>\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ab03e6a9940634f4f2d841aed40f24493}{txn\_partition\_map\_t}};}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<int64\_t,\ std::map<int64\_t,\ DeltaWriter*>>}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_aa1f120d4d59c00d187327e93879a30a3}{txn\_tablet\_delta\_writer\_map\_t}};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ std::shared\_mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a50699b0d66e6d8bb839672b90df1d9b5}{\_get\_txn\_map\_lock}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_a16e193755d58a0b8ba69dea39deb8822}{txn\_tablet\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a243bf4cacc4acb211cb5b91a165f6451}{\_get\_txn\_tablet\_map}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_ab03e6a9940634f4f2d841aed40f24493}{txn\_partition\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_af22022cf5b168b925b29f6576419ea4c}{\_get\_txn\_partition\_map}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{inline}\ std::mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a61e09b1615984e18ad12673d5cae9f63}{\_get\_txn\_lock}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ std::shared\_mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a86fab92177aa70f03fd06d14da199e96}{\_get\_txn\_tablet\_delta\_writer\_map\_lock}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_aa1f120d4d59c00d187327e93879a30a3}{txn\_tablet\_delta\_writer\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a73fd0a8912898d66909edf6ecd28e78c}{\_get\_txn\_tablet\_delta\_writer\_map}}(TTransactionId\ transactionId);}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ Insert\ or\ remove\ (transaction\_id,\ partition\_id)\ from\ \_txn\_partition\_map}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ get\ \_txn\_map\_lock\ before\ calling.}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ad0bed481cc58c1c52acc60e4ee70cc8a}{\_insert\_txn\_partition\_map\_unlocked}}(int64\_t\ transaction\_id,\ int64\_t\ partition\_id);}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a3995cfc13d858e6aee168800e44b5099}{\_clear\_txn\_partition\_map\_unlocked}}(int64\_t\ transaction\_id,\ int64\_t\ partition\_id);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}};}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a611817739d6631525366de5f0e089d70}{\_txn\_shard\_size}};}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ \_txn\_map\_locks[i]\ protect\ \_txn\_tablet\_maps[i],\ i=0,1,2...,and\ i\ <\ \_txn\_map\_shard\_size}}
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_a16e193755d58a0b8ba69dea39deb8822}{txn\_tablet\_map\_t}}*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9e978df56774073d0661509b3b558fd8}{\_txn\_tablet\_maps}};}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ transaction\_id\ -\/>\ corresponding\ partition\ ids}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ This\ is\ mainly\ for\ the\ clear\ txn\ task\ received\ from\ FE,\ which\ may\ only\ has\ transaction\ id,}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ so\ we\ need\ this\ map\ to\ find\ out\ which\ partitions\ are\ corresponding\ to\ a\ transaction\ id.}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ The\ \_txn\_partition\_maps[i]\ should\ be\ constructed/deconstructed/modified\ alongside\ with\ '\_txn\_tablet\_maps[i]'}}
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_ab03e6a9940634f4f2d841aed40f24493}{txn\_partition\_map\_t}}*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a957c695914d79b2ab5d0b2a67bcba141}{\_txn\_partition\_maps}};}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ std::shared\_mutex*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a6ffbc836c38dc8bdfde03dd38daecf6c}{\_txn\_map\_locks}};}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ std::mutex*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a2e6a7827c9a496c793efe1c1ff8a06ba}{\_txn\_mutex}};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_aa1f120d4d59c00d187327e93879a30a3}{txn\_tablet\_delta\_writer\_map\_t}}*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9b03c13905591016324e72390c3b31e9}{\_txn\_tablet\_delta\_writer\_map}};}
+\DoxyCodeLine{00232\ \ \ \ \ std::shared\_mutex*\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a88335bd7f1c20a0d5a8568a7c2d4cefa}{\_txn\_tablet\_delta\_writer\_map\_locks}};}
+\DoxyCodeLine{00233\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_txn_manager_a21d1a00240b3493f7b607752e0f2bc36}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_txn_manager}{TxnManager}});}
+\DoxyCodeLine{00234\ \};\ \textcolor{comment}{//\ TxnManager}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{inline}\ std::shared\_mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a50699b0d66e6d8bb839672b90df1d9b5}{TxnManager::\_get\_txn\_map\_lock}}(TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a6ffbc836c38dc8bdfde03dd38daecf6c}{\_txn\_map\_locks}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a16e193755d58a0b8ba69dea39deb8822}{TxnManager::txn\_tablet\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a243bf4cacc4acb211cb5b91a165f6451}{TxnManager::\_get\_txn\_tablet\_map}}(TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9e978df56774073d0661509b3b558fd8}{\_txn\_tablet\_maps}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00242\ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_ab03e6a9940634f4f2d841aed40f24493}{TxnManager::txn\_partition\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_af22022cf5b168b925b29f6576419ea4c}{TxnManager::\_get\_txn\_partition\_map}}(}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a957c695914d79b2ab5d0b2a67bcba141}{\_txn\_partition\_maps}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{keyword}{inline}\ std::mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a61e09b1615984e18ad12673d5cae9f63}{TxnManager::\_get\_txn\_lock}}(TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a2e6a7827c9a496c793efe1c1ff8a06ba}{\_txn\_mutex}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a611817739d6631525366de5f0e089d70}{\_txn\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00251\ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{inline}\ std::shared\_mutex\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a86fab92177aa70f03fd06d14da199e96}{TxnManager::\_get\_txn\_tablet\_delta\_writer\_map\_lock}}(}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a88335bd7f1c20a0d5a8568a7c2d4cefa}{\_txn\_tablet\_delta\_writer\_map\_locks}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00256\ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_aa1f120d4d59c00d187327e93879a30a3}{TxnManager::txn\_tablet\_delta\_writer\_map\_t}}\&\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a73fd0a8912898d66909edf6ecd28e78c}{TxnManager::\_get\_txn\_tablet\_delta\_writer\_map}}(}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ TTransactionId\ transactionId)\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_txn_manager_a9b03c13905591016324e72390c3b31e9}{\_txn\_tablet\_delta\_writer\_map}}[transactionId\ \&\ (\mbox{\hyperlink{classdoris_1_1_txn_manager_a35edbe477acce673767ae812f412297f}{\_txn\_map\_shard\_size}}\ -\/\ 1)];}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

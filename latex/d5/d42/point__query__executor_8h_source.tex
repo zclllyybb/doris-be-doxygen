@@ -1,0 +1,275 @@
+\hypertarget{point__query__executor_8h_source}{}\doxysection{point\+\_\+query\+\_\+executor.\+h}
+\label{point__query__executor_8h_source}\index{/Users/dabowang/be\_all/service/point\_query\_executor.h@{/Users/dabowang/be\_all/service/point\_query\_executor.h}}
+\mbox{\hyperlink{point__query__executor_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}butil/containers/doubly\_buffered\_data.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/internal\_service.pb.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{int128_8h}{gutil/int128.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block_8h}{vec/core/block.h}}"{}}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{class\ }RowCache;}
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }Cache;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ For\ caching\ point\ lookup\ pre\ allocted\ blocks\ and\ exprs}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_reusable}{Reusable}}\ \{}
+\DoxyCodeLine{00037\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_reusable_ad2db134ba74ea0cfdda47c8d0e7a5dd8}{\string~Reusable}}();}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_reusable_a3c4ac30ce1556c9a2cfde887ff5d0e11}{is\_expired}}(int64\_t\ ttl\_ms)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ butil::gettimeofday\_ms()\ -\/\ \mbox{\hyperlink{classdoris_1_1_reusable_a8541e7731c10d763e4d2ff234ec2a02a}{\_create\_timestamp}}\ >\ ttl\_ms;}
+\DoxyCodeLine{00042\ \ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_reusable_a173ef36b01434c0dc425f7d18624554b}{init}}(\textcolor{keyword}{const}\ TDescriptorTable\&\ t\_desc\_tbl,\ \textcolor{keyword}{const}\ std::vector<TExpr>\&\ \mbox{\hyperlink{classdoris_1_1_reusable_a8278231c2c6fd442a1f8d4fceacee2da}{output\_exprs}},}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ block\_size\ =\ 1);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ std::unique\_ptr<vectorized::Block>\ \mbox{\hyperlink{classdoris_1_1_reusable_abed2ea7117120f9b78482fe9ff30568e}{get\_block}}();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ do\ not\ touch\ block\ after\ returned}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_reusable_a601d8a8ee04ce264480f1b847be18d46}{return\_block}}(std::unique\_ptr<vectorized::Block>\&\ block);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tuple_descriptor}{TupleDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1_reusable_aa1f3a370cb6dc5ce1e543276620bec87}{tuple\_desc}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_reusable_a1cb9da114bfc721527862c9a30bac428}{\_desc\_tbl}}-\/>\mbox{\hyperlink{classdoris_1_1_descriptor_tbl_afe6eb6a823dd3fc7d47f2fd8a43e4f33}{get\_tuple\_descriptor}}(0);\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<vectorized::VExprContext*>\&\ \mbox{\hyperlink{classdoris_1_1_reusable_a8278231c2c6fd442a1f8d4fceacee2da}{output\_exprs}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_reusable_aa5333d5a0e1e9cac9439e4ff9aaf7a59}{\_output\_exprs\_ctxs}};\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ caching\ TupleDescriptor,\ output\_expr,\ etc...}}
+\DoxyCodeLine{00058\ \ \ \ \ std::unique\_ptr<RuntimeState>\ \mbox{\hyperlink{classdoris_1_1_reusable_a46170bcb9a55ad401f8f75781afc1544}{\_runtime\_state}};}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}*\ \mbox{\hyperlink{classdoris_1_1_reusable_a1cb9da114bfc721527862c9a30bac428}{\_desc\_tbl}};}
+\DoxyCodeLine{00060\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_reusable_a6a5e3add3f28cf6ad9075f84858f12a3}{\_block\_mutex}};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ prevent\ from\ allocte\ too\ many\ tmp\ blocks}}
+\DoxyCodeLine{00062\ \ \ \ \ std::vector<std::unique\_ptr<vectorized::Block>>\ \mbox{\hyperlink{classdoris_1_1_reusable_a6188103aa561835033c24b17aaf67ab9}{\_block\_pool}};}
+\DoxyCodeLine{00063\ \ \ \ \ std::vector<vectorized::VExprContext*>\ \mbox{\hyperlink{classdoris_1_1_reusable_aa5333d5a0e1e9cac9439e4ff9aaf7a59}{\_output\_exprs\_ctxs}};}
+\DoxyCodeLine{00064\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_reusable_a8541e7731c10d763e4d2ff234ec2a02a}{\_create\_timestamp}}\ =\ 0;}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ RowCache\ is\ a\ LRU\ cache\ for\ row\ store}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_row_cache}{RowCache}}\ \{}
+\DoxyCodeLine{00069\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ The\ cache\ key\ for\ row\ lru\ cache}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key}{RowCacheKey}}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a48be9475be9e8520bdb23eadb1836131}{RowCacheKey}}(int64\_t\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}})\ :\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}}(\mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}}),\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}}(\mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}})\ \{\}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ to\ a\ flat\ binary\ which\ can\ be\ used\ as\ LRUCache's\ key}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a4b6672eb8de905bde11bb092d43d50e2}{encode}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ full\_key;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ full\_key.resize(\textcolor{keyword}{sizeof}(int64\_t)\ +\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}}.\mbox{\hyperlink{structdoris_1_1_slice_a854352f53b148adc24983a58a1866d66}{size}});}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{mysql__global_8h_a7a9e0ca052e0f568fcf4c7dce0a95532}{int8store}}(\&full\_key.front(),\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}});}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}((\&full\_key.front())\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a1507735acbeddbdf20663acb53ed7803}{tablet\_id}}),\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}}.\mbox{\hyperlink{structdoris_1_1_slice_a91a70b77df95bd8b0830b49a094c2acb}{data}},\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key_a60214260b7bd8510d0dea2641509cf6c}{key}}.\mbox{\hyperlink{structdoris_1_1_slice_a854352f53b148adc24983a58a1866d66}{size}});}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ full\_key;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ A\ handle\ for\ RowCache\ entry.\ This\ class\ make\ it\ easy\ to\ handle}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ Cache\ entry.\ Users\ don't\ need\ to\ release\ the\ obtained\ cache\ entry.\ This}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ class\ will\ release\ the\ cache\ entry\ when\ it\ is\ destroyed.}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}}\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a00115c074cf6a082227b3ae3c6c3298c}{CacheHandle}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a09a1ba91c8842492a75c3c4a55706089}{CacheHandle}}(\mbox{\hyperlink{classdoris_1_1_cache}{Cache}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_abf8f5a3b11435739d7e5bd64eaef16bc}{cache}},\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ handle)\ :\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_abf8f5a3b11435739d7e5bd64eaef16bc}{cache}}),\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}(handle)\ \{\}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a5467a1df350a7f26288c876506598cc3}{\string~CacheHandle}}()\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}-\/>\mbox{\hyperlink{classdoris_1_1_cache_a99ff5ff87dc624c6460076b6e6879011}{release}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a0aabcbe70c01b6661d3e1a79f35bfe32}{CacheHandle}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}}\&\&\ other)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}},\ other.\_cache);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}},\ other.\_handle);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}}\&\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_aa0df700cf9f18bc04e60d2ed253dcea7}{operator=}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}}\&\&\ other)\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}},\ other.\_cache);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}},\ other.\_handle);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a1153e3a77aa46ed8f7683e71c60f4584}{valid}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}\ !=\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache}{Cache}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_abf8f5a3b11435739d7e5bd64eaef16bc}{cache}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}};\ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ac345abcb9d1a417959d5d1d54339ca2e}{data}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}-\/>\mbox{\hyperlink{classdoris_1_1_cache_a1cedcec2a6e02e4762cca7a71d23c080}{value\_slice}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}});\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache}{Cache}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_ae4aa7a67fed999411ade4adc1ff27445}{\_cache}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_a7c90e50ce6ee6e0c311b05e8ee2618d3}{\_handle}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ allow\ copy\ and\ assign}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle_adb5bedabc91c232b1758ffcd66b5863e}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}});}
+\DoxyCodeLine{00121\ \ \ \ \ \};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ Create\ global\ instance\ of\ this\ class}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_row_cache_a3bca404e8350b38d87a7ceea0e72bf0b}{create\_global\_cache}}(int64\_t\ capacity,\ uint32\_t\ num\_shards\ =\ \mbox{\hyperlink{classdoris_1_1_row_cache_a195b1f6a2c95ead87586187857dc798c}{kDefaultNumShards}});}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_row_cache}{RowCache}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_ad5d304483624da9540220330572cad36}{instance}}();}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Lookup\ a\ row\ key\ from\ cache,}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ If\ the\ Row\ key\ is\ found,\ the\ cache\ entry\ will\ be\ written\ into\ handle.}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ CacheHandle\ will\ release\ cache\ entry\ to\ cache\ when\ it\ destructs}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ entry\ is\ found,\ otherwise\ return\ false.}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_row_cache_a0558e4c0fb198639f1fae62c70e6e838}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key}{RowCacheKey}}\&\ key,\ \mbox{\hyperlink{classdoris_1_1_row_cache_1_1_cache_handle}{CacheHandle}}*\ handle);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ Insert\ a\ row\ with\ key\ into\ this\ cache.}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ This\ function\ is\ thread-\/safe,\ and\ when\ two\ clients\ insert\ two\ same\ key}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ concurrently,\ this\ function\ can\ assure\ that\ only\ one\ page\ is\ cached.}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ The\ in\_memory\ page\ will\ have\ higher\ priority.}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_row_cache_aaeb93baa4fd96d0bd38fe2164a4933db}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key}{RowCacheKey}}\&\ key,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_row_cache_a4d575c4a79fe1f79ae087711476bcc65}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_row_cache_1_1_row_cache_key}{RowCacheKey}}\&\ key);}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_row_cache_a195b1f6a2c95ead87586187857dc798c}{kDefaultNumShards}}\ =\ 128;}
+\DoxyCodeLine{00145\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_row_cache}{RowCache}}(int64\_t\ capacity,\ \textcolor{keywordtype}{int}\ num\_shards\ =\ \mbox{\hyperlink{classdoris_1_1_row_cache_a195b1f6a2c95ead87586187857dc798c}{kDefaultNumShards}});}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_row_cache}{RowCache}}*\ \mbox{\hyperlink{classdoris_1_1_row_cache_a4ac9bba2b3a477d775a22dff3be07d31}{\_s\_instance}};}
+\DoxyCodeLine{00147\ \ \ \ \ std::unique\_ptr<Cache>\ \mbox{\hyperlink{classdoris_1_1_row_cache_a80235f290f396ea3c3d30148f4b6f445}{\_cache}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00148\ \};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ A\ cache\ used\ for\ prepare\ stmt.}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ One\ connection\ per\ stmt\ perf\ uuid}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ Use\ DoublyBufferedData\ to\ wrap\ Cache\ for\ performance\ and\ thread\ safe,}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ since\ it's\ barely\ modified}}
+\DoxyCodeLine{00154\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_lookup_cache}{LookupCache}}\ \{}
+\DoxyCodeLine{00155\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ uuid\ to\ reusable}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_lookup_cache_ab194759491203bf5907c9a7f3526767c}{Cache}}\ =\ phmap::flat\_hash\_map<uint128,\ std::shared\_ptr<Reusable>>;}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_lookup_cache_a97e18529d1af6f79bcfa092525b73133}{CacheIter}}\ =\ Cache::iterator;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lookup_cache_afb6a0c73f908020a210fe966cda3af14}{LookupCache}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache}{LookupCache}}\&\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_adda078b37d5b8c68658259afe1aa85b4}{instance}}()\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache}{LookupCache}}\ ins;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ins;}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a96dec4941fa113cf4b19ff12a8b4f9ed}{add}}(\mbox{\hyperlink{classuint128}{uint128}}\ cache\_id,\ std::shared\_ptr<Reusable>\ item)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ assert(item\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a43e34cc126526d9f95cbf45bcbebc388}{\_double\_buffer\_cache}}.Modify(\mbox{\hyperlink{classdoris_1_1_lookup_cache_a6e354139ddc6154ffb9d4f17dcbfa757}{update\_cache}},\ std::make\_pair(cache\_id,\ item));}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ find\ an\ item,\ return\ null\ if\ not\ exist}}
+\DoxyCodeLine{00172\ \ \ \ \ std::shared\_ptr<Reusable>\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_afaa96a9758f2b54bf7a594281505b0b0}{get}}(\mbox{\hyperlink{classuint128}{uint128}}\ cache\_id)\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ butil::DoublyBufferedData<Cache>::ScopedPtr\ s;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_lookup_cache_a43e34cc126526d9f95cbf45bcbebc388}{\_double\_buffer\_cache}}.Read(\&s)\ !=\ 0)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}failed\ to\ get\ cache\ from\ double\ buffer\ data"{}};}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ s-\/>find(cache\_id);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ !=\ s-\/>end())\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00183\ \ \ \ \ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00186\ \ \ \ \ butil::DoublyBufferedData<Cache>\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a43e34cc126526d9f95cbf45bcbebc388}{\_double\_buffer\_cache}};}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ 30\ seconds\ for\ expiring\ an\ item}}
+\DoxyCodeLine{00188\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a781453d4a355dbd08b9213ae3ac1f47a}{\_expir\_seconds}}\ =\ config::tablet\_lookup\_cache\_clean\_interval;}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a6e354139ddc6154ffb9d4f17dcbfa757}{update\_cache}}(\mbox{\hyperlink{classdoris_1_1_lookup_cache_ab194759491203bf5907c9a7f3526767c}{Cache}}\&\ old\_cache,}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<\mbox{\hyperlink{classuint128}{uint128}},\ std::shared\_ptr<Reusable>>\&\ p)\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ old\_cache.emplace(p);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a6723517a47eb1b020835a5c1857d3559}{remove\_items}}(\mbox{\hyperlink{classdoris_1_1_lookup_cache_ab194759491203bf5907c9a7f3526767c}{Cache}}\&\ old\_cache,\ \textcolor{keyword}{const}\ std::vector<uint128>\&\ keys)\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ keys.size();\ ++i)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ old\_cache.erase(keys[i]);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ Called\ from\ StorageEngine::\_start\_clean\_lookup\_cache}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_storage_engine}{StorageEngine}};}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a66ec42d2ff5b84117b1da4cbba719f1b}{prune}}()\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ std::vector<uint128>\ expired\_keys;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ butil::DoublyBufferedData<Cache>::ScopedPtr\ s;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_lookup_cache_a43e34cc126526d9f95cbf45bcbebc388}{\_double\_buffer\_cache}}.Read(\&s)\ !=\ 0)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ s-\/>begin();\ it\ !=\ s-\/>end();\ ++it)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>second-\/>is\_expired(\mbox{\hyperlink{classdoris_1_1_lookup_cache_a781453d4a355dbd08b9213ae3ac1f47a}{\_expir\_seconds}}\ *\ 1000))\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expired\_keys.push\_back(it-\/>first);}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lookup_cache_a43e34cc126526d9f95cbf45bcbebc388}{\_double\_buffer\_cache}}.Modify(\mbox{\hyperlink{classdoris_1_1_lookup_cache_a6723517a47eb1b020835a5c1857d3559}{remove\_items}},\ expired\_keys);}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ LOG(INFO)\ <<\ \textcolor{stringliteral}{"{}prune\ lookup\ cache,\ total\ "{}}\ <<\ expired\_keys.size()\ <<\ \textcolor{stringliteral}{"{}\ expired\ items"{}};}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ \};}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_metrics}{Metrics}}\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics_aac8853916fe40092772145c5093041e9}{Metrics}}()}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structdoris_1_1_metrics_a92d8223152de39af8d61943a2a519341}{init\_ns}}(TUnit::TIME\_NS),}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics_aa2f1d2ea445b9e1db07d9d4836a0a3dd}{init\_key\_ns}}(TUnit::TIME\_NS),}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics_a7b24d34431baccc2fa3b9f1431061d9f}{lookup\_key\_ns}}(TUnit::TIME\_NS),}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics_a0eac04ead92e7c03c9ccdc1a734e7ea2}{lookup\_data\_ns}}(TUnit::TIME\_NS),}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics_ac9e95b2c047c60a6e110ada374b71be4}{output\_data\_ns}}(TUnit::TIME\_NS)\ \{\}}
+\DoxyCodeLine{00231\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}\ \mbox{\hyperlink{structdoris_1_1_metrics_a92d8223152de39af8d61943a2a519341}{init\_ns}};}
+\DoxyCodeLine{00232\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}\ \mbox{\hyperlink{structdoris_1_1_metrics_aa2f1d2ea445b9e1db07d9d4836a0a3dd}{init\_key\_ns}};}
+\DoxyCodeLine{00233\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}\ \mbox{\hyperlink{structdoris_1_1_metrics_a7b24d34431baccc2fa3b9f1431061d9f}{lookup\_key\_ns}};}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}\ \mbox{\hyperlink{structdoris_1_1_metrics_a0eac04ead92e7c03c9ccdc1a734e7ea2}{lookup\_data\_ns}};}
+\DoxyCodeLine{00235\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}\ \mbox{\hyperlink{structdoris_1_1_metrics_ac9e95b2c047c60a6e110ada374b71be4}{output\_data\_ns}};}
+\DoxyCodeLine{00236\ \};}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{comment}{//\ An\ util\ to\ do\ tablet\ lookup}}
+\DoxyCodeLine{00239\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_point_query_executor}{PointQueryExecutor}}\ \{}
+\DoxyCodeLine{00240\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a15ef978a29ac5137a3caa3a8a0a7bfc4}{init}}(\textcolor{keyword}{const}\ PTabletKeyLookupRequest*\ request,\ PTabletKeyLookupResponse*\ response);}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_aafdc9fce98d14cc95065192634277f22}{lookup\_up}}();}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_add3d3bf31f63409b068d60147be9cc54}{print\_profile}}();}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a9cbd41cd87dac78a1dbeae47ddb3f9e2}{\_init\_keys}}(\textcolor{keyword}{const}\ PTabletKeyLookupRequest*\ request);}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_af61da1001dff755be1ef266baf4041bb}{\_lookup\_row\_key}}();}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a5599b8e5e02079b130887b4445554db3}{\_lookup\_row\_data}}();}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_ad0b1cffd5d7a490d274e733fd3e1d6ea}{\_output\_data}}();}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ PTabletKeyLookupResponse*\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_af41c47076b638f587fb211f41a4eb24d}{\_response}};}
+\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a98f28be525261e7ac6cde67ff645ab91}{\_tablet}};}
+\DoxyCodeLine{00258\ \ \ \ \ std::vector<std::string>\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a179f1114f999d37696a8f5ea246abf6d}{\_primary\_keys}};}
+\DoxyCodeLine{00259\ \ \ \ \ std::vector<RowCache::CacheHandle>\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a9b6491b0a64930e74dd0d69c40ab0b93}{\_cached\_row\_data}};}
+\DoxyCodeLine{00260\ \ \ \ \ std::vector<std::optional<RowLocation>>\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a398765eefb5213defdfb8a11b5b09670}{\_row\_locations}};}
+\DoxyCodeLine{00261\ \ \ \ \ std::shared\_ptr<Reusable>\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_abd3f168272eea921eea07e14c7b2d105}{\_reusable}};}
+\DoxyCodeLine{00262\ \ \ \ \ std::unique\_ptr<vectorized::Block>\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a2c0df953cb04c475eca5f142132e4e13}{\_result\_block}};}
+\DoxyCodeLine{00263\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_metrics}{Metrics}}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_aa97bfe1fd28284b1452da9b03147b8fb}{\_profile\_metrics}};}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a67a91339207f8f151ab077a81f0f574c}{\_row\_cache\_hits}}\ =\ 0;}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a5af31c89e327cef228f354cdb95fe6fb}{\_hit\_lookup\_cache}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_point_query_executor_a4329798bb3e4d0b538e659216ea55df0}{\_binary\_row\_format}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00267\ \};}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

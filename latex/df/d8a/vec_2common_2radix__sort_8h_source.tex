@@ -1,0 +1,353 @@
+\hypertarget{vec_2common_2radix__sort_8h_source}{}\doxysection{radix\+\_\+sort.\+h}
+\label{vec_2common_2radix__sort_8h_source}\index{/Users/dabowang/be\_all/vec/common/radix\_sort.h@{/Users/dabowang/be\_all/vec/common/radix\_sort.h}}
+\mbox{\hyperlink{vec_2common_2radix__sort_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Common/RadixSort.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}string.h"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#if\ !defined(\_\_APPLE\_\_)\ \&\&\ !defined(\_\_FreeBSD\_\_)}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}malloc.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}algorithm"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}cmath"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}cstdint"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}cstdlib"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}type\_traits"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bit__cast_8h}{vec/common/bit\_cast.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_malloc_allocator}{RadixSortMallocAllocator}}\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{struct_radix_sort_malloc_allocator_afab5d721c09744969dc551e64bce4e3c}{allocate}}(\textcolor{keywordtype}{size\_t}\ size)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{malloc}}(size);\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_malloc_allocator_a9d8a7ae62a73c270164c7f28f7a57cd2}{deallocate}}(\textcolor{keywordtype}{void}*\ ptr,\ \textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*size*/})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{jemalloc__hook_8cpp_a3c12ec6b8e8368e804827d604b2979d7}{free}}(ptr);\ \}}
+\DoxyCodeLine{00051\ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyBits>}
+\DoxyCodeLine{00060\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_float_transform}{RadixSortFloatTransform}}\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_float_transform_abb8a96230636eb294e2f85eb4b0343a0}{transform\_is\_simple}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_float_transform_ac9117f3f18a29f8f629522040e1da4f3}{forward}}(KeyBits\ x)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x\ \string^}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((-\/(x\ >>\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1)))\ |\ (KeyBits(1)\ <<\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1)));}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_float_transform_a18c448b5c7fad13f22664ed4481a0fbe}{backward}}(KeyBits\ x)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x\ \string^}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((x\ >>\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1))\ -\/\ 1)\ |\ (KeyBits(1)\ <<\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1)));}
+\DoxyCodeLine{00072\ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TElement>}
+\DoxyCodeLine{00076\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_float_traits}{RadixSortFloatTraits}}\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_float_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\ =}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ TElement;\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_float_traits_a6618262236af00ff910ae6572287b714}{Key}}\ =\ \mbox{\hyperlink{struct_radix_sort_float_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}};\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_float_traits_a66283d3c1c5ce824d30d6470056df62d}{CountType}}\ =}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t;\ }
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_float_traits_a62fe253eb227ee8eff5a0087575a907c}{KeyBits}}\ =\ std::conditional\_t<\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_radix_sort_float_traits_a6618262236af00ff910ae6572287b714}{Key}})\ ==\ 8,\ uint64\_t,\ uint32\_t>;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_float_traits_a7328b2a83ee582220bcbac67b1b8892f}{PART\_SIZE\_BITS}}\ =}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ 8;\ }
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_float_transform}{Transform}}\ =\ \mbox{\hyperlink{struct_radix_sort_float_transform}{RadixSortFloatTransform<KeyBits>}};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_malloc_allocator}{Allocator}}\ =\ \mbox{\hyperlink{struct_radix_sort_malloc_allocator}{RadixSortMallocAllocator}};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{struct_radix_sort_float_traits_a6618262236af00ff910ae6572287b714}{Key}}\&\ \mbox{\hyperlink{struct_radix_sort_float_traits_a15dc7e01ad67439be52b9287c06b1b3a}{extract\_key}}(\mbox{\hyperlink{struct_radix_sort_float_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\&\ elem)\ \{\ \textcolor{keywordflow}{return}\ elem;\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_float_traits_a86e3026386eb559ebf9659065ca5d0ea}{less}}(\mbox{\hyperlink{struct_radix_sort_float_traits_a6618262236af00ff910ae6572287b714}{Key}}\ x,\ \mbox{\hyperlink{struct_radix_sort_float_traits_a6618262236af00ff910ae6572287b714}{Key}}\ y)\ \{\ \textcolor{keywordflow}{return}\ x\ <\ y;\ \}}
+\DoxyCodeLine{00103\ \};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyBits>}
+\DoxyCodeLine{00106\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_identity_transform}{RadixSortIdentityTransform}}\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_identity_transform_abb8a96230636eb294e2f85eb4b0343a0}{transform\_is\_simple}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_identity_transform_ac9117f3f18a29f8f629522040e1da4f3}{forward}}(KeyBits\ x)\ \{\ \textcolor{keywordflow}{return}\ x;\ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_identity_transform_a18c448b5c7fad13f22664ed4481a0fbe}{backward}}(KeyBits\ x)\ \{\ \textcolor{keywordflow}{return}\ x;\ \}}
+\DoxyCodeLine{00111\ \};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TElement>}
+\DoxyCodeLine{00114\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_u_int_traits}{RadixSortUIntTraits}}\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_u_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\ =\ TElement;}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_u_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ =\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}};}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_u_int_traits_a66283d3c1c5ce824d30d6470056df62d}{CountType}}\ =\ uint32\_t;}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_u_int_traits_aa0dd9489a61c68c83c44845288e8e15f}{KeyBits}}\ =\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a6618262236af00ff910ae6572287b714}{Key}};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a7328b2a83ee582220bcbac67b1b8892f}{PART\_SIZE\_BITS}}\ =\ 8;}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_identity_transform}{Transform}}\ =\ \mbox{\hyperlink{struct_radix_sort_identity_transform}{RadixSortIdentityTransform<KeyBits>}};}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_malloc_allocator}{Allocator}}\ =\ \mbox{\hyperlink{struct_radix_sort_malloc_allocator}{RadixSortMallocAllocator}};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\&\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a15dc7e01ad67439be52b9287c06b1b3a}{extract\_key}}(\mbox{\hyperlink{struct_radix_sort_u_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\&\ elem)\ \{\ \textcolor{keywordflow}{return}\ elem;\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a86e3026386eb559ebf9659065ca5d0ea}{less}}(\mbox{\hyperlink{struct_radix_sort_u_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ x,\ \mbox{\hyperlink{struct_radix_sort_u_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ y)\ \{\ \textcolor{keywordflow}{return}\ x\ <\ y;\ \}}
+\DoxyCodeLine{00128\ \};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyBits>}
+\DoxyCodeLine{00131\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_signed_transform}{RadixSortSignedTransform}}\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_signed_transform_abb8a96230636eb294e2f85eb4b0343a0}{transform\_is\_simple}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_signed_transform_ac9117f3f18a29f8f629522040e1da4f3}{forward}}(KeyBits\ x)\ \{\ \textcolor{keywordflow}{return}\ x\ \string^\ (KeyBits(1)\ <<\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1));\ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{static}\ KeyBits\ \mbox{\hyperlink{struct_radix_sort_signed_transform_a18c448b5c7fad13f22664ed4481a0fbe}{backward}}(KeyBits\ x)\ \{\ \textcolor{keywordflow}{return}\ x\ \string^\ (KeyBits(1)\ <<\ (\textcolor{keyword}{sizeof}(KeyBits)\ *\ 8\ -\/\ 1));\ \}}
+\DoxyCodeLine{00136\ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TElement>}
+\DoxyCodeLine{00139\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort_int_traits}{RadixSortIntTraits}}\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\ =\ TElement;}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ =\ \mbox{\hyperlink{struct_radix_sort_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}};}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_int_traits_a66283d3c1c5ce824d30d6470056df62d}{CountType}}\ =\ uint32\_t;}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_int_traits_a9d50393eeb92e15f2def33ba031266b9}{KeyBits}}\ =\ std::make\_unsigned\_t<Key>;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_int_traits_a7328b2a83ee582220bcbac67b1b8892f}{PART\_SIZE\_BITS}}\ =\ 8;}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_signed_transform}{Transform}}\ =\ \mbox{\hyperlink{struct_radix_sort_signed_transform}{RadixSortSignedTransform<KeyBits>}};}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_malloc_allocator}{Allocator}}\ =\ \mbox{\hyperlink{struct_radix_sort_malloc_allocator}{RadixSortMallocAllocator}};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{struct_radix_sort_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\&\ \mbox{\hyperlink{struct_radix_sort_int_traits_a15dc7e01ad67439be52b9287c06b1b3a}{extract\_key}}(\mbox{\hyperlink{struct_radix_sort_int_traits_a20d102b87c4184d243a18a39f17c60dc}{Element}}\&\ elem)\ \{\ \textcolor{keywordflow}{return}\ elem;\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_radix_sort_int_traits_a86e3026386eb559ebf9659065ca5d0ea}{less}}(\mbox{\hyperlink{struct_radix_sort_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ x,\ \mbox{\hyperlink{struct_radix_sort_int_traits_a6618262236af00ff910ae6572287b714}{Key}}\ y)\ \{\ \textcolor{keywordflow}{return}\ x\ <\ y;\ \}}
+\DoxyCodeLine{00153\ \};}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00156\ \textcolor{keyword}{using\ }\mbox{\hyperlink{vec_2common_2radix__sort_8h_a2ad247eacc55805a23d8966eeb762337}{RadixSortNumTraits}}\ =\ std::conditional\_t<}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ std::is\_integral\_v<T>,}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ std::conditional\_t<std::is\_unsigned\_v<T>,\ \mbox{\hyperlink{struct_radix_sort_u_int_traits}{RadixSortUIntTraits<T>}},\ \mbox{\hyperlink{struct_radix_sort_int_traits}{RadixSortIntTraits<T>}}>,}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_float_traits}{RadixSortFloatTraits<T>}}>;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Traits>}
+\DoxyCodeLine{00162\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_radix_sort}{RadixSort}}\ \{}
+\DoxyCodeLine{00163\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}\ =\ \textcolor{keyword}{typename}\ Traits::Element;}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_ada2f1b8ed708ba9fd438d9018669d4b9}{Key}}\ =\ \textcolor{keyword}{typename}\ Traits::Key;}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_afa8a515cf588da2a01dcb79d09a3b763}{CountType}}\ =\ \textcolor{keyword}{typename}\ Traits::CountType;}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ =\ \textcolor{keyword}{typename}\ Traits::KeyBits;}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ Use\ insertion\ sort\ if\ the\ size\ of\ the\ array\ is\ less\ than\ equal\ to\ this\ threshold}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_ae1c4d6f9edc1a85af8ec8a47fe253449}{INSERTION\_SORT\_THRESHOLD}}\ =\ 64;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ =\ 1\ <<\ Traits::PART\_SIZE\_BITS;}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_ac7d82c88872785c5be98a28765149922}{PART\_BITMASK}}\ =\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ -\/\ 1;}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_acee8d20c957cfc2095640be939c63345}{KEY\_BITS}}\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_radix_sort_ada2f1b8ed708ba9fd438d9018669d4b9}{Key}})\ *\ 8;}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}\ =}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_radix_sort_acee8d20c957cfc2095640be939c63345}{KEY\_BITS}}\ +\ (Traits::PART\_SIZE\_BITS\ -\/\ 1))\ /\ Traits::PART\_SIZE\_BITS;}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ \mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ x)\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Traits::Transform::transform\_is\_simple)\ x\ =\ Traits::Transform::forward(x);}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (x\ >>\ (\mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ *\ Traits::PART\_SIZE\_BITS))\ \&\ \mbox{\hyperlink{struct_radix_sort_ac7d82c88872785c5be98a28765149922}{PART\_BITMASK}};}
+\DoxyCodeLine{00182\ \ \ \ \ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ \mbox{\hyperlink{struct_radix_sort_a2af6a25fd8df133293ae3f00acff831b}{key\_to\_bits}}(\mbox{\hyperlink{struct_radix_sort_ada2f1b8ed708ba9fd438d9018669d4b9}{Key}}\ x)\ \{\ \textcolor{keywordflow}{return}\ ext::bit\_cast<KeyBits>(x);\ \}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{struct_radix_sort_ada2f1b8ed708ba9fd438d9018669d4b9}{Key}}\ \mbox{\hyperlink{struct_radix_sort_a535cf57f7f14a03ce766eee879c9cc3f}{bits\_to\_key}}(\mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ x)\ \{\ \textcolor{keywordflow}{return}\ ext::bit\_cast<Key>(x);\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_a3c7aef37715dcd14276b95d772f069f8}{insertion\_sort\_internal}}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ end\ =\ arr\ +\ size;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ i\ =\ arr\ +\ 1;\ i\ <\ end;\ ++i)\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Traits::less(Traits::extract\_key(*i),\ Traits::extract\_key(*(i\ -\/\ 1))))\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ j;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}\ tmp\ =\ *i;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *i\ =\ *(i\ -\/\ 1);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ i\ -\/\ 1;\ j\ >\ arr\ \&\&\ Traits::less(Traits::extract\_key(tmp),}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Traits::extract\_key(*(j\ -\/\ 1)));}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/j)}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *j\ =\ *(j\ -\/\ 1);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *j\ =\ tmp;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{/*\ Main\ MSD\ radix\ sort\ subroutine}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ *\ Puts\ elements\ to\ buckets\ based\ on\ PASS-\/th\ digit,\ then\ recursively\ calls\ insertion\ sort\ or\ itself\ on\ the\ buckets}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ PASS>}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_a6f60f56d8cf28d9beaac5da6f03aa1d2}{radix\_sort\_msd\_internal}}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ limit)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ last\_list[\mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ +\ 1];}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}**\ last\ =\ last\_list\ +\ 1;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ count[\mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}]\ =\ \{0\};}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ i\ =\ arr;\ i\ <\ arr\ +\ size;\ ++i)\ ++count[\mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(PASS,\ *i)];}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ last\_list[0]\ =\ last\_list[1]\ =\ arr;}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ buckets\_for\_recursion\ =\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}};}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ finish\ =\ arr\ +\ size;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 1;\ i\ <\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}};\ ++i)\ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ last[i]\ =\ last[i\ -\/\ 1]\ +\ count[i\ -\/\ 1];}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (last[i]\ >=\ arr\ +\ limit)\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buckets\_for\_recursion\ =\ i;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ finish\ =\ last[i];}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ At\ this\ point,\ we\ have\ the\ following\ variables:}}
+\DoxyCodeLine{00227\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ count[i]\ is\ the\ size\ of\ i-\/th\ bucket}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ last[i]\ is\ a\ pointer\ to\ the\ beginning\ of\ i-\/th\ bucket,\ last[-\/1]\ ==\ last[0]}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ buckets\_for\_recursion\ is\ the\ number\ of\ buckets\ that\ should\ be\ sorted,\ the\ last\ of\ them\ only\ partially}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ finish\ is\ a\ pointer\ to\ the\ end\ of\ the\ first\ buckets\_for\_recursion\ buckets}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Scatter\ array\ elements\ to\ buckets\ until\ the\ first\ buckets\_for\_recursion\ buckets\ are\ full}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ buckets\_for\_recursion;\ ++i)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ end\ =\ last[i\ -\/\ 1]\ +\ count[i];}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (end\ ==\ finish)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ last[i]\ =\ end;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (last[i]\ !=\ end)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}\ swapper\ =\ *last[i];}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a3e786c6c8d3019319c170b56c67cd55b}{KeyBits}}\ tag\ =\ \mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(PASS,\ swapper);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tag\ !=\ i)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(swapper,\ *last[tag]++);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ ((tag\ =\ \mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(PASS,\ swapper))\ !=\ i);}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *last[i]\ =\ swapper;}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++last[i];}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (PASS\ >\ 0)\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Recursively\ sort\ buckets,\ except\ the\ last\ one}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ buckets\_for\_recursion\ -\/\ 1;\ ++i)\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ start\ =\ last[i\ -\/\ 1];}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ subsize\ =\ last[i]\ -\/\ last[i\ -\/\ 1];}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a9b9b2a83685cd6cc45cd8406114f9301}{radix\_sort\_msd\_internal\_helper}}<PASS\ -\/\ 1>(start,\ subsize,\ subsize);}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sort\ last\ necessary\ bucket\ with\ limit}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ start\ =\ last[buckets\_for\_recursion\ -\/\ 2];}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ subsize\ =\ last[buckets\_for\_recursion\ -\/\ 1]\ -\/\ last[buckets\_for\_recursion\ -\/\ 2];}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sublimit\ =\ limit\ -\/\ (last[buckets\_for\_recursion\ -\/\ 1]\ -\/\ arr);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a9b9b2a83685cd6cc45cd8406114f9301}{radix\_sort\_msd\_internal\_helper}}<PASS\ -\/\ 1>(start,\ subsize,\ sublimit);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{comment}{//\ A\ helper\ to\ choose\ sorting\ algorithm\ based\ on\ array\ length}}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ PASS>}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_a9b9b2a83685cd6cc45cd8406114f9301}{radix\_sort\_msd\_internal\_helper}}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ limit)\ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ <=\ \mbox{\hyperlink{struct_radix_sort_ae1c4d6f9edc1a85af8ec8a47fe253449}{INSERTION\_SORT\_THRESHOLD}})}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a3c7aef37715dcd14276b95d772f069f8}{insertion\_sort\_internal}}(arr,\ size);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ radix\_sort\_msd\_internal<PASS>(arr,\ size,\ limit);}
+\DoxyCodeLine{00276\ \ \ \ \ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_aea216f1eb9ef9f87dfda1c9394c5bd6d}{execute\_lsd}}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_afa8a515cf588da2a01dcb79d09a3b763}{CountType}}\ histograms[\mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ *\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}]\ =\ \{0\};}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Traits::Allocator\ allocator;}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ swap\_buffer\ =}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\textcolor{keyword}{>}(allocator.allocate(size\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}})));}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Traits::Transform::transform\_is\_simple)}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Traits::extract\_key(arr[i])\ =\ \mbox{\hyperlink{struct_radix_sort_a535cf57f7f14a03ce766eee879c9cc3f}{bits\_to\_key}}(}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Traits::Transform::forward(\mbox{\hyperlink{struct_radix_sort_a2af6a25fd8df133293ae3f00acff831b}{key\_to\_bits}}(Traits::extract\_key(arr[i]))));}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ pass\ =\ 0;\ pass\ <\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}};\ ++pass)}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++histograms[pass\ *\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ +}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(pass,\ \mbox{\hyperlink{struct_radix_sort_a2af6a25fd8df133293ae3f00acff831b}{key\_to\_bits}}(Traits::extract\_key(arr[i])))];}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sums[\mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}]\ =\ \{0\};}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}};\ ++i)\ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ pass\ =\ 0;\ pass\ <\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}};\ ++pass)\ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ tmp\ =\ histograms[pass\ *\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ +\ i]\ +\ sums[pass];}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ histograms[pass\ *\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ +\ i]\ =\ sums[pass]\ -\/\ 1;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sums[pass]\ =\ tmp;}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ pass\ =\ 0;\ pass\ <\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}};\ ++pass)\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ writer\ =\ pass\ \%\ 2\ ?\ arr\ :\ swap\_buffer;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ reader\ =\ pass\ \%\ 2\ ?\ swap\_buffer\ :\ arr;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ size;\ ++i)\ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ pos\ =\ \mbox{\hyperlink{struct_radix_sort_abee7f80118cb02c2fd5aa7b8589a16fa}{get\_part}}(pass,\ \mbox{\hyperlink{struct_radix_sort_a2af6a25fd8df133293ae3f00acff831b}{key\_to\_bits}}(Traits::extract\_key(reader[i])));}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ dest\ =\ writer[++histograms[pass\ *\ \mbox{\hyperlink{struct_radix_sort_a93d6436bb57414bf4ac25336eef45418}{HISTOGRAM\_SIZE}}\ +\ pos]];}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest\ =\ reader[i];}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Traits::Transform::transform\_is\_simple\ \&\&\ pass\ ==\ \mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}\ -\/\ 1)}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Traits::extract\_key(dest)\ =\ \mbox{\hyperlink{struct_radix_sort_a535cf57f7f14a03ce766eee879c9cc3f}{bits\_to\_key}}(Traits::Transform::backward(}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a2af6a25fd8df133293ae3f00acff831b}{key\_to\_bits}}(Traits::extract\_key(reader[i]))));}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}\ \%\ 2)\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(arr,\ swap\_buffer,\ size\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}));}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ allocator.deallocate(swap\_buffer,\ size\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}));}
+\DoxyCodeLine{00343\ \ \ \ \ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{/*\ Most\ significant\ digit\ radix\ sort}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ \ \ *\ Usually\ slower\ than\ LSD\ and\ is\ not\ stable,\ but\ allows\ partial\ sorting}}
+\DoxyCodeLine{00347\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00348\ \textcolor{comment}{\ \ \ \ \ *\ Based\ on\ https://github.com/voutcn/kxsort,\ license:}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ \ *\ The\ MIT\ License}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ \ *\ Copyright\ (c)\ 2016\ Dinghua\ Li\ <voutcn@gmail.com>}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00352\ \textcolor{comment}{\ \ \ \ \ *\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ \ *\ a\ copy\ of\ this\ software\ and\ associated\ documentation\ files\ (the}}
+\DoxyCodeLine{00354\ \textcolor{comment}{\ \ \ \ \ *\ "{}Software"{}),\ to\ deal\ in\ the\ Software\ without\ restriction,\ including}}
+\DoxyCodeLine{00355\ \textcolor{comment}{\ \ \ \ \ *\ without\ limitation\ the\ rights\ to\ use,\ copy,\ modify,\ merge,\ publish,}}
+\DoxyCodeLine{00356\ \textcolor{comment}{\ \ \ \ \ *\ distribute,\ sublicense,\ and/or\ sell\ copies\ of\ the\ Software,\ and\ to}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ \ *\ permit\ persons\ to\ whom\ the\ Software\ is\ furnished\ to\ do\ so,\ subject\ to}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ \ *\ the\ following\ conditions:}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ \ \ *\ The\ above\ copyright\ notice\ and\ this\ permission\ notice\ shall\ be}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ \ \ *\ included\ in\ all\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00363\ \textcolor{comment}{\ \ \ \ \ *\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ \ \ \ *\ EXPRESS\ OR\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF}}
+\DoxyCodeLine{00365\ \textcolor{comment}{\ \ \ \ \ *\ MERCHANTABILITY,\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ \ \ \ *\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS}}
+\DoxyCodeLine{00367\ \textcolor{comment}{\ \ \ \ \ *\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER\ LIABILITY,\ WHETHER\ IN\ AN}}
+\DoxyCodeLine{00368\ \textcolor{comment}{\ \ \ \ \ *\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,\ OUT\ OF\ OR\ IN}}
+\DoxyCodeLine{00369\ \textcolor{comment}{\ \ \ \ \ *\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN\ THE}}
+\DoxyCodeLine{00370\ \textcolor{comment}{\ \ \ \ \ *\ SOFTWARE.}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_radix_sort_afc59df6fbd01a1f544bce03c33b3e97b}{execute\_msd}}(\mbox{\hyperlink{struct_radix_sort_af50e7927087119c5ad5b37aac724d712}{Element}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ limit)\ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ limit\ =\ std::min(limit,\ size);}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_radix_sort_a9b9b2a83685cd6cc45cd8406114f9301}{radix\_sort\_msd\_internal\_helper}}<\mbox{\hyperlink{struct_radix_sort_af270056e3068c3e0a39749ea684614f8}{NUM\_PASSES}}\ -\/\ 1>(arr,\ size,\ limit);}
+\DoxyCodeLine{00375\ \ \ \ \ \}}
+\DoxyCodeLine{00376\ \};}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00382\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{vec_2common_2radix__sort_8h_adf83c7c078b5a82596e05ab1d7987596}{radix\_sort\_lsd}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \mbox{\hyperlink{struct_radix_sort}{RadixSort<RadixSortNumTraits<T>}}>::execute\_lsd(arr,\ size);}
+\DoxyCodeLine{00384\ \}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00387\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{vec_2common_2radix__sort_8h_a32c0acdad085ceb9d85a1558a274963b}{radix\_sort\_msd}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ arr,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ limit)\ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \mbox{\hyperlink{struct_radix_sort}{RadixSort<RadixSortNumTraits<T>}}>::execute\_msd(arr,\ size,\ limit);}
+\DoxyCodeLine{00389\ \}}
+
+\end{DoxyCode}

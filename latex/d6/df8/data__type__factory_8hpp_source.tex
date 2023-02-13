@@ -1,0 +1,149 @@
+\hypertarget{data__type__factory_8hpp_source}{}\doxysection{data\+\_\+type\+\_\+factory.\+hpp}
+\label{data__type__factory_8hpp_source}\index{/Users/dabowang/be\_all/vec/data\_types/data\_type\_factory.hpp@{/Users/dabowang/be\_all/vec/data\_types/data\_type\_factory.hpp}}
+\mbox{\hyperlink{data__type__factory_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/DataTypes/DataTypeFactory.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}arrow/type.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{consts_8h}{common/consts.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/data.pb.h"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2field_8h}{olap/field.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime_2types_8h}{runtime/types.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type_8h}{vec/data\_types/data\_type.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__array_8h}{vec/data\_types/data\_type\_array.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__bitmap_8h}{vec/data\_types/data\_type\_bitmap.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__date_8h}{vec/data\_types/data\_type\_date.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__date__time_8h}{vec/data\_types/data\_type\_date\_time.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__decimal_8h}{vec/data\_types/data\_type\_decimal.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__fixed__length__object_8h}{vec/data\_types/data\_type\_fixed\_length\_object.h}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__hll_8h}{vec/data\_types/data\_type\_hll.h}}"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__jsonb_8h}{vec/data\_types/data\_type\_jsonb.h}}"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__nothing_8h}{vec/data\_types/data\_type\_nothing.h}}"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__nullable_8h}{vec/data\_types/data\_type\_nullable.h}}"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__number_8h}{vec/data\_types/data\_type\_number.h}}"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__string_8h}{vec/data\_types/data\_type\_string.h}}"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory}{DataTypeFactory}}\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a5510664a34b53b34afe49209d75b711d}{DataTypeMap}}\ =\ std::unordered\_map<std::string,\ DataTypePtr>;}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a94d087c21e77fa8b7705e09d22803174}{InvertedDataTypeMap}}\ =\ std::vector<std::pair<DataTypePtr,\ std::string>>;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory}{DataTypeFactory}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}}()\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::once\_flag\ oc;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory}{DataTypeFactory}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}};}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ std::call\_once(oc,\ []()\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<std::string,\ DataTypePtr>\ base\_type\_map\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}UInt8"{}},\ std::make\_shared<DataTypeUInt8>()\},}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}UInt16"{}},\ std::make\_shared<DataTypeUInt16>()\},}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}UInt32"{}},\ std::make\_shared<DataTypeUInt32>()\},}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}UInt64"{}},\ std::make\_shared<DataTypeUInt64>()\},}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Int8"{}},\ std::make\_shared<DataTypeInt8>()\},}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Int16"{}},\ std::make\_shared<DataTypeInt16>()\},}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Int32"{}},\ std::make\_shared<DataTypeInt32>()\},}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Int64"{}},\ std::make\_shared<DataTypeInt64>()\},}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Int128"{}},\ std::make\_shared<DataTypeInt128>()\},}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Float32"{}},\ std::make\_shared<DataTypeFloat32>()\},}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Float64"{}},\ std::make\_shared<DataTypeFloat64>()\},}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Date"{}},\ std::make\_shared<DataTypeDate>()\},}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}DateV2"{}},\ std::make\_shared<DataTypeDateV2>()\},}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}DateTime"{}},\ std::make\_shared<DataTypeDateTime>()\},}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}DateTimeV2"{}},\ std::make\_shared<DataTypeDateTimeV2>()\},}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}String"{}},\ std::make\_shared<DataTypeString>()\},}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Decimal"{}},\ std::make\_shared<DataTypeDecimal<Decimal128>>(27,\ 9)\},}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Decimal32"{}},\ std::make\_shared<DataTypeDecimal<Decimal32>>(}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1_be_consts_a14ea78c5b1a1b257433da6ae9589fb24}{BeConsts::MAX\_DECIMAL32\_PRECISION}},\ 0)\},}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Decimal64"{}},\ std::make\_shared<DataTypeDecimal<Decimal64>>(}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1_be_consts_a1aa221f2be37de41412adcbafa98c688}{BeConsts::MAX\_DECIMAL64\_PRECISION}},\ 0)\},}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Decimal128"{}},\ std::make\_shared<DataTypeDecimal<Decimal128>>(}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1_be_consts_aa037eae9805d9fc8cb8f0c956622b2a0}{BeConsts::MAX\_DECIMAL128\_PRECISION}},\ 0)\},}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Decimal128I"{}},\ std::make\_shared<DataTypeDecimal<Decimal128I>>(}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1_be_consts_aa037eae9805d9fc8cb8f0c956622b2a0}{BeConsts::MAX\_DECIMAL128\_PRECISION}},\ 0)\},}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Jsonb"{}},\ std::make\_shared<DataTypeJsonb>()\},}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}BitMap"{}},\ std::make\_shared<DataTypeBitMap>()\},}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}Hll"{}},\ std::make\_shared<DataTypeHLL>()\},}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\&\ [key,\ val]\ :\ base\_type\_map)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}}.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac0336a21f0200bfb81c09f5bb9f39dd4}{register\_data\_type}}(key,\ val);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}}.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac0336a21f0200bfb81c09f5bb9f39dd4}{register\_data\_type}}(\textcolor{stringliteral}{"{}Array("{}}\ +\ key\ +\ \textcolor{stringliteral}{"{})"{}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<vectorized::DataTypeArray>(val));}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}}.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac0336a21f0200bfb81c09f5bb9f39dd4}{register\_data\_type}}(}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Array(Nullable("{}}\ +\ key\ +\ \textcolor{stringliteral}{"{}))"{}},}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<vectorized::DataTypeArray>(}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_shared<vectorized::DataTypeNullable>(val)));}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a33dbf017076ce5cda6f8e1e3665c207f}{instance}};}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a4ce2eeec18ecf219ad4e055c229bf768}{get}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a471612dc44dbbec11507a345abf9e94d}{\_data\_type\_map}}[\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}}];\ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a489a74622c0ce209e5b1b23b1eaa28b6}{get}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ data\_type)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ type\_ptr\ =\ data\_type-\/>is\_nullable()}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ ((\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_nullable}{DataTypeNullable}}*)(data\_type.get()))-\/>get\_nested\_type()}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ data\_type;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ entity\ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_afcf28691f4b8e2767d07f77ebdeaae38}{\_invert\_data\_type\_map}})\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entity.first-\/>equals(*type\_ptr))\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ entity.second;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacedoris_1_1vectorized_ae8831b7f9a465976c6794f0c3d13efa7}{is\_decimal}}(type\_ptr)\ \&\&\ type\_ptr-\/>get\_type\_id()\ ==\ entity.first-\/>get\_type\_id())\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ entity.second;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ae13fa741dc7945a2a1544abe20efb8b3}{\_empty\_string}};}
+\DoxyCodeLine{00112\ \ \ \ \ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_field}{doris::Field}}\&\ col\_desc);}
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ col\_desc,\ \textcolor{keywordtype}{bool}\ is\_nullable\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{TypeDescriptor}}\&\ col\_desc,\ \textcolor{keywordtype}{bool}\ is\_nullable\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\textcolor{keyword}{const}\ PColumnMeta\&\ pcolumn);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\textcolor{keyword}{const}\ arrow::DataType*\ type,\ \textcolor{keywordtype}{bool}\ is\_nullable);}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a700a6fc5ec608fcf5083d5717fcdb380}{create\_data\_type}}(\textcolor{keyword}{const}\ TTypeDesc\&\ raw\_type)\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac7b04e0645cc8b7e94c48a7eb786b0a6}{create\_data\_type}}(\mbox{\hyperlink{structdoris_1_1_type_descriptor_aed6c74302e86aaab1dd7d394e0b2a187}{TypeDescriptor::from\_thrift}}(raw\_type),\ raw\_type.is\_nullable);}
+\DoxyCodeLine{00125\ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac832247ddb29cf377a0f50bfd833016f}{create\_data\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\&\ type,\ \textcolor{keywordtype}{int}\ precision,\ \textcolor{keywordtype}{int}\ scale)\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a6108850d517df74a387bbc29a61b86be}{\_create\_primitive\_data\_type}}(type,\ precision,\ scale);}
+\DoxyCodeLine{00129\ \ \ \ \ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a6108850d517df74a387bbc29a61b86be}{\_create\_primitive\_data\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\&\ type,\ \textcolor{keywordtype}{int}\ precision,\ \textcolor{keywordtype}{int}\ scale)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ac0336a21f0200bfb81c09f5bb9f39dd4}{register\_data\_type}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ data\_type)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a471612dc44dbbec11507a345abf9e94d}{\_data\_type\_map}}.emplace(\mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ data\_type);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_afcf28691f4b8e2767d07f77ebdeaae38}{\_invert\_data\_type\_map}}.emplace\_back(data\_type,\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Here\ is\ a\ little\ trick\ here,\ use\ bimap\ to\ replace\ map\ and\ vector}}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a5510664a34b53b34afe49209d75b711d}{DataTypeMap}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a471612dc44dbbec11507a345abf9e94d}{\_data\_type\_map}};}
+\DoxyCodeLine{00140\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_a94d087c21e77fa8b7705e09d22803174}{InvertedDataTypeMap}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_afcf28691f4b8e2767d07f77ebdeaae38}{\_invert\_data\_type\_map}};}
+\DoxyCodeLine{00141\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_factory_ae13fa741dc7945a2a1544abe20efb8b3}{\_empty\_string}};}
+\DoxyCodeLine{00142\ \};}
+\DoxyCodeLine{00143\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

@@ -1,0 +1,325 @@
+\hypertarget{rowset_8h_source}{}\doxysection{rowset.\+h}
+\label{rowset_8h_source}\index{/Users/dabowang/be\_all/olap/rowset/rowset.h@{/Users/dabowang/be\_all/olap/rowset/rowset.h}}
+\mbox{\hyperlink{rowset_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{env_8h}{env/env.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/olap\_file.pb.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{remote__file__system_8h}{io/fs/remote\_file\_system.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__meta_8h}{olap/rowset/rowset\_meta.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }DataDir;}
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }OlapTuple;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }RowCursor;}
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }Rowset;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\ =\ std::shared\_ptr<Rowset>;}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_rowset_factory}{RowsetFactory}};}
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_rowset_reader}{RowsetReader}};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ the\ rowset\ state\ transfer\ graph:}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ ROWSET\_UNLOADED\ \ \ \ <-\/-\/|}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ ↓\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ ROWSET\_LOADED\ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ ↓\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ ROWSET\_UNLOADING\ \ \ -\/-\/>|}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244d}{RowsetState}}\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ state\ for\ new\ created\ rowset}}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}},}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ state\ after\ load()\ called}}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da2d02bb45f7333ec9d0910efc01add587}{ROWSET\_LOADED}},}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ state\ for\ closed()\ called\ but\ owned\ by\ some\ readers}}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da274a8bf435c783c4af19f1e9bddbda66}{ROWSET\_UNLOADING}}}
+\DoxyCodeLine{00055\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_rowset_state_machine}{RowsetStateMachine}}\ \{}
+\DoxyCodeLine{00058\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_afc6d107fbf9455d5a38c4e6548deb0b1}{RowsetStateMachine}}()\ :\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}}(\mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}})\ \{\}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_aa4323b1b13b88eab9ab3552cc686f417}{on\_load}}()\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}})\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}}:}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}}\ =\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da2d02bb45f7333ec9d0910efc01add587}{ROWSET\_LOADED}};}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::Error<ErrorCode::ROWSET\_INVALID\_STATE\_TRANSITION>();}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a066c2f644637236eaef9ee9ae597e7d7}{on\_close}}(uint64\_t\ refs\_by\_reader)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}})\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da2d02bb45f7333ec9d0910efc01add587}{ROWSET\_LOADED}}:}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (refs\_by\_reader\ ==\ 0)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}}\ =\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}}\ =\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da274a8bf435c783c4af19f1e9bddbda66}{ROWSET\_UNLOADING}};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::Error<ErrorCode::ROWSET\_INVALID\_STATE\_TRANSITION>();}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a1a27b0372e0946f78b8842194994c534}{on\_release}}()\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}})\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da274a8bf435c783c4af19f1e9bddbda66}{ROWSET\_UNLOADING}}:}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}}\ =\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}};}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::Error<ErrorCode::ROWSET\_INVALID\_STATE\_TRANSITION>();}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00099\ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244d}{RowsetState}}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}};\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244d}{RowsetState}}\ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a6120ed86996efeec70ba6996536fb1dc}{\_rowset\_state}};}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_rowset}{Rowset}}\ :\ \textcolor{keyword}{public}\ std::enable\_shared\_from\_this<Rowset>\ \{}
+\DoxyCodeLine{00108\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_rowset_a181743f188f82d79cf2afb0b9a6bce72}{\string~Rowset}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ Open\ all\ segment\ files\ in\ this\ rowset\ and\ load\ necessary\ metadata.}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ -\/\ `use\_cache`\ :\ whether\ to\ use\ fd\ cache,\ only\ applicable\ to\ alpha\ rowset\ now}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ May\ be\ called\ multiple\ times,\ subsequent\ calls\ will\ no-\/op.}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ Derived\ class\ implements\ the\ load\ logic\ by\ overriding\ the\ `do\_load\_once()`\ method.}}
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a313853484a808f8d73f4bdcd5580cdbd}{load}}(\textcolor{keywordtype}{bool}\ use\_cache\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ returns\ Status::Error<ErrorCode::ROWSET\_CREATE\_READER>()\ when\ failed\ to\ create\ reader}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_abb63df8fb27adf1f865329ccccbdc4d6}{create\_reader}}(std::shared\_ptr<RowsetReader>*\ result)\ =\ 0;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\&\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}};\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a071de59683a57162e70d68d900a2ef8a}{is\_pending}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a1692c15e0af86cbc5e360ffc5b07830c}{\_is\_pending}};\ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_aef8e753cccabd64207d9ca9e8e034133}{is\_local}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>is\_local();\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ publish\ rowset\ to\ make\ it\ visible\ to\ read}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_aed3f4d1dfcbc32b9c625a663324c5f6c}{make\_visible}}(\mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{classdoris_1_1_rowset_acf1fd17a882fa1c7b67fbe2bbb20645c}{version}});}
+\DoxyCodeLine{00129\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a767729d793e66a91576e1d0c5902d1a6}{tablet\_schema}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}};\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ helper\ class\ to\ access\ RowsetMeta}}
+\DoxyCodeLine{00132\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_abe8c8137f06ec6f89fdc8ee1bde92e58}{start\_version}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>version().first;\ \}}
+\DoxyCodeLine{00133\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_a5727d2c4ffe07bce30d8dea46125d8e5}{end\_version}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>version().second;\ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_rowset_a7a383abea155a3fbad588337d48e1bd9}{index\_disk\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>index\_disk\_size();\ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_rowset_aba1b14295a61bd98908f0b91878b1515}{data\_disk\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>total\_disk\_size();\ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a644718bb2fb240de962dc3c9a1fdf0dc}{empty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>empty();\ \}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a31ebcb669e311509d8830c570d64c13e}{zero\_num\_rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>num\_rows()\ ==\ 0;\ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_rowset_a80047a1ccadf053f7df9bbaf2f979102}{num\_rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>num\_rows();\ \}}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{classdoris_1_1_rowset_acf1fd17a882fa1c7b67fbe2bbb20645c}{version}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>version();\ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a154068040e19040b8e2468c080e00e05}{rowset\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>rowset\_id();\ \}}
+\DoxyCodeLine{00141\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_a7d1055651e34ec805e9be916388fb79c}{creation\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>creation\_time();\ \}}
+\DoxyCodeLine{00142\ \ \ \ \ PUniqueId\ \mbox{\hyperlink{classdoris_1_1_rowset_a322bdf34ec018a6cf83c3238befe8bd6}{load\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>load\_id();\ \}}
+\DoxyCodeLine{00143\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_a5a254db8b14f44e2d0afb8cb258d2dbf}{txn\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>txn\_id();\ \}}
+\DoxyCodeLine{00144\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_a729d7fadedbbd9189bd15d20707b0702}{partition\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>partition\_id();\ \}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ flag\ for\ push\ delete\ rowset}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_ae4efc5bfb07e4b6ccc5e1e024992ad90}{delete\_flag}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>delete\_flag();\ \}}
+\DoxyCodeLine{00147\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_aa5e435ac1546bb31f145ad5a0c0f62aa}{num\_segments}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>num\_segments();\ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_af8db1d12d50ccbcbb55ab7de8ccee82d}{to\_rowset\_pb}}(RowsetMetaPB*\ rs\_meta)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>to\_rowset\_pb(rs\_meta);\ \}}
+\DoxyCodeLine{00149\ \ \ \ \ RowsetMetaPB\ \mbox{\hyperlink{classdoris_1_1_rowset_a35363b1f05586c2d56046b69697b24f9}{get\_rowset\_pb}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>get\_rowset\_pb();\ \}}
+\DoxyCodeLine{00150\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_ab782cf37c238a5d2ec47c0153920df78}{oldest\_write\_timestamp}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>oldest\_write\_timestamp();\ \}}
+\DoxyCodeLine{00151\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_rowset_ae3243e7504234fea4db3714a9dc4afaa}{newest\_write\_timestamp}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>newest\_write\_timestamp();\ \}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a4848666c5f5f447bac114754d154d739}{is\_segments\_overlapping}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>is\_segments\_overlapping();\ \}}
+\DoxyCodeLine{00153\ \ \ \ \ KeysType\ \mbox{\hyperlink{classdoris_1_1_rowset_a3f8863ece96ada44076698c8b0849bbb}{keys\_type}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}}-\/>keys\_type();\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ remove\ all\ files\ in\ this\ rowset}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ TODO\ should\ we\ rename\ the\ method\ to\ remove\_files()\ to\ be\ more\ specific?}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_af80e262e0f56e54f36195dc96bfa4ee3}{remove}}()\ =\ 0;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ close\ to\ clear\ the\ resource\ owned\ by\ rowset}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ including:\ open\ files,\ indexes\ and\ so\ on}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ NOTICE:\ can\ not\ call\ this\ function\ in\ multithreads}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_a5ae591df94fc66ccb85cbb6565368bca}{close}}()\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244d}{RowsetState}}\ old\_state\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}();}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_state\ !=\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da2d02bb45f7333ec9d0910efc01add587}{ROWSET\_LOADED}})\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ st\ =\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ close\_lock(\mbox{\hyperlink{classdoris_1_1_rowset_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ current\_refs\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_aaf8f05bc97214246419228cb54f9d201}{\_refs\_by\_reader}};}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ old\_state\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}();}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_state\ !=\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da2d02bb45f7333ec9d0910efc01add587}{ROWSET\_LOADED}})\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_refs\ ==\ 0)\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a117c8464213ad9bb9fa589c489e7b675}{do\_close}}();}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ st\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a066c2f644637236eaef9ee9ae597e7d7}{on\_close}}(current\_refs);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!st.\mbox{\hyperlink{classdoris_1_1_status_a03cb7eaa663dc83af68bc28a596d09e6}{ok}}())\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}state\ transition\ failed\ from:"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}();}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a18eaecaf99d52cb40ba1da6343fa8449}{VLOG\_NOTICE}}\ <<\ \textcolor{stringliteral}{"{}rowset\ is\ close.\ rowset\ state\ from:"{}}\ <<\ old\_state\ <<\ \textcolor{stringliteral}{"{}\ to\ "{}}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}()\ <<\ \textcolor{stringliteral}{"{},\ version:"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_abe8c8137f06ec6f89fdc8ee1bde92e58}{start\_version}}()}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}-\/"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a5727d2c4ffe07bce30d8dea46125d8e5}{end\_version}}()\ <<\ \textcolor{stringliteral}{"{},\ tabletid:"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>tablet\_id();}
+\DoxyCodeLine{00187\ \ \ \ \ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ hard\ link\ all\ files\ in\ this\ rowset\ to\ `dir`\ to\ form\ a\ new\ rowset\ with\ id\ `new\_rowset\_id`.}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3fdf94666b9ed9863bb0ddffaa2afa35}{link\_files\_to}}(\textcolor{keyword}{const}\ std::string\&\ dir,\ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\ new\_rowset\_id,}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_rowset\_start\_seg\_id\ =\ 0)\ =\ 0;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ copy\ all\ files\ to\ `dir`}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a7521e12f7c0246f92ed2b258b0390d28}{copy\_files\_to}}(\textcolor{keyword}{const}\ std::string\&\ dir,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\&\ new\_rowset\_id)\ =\ 0;}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_aa5317d2266aae07944794dbe146ceaf7}{upload\_to}}(\mbox{\hyperlink{classdoris_1_1io_1_1_remote_file_system}{io::RemoteFileSystem}}*\ dest\_fs,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_rowset_id}{RowsetId}}\&\ new\_rowset\_id)\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00198\ \ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a00267a4038e5aca43bf796d2f892188d}{remove\_old\_files}}(std::vector<std::string>*\ files\_to\_remove)\ =\ 0;}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ return\ whether\ `path`\ is\ one\ of\ the\ files\ in\ this\ rowset}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a9af46527008411cdeaaad5868e217bdc}{check\_path}}(\textcolor{keyword}{const}\ std::string\&\ path)\ =\ 0;}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_ad96c5d28edea7a941afc64ab071cc826}{check\_file\_exist}}()\ =\ 0;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ return\ an\ unique\ identifier\ string\ for\ this\ rowset}}
+\DoxyCodeLine{00208\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_rowset_a027f230dc66ca60c792ed9408dacb850}{unique\_id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fmt::format(\textcolor{stringliteral}{"{}\{\}/\{\}"{}},\ \mbox{\hyperlink{classdoris_1_1_rowset_ada8ccb7d07c927bf7e95c9cf8fcc881a}{\_tablet\_path}},\ \mbox{\hyperlink{classdoris_1_1_rowset_a154068040e19040b8e2468c080e00e05}{rowset\_id}}().\mbox{\hyperlink{decimal12_8h_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}());}
+\DoxyCodeLine{00210\ \ \ \ \ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a06e2db38313641124cda205cf7baaff3}{need\_delete\_file}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a56ebe0c9ff6d64a32ce2c8b9f264ac7c}{\_need\_delete\_file}};\ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_a42141c4a830b058e3131ec41b979c123}{set\_need\_delete\_file}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_rowset_a56ebe0c9ff6d64a32ce2c8b9f264ac7c}{\_need\_delete\_file}}\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_af837c2805b2d4186bc7564b3179d9874}{contains\_version}}(\mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{classdoris_1_1_rowset_acf1fd17a882fa1c7b67fbe2bbb20645c}{version}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}}()-\/>version().contains(\mbox{\hyperlink{classdoris_1_1_rowset_acf1fd17a882fa1c7b67fbe2bbb20645c}{version}});}
+\DoxyCodeLine{00218\ \ \ \ \ \}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_rowset_a2ef1ec02950acdae4b4e393b91e27f50}{tablet\_path}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_ada8ccb7d07c927bf7e95c9cf8fcc881a}{\_tablet\_path}};\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{virtual}\ std::string\ \mbox{\hyperlink{classdoris_1_1_rowset_a503f588d10653e47f3f9a2b84a61ae69}{rowset\_dir}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_rowset_a9a1efadc5b0889937b022962d9966b79}{\_rowset\_dir}};\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a916569ed5c1685273b879cee3397a52d}{comparator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\&\ left,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_a45a11d2c52e9b86e26ff0bb6d9c667d2}{RowsetSharedPtr}}\&\ right)\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ left-\/>end\_version()\ <\ right-\/>end\_version();}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ this\ function\ is\ called\ by\ reader\ to\ increase\ reference\ of\ rowset}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_af9f5b35a212d21af601a8213ed325871}{acquire}}()\ \{\ ++\mbox{\hyperlink{classdoris_1_1_rowset_aaf8f05bc97214246419228cb54f9d201}{\_refs\_by\_reader}};\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_a23b477d0e2d399f75d585d154c346591}{release}}()\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ refs\ by\ reader\ is\ 0\ and\ the\ rowset\ is\ closed,\ should\ release\ the\ resouce}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ uint64\_t\ current\_refs\ =\ -\/-\/\mbox{\hyperlink{classdoris_1_1_rowset_aaf8f05bc97214246419228cb54f9d201}{\_refs\_by\_reader}};}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_refs\ ==\ 0\ \&\&\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}()\ ==\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da274a8bf435c783c4af19f1e9bddbda66}{ROWSET\_UNLOADING}})\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ release\_lock(\mbox{\hyperlink{classdoris_1_1_rowset_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ rejudge\ \_refs\_by\_reader\ because\ we\ do\ not\ add\ lock\ in\ create\ reader}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_rowset_aaf8f05bc97214246419228cb54f9d201}{\_refs\_by\_reader}}\ ==\ 0\ \&\&}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}()\ ==\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da274a8bf435c783c4af19f1e9bddbda66}{ROWSET\_UNLOADING}})\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ first\ do\ close,\ then\ change\ state}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a117c8464213ad9bb9fa589c489e7b675}{do\_close}}();}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a1a27b0372e0946f78b8842194994c534}{on\_release}}();}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}}.\mbox{\hyperlink{classdoris_1_1_rowset_state_machine_a44661f16b5db7876d6abfe1bc380e0d3}{rowset\_state}}()\ ==\ \mbox{\hyperlink{namespacedoris_a63effb2e77c4a52b128b7f27e697244da5a995ced6d689c8107fe7dd72b400184}{ROWSET\_UNLOADED}})\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{logging_8h_a18eaecaf99d52cb40ba1da6343fa8449}{VLOG\_NOTICE}}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}close\ the\ rowset.\ rowset\ state\ from\ ROWSET\_UNLOADING\ to\ ROWSET\_UNLOADED"{}}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ version:"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_abe8c8137f06ec6f89fdc8ee1bde92e58}{start\_version}}()\ <<\ \textcolor{stringliteral}{"{}-\/"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a5727d2c4ffe07bce30d8dea46125d8e5}{end\_version}}()}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ tabletid:"{}}\ <<\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>tablet\_id();}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00252\ \ \ \ \ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_adf373f948ba8cf7b727e30ca42ebf06a}{get\_segments\_key\_bounds}}(std::vector<KeyBoundsPB>*\ segments\_key\_bounds)\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>get\_segments\_key\_bounds(segments\_key\_bounds);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3111234e2ea0ff29015c885d14435a05}{min\_key}}(std::string*\ \mbox{\hyperlink{classdoris_1_1_rowset_a3111234e2ea0ff29015c885d14435a05}{min\_key}})\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ KeyBoundsPB\ key\_bounds;}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>get\_first\_segment\_key\_bound(\&key\_bounds);}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}})\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_rowset_a3111234e2ea0ff29015c885d14435a05}{min\_key}}\ =\ key\_bounds.min\_key();}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00266\ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_af6b5d217a2cf643bb12ebffce3140e78}{max\_key}}(std::string*\ \mbox{\hyperlink{classdoris_1_1_rowset_af6b5d217a2cf643bb12ebffce3140e78}{max\_key}})\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ KeyBoundsPB\ key\_bounds;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}}-\/>get\_last\_segment\_key\_bound(\&key\_bounds);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}})\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_rowset_af6b5d217a2cf643bb12ebffce3140e78}{max\_key}}\ =\ key\_bounds.max\_key();}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00275\ \ \ \ \ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3a89520075d26e9b4c448e63dbda9b8c}{check\_rowset\_segment}}();}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_rowset_factory}{RowsetFactory}};}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_a21bda176a1680a179650dca9b3f76dc7}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_rowset}{Rowset}});}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ this\ is\ non-\/public\ because\ all\ clients\ should\ use\ RowsetFactory\ to\ obtain\ pointer\ to\ initialized\ Rowset}}
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset}{Rowset}}(\mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ schema,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_rowset_a2ef1ec02950acdae4b4e393b91e27f50}{tablet\_path}},}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_rowset_acc853122cc0085dc53b44babe3ef8979}{rowset\_meta}});}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ this\ is\ non-\/public\ because\ all\ clients\ should\ use\ RowsetFactory\ to\ obtain\ pointer\ to\ initialized\ Rowset}}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_ab2f77770a6c9c118512d8969992c6add}{init}}()\ =\ 0;}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ The\ actual\ implementation\ of\ load().\ Guaranteed\ by\ to\ called\ exactly\ once.}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a1740c29f24635deff966a7848fa4d7bd}{do\_load}}(\textcolor{keywordtype}{bool}\ use\_cache)\ =\ 0;}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ release\ resources\ in\ this\ api}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_a117c8464213ad9bb9fa589c489e7b675}{do\_close}}()\ =\ 0;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ allow\ subclass\ to\ add\ custom\ logic\ when\ rowset\ is\ being\ published}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_rowset_ae7a18ddde34de8a4a1b95d4d09cabd21}{make\_visible\_extra}}(\mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{classdoris_1_1_rowset_acf1fd17a882fa1c7b67fbe2bbb20645c}{version}})\ \{\}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a827b1650bdb16efbf100cbf5608f5192}{check\_current\_rowset\_segment}}()\ =\ 0;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a9c9b59974a6e644d6d15e1d57cade701}{\_schema}};}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_rowset_ada8ccb7d07c927bf7e95c9cf8fcc881a}{\_tablet\_path}};}
+\DoxyCodeLine{00304\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_rowset_a9a1efadc5b0889937b022962d9966b79}{\_rowset\_dir}};}
+\DoxyCodeLine{00305\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8e1aa733e7ffe7bd29887ebdf7c1303d}{RowsetMetaSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a3084a320d2f1c3c59e375bb0d3429b75}{\_rowset\_meta}};}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ init\ in\ constructor}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a1692c15e0af86cbc5e360ffc5b07830c}{\_is\_pending}};\ \ \ \ \textcolor{comment}{//\ rowset\ is\ pending\ iff\ it's\ not\ in\ visible\ state}}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a5cd163c7e25369090dba6d7066a1b65e}{\_is\_cumulative}};\ \textcolor{comment}{//\ rowset\ is\ cumulative\ iff\ it's\ visible\ and\ start\ version\ <\ end\ version}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{//\ mutex\ lock\ for\ load/close\ api\ because\ it\ is\ costly}}
+\DoxyCodeLine{00311\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_rowset_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_rowset_a56ebe0c9ff6d64a32ce2c8b9f264ac7c}{\_need\_delete\_file}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{//\ variable\ to\ indicate\ how\ many\ rowset\ readers\ owned\ this\ rowset}}
+\DoxyCodeLine{00314\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_rowset_aaf8f05bc97214246419228cb54f9d201}{\_refs\_by\_reader}};}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ rowset\ state\ machine}}
+\DoxyCodeLine{00316\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_rowset_state_machine}{RowsetStateMachine}}\ \mbox{\hyperlink{classdoris_1_1_rowset_a055021a87c721d72f28d101a35717fb9}{\_rowset\_state\_machine}};}
+\DoxyCodeLine{00317\ \};}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

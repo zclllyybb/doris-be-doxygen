@@ -1,0 +1,223 @@
+\hypertarget{move_8h_source}{}\doxysection{move.\+h}
+\label{move_8h_source}\index{/Users/dabowang/be\_all/gutil/move.h@{/Users/dabowang/be\_all/gutil/move.h}}
+\mbox{\hyperlink{move_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2012\ The\ Chromium\ Authors.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Use\ of\ this\ source\ code\ is\ governed\ by\ a\ BSD-\/style\ license\ that\ can\ be}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ found\ in\ the\ LICENSE\ file.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Macro\ with\ the\ boilerplate\ that\ makes\ a\ type\ move-\/only\ in\ C++03.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ USAGE}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ This\ macro\ should\ be\ used\ instead\ of\ DISALLOW\_COPY\_AND\_ASSIGN\ to\ create}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ a\ "{}move-\/only"{}\ type.\ \ Unlike\ DISALLOW\_COPY\_AND\_ASSIGN,\ this\ macro\ should\ be}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ the\ first\ line\ in\ a\ class\ declaration.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ A\ class\ using\ this\ macro\ must\ call\ .Pass()\ (or\ somehow\ be\ an\ r-\/value\ already)}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ before\ it\ can\ be:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ *\ Passed\ as\ a\ function\ argument}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ *\ Used\ as\ the\ right-\/hand\ side\ of\ an\ assignment}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ *\ Returned\ from\ a\ function}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ Each\ class\ will\ still\ need\ to\ define\ their\ own\ "{}move\ constructor"{}\ and\ "{}move}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ operator="{}\ to\ make\ this\ useful.\ \ Here's\ an\ example\ of\ the\ macro,\ the\ move}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ constructor,\ and\ the\ move\ operator=\ from\ the\ scoped\_ptr\ class:}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ template\ <typename\ T>}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ class\ scoped\_ptr\ \{}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ \ MOVE\_ONLY\_TYPE\_FOR\_CPP\_03(scoped\_ptr,\ RValue)}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ public:}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ \ scoped\_ptr(RValue\&\ other)\ :\ ptr\_(other.release())\ \{\ \}}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ \ scoped\_ptr\&\ operator=(RValue\&\ other)\ \{}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \ \ \ swap(other);}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ \ \ return\ *this;}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \};}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Note\ that\ the\ constructor\ must\ NOT\ be\ marked\ explicit.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ For\ consistency,\ the\ second\ parameter\ to\ the\ macro\ should\ always\ be\ RValue}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ unless\ you\ have\ a\ strong\ reason\ to\ do\ otherwise.\ \ It\ is\ only\ exposed\ as\ a}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ macro\ parameter\ so\ that\ the\ move\ constructor\ and\ move\ operator=\ don't\ look}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ like\ they're\ using\ a\ phantom\ type.}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ HOW\ THIS\ WORKS}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ For\ a\ thorough\ explanation\ of\ this\ technique,\ see:}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ http://en.wikibooks.org/wiki/More\_C\%2B\%2B\_Idioms/Move\_Constructor}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ The\ summary\ is\ that\ we\ take\ advantage\ of\ 2\ properties:}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ 1)\ non-\/const\ references\ will\ not\ bind\ to\ r-\/values.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ 2)\ C++\ can\ apply\ one\ user-\/defined\ conversion\ when\ initializing\ a}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ \ \ \ variable.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ The\ first\ lets\ us\ disable\ the\ copy\ constructor\ and\ assignment\ operator}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ by\ declaring\ private\ version\ of\ them\ with\ a\ non-\/const\ reference\ parameter.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ For\ l-\/values,\ direct\ initialization\ still\ fails\ like\ in}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ DISALLOW\_COPY\_AND\_ASSIGN\ because\ the\ copy\ constructor\ and\ assignment}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ operators\ are\ private.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ For\ r-\/values,\ the\ situation\ is\ different.\ The\ copy\ constructor\ and}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ assignment\ operator\ are\ not\ viable\ due\ to\ (1),\ so\ we\ are\ trying\ to\ call}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ a\ non-\/existent\ constructor\ and\ non-\/existing\ operator=\ rather\ than\ a\ private}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ one.\ \ Since\ we\ have\ not\ committed\ an\ error\ quite\ yet,\ we\ can\ provide\ an}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ alternate\ conversion\ sequence\ and\ a\ constructor.\ \ We\ add}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ *\ a\ private\ struct\ named\ "{}RValue"{}}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ *\ a\ user-\/defined\ conversion\ "{}operator\ RValue()"{}}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ \ \ *\ a\ "{}move\ constructor"{}\ and\ "{}move\ operator="{}\ that\ take\ the\ RValue\&\ as}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ \ \ their\ sole\ parameter.}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ Only\ r-\/values\ will\ trigger\ this\ sequence\ and\ execute\ our\ "{}move\ constructor"{}}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ or\ "{}move\ operator=."{}\ \ L-\/values\ will\ match\ the\ private\ copy\ constructor\ and}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ operator=\ first\ giving\ a\ "{}private\ in\ this\ context"{}\ error.\ \ This\ combination}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ gives\ us\ a\ move-\/only\ type.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ For\ signaling\ a\ destructive\ transfer\ of\ data\ from\ an\ l-\/value,\ we\ provide\ a}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ method\ named\ Pass()\ which\ creates\ an\ r-\/value\ for\ the\ current\ instance}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ triggering\ the\ move\ constructor\ or\ move\ operator=.}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ Other\ ways\ to\ get\ r-\/values\ is\ to\ use\ the\ result\ of\ an\ expression\ like\ a}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ function\ call.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ Here's\ an\ example\ with\ comments\ explaining\ what\ gets\ triggered\ where:}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ \ \ \ class\ Foo\ \{}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ \ \ \ \ \ MOVE\_ONLY\_TYPE\_FOR\_CPP\_03(Foo,\ RValue);}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ \ \ \ \ public:}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ \ \ \ \ ...\ API\ ...}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ \ \ \ \ Foo(RValue\ other);\ \ \ \ \ \ \ \ \ \ \ //\ Move\ constructor.}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \ \ \ \ \ Foo\&\ operator=(RValue\ rhs);\ \ //\ Move\ operator=}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ \ \ \ \};}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ \ \ \ Foo\ MakeFoo();\ \ //\ Function\ that\ returns\ a\ Foo.}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ \ \ \ Foo\ f;}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ \ \ \ Foo\ f\_copy(f);\ \ //\ ERROR:\ Foo(Foo\&)\ is\ private\ in\ this\ context.}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ \ \ \ Foo\ f\_assign;}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ \ \ \ f\_assign\ =\ f;\ \ \ //\ ERROR:\ operator=(Foo\&)\ is\ private\ in\ this\ context.}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//}}
+\DoxyCodeLine{00102\ \textcolor{comment}{//}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ \ \ \ Foo\ f(MakeFoo());\ \ \ \ \ \ //\ R-\/value\ so\ alternate\ conversion\ executed.}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ \ \ \ Foo\ f\_copy(std::move(f));\ \ //\ R-\/value\ so\ alternate\ conversion\ executed.}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ \ \ \ f\ =\ std::move(f\_copy);\ \ \ \ \ //\ R-\/value\ so\ alternate\ conversion\ executed.}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ IMPLEMENTATION\ SUBTLETIES\ WITH\ RValue}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ The\ RValue\ struct\ is\ just\ a\ container\ for\ a\ pointer\ back\ to\ the\ original}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ object.\ It\ should\ only\ ever\ be\ created\ as\ a\ temporary,\ and\ no\ external}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ class\ should\ ever\ declare\ it\ or\ use\ it\ in\ a\ parameter.}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ It\ is\ tempting\ to\ want\ to\ use\ the\ RValue\ type\ in\ function\ parameters,\ but}}
+\DoxyCodeLine{00115\ \textcolor{comment}{//\ excluding\ the\ limited\ usage\ here\ for\ the\ move\ constructor\ and\ move}}
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ operator=,\ doing\ so\ would\ mean\ that\ the\ function\ could\ take\ both\ r-\/values}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ and\ l-\/values\ equally\ which\ is\ unexpected.\ \ See\ COMPARED\ To\ Boost.Move\ for}}
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ more\ details.}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ An\ alternate,\ and\ incorrect,\ implementation\ of\ the\ RValue\ class\ used\ by}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ Boost.Move\ makes\ RValue\ a\ fieldless\ child\ of\ the\ move-\/only\ type.\ RValue\&}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ is\ then\ used\ in\ place\ of\ RValue\ in\ the\ various\ operators.\ \ The\ RValue\&\ is}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ "{}created"{}\ by\ doing\ *reinterpret\_cast<RValue*>(this).\ \ This\ has\ the\ appeal}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ of\ never\ creating\ a\ temporary\ RValue\ struct\ even\ with\ optimizations}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ disabled.\ \ Also,\ by\ virtue\ of\ inheritance\ you\ can\ treat\ the\ RValue}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ reference\ as\ if\ it\ were\ the\ move-\/only\ type\ itself.\ \ Unfortunately,}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ using\ the\ result\ of\ this\ reinterpret\_cast<>\ is\ actually\ undefined\ behavior}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ due\ to\ C++98\ 5.2.10.7.\ In\ certain\ compilers\ (e.g.,\ NaCl)\ the\ optimizer}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ will\ generate\ non-\/working\ code.}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ In\ optimized\ builds,\ both\ implementations\ generate\ the\ same\ assembly\ so\ we}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ choose\ the\ one\ that\ adheres\ to\ the\ standard.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ WHY\ HAVE\ typedef\ void\ MoveOnlyTypeForCPP03}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ Callback<>/Bind()\ needs\ to\ understand\ movable-\/but-\/not-\/copyable\ semantics}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ to\ call\ .Pass()\ appropriately\ when\ it\ is\ expected\ to\ transfer\ the\ value.}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ The\ cryptic\ typedef\ MoveOnlyTypeForCPP03\ is\ added\ to\ make\ this\ check}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ easy\ and\ automatic\ in\ helper\ templates\ for\ Callback<>/Bind().}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ See\ IsMoveOnlyType\ template\ and\ its\ usage\ in\ base/callback\_internal.h}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ for\ more\ details.}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ COMPARED\ TO\ C++11}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ In\ C++11,\ you\ would\ implement\ this\ functionality\ using\ an\ r-\/value\ reference}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ and\ our\ .Pass()\ method\ would\ be\ replaced\ with\ a\ call\ to\ std::move().}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ This\ emulation\ also\ has\ a\ deficiency\ where\ it\ uses\ up\ the\ single}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ user-\/defined\ conversion\ allowed\ by\ C++\ during\ initialization.\ \ This\ can}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ cause\ problems\ in\ some\ API\ edge\ cases.\ \ For\ instance,\ in\ scoped\_ptr,\ it\ is}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ impossible\ to\ make\ a\ function\ "{}void\ Foo(scoped\_ptr<Parent>\ p)"{}\ accept\ a}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ value\ of\ type\ scoped\_ptr<Child>\ even\ if\ you\ add\ a\ constructor\ to}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ scoped\_ptr<>\ that\ would\ make\ it\ look\ like\ it\ should\ work.\ \ C++11\ does\ not}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ have\ this\ deficiency.}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//}}
+\DoxyCodeLine{00158\ \textcolor{comment}{//}}
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ COMPARED\ TO\ Boost.Move}}
+\DoxyCodeLine{00160\ \textcolor{comment}{//}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ Our\ implementation\ similar\ to\ Boost.Move,\ but\ we\ keep\ the\ RValue\ struct}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ private\ to\ the\ move-\/only\ type,\ and\ we\ don't\ use\ the\ reinterpret\_cast<>\ hack.}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ In\ Boost.Move,\ RValue\ is\ the\ boost::rv<>\ template.\ \ This\ type\ can\ be\ used}}
+\DoxyCodeLine{00165\ \textcolor{comment}{//\ when\ writing\ APIs\ like:}}
+\DoxyCodeLine{00166\ \textcolor{comment}{//}}
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ \ \ void\ MyFunc(boost::rv<Foo>\&\ f)}}
+\DoxyCodeLine{00168\ \textcolor{comment}{//}}
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ that\ can\ take\ advantage\ of\ rv<>\ to\ avoid\ extra\ copies\ of\ a\ type.\ \ However\ you}}
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ would\ still\ be\ able\ to\ call\ this\ version\ of\ MyFunc\ with\ an\ l-\/value:}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ \ \ Foo\ f;}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//\ \ \ MyFunc(f);\ \ //\ Uh\ oh,\ we\ probably\ just\ destroyed\ |f|\ w/o\ calling\ Pass().}}
+\DoxyCodeLine{00174\ \textcolor{comment}{//}}
+\DoxyCodeLine{00175\ \textcolor{comment}{//\ unless\ someone\ is\ very\ careful\ to\ also\ declare\ a\ parallel\ override\ like:}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//}}
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ \ \ void\ MyFunc(const\ Foo\&\ f)}}
+\DoxyCodeLine{00178\ \textcolor{comment}{//}}
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ that\ would\ catch\ the\ l-\/values\ first.\ \ This\ was\ declared\ unsafe\ in\ C++11\ and}}
+\DoxyCodeLine{00180\ \textcolor{comment}{//\ a\ C++11\ compiler\ will\ explicitly\ fail\ MyFunc(f).\ \ Unfortunately,\ we\ cannot}}
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ ensure\ this\ in\ C++03.}}
+\DoxyCodeLine{00182\ \textcolor{comment}{//}}
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ Since\ we\ have\ no\ need\ for\ writing\ such\ APIs\ yet,\ our\ implementation\ keeps}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ RValue\ private\ and\ uses\ a\ .Pass()\ method\ to\ do\ the\ conversion\ instead\ of}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ trying\ to\ write\ a\ version\ of\ "{}std::move()."{}\ Writing\ an\ API\ like\ std::move()}}
+\DoxyCodeLine{00186\ \textcolor{comment}{//\ would\ require\ the\ RValue\ struct\ to\ be\ public.}}
+\DoxyCodeLine{00187\ \textcolor{comment}{//}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ CAVEATS}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//}}
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ If\ you\ include\ a\ move-\/only\ type\ as\ a\ field\ inside\ a\ class\ that\ does\ not}}
+\DoxyCodeLine{00192\ \textcolor{comment}{//\ explicitly\ declare\ a\ copy\ constructor,\ the\ containing\ class's\ implicit}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ copy\ constructor\ will\ change\ from\ Containing(const\ Containing\&)\ to}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ Containing(Containing\&).\ \ This\ can\ cause\ some\ unexpected\ errors.}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//}}
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ \ \ http://llvm.org/bugs/show\_bug.cgi?id=11528}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ The\ workaround\ is\ to\ explicitly\ declare\ your\ copy\ constructor.}}
+\DoxyCodeLine{00199\ \textcolor{comment}{//}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#define\ MOVE\_ONLY\_TYPE\_FOR\_CPP\_03(type,\ rvalue\_type)\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{private:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\ \ \ \ struct\ rvalue\_type\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ explicit\ rvalue\_type(type*\ object)\ :\ object(object)\ \{\}\ \(\backslash\)}}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ type*\ object;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\ \ \ \ \};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\ \ \ \ type(type\&);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00210\ \textcolor{preprocessor}{\ \ \ \ void\ operator=(type\&);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{public:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\ \ \ \ operator\ rvalue\_type()\ \{\ return\ rvalue\_type(this);\ \}\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\ \ \ \ type\ Pass()\ \{\ return\ type(rvalue\_type(this));\ \}\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\ \ \ \ typedef\ void\ MoveOnlyTypeForCPP03;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{private:}}
+
+\end{DoxyCode}

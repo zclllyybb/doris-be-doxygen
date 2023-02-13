@@ -1,0 +1,962 @@
+\hypertarget{hash__table_8h_source}{}\doxysection{hash\+\_\+table.\+h}
+\label{hash__table_8h_source}\index{/Users/dabowang/be\_all/vec/common/hash\_table/hash\_table.h@{/Users/dabowang/be\_all/vec/common/hash\_table/hash\_table.h}}
+\mbox{\hyperlink{hash__table_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Common/HashTable/HashTable.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <boost/noncopyable.hpp>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2common_2exception_8h}{vec/common/exception.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__table__allocator_8h}{vec/common/hash\_table/hash\_table\_allocator.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__table__key__holder_8h}{vec/common/hash\_table/hash\_table\_key\_holder.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{io__helper_8h}{vec/io/io\_helper.h}}"{}}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_DEBUG\_RESIZES}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <Common/Stopwatch.h>}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_hash_table_no_state}{HashTableNoState}}\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_no_state_aba4af1f6a2aa6ff4e17d0a84962daefb}{write}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{doris::vectorized::BufferWritable}}\&)\textcolor{keyword}{\ const\ }\{\}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ ///\ Deserialization,\ in\ binary\ and\ text\ form.}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_no_state_abd68999a77280ce39ae74e9c9c9158d8}{read}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{doris::vectorized::BufferReadable}}\&)\ \{\}}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_zero_traits}{ZeroTraits}}\ \{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00069\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespace_zero_traits_a0517f3cc4f3f256ce870ecd619187cca}{check}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ x)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{return}\ x\ ==\ 0;}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_zero_traits_a89ab63592e7dd40399be3e63f30d9ce0}{set}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ x)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ x\ =\ 0;}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \}\ \textcolor{comment}{//\ namespace\ ZeroTraits}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_void_key}{VoidKey}}\ \{\};}
+\DoxyCodeLine{00123\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_void_mapped}{VoidMapped}}\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{struct_void_mapped_a0a2af08a1e1a7a0f65177607a30a1e95}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00127\ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00133\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erLike>}
+\DoxyCodeLine{00134\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{hash__table_8h_a37cb02bdc80ae12e1461ec185005dee5}{lookup\_result\_get\_mapped}}(PointerLike\&\&\ ptr)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{return}\ \&*ptr;}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00143\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00144\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{hash__table_8h_a37cb02bdc80ae12e1461ec185005dee5}{lookup\_result\_get\_mapped}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ obj)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{auto}\ mapped\_ptr\ =\ \mbox{\hyperlink{hash__table_8h_a37cb02bdc80ae12e1461ec185005dee5}{lookup\_result\_get\_mapped}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(obj));}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ const\_mapped\_ptr\ =\ mapped\_ptr;}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{return}\ const\_mapped\_ptr;}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00156\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ Hash,\ \textcolor{keyword}{typename}\ TState\ =\ HashTableNoState>}
+\DoxyCodeLine{00157\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_hash_table_cell}{HashTableCell}}\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_hash_table_cell_a168977474e1267663223541cbc6de230}{State}}\ =\ TState;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_hash_table_cell_acf4be953c7037c26797d1e8784b3074d}{key\_type}}\ =\ Key;}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_hash_table_cell_a5c1df1ab65750946a228fd036417792e}{value\_type}}\ =\ Key;}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{struct_hash_table_cell_aa3be7397a8d221c07fe81dd0071d528e}{mapped\_type}}\ =\ void;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ Key\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{struct_hash_table_cell_a466321f2deb1453691300c7d77f0a852}{HashTableCell}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00169\ \ \ \ \ \mbox{\hyperlink{struct_hash_table_cell_a0a19155868ae89fbf129112e33906fa3}{HashTableCell}}(\textcolor{keyword}{const}\ Key\&\ key\_,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a168977474e1267663223541cbc6de230}{State}}\&)\ :\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}}(key\_)\ \{\}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a5c1df1ab65750946a228fd036417792e}{value\_type}}\&\ \mbox{\hyperlink{struct_hash_table_cell_a84c3d85ebe67f96ff37dd2721c45948b}{get\_value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}};\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{struct_hash_table_cell_a30b93bc09592fe6b883c6dd4d439eff0}{get\_key}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a5c1df1ab65750946a228fd036417792e}{value\_type}}\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a51eea93b7a09f6c8669a8f15eaaab429}{key\_equals}}(\textcolor{keyword}{const}\ Key\&\ key\_)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}}\ ==\ key\_;\ \}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a7a60bc71c1606626187ed6e1a06b30f7}{key\_equals}}(\textcolor{keyword}{const}\ Key\&\ key\_,\ \textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*hash\_*/})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}}\ ==\ key\_;\ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_ace4716da14a471245426c885f78f63c8}{key\_equals}}(\textcolor{keyword}{const}\ Key\&\ key\_,\ \textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*hash\_*/},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a168977474e1267663223541cbc6de230}{State}}\&\ \textcolor{comment}{/*state*/})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}}\ ==\ key\_;}
+\DoxyCodeLine{00182\ \ \ \ \ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_cell_a3d4f78d51b7aef2d4e2dfaba9920b2c1}{set\_hash}}(\textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*hash\_value*/})\ \{\}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_cell_a453f422fe13bf0b4d61bfe6916939535}{get\_hash}}(\textcolor{keyword}{const}\ Hash\&\ hash)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ hash(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}});\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a0b73551457dd7332e20e131684192a52}{is\_zero}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a168977474e1267663223541cbc6de230}{State}}\&\ state)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_cell_a0b73551457dd7332e20e131684192a52}{is\_zero}}(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}},\ state);\ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a130eb835a55834bd70be73e7094eadda}{is\_zero}}(\textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a168977474e1267663223541cbc6de230}{State}}\&\ \textcolor{comment}{/*state*/})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_zero_traits_a0517f3cc4f3f256ce870ecd619187cca}{ZeroTraits::check}}(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}});\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_cell_a7abc00160f8083a0efe879f9b573e349}{set\_zero}}()\ \{\ \mbox{\hyperlink{namespace_zero_traits_a89ab63592e7dd40399be3e63f30d9ce0}{ZeroTraits::set}}(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}});\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a96f84a301a8e9e6a05a996a423d6ab24}{need\_zero\_value\_storage}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_cell_a36216496845b55e227b4873cc79161b0}{is\_deleted}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_cell_ab081cd422996e58e6d24ec2a4718a99e}{set\_mapped}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_hash_table_cell_a5c1df1ab65750946a228fd036417792e}{value\_type}}\&\ \textcolor{comment}{/*value*/})\ \{\}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_cell_a6f4584c7920cc1242cb89ef49aa5386c}{write}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{doris::vectorized::BufferWritable}}\&\ wb)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{doris::vectorized::write\_binary}}(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}},\ wb);}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_cell_a0db73b6709ab812abce69276f2288d48}{read}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{doris::vectorized::BufferReadable}}\&\ rb)\ \{\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{doris::vectorized::read\_binary}}(\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}},\ rb);\ \}}
+\DoxyCodeLine{00217\ \};}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ Hash,\ \textcolor{keyword}{typename}\ State>}
+\DoxyCodeLine{00220\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{hash__table_8h_a2a5c54fcda5f630dcd231abdab1da06f}{lookup\_result\_get\_key}}(\mbox{\hyperlink{struct_hash_table_cell}{HashTableCell<Key,\ Hash,\ State>}}*\ cell)\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{return}\ \&cell-\/>\mbox{\hyperlink{struct_hash_table_cell_a96313403719d705d2df812e3ba166772}{key}};}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ Hash,\ \textcolor{keyword}{typename}\ State>}
+\DoxyCodeLine{00225\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{hash__table_8h_a37cb02bdc80ae12e1461ec185005dee5}{lookup\_result\_get\_mapped}}(\mbox{\hyperlink{struct_hash_table_cell}{HashTableCell<Key,\ Hash,\ State>}}*)\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00227\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00234\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{hash__table_8h_acb564f0bbdb75b37894b874f5743c96d}{insert\_set\_mapped}}(\textcolor{keywordtype}{void}*\ \textcolor{comment}{/*\ dest\ */},\ \textcolor{keyword}{const}\ ValueType\&\ \textcolor{comment}{/*\ src\ */})\ \{\}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MappedType,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00237\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{hash__table_8h_acb564f0bbdb75b37894b874f5743c96d}{insert\_set\_mapped}}(MappedType*\ dest,\ \textcolor{keyword}{const}\ ValueType\&\ src)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ *dest\ =\ src.second;}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00243\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ initial\_size\_degree\ =\ 10>}
+\DoxyCodeLine{00244\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_hash_table_grower}{HashTableGrower}}\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{doris::vectorized::UInt8}}\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ =\ initial\_size\_degree;}
+\DoxyCodeLine{00247\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a51b4c1b67123dbb4903672fa753e6dd1}{doris::vectorized::Int64}}\ \mbox{\hyperlink{struct_hash_table_grower_a19a6d6df928bc2586313d743e66782ce}{double\_grow\_degree}}\ =\ 31;\ \textcolor{comment}{//\ 2GB}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a5cfd4e88f719ff67b0a8184ea7915087}{buf\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1ULL\ <<\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}};\ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\#ifndef\ STRICT\_MEMORY\_USE}}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a21b2b141468ac92f67064e4ab6015d9e}{max\_fill}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1ULL\ <<\ (\mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ -\/\ 1);\ \}}
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{comment}{//\ When\ capacity\ is\ greater\ than\ 2G,\ grow\ when\ 75\%\ of\ the\ capacity\ is\ satisfied.}}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a21b2b141468ac92f67064e4ab6015d9e}{max\_fill}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ <\ \mbox{\hyperlink{struct_hash_table_grower_a19a6d6df928bc2586313d743e66782ce}{double\_grow\_degree}}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ 1ULL\ <<\ (\mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ -\/\ 1)}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (1ULL\ <<\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}})\ -\/\ (1ULL\ <<\ (\mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ -\/\ 2));}
+\DoxyCodeLine{00260\ \ \ \ \ \}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a2720252b705b8eea9f01ce1f0a9fa476}{mask}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_hash_table_grower_a5cfd4e88f719ff67b0a8184ea7915087}{buf\_size}}()\ -\/\ 1;\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a63ff69e15481c5ffe27fefd1da16dfce}{place}}(\textcolor{keywordtype}{size\_t}\ x)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ x\ \&\ \mbox{\hyperlink{struct_hash_table_grower_a2720252b705b8eea9f01ce1f0a9fa476}{mask}}();\ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_grower_a3ef27c18555bb291ceb58604f55f1679}{next}}(\textcolor{keywordtype}{size\_t}\ pos)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ ++pos;}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pos\ \&\ \mbox{\hyperlink{struct_hash_table_grower_a2720252b705b8eea9f01ce1f0a9fa476}{mask}}();}
+\DoxyCodeLine{00272\ \ \ \ \ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_grower_a259aefaed5c74605ef0753eb01061175}{overflow}}(\textcolor{keywordtype}{size\_t}\ elems)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ elems\ >\ \mbox{\hyperlink{struct_hash_table_grower_a21b2b141468ac92f67064e4ab6015d9e}{max\_fill}}();\ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_grower_ab6a577cbba3588fe8ea8074e132596fc}{increase\_size}}()\ \{\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ +=\ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ >=\ 23\ ?\ 1\ :\ 2;\ \}}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_grower_a270245ec7a14642d03b1f3483bcacd35}{set}}(\textcolor{keywordtype}{size\_t}\ num\_elems)\ \{}
+\DoxyCodeLine{00282\ \textcolor{preprocessor}{\#ifndef\ STRICT\_MEMORY\_USE}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ fill\_capacity\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(num\_elems\ -\/\ 1))\ +\ 2;}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ fill\_capacity\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(num\_elems\ -\/\ 1))\ +\ 1;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ fill\_capacity\ =}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fill\_capacity\ <\ \mbox{\hyperlink{struct_hash_table_grower_a19a6d6df928bc2586313d743e66782ce}{double\_grow\_degree}}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ fill\_capacity\ +\ 1}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (num\_elems\ <\ (1ULL\ <<\ fill\_capacity)\ -\/\ (1ULL\ <<\ (fill\_capacity\ -\/\ 2))}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ fill\_capacity}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ fill\_capacity\ +\ 1);}
+\DoxyCodeLine{00292\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ =\ num\_elems\ <=\ 1\ ?\ initial\_size\_degree}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (initial\_size\_degree\ >\ fill\_capacity\ ?\ initial\_size\_degree}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ fill\_capacity);}
+\DoxyCodeLine{00296\ \ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_grower_ac19899838e161ea5398b6775b4bd5e19}{set\_buf\_size}}(\textcolor{keywordtype}{size\_t}\ buf\_size\_)\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_hash_table_grower_a06ba8f47d59881d48467ce75a3ec9fd7}{size\_degree}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(buf\_size\_\ -\/\ 1)\ +\ 1);}
+\DoxyCodeLine{00300\ \ \ \ \ \}}
+\DoxyCodeLine{00301\ \};}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00307\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ initial\_size\_degree\ =\ 8>}
+\DoxyCodeLine{00308\ \textcolor{keyword}{class\ }\textcolor{keyword}{alignas}(64)\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation}{HashTableGrowerWithPrecalculation}}\ \{}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{doris::vectorized::UInt8}}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ =\ initial\_size\_degree;}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_aed66a70c2c70193973680623bba302b1}{precalculated\_mask}}\ =\ (1ULL\ <<\ initial\_size\_degree)\ -\/\ 1;}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a3e5537e6cb0403bcca5fe9d3782e3f66}{precalculated\_max\_fill}}\ =\ 1ULL\ <<\ (initial\_size\_degree\ -\/\ 1);}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00316\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{doris::vectorized::UInt8}}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a75964e716639a0bc52ca172725188f1e}{size\_degree}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}};\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a7473817f0d89611bc8e2008a58301819}{increase\_size\_degree}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{doris::vectorized::UInt8}}\ delta)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ +=\ delta;}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ <=\ 64);}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_aed66a70c2c70193973680623bba302b1}{precalculated\_mask}}\ =\ (1ULL\ <<\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}})\ -\/\ 1;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a3e5537e6cb0403bcca5fe9d3782e3f66}{precalculated\_max\_fill}}\ =\ 1ULL\ <<\ (\mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ -\/\ 1);}
+\DoxyCodeLine{00323\ \ \ \ \ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a3c699482f4a86cc8b758feac0875768f}{initial\_count}}\ =\ 1ULL\ <<\ initial\_size\_degree;}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_acd0187acccc0890da268d77c4280b1a7}{performs\_linear\_probing\_with\_single\_step}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a5cfd4e88f719ff67b0a8184ea7915087}{buf\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1ULL\ <<\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}};\ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a63ff69e15481c5ffe27fefd1da16dfce}{place}}(\textcolor{keywordtype}{size\_t}\ x)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ x\ \&\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_aed66a70c2c70193973680623bba302b1}{precalculated\_mask}};\ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a3ef27c18555bb291ceb58604f55f1679}{next}}(\textcolor{keywordtype}{size\_t}\ pos)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (pos\ +\ 1)\ \&\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_aed66a70c2c70193973680623bba302b1}{precalculated\_mask}};\ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a259aefaed5c74605ef0753eb01061175}{overflow}}(\textcolor{keywordtype}{size\_t}\ elems)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ elems\ >\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a3e5537e6cb0403bcca5fe9d3782e3f66}{precalculated\_max\_fill}};\ \}}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_ab6a577cbba3588fe8ea8074e132596fc}{increase\_size}}()\ \{\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a7473817f0d89611bc8e2008a58301819}{increase\_size\_degree}}(\mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ >=\ 23\ ?\ 1\ :\ 2);\ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a270245ec7a14642d03b1f3483bcacd35}{set}}(\textcolor{keywordtype}{size\_t}\ num\_elems)\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ =}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_elems\ <=\ 1}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ initial\_size\_degree}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ ((initial\_size\_degree\ >\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(num\_elems\ -\/\ 1))\ +\ 2)}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ initial\_size\_degree}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(num\_elems\ -\/\ 1))\ +\ 2));}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a7473817f0d89611bc8e2008a58301819}{increase\_size\_degree}}(0);}
+\DoxyCodeLine{00354\ \ \ \ \ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_ac19899838e161ea5398b6775b4bd5e19}{set\_buf\_size}}(\textcolor{keywordtype}{size\_t}\ buf\_size\_)\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a00cbe8119c966d1eca7d9dbb673872a0}{size\_degree\_}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{log2_8c_a38bd88274dc5594b4826fd60c8054c8e}{log2}}(buf\_size\_\ -\/\ 1)\ +\ 1);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_grower_with_precalculation_a7473817f0d89611bc8e2008a58301819}{increase\_size\_degree}}(0);}
+\DoxyCodeLine{00359\ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \};}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{keyword}{static\_assert}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{class_hash_table_grower_with_precalculation}{HashTableGrowerWithPrecalculation<>}})\ ==\ 64);}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00369\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ key\_bits>}
+\DoxyCodeLine{00370\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_hash_table_fixed_grower}{HashTableFixedGrower}}\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a5cfd4e88f719ff67b0a8184ea7915087}{buf\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1ULL\ <<\ key\_bits;\ \}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a63ff69e15481c5ffe27fefd1da16dfce}{place}}(\textcolor{keywordtype}{size\_t}\ x)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ x;\ \}}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a3ef27c18555bb291ceb58604f55f1679}{next}}(\textcolor{keywordtype}{size\_t}\ pos)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ pos\ +\ 1;\ \}}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a99b97c8f93e8fd876baf6f7ab0e16d3b}{overflow}}(\textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*elems*/})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_ab6a577cbba3588fe8ea8074e132596fc}{increase\_size}}()\ \{\ \_\_builtin\_unreachable();\ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a3c8b9806e7522469cb75548d9941aff4}{set}}(\textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*num\_elems*/})\ \{\}}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_hash_table_fixed_grower_a9f805e5ca398ca03166be918c8ee6cae}{set\_buf\_size}}(\textcolor{keywordtype}{size\_t}\ \textcolor{comment}{/*buf\_size\_*/})\ \{\}}
+\DoxyCodeLine{00380\ \};}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00383\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ need\_zero\_value\_storage,\ \textcolor{keyword}{typename}\ Cell>}
+\DoxyCodeLine{00384\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_zero_value_storage}{ZeroValueStorage}};}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Cell>}
+\DoxyCodeLine{00387\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_zero_value_storage}{ZeroValueStorage}}<true,\ Cell>\ \{}
+\DoxyCodeLine{00388\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_zero\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00390\ \ \ \ \ std::aligned\_storage\_t<\textcolor{keyword}{sizeof}(Cell),\ \textcolor{keyword}{alignof}(Cell)>}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_a2724bfd8ed9f2d8eb6e852cab4a3ddde}{zero\_value\_storage}};\ }
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_aa4800958989c16f3455a5891f7f4fe08}{get\_has\_zero}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ has\_zero;\ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_a8cf32678e4156af7cb8d61752c8b19a0}{set\_get\_has\_zero}}()\ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ has\_zero\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (zero\_value())\ Cell();}
+\DoxyCodeLine{00399\ \ \ \ \ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_a2896108c021a0f8f3c95f1c834af8e97}{clear\_get\_has\_zero}}()\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ has\_zero\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ zero\_value()-\/>\string~Cell();}
+\DoxyCodeLine{00404\ \ \ \ \ \}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ Cell*\ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_ae3d208d24ddc90e33c92bca722e580e5}{zero\_value}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}Cell*\textcolor{keyword}{>}(\&zero\_value\_storage);\ \}}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keyword}{const}\ Cell*\ \mbox{\hyperlink{struct_zero_value_storage_3_01true_00_01_cell_01_4_a8d75f35df8be8006cf68a5c207ed277f}{zero\_value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }Cell*\textcolor{keyword}{>}(\&zero\_value\_storage);\ \}}
+\DoxyCodeLine{00408\ \};}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Cell>}
+\DoxyCodeLine{00411\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_zero_value_storage}{ZeroValueStorage}}<false,\ Cell>\ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_zero_value_storage_3_01false_00_01_cell_01_4_aa4800958989c16f3455a5891f7f4fe08}{get\_has\_zero}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_zero_value_storage_3_01false_00_01_cell_01_4_a8cf32678e4156af7cb8d61752c8b19a0}{set\_get\_has\_zero}}()\ \{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_exception}{doris::vectorized::Exception}}(\textcolor{stringliteral}{"{}HashTable:\ logical\ error"{}},}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::TStatusCode::VEC\_LOGIC\_ERROR);}
+\DoxyCodeLine{00416\ \ \ \ \ \}}
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_zero_value_storage_3_01false_00_01_cell_01_4_a2896108c021a0f8f3c95f1c834af8e97}{clear\_get\_has\_zero}}()\ \{\}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ Cell*\ \mbox{\hyperlink{struct_zero_value_storage_3_01false_00_01_cell_01_4_ae3d208d24ddc90e33c92bca722e580e5}{zero\_value}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keyword}{const}\ Cell*\ \mbox{\hyperlink{struct_zero_value_storage_3_01false_00_01_cell_01_4_a8d75f35df8be8006cf68a5c207ed277f}{zero\_value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00421\ \};}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ Cell,\ \textcolor{keyword}{typename}\ HashMethod,\ \textcolor{keyword}{typename}\ Grower,\ \textcolor{keyword}{typename}\ Allocator>}
+\DoxyCodeLine{00424\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table}{HashTable}}\ :\ \textcolor{keyword}{private}\ boost::noncopyable,}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}\ HashMethod,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}\ \mbox{\hyperlink{class_allocator}{Allocator}},}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}\ Cell::State,}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}\ \mbox{\hyperlink{struct_zero_value_storage}{ZeroValueStorage}}<Cell::need\_zero\_value\_storage,}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Cell>\ }
+\DoxyCodeLine{00430\ \{}
+\DoxyCodeLine{00431\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table_a35cb182752752c74a30050705acc3c06}{Reader}};}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename},\ \textcolor{keywordtype}{size\_t}>}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_partitioned_hash_table}{PartitionedHashTable}};}
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SubMaps>}
+\DoxyCodeLine{00438\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_string_hash_table}{StringHashTable}};}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_a7c00b43e4685e87442c0b5c441bf3c73}{HashValue}}\ =\ size\_t;}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table}{Self}}\ =\ \mbox{\hyperlink{class_hash_table_abc1566bdf3ca2a21dfbd293f3ef33e99}{HashTable}};}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_adfc929c07897ba6a1485a191f0f583dd}{cell\_type}}\ =\ Cell;}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}}\ =\ 0;\ }
+\DoxyCodeLine{00445\ \ \ \ \ Cell*\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}};\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00446\ \ \ \ \ Grower\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}};}
+\DoxyCodeLine{00447\ \ \ \ \ int64\_t\ \mbox{\hyperlink{class_hash_table_af8c4415cd83945be0ffc3ba1d097c0a8}{\_resize\_timer\_ns}};}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{comment}{//\ the\ bucket\ count\ threshold\ above\ which\ it's\ converted\ to\ partioned\ hash\ table}}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{comment}{//\ >\ 0:\ enable\ convert\ dynamically}}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{comment}{//\ 0:\ convert\ is\ disabled}}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_hash_table_a1ff1f7ec64a6dc522c13ba92dd79c957}{\_partitioned\_threshold}}\ =\ 0;}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//\ if\ need\ resize\ and\ bucket\ count\ after\ resize\ will\ be\ >=\ \_partitioned\_threshold,}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ this\ flag\ is\ set\ to\ true,\ and\ resize\ does\ not\ actually\ happen,}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//\ PartitionedHashTable\ will\ convert\ this\ hash\ table\ to\ partitioned\ hash\ table}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{comment}{//factor\ that\ will\ trigger\ growing\ the\ hash\ table\ on\ insert.}}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{class_hash_table_aea26eed373759b51ca5dbdda3c90e065}{MAX\_BUCKET\_OCCUPANCY\_FRACTION}}\ =\ 0.5f;}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_COUNT\_COLLISIONS}}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{mutable}\ \textcolor{keywordtype}{size\_t}\ collisions\ =\ 0;}
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a47e1e77832c3cfec157cf5143921af48}{set\_partitioned\_threshold}}(\textcolor{keywordtype}{int}\ threshold)\ \{\ \mbox{\hyperlink{class_hash_table_a1ff1f7ec64a6dc522c13ba92dd79c957}{\_partitioned\_threshold}}\ =\ threshold;\ \}}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_a8b8fe0155e31957108021f1f9ddd5298}{check\_if\_need\_partition}}(\textcolor{keywordtype}{size\_t}\ bucket\_count)\ \{}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a1ff1f7ec64a6dc522c13ba92dd79c957}{\_partitioned\_threshold}}\ >\ 0\ \&\&\ bucket\_count\ >=\ \mbox{\hyperlink{class_hash_table_a1ff1f7ec64a6dc522c13ba92dd79c957}{\_partitioned\_threshold}};}
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_a6922aad0d6cc35006f10a93e8bf160cb}{need\_partition}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}};\ \}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(\textcolor{keyword}{const}\ Key\&\ x,\ \textcolor{keywordtype}{size\_t}\ hash\_value,\ \textcolor{keywordtype}{size\_t}\ place\_value)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this})\ \&\&}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].key\_equals(x,\ hash\_value,\ *\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.next(place\_value);}
+\DoxyCodeLine{00478\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_COUNT\_COLLISIONS}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ ++collisions;}
+\DoxyCodeLine{00480\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ place\_value;}
+\DoxyCodeLine{00484\ \ \ \ \ \}}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ std::pair<bool,\ size\_t>\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a4fe780d76fec6dbe5279a51217038561}{find\_cell\_opt}}(\textcolor{keyword}{const}\ Key\&\ x,\ \textcolor{keywordtype}{size\_t}\ hash\_value,}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_zero\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ is\_zero\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_zero\ ||\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].key\_equals(x,\ hash\_value,\ *\textcolor{keyword}{this}))\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.next(place\_value);}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true});}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{is\_zero,\ place\_value\};}
+\DoxyCodeLine{00496\ \ \ \ \ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_aefba660bc86abe4dcb9fe3fd2345f274}{find\_empty\_cell}}(\textcolor{keywordtype}{size\_t}\ place\_value)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.next(place\_value);}
+\DoxyCodeLine{00502\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_COUNT\_COLLISIONS}}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ ++collisions;}
+\DoxyCodeLine{00504\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ place\_value;}
+\DoxyCodeLine{00508\ \ \ \ \ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a256858c1c899655cd657e7fb5b2e3ffb}{alloc}}(\textcolor{keyword}{const}\ Grower\&\ new\_grower)\ \{}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ =\ \textcolor{keyword}{reinterpret\_cast<}Cell*\textcolor{keyword}{>}(\mbox{\hyperlink{class_allocator_a35677db523083f8c3a508d75cd9bb77b}{Allocator::alloc}}(new\_grower.buf\_size()\ *\ \textcolor{keyword}{sizeof}(Cell)));}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}\ =\ new\_grower;}
+\DoxyCodeLine{00513\ \ \ \ \ \}}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}()\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}})\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{Allocator::free}}(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}},\ \mbox{\hyperlink{class_hash_table_a198db9796b9203b37490600dd1d312af}{get\_buffer\_size\_in\_bytes}}());}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00520\ \ \ \ \ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a4fd55077471e5ba8f2a7da327d394ac5}{reinsert}}(Cell\&\ x,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value);}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&x\ ==\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value])\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(Cell::get\_key(x.get\_value()),\ hash\_value,\ place\_value);}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this}))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ x.set\_hash(hash\_value);}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]),\ \&x,\ \textcolor{keyword}{sizeof}(x));}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ x.set\_zero();}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00543\ \ \ \ \ \}}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}()\ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!std::is\_trivially\_destructible\_v<Cell>)}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ it\ =\ \mbox{\hyperlink{class_hash_table_a29305669b60ca1680752e2fc3592ba99}{begin}}(),\ it\_end\ =\ \mbox{\hyperlink{class_hash_table_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}();\ it\ !=\ it\_end;\ ++it)\ it.ptr-\/>\string~Cell();}
+\DoxyCodeLine{00548\ \ \ \ \ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived,\ \textcolor{keywordtype}{bool}\ is\_const>}
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}\ \{}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_1_1iterator__base_a907c566e3259adfbd9d40ef90c189d1d}{Container}}\ =\ std::conditional\_t<is\_const,\ const\ Self,\ Self>;}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_1_1iterator__base_a64a196d30fdae15f112b50e4f0cd0281}{cell\_type}}\ =\ std::conditional\_t<is\_const,\ const\ Cell,\ Cell>;}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a907c566e3259adfbd9d40ef90c189d1d}{Container}}*\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}};}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a64a196d30fdae15f112b50e4f0cd0281}{cell\_type}}*\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table}{HashTable}};}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a91fbc1535b71dd53bf2f17c1cbe21308}{iterator\_base}}()\ \{\}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ababbcdb4860d25966a35f9404404f478}{iterator\_base}}(\mbox{\hyperlink{class_hash_table_1_1iterator__base_a907c566e3259adfbd9d40ef90c189d1d}{Container}}*\ container\_,\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a64a196d30fdae15f112b50e4f0cd0281}{cell\_type}}*\ ptr\_)\ :\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}(container\_),\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}(ptr\_)\ \{\}}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_acd33c156deeca689a7b4f0277a045cfb}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}\ ==\ rhs.\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};\ \}}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_af50b1ef399f7d2fd44352e257dfad41c}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}\ !=\ rhs.\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};\ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ Derived\&\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a5dc20aa91709453024849d45351245bf}{operator++}}()\ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}-\/>is\_zero(*\mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}})))}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}\ =\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>buf;}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ buf\_end\ =\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>buf\ +\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>grower.buf\_size();}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ptr\ <\ buf\_end\ \&\&\ ptr-\/>is\_zero(*\mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}))\ ++\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this);}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a6ef7fc4a0c7287c4c026c77b63c8abb9}{operator*}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};\ \}}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a687c254fc3be665f33fffb7b45b3a353}{operator-\/>}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};\ \}}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_acfbc4bf99dd92a2e238bde01f4a33894}{get\_ptr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}};\ \}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ae1ac2018a4646d71125fa5473670aea8}{get\_hash}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}-\/>get\_hash(*\mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}});\ \}}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad07656856239a4495c5c352cabf52e7f}{get\_collision\_chain\_length}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>grower.place((\mbox{\hyperlink{class_hash_table_1_1iterator__base_a2e4a60fb375bbc038f959e054a82b204}{ptr}}\ -\/\ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>buf)\ -\/}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator__base_ad139bad38c15658964ed128b28ab6b53}{container}}-\/>grower.place(\mbox{\hyperlink{class_hash_table_1_1iterator__base_ae1ac2018a4646d71125fa5473670aea8}{get\_hash}}()));}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \textcolor{keyword}{operator}\ Cell*()\ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00608\ \ \ \ \ \};}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00611\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_acf4be953c7037c26797d1e8784b3074d}{key\_type}}\ =\ Key;}
+\DoxyCodeLine{00612\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_a8b40c1bc47646bd1b6a322564024fd7c}{value\_type}}\ =\ \textcolor{keyword}{typename}\ Cell::value\_type;}
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_a86d9a539022771977d1cf09bb90ca9d8}{mapped\_type}}\ =\ \mbox{\hyperlink{class_hash_table_a8b40c1bc47646bd1b6a322564024fd7c}{value\_type}};}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_a35c2373d47d8eb2187eb3b72c13da089}{Hash}}\ =\ HashMethod;}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \ \ \ \ \textcolor{comment}{//\ Use\ lookup\_result\_get\_mapped/Key\ to\ work\ with\ these\ values.}}
+\DoxyCodeLine{00617\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\ =\ Cell*;}
+\DoxyCodeLine{00618\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_aa41fb9984fe57964cc0df9ff8d7a3123}{ConstLookupResult}}\ =\ \textcolor{keyword}{const}\ Cell*;}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a0446e6e35d8f0463a521d846f6002a6a}{reset\_resize\_timer}}()\ \{\ \mbox{\hyperlink{class_hash_table_af8c4415cd83945be0ffc3ba1d097c0a8}{\_resize\_timer\_ns}}\ =\ 0;\ \}}
+\DoxyCodeLine{00621\ \ \ \ \ int64\_t\ \mbox{\hyperlink{class_hash_table_a31ae17c642b13ca31ac3966fafb0948d}{get\_resize\_timer\_value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_af8c4415cd83945be0ffc3ba1d097c0a8}{\_resize\_timer\_ns}};\ \}}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(\textcolor{keyword}{const}\ Key\&\ x)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ Hash::operator()(x);\ \}}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ \ \ \ \ \mbox{\hyperlink{class_hash_table_abc1566bdf3ca2a21dfbd293f3ef33e99}{HashTable}}()\ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::need\_zero\_value\_storage)\ this-\/>zero\_value()-\/>set\_zero();}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a256858c1c899655cd657e7fb5b2e3ffb}{alloc}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}});}
+\DoxyCodeLine{00628\ \ \ \ \ \}}
+\DoxyCodeLine{00629\ }
+\DoxyCodeLine{00630\ \ \ \ \ \mbox{\hyperlink{class_hash_table_adb7ad76a93ff648fad985af26b249358}{HashTable}}(\textcolor{keywordtype}{size\_t}\ reserve\_for\_num\_elements)\ \{}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::need\_zero\_value\_storage)\ this-\/>zero\_value()-\/>set\_zero();}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.set(reserve\_for\_num\_elements);}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a256858c1c899655cd657e7fb5b2e3ffb}{alloc}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}});}
+\DoxyCodeLine{00634\ \ \ \ \ \}}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \ \ \mbox{\hyperlink{class_hash_table_a6cf0f44f1d6bcc7b17c8ad4d2f7b8149}{HashTable}}(\mbox{\hyperlink{class_hash_table}{HashTable}}\&\&\ rhs)\ :\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}(nullptr)\ \{\ *\textcolor{keyword}{this}\ =\ std::move(rhs);\ \}}
+\DoxyCodeLine{00637\ }
+\DoxyCodeLine{00638\ \ \ \ \ \mbox{\hyperlink{class_hash_table_aaf0dfe5ff8f321274e1a349503461a48}{\string~HashTable}}()\ \{}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}();}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}();}
+\DoxyCodeLine{00641\ \ \ \ \ \}}
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00643\ \ \ \ \ \mbox{\hyperlink{class_hash_table}{HashTable}}\&\ \mbox{\hyperlink{class_hash_table_a34c53932da19c168374b34de9de83834}{operator=}}(\mbox{\hyperlink{class_hash_table}{HashTable}}\&\&\ rhs)\ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}();}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}();}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}},\ rhs.buf);}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}},\ rhs.m\_size);}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}},\ rhs.grower);}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}},\ rhs.\_need\_partition);}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ std::swap(\mbox{\hyperlink{class_hash_table_a1ff1f7ec64a6dc522c13ba92dd79c957}{\_partitioned\_threshold}},\ rhs.\_partitioned\_threshold);}
+\DoxyCodeLine{00652\ }
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ Hash::operator=(std::move(rhs));}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ Allocator::operator=(std::move(rhs));}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ Cell::State::operator=(std::move(rhs));}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_zero_value_storage}{ZeroValueStorage<Cell::need\_zero\_value\_storage,\ Cell>::operator=}}(std::move(rhs));}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00659\ \ \ \ \ \}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}<iterator,\ false>\ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}<\mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}},\ \textcolor{keyword}{false}>\mbox{\hyperlink{class_hash_table_1_1iterator__base_a91fbc1535b71dd53bf2f17c1cbe21308}{::iterator\_base}};}
+\DoxyCodeLine{00664\ \ \ \ \ \};}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}<const\_iterator,\ true>\ \{}
+\DoxyCodeLine{00667\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_hash_table_1_1iterator__base}{iterator\_base}}<\mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}},\ \textcolor{keyword}{true}>\mbox{\hyperlink{class_hash_table_1_1iterator__base_a91fbc1535b71dd53bf2f17c1cbe21308}{::iterator\_base}};}
+\DoxyCodeLine{00669\ \ \ \ \ \};}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_a29305669b60ca1680752e2fc3592ba99}{begin}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}();}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>get\_has\_zero())\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a4cc9416f2a2ba1a4e2709d2e1093210d}{iterator\_to\_zero}}();}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Cell*\ ptr\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}};}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ buf\_end\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ +\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size();}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ptr\ <\ buf\_end\ \&\&\ ptr-\/>is\_zero(*\textcolor{keyword}{this}))\ ++ptr;}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}(\textcolor{keyword}{this},\ ptr);}
+\DoxyCodeLine{00681\ \ \ \ \ \}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_a39112ae08f6ffc7ee58c6aa79772e094}{cbegin}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a29305669b60ca1680752e2fc3592ba99}{begin}}();\ \}}
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ \mbox{\hyperlink{class_hash_table_ad69bd11391be1a1dba5c8202259664f8}{begin}}()\ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}();}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>get\_has\_zero())\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a4cc9416f2a2ba1a4e2709d2e1093210d}{iterator\_to\_zero}}();}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ Cell*\ ptr\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}};}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ buf\_end\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ +\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size();}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ptr\ <\ buf\_end\ \&\&\ ptr-\/>is\_zero(*\textcolor{keyword}{this}))\ ++ptr;}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}(\textcolor{keyword}{this},\ ptr);}
+\DoxyCodeLine{00695\ \ \ \ \ \}}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}(\textcolor{keyword}{this},\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ +\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size());\ \}}
+\DoxyCodeLine{00698\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_a93791e61ab486b4022c389d634b4facc}{cend}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_accf9a4bd0c34d4a5f6a7dab66ea10cdc}{end}}();\ \}}
+\DoxyCodeLine{00699\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ \mbox{\hyperlink{class_hash_table_acad38d52497a975bfb6f2f6acd76631f}{end}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}(\textcolor{keyword}{this},\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ +\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size());\ \}}
+\DoxyCodeLine{00700\ }
+\DoxyCodeLine{00701\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00702\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_a7785e973f850b75a741ed6e5651c568b}{iterator\_to}}(\textcolor{keyword}{const}\ Cell*\ ptr)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}(\textcolor{keyword}{this},\ ptr);\ \}}
+\DoxyCodeLine{00703\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ \mbox{\hyperlink{class_hash_table_a11e9283aa0ad83aa9cac9d344a0c6b4d}{iterator\_to}}(Cell*\ ptr)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}(\textcolor{keyword}{this},\ ptr);\ \}}
+\DoxyCodeLine{00704\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1const__iterator}{const\_iterator}}\ \mbox{\hyperlink{class_hash_table_a4cc9416f2a2ba1a4e2709d2e1093210d}{iterator\_to\_zero}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a7785e973f850b75a741ed6e5651c568b}{iterator\_to}}(this-\/>zero\_value());\ \}}
+\DoxyCodeLine{00705\ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\ \mbox{\hyperlink{class_hash_table_aa33b8c335946f80594d799ddeec67387}{iterator\_to\_zero}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a7785e973f850b75a741ed6e5651c568b}{iterator\_to}}(this-\/>zero\_value());\ \}}
+\DoxyCodeLine{00706\ }
+\DoxyCodeLine{00710\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_ab6b45e876cd28f1ec30f7a7dd1cf9237}{emplace\_if\_zero}}(Key\ x,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{bool}\&\ inserted,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Cell::need\_zero\_value\_storage)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \ \ \ \ it\ =\ this-\/>zero\_value();}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!this-\/>get\_has\_zero())\ \{}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>set\_get\_has\_zero();}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>zero\_value()-\/>set\_hash(hash\_value);}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inserted\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inserted\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00724\ }
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00729\ \ \ \ \ \}}
+\DoxyCodeLine{00730\ }
+\DoxyCodeLine{00731\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00732\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_afc9c767824bc21363c787e6d31e49eb6}{lazy\_emplace\_if\_zero}}(\textcolor{keyword}{const}\ Key\&\ x,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{size\_t}\ hash\_value,}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Cell::need\_zero\_value\_storage)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ it\ =\ this-\/>zero\_value();}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!this-\/>get\_has\_zero())\ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>set\_get\_has\_zero();}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::forward<Func>(f)(\mbox{\hyperlink{class_hash_table_1_1_constructor}{Constructor}}(it),\ x);}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>zero\_value()-\/>set\_hash(hash\_value);}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00750\ \ \ \ \ \}}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00753\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_ad38274e8ab8bdbad219e8453c4354f49}{emplace\_non\_zero\_impl}}(\textcolor{keywordtype}{size\_t}\ place\_value,\ KeyHolder\&\&\ key\_holder,}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{bool}\&\ inserted,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ it\ =\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value];}
+\DoxyCodeLine{00756\ }
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{hash__table__key__holder_8h_a75c6314958473c22b1aebf8a9f9bef90}{key\_holder\_discard\_key}}(key\_holder);}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \ \ \ inserted\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{hash__table__key__holder_8h_a425b39a22161c4748fabb6731c74f7fe}{key\_holder\_persist\_key}}(key\_holder);}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00765\ }
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value])\ Cell(key,\ *\textcolor{keyword}{this});}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].set\_hash(hash\_value);}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ inserted\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.overflow(\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}})))\ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ac69dffcd6a75ec433c96b6bb4bab9fc9}{resize}}();}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (...)\ \{}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].set\_zero();}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw};}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(!\mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}}))\ \{}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ hash\ table\ was\ rehashed,\ so\ we\ have\ to\ re-\/find\ the\ key.}}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_place\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(key,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[new\_place].is\_zero(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ it\ =\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[new\_place];}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00791\ \ \ \ \ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00794\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a82f3aee114e5104b3a7652ebc147f8ca}{lazy\_emplace\_non\_zero\_impl}}(\textcolor{keywordtype}{size\_t}\ place\_value,\ KeyHolder\&\&\ key\_holder,}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{size\_t}\ hash\_value,\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ it\ =\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value];}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{hash__table__key__holder_8h_a75c6314958473c22b1aebf8a9f9bef90}{key\_holder\_discard\_key}}(key\_holder);}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00802\ }
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{hash__table__key__holder_8h_a425b39a22161c4748fabb6731c74f7fe}{key\_holder\_persist\_key}}(key\_holder);}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ f(\mbox{\hyperlink{class_hash_table_1_1_constructor}{Constructor}}(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]),\ key);}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].set\_hash(hash\_value);}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.overflow(\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}})))\ \{}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ac69dffcd6a75ec433c96b6bb4bab9fc9}{resize}}();}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (...)\ \{}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].set\_zero();}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw};}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00822\ }
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(!\mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}}))\ \{}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ hash\ table\ was\ rehashed,\ so\ we\ have\ to\ re-\/find\ the\ key.}}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_place\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(key,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[new\_place].is\_zero(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ it\ =\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[new\_place];}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00830\ \ \ \ \ \}}
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00833\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00834\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a6bada0a43283c01c3fd7f97e5f25749c}{emplace\_non\_zero}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{bool}\&\ inserted,}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(key,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ad38274e8ab8bdbad219e8453c4354f49}{emplace\_non\_zero\_impl}}(place\_value,\ key\_holder,\ it,\ inserted,\ hash\_value);}
+\DoxyCodeLine{00839\ \ \ \ \ \}}
+\DoxyCodeLine{00840\ }
+\DoxyCodeLine{00841\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00842\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a295dfa11b7ef0d2718f9e770b55a8f14}{lazy\_emplace\_non\_zero}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value,\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(key,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a82f3aee114e5104b3a7652ebc147f8ca}{lazy\_emplace\_non\_zero\_impl}}(place\_value,\ key\_holder,\ it,\ hash\_value,\ std::forward<Func>(f));}
+\DoxyCodeLine{00847\ \ \ \ \ \}}
+\DoxyCodeLine{00848\ }
+\DoxyCodeLine{00849\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00850\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_ab85a944cc0646798534178eff0913a4b}{expanse\_for\_add\_elem}}(\textcolor{keywordtype}{size\_t}\ num\_elem)\ \{}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_hash_table_abcb4accdce705f39d84031b502a5615a}{add\_elem\_size\_overflow}}(num\_elem))\ \{}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ac69dffcd6a75ec433c96b6bb4bab9fc9}{resize}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size()\ +\ num\_elem);}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00854\ \ \ \ \ \}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00857\ \ \ \ \ std::pair<LookupResult,\ bool>\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a05734408db6e4cbe4a77ce6e1fb07aa1}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_hash_table_a8b40c1bc47646bd1b6a322564024fd7c}{value\_type}}\&\ x)\ \{}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ std::pair<LookupResult,\ bool>\ res;}
+\DoxyCodeLine{00859\ }
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value\ =\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(Cell::get\_key(x));}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_ab6b45e876cd28f1ec30f7a7dd1cf9237}{emplace\_if\_zero}}(Cell::get\_key(x),\ res.first,\ res.second,\ hash\_value))\ \{}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a6bada0a43283c01c3fd7f97e5f25749c}{emplace\_non\_zero}}(Cell::get\_key(x),\ res.first,\ res.second,\ hash\_value);}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00864\ }
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (res.second)\ \mbox{\hyperlink{hash__table_8h_acb564f0bbdb75b37894b874f5743c96d}{insert\_set\_mapped}}(\mbox{\hyperlink{hash__table_8h_a37cb02bdc80ae12e1461ec185005dee5}{lookup\_result\_get\_mapped}}(res.first),\ x);}
+\DoxyCodeLine{00866\ }
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00868\ \ \ \ \ \}}
+\DoxyCodeLine{00869\ }
+\DoxyCodeLine{00870\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00871\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a7391681687590561bf8401f599f89302}{prefetch}}(KeyHolder\&\ key\_holder)\ \{}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\_value\ =\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(key);}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value);}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]);}
+\DoxyCodeLine{00876\ \ \ \ \ \}}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ READ>}
+\DoxyCodeLine{00879\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a837a241484fa4fb88ac3d7a0a6160afb}{prefetch\_by\_hash}}(\textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Two\ optional\ arguments:}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'rw':\ 1\ means\ the\ memory\ access\ is\ write}}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'locality':\ 0-\/3.\ 0\ means\ no\ temporal\ locality.\ 3\ means\ high\ temporal\ locality.}}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value);}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value],\ READ\ ?\ 0\ :\ 1,\ 1);}
+\DoxyCodeLine{00885\ \ \ \ \ \}}
+\DoxyCodeLine{00886\ }
+\DoxyCodeLine{00887\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ READ,\ \textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00888\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a891da7dcfef48bf4cfb08508d8481c29}{prefetch}}(KeyHolder\&\ key\_holder)\ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Two\ optional\ arguments:}}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'rw':\ 1\ means\ the\ memory\ access\ is\ write}}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'locality':\ 0-\/3.\ 0\ means\ no\ temporal\ locality.\ 3\ means\ high\ temporal\ locality.}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\_value\ =\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(key);}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value);}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value],\ READ\ ?\ 0\ :\ 1,\ 1);}
+\DoxyCodeLine{00896\ \ \ \ \ \}}
+\DoxyCodeLine{00897\ }
+\DoxyCodeLine{00899\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_ac620a0cf0ad7fdaec119d62b22991002}{reinsert}}(\mbox{\hyperlink{class_hash_table_1_1iterator}{iterator}}\&\ it,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a4fd55077471e5ba8f2a7da327d394ac5}{reinsert}}(*it.\mbox{\hyperlink{class_hash_table_1_1iterator__base_acfbc4bf99dd92a2e238bde01f4a33894}{get\_ptr}}(),\ hash\_value);}
+\DoxyCodeLine{00901\ \ \ \ \ \}}
+\DoxyCodeLine{00902\ }
+\DoxyCodeLine{00903\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table_1_1_constructor}{Constructor}}\ \{}
+\DoxyCodeLine{00904\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_hash_table}{HashTable}};}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_1_1_constructor_ad453e9d8dd456e2b45644dcca5aa86bf}{operator()}}(Args\&\&...\ \mbox{\hyperlink{structargs}{args}})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\mbox{\hyperlink{class_hash_table_1_1_constructor_a666c2b456871354fbdc0b21bf2bbdc50}{\_cell}})\ Cell(std::forward<Args>(\mbox{\hyperlink{structargs}{args}})...);}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_1_1_constructor_acb6d3c39a7463629e2607a0521e48d7a}{Constructor}}(Cell*\ cell)\ :\ \mbox{\hyperlink{class_hash_table_1_1_constructor_a666c2b456871354fbdc0b21bf2bbdc50}{\_cell}}(cell)\ \{\}}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ Cell*\ \mbox{\hyperlink{class_hash_table_1_1_constructor_a666c2b456871354fbdc0b21bf2bbdc50}{\_cell}};}
+\DoxyCodeLine{00914\ \ \ \ \ \};}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00932\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00933\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a129c4582c39f1121609be23f4dcc27ee}{emplace}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{bool}\&\ inserted)\ \{}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a129c4582c39f1121609be23f4dcc27ee}{emplace}}(key\_holder,\ it,\ inserted,\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(key));}
+\DoxyCodeLine{00936\ \ \ \ \ \}}
+\DoxyCodeLine{00937\ }
+\DoxyCodeLine{00938\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00939\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_ac7904158a86835fa740687596ff2f6c9}{emplace}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{bool}\&\ inserted,}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00942\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_ab6b45e876cd28f1ec30f7a7dd1cf9237}{emplace\_if\_zero}}(key,\ it,\ inserted,\ hash\_value))}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a6bada0a43283c01c3fd7f97e5f25749c}{emplace\_non\_zero}}(key\_holder,\ it,\ inserted,\ hash\_value);}
+\DoxyCodeLine{00944\ \ \ \ \ \}}
+\DoxyCodeLine{00945\ }
+\DoxyCodeLine{00946\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00947\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a0f074e94ef6b0bad3f70b63f0332f552}{emplace}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{size\_t}\ hash\_value,}
+\DoxyCodeLine{00948\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\&\ inserted)\ \{}
+\DoxyCodeLine{00949\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a129c4582c39f1121609be23f4dcc27ee}{emplace}}(key\_holder,\ it,\ inserted,\ hash\_value);}
+\DoxyCodeLine{00950\ \ \ \ \ \}}
+\DoxyCodeLine{00951\ }
+\DoxyCodeLine{00952\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00953\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a10b80df53e31d368020ba6575ce72624}{lazy\_emplace}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a10b80df53e31d368020ba6575ce72624}{lazy\_emplace}}(key\_holder,\ it,\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(key),\ std::forward<Func>(f));}
+\DoxyCodeLine{00956\ \ \ \ \ \}}
+\DoxyCodeLine{00957\ }
+\DoxyCodeLine{00958\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00959\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a5e2fcd31687cdf66fe293d48cff80c73}{lazy\_emplace}}(KeyHolder\&\&\ key\_holder,\ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\&\ it,\ \textcolor{keywordtype}{size\_t}\ hash\_value,}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ =\ \mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder);}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_afc9c767824bc21363c787e6d31e49eb6}{lazy\_emplace\_if\_zero}}(key,\ it,\ hash\_value,\ std::forward<Func>(f)))}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a295dfa11b7ef0d2718f9e770b55a8f14}{lazy\_emplace\_non\_zero}}(key\_holder,\ it,\ hash\_value,\ std::forward<Func>(f));}
+\DoxyCodeLine{00964\ \ \ \ \ \}}
+\DoxyCodeLine{00965\ }
+\DoxyCodeLine{00967\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a1a046fc2104742bf01ed6fb62654efe9}{insert\_unique\_non\_zero}}(\textcolor{keyword}{const}\ Cell*\ cell,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_aefba660bc86abe4dcb9fe3fd2345f274}{find\_empty\_cell}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00969\ }
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]),\ cell,\ \textcolor{keyword}{sizeof}(*cell));}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{00972\ }
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.overflow(\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}})))\ \mbox{\hyperlink{class_hash_table_ac69dffcd6a75ec433c96b6bb4bab9fc9}{resize}}();}
+\DoxyCodeLine{00974\ \ \ \ \ \}}
+\DoxyCodeLine{00975\ }
+\DoxyCodeLine{00976\ \ \ \ \ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_afb35e0b83af5ce79df57f7ee53529687}{find}}(Key\ x)\ \{}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \textcolor{keywordflow}{return}\ this-\/>get\_has\_zero()\ ?\ this-\/>zero\_value()\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00978\ }
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value\ =\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(x);}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [is\_zero,\ place\_value]\ =\ \mbox{\hyperlink{class_hash_table_a4fe780d76fec6dbe5279a51217038561}{find\_cell\_opt}}(x,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !is\_zero\ ?\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00982\ \ \ \ \ \}}
+\DoxyCodeLine{00983\ }
+\DoxyCodeLine{00984\ \ \ \ \ \mbox{\hyperlink{class_hash_table_aa41fb9984fe57964cc0df9ff8d7a3123}{ConstLookupResult}}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a3657b8900b555f95c6b7089b38e15ddb}{find}}(Key\ x)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}std::decay\_t<decltype(*this)\textcolor{keyword}{>}*>(\textcolor{keyword}{this})-\/>\mbox{\hyperlink{class_hash_table_afb35e0b83af5ce79df57f7ee53529687}{find}}(x);}
+\DoxyCodeLine{00986\ \ \ \ \ \}}
+\DoxyCodeLine{00987\ }
+\DoxyCodeLine{00988\ \ \ \ \ \mbox{\hyperlink{class_hash_table_ae82a47ed54977d3df1587240f9dfcf7a}{LookupResult}}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_ae502e8c512a2bb2b32ff09dfbaeefbca}{find}}(Key\ x,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\ \{}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \textcolor{keywordflow}{return}\ this-\/>get\_has\_zero()\ ?\ this-\/>zero\_value()\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00990\ }
+\DoxyCodeLine{00991\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(x,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this})\ ?\ \&\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value]\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00993\ \ \ \ \ \}}
+\DoxyCodeLine{00994\ }
+\DoxyCodeLine{00995\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_a972aaf2f2d4a42fb0c5e104382c7eb2a}{has}}(Key\ x)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \textcolor{keywordflow}{return}\ this-\/>get\_has\_zero();}
+\DoxyCodeLine{00997\ }
+\DoxyCodeLine{00998\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ hash\_value\ =\ \mbox{\hyperlink{class_hash_table_a0902d3327344aca5739605fd268a2481}{hash}}(x);}
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(x,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this});}
+\DoxyCodeLine{01001\ \ \ \ \ \}}
+\DoxyCodeLine{01002\ }
+\DoxyCodeLine{01003\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{class_hash_table_abfbc2b9c9c38fca4ceb879a66892a703}{has}}(Key\ x,\ \textcolor{keywordtype}{size\_t}\ hash\_value)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Cell::is\_zero(x,\ *\textcolor{keyword}{this}))\ \textcolor{keywordflow}{return}\ this-\/>get\_has\_zero();}
+\DoxyCodeLine{01005\ }
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ place\_value\ =\ \mbox{\hyperlink{class_hash_table_a22c8ea94719f42c4d183a991b8f44e69}{find\_cell}}(x,\ hash\_value,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.place(hash\_value));}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[place\_value].is\_zero(*\textcolor{keyword}{this});}
+\DoxyCodeLine{01008\ \ \ \ \ \}}
+\DoxyCodeLine{01009\ }
+\DoxyCodeLine{01010\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a6f4584c7920cc1242cb89ef49aa5386c}{write}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{doris::vectorized::BufferWritable}}\&\ wb)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ Cell::State::write(wb);}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_aea0f84880e4df4a136a12a3f01104392}{doris::vectorized::write\_var\_uint}}(\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}},\ wb);}
+\DoxyCodeLine{01013\ }
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>get\_has\_zero())\ this-\/>zero\_value()-\/>write(wb);}
+\DoxyCodeLine{01015\ }
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ ptr\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}},\ buf\_end\ =\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ +\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size();\ ptr\ <\ buf\_end;\ ++ptr)}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ptr-\/>is\_zero(*\textcolor{keyword}{this}))\ ptr-\/>write(wb);}
+\DoxyCodeLine{01018\ \ \ \ \ \}}
+\DoxyCodeLine{01019\ }
+\DoxyCodeLine{01020\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a0db73b6709ab812abce69276f2288d48}{read}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{doris::vectorized::BufferReadable}}\&\ rb)\ \{}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ Cell::State::read(rb);}
+\DoxyCodeLine{01022\ }
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}();}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \ \ this-\/>clear\_get\_has\_zero();}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}}\ =\ 0;}
+\DoxyCodeLine{01026\ }
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a81586a76c764e2556f67139907fa5440}{doris::vectorized::UInt64}}\ new\_size\ =\ 0;}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a09f41c09d98543d82de792a1f07d0f4b}{doris::vectorized::read\_var\_uint}}(new\_size,\ rb);}
+\DoxyCodeLine{01029\ }
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}();}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ Grower\ new\_grower\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}};}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ new\_grower.set(new\_size);}
+\DoxyCodeLine{01033\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a256858c1c899655cd657e7fb5b2e3ffb}{alloc}}(new\_grower);}
+\DoxyCodeLine{01034\ }
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ new\_size;\ ++i)\ \{}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ \ \ \ \ \ \ Cell\ x;}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \ \ \ \ \ \ x.read(rb);}
+\DoxyCodeLine{01038\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a05734408db6e4cbe4a77ce6e1fb07aa1}{insert}}(Cell::get\_key(x.get\_value()));}
+\DoxyCodeLine{01039\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01040\ \ \ \ \ \}}
+\DoxyCodeLine{01041\ }
+\DoxyCodeLine{01042\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};\ \}}
+\DoxyCodeLine{01043\ }
+\DoxyCodeLine{01044\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_a644718bb2fb240de962dc3c9a1fdf0dc}{empty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0\ ==\ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};\ \}}
+\DoxyCodeLine{01045\ }
+\DoxyCodeLine{01046\ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{class_hash_table_a337cbd8df811016158e08e55728d8ba1}{get\_factor}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_aea26eed373759b51ca5dbdda3c90e065}{MAX\_BUCKET\_OCCUPANCY\_FRACTION}};\ \}}
+\DoxyCodeLine{01047\ }
+\DoxyCodeLine{01048\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_ac0146f5bfdbf16bf96e76e884fe4eecb}{should\_be\_shrink}}(int64\_t\ valid\_row)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ valid\_row\ <\ \mbox{\hyperlink{class_hash_table_a337cbd8df811016158e08e55728d8ba1}{get\_factor}}()\ *\ (\mbox{\hyperlink{class_hash_table_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\ /\ 2.0);}
+\DoxyCodeLine{01050\ \ \ \ \ \}}
+\DoxyCodeLine{01051\ }
+\DoxyCodeLine{01052\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a0fd651eb7a6d6844fafcc8cb3b130d62}{init\_buf\_size}}(\textcolor{keywordtype}{size\_t}\ reserve\_for\_num\_elements)\ \{}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}();}
+\DoxyCodeLine{01054\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.set(reserve\_for\_num\_elements);}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a256858c1c899655cd657e7fb5b2e3ffb}{alloc}}(\mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}});}
+\DoxyCodeLine{01056\ \ \ \ \ \}}
+\DoxyCodeLine{01057\ }
+\DoxyCodeLine{01058\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_a0faee33445d168e0d3b46fe3d3a24901}{delete\_zero\_key}}(Key\ key)\ \{}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>get\_has\_zero()\ \&\&\ Cell::is\_zero(key,\ *\textcolor{keyword}{this}))\ \{}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}};}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>clear\_get\_has\_zero();}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01063\ \ \ \ \ \}}
+\DoxyCodeLine{01064\ }
+\DoxyCodeLine{01065\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_ac8bb3912a3ce86b15842e79d0b421204}{clear}}()\ \{}
+\DoxyCodeLine{01066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}();}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ this-\/>clear\_get\_has\_zero();}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}}\ =\ 0;}
+\DoxyCodeLine{01069\ }
+\DoxyCodeLine{01070\ \ \ \ \ \ \ \ \ memset(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}),\ 0,\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size()\ *\ \textcolor{keyword}{sizeof}(*\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}));}
+\DoxyCodeLine{01071\ \ \ \ \ \}}
+\DoxyCodeLine{01072\ }
+\DoxyCodeLine{01075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_af9521c93c45ed1ac85597d233a65cb79}{clear\_and\_shrink}}()\ \{}
+\DoxyCodeLine{01076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a7c16b0a3eb143672e74ee2bedd0a8436}{destroy\_elements}}();}
+\DoxyCodeLine{01077\ \ \ \ \ \ \ \ \ this-\/>clear\_get\_has\_zero();}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}}\ =\ 0;}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_aafde19f7d36ca163a143579c1b125b6d}{free}}();}
+\DoxyCodeLine{01080\ \ \ \ \ \}}
+\DoxyCodeLine{01081\ }
+\DoxyCodeLine{01082\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_a198db9796b9203b37490600dd1d312af}{get\_buffer\_size\_in\_bytes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size()\ *\ \textcolor{keyword}{sizeof}(Cell);\ \}}
+\DoxyCodeLine{01083\ }
+\DoxyCodeLine{01084\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_hash_table_acf71b39cbb3e50ad83e1ab7af13da34a}{get\_buffer\_size\_in\_cells}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size();\ \}}
+\DoxyCodeLine{01085\ }
+\DoxyCodeLine{01086\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_hash_table_abcb4accdce705f39d84031b502a5615a}{add\_elem\_size\_overflow}}(\textcolor{keywordtype}{size\_t}\ add\_size)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.overflow(add\_size\ +\ \mbox{\hyperlink{class_hash_table_a0dc3c363255f193681c77b4d2a82e995}{m\_size}});}
+\DoxyCodeLine{01088\ \ \ \ \ \}}
+\DoxyCodeLine{01089\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_COUNT\_COLLISIONS}}
+\DoxyCodeLine{01090\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ getCollisions()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ collisions;\ \}}
+\DoxyCodeLine{01091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01092\ }
+\DoxyCodeLine{01093\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{01095\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_hash_table_ac69dffcd6a75ec433c96b6bb4bab9fc9}{resize}}(\textcolor{keywordtype}{size\_t}\ for\_num\_elems\ =\ 0,\ \textcolor{keywordtype}{size\_t}\ for\_buf\_size\ =\ 0)\ \{}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{runtime__profile_8h_aaf031eb453aeee708e6e627425844795}{SCOPED\_RAW\_TIMER}}(\&\mbox{\hyperlink{class_hash_table_af8c4415cd83945be0ffc3ba1d097c0a8}{\_resize\_timer\_ns}});}
+\DoxyCodeLine{01097\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_DEBUG\_RESIZES}}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ Stopwatch\ watch;}
+\DoxyCodeLine{01099\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01100\ }
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ old\_size\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size();}
+\DoxyCodeLine{01102\ }
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ Grower\ new\_grower\ =\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}};}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (for\_num\_elems)\ \{}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \ \ \ \ new\_grower.set(for\_num\_elems);}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_grower.buf\_size()\ <=\ old\_size)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (for\_buf\_size)\ \{}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \ \ \ \ new\_grower.set\_buf\_size(for\_buf\_size);}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_grower.buf\_size()\ <=\ old\_size)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \ \ \ \ \ \ new\_grower.increase\_size();}
+\DoxyCodeLine{01117\ }
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ new\ bucket\ count\ exceed\ partitioned\ hash\ table\ bucket\ count\ threshold,}}
+\DoxyCodeLine{01119\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ don't\ resize\ and\ set\ need\ partition\ flag}}
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_hash_table_a8b8fe0155e31957108021f1f9ddd5298}{check\_if\_need\_partition}}(new\_grower.buf\_size()))\ \{}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ad619874c0d3c23e6612d165c2cb9ae51}{\_need\_partition}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01123\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01124\ }
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}\ =\ \textcolor{keyword}{reinterpret\_cast<}Cell*\textcolor{keyword}{>}(\mbox{\hyperlink{class_allocator_af48b30af68c846da954ef85a876ac5a9}{Allocator::realloc}}(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}},\ \mbox{\hyperlink{class_hash_table_a198db9796b9203b37490600dd1d312af}{get\_buffer\_size\_in\_bytes}}(),}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_grower.buf\_size()\ *\ \textcolor{keyword}{sizeof}(Cell)));}
+\DoxyCodeLine{01128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}\ =\ new\_grower;}
+\DoxyCodeLine{01129\ }
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ i\ =\ 0;}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ i\ <\ old\_size;\ ++i)}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].is\_zero(*\textcolor{keyword}{this})\ \&\&\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].is\_deleted())}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a4fd55077471e5ba8f2a7da327d394ac5}{reinsert}}(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i],\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].get\_hash(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{01138\ }
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].is\_zero(*\textcolor{keyword}{this})\ \&\&\ !\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].is\_deleted();\ ++i)}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_hash_table_a4fd55077471e5ba8f2a7da327d394ac5}{reinsert}}(\mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i],\ \mbox{\hyperlink{class_hash_table_a0206a94df49d5e10d01ca9a286ef2f7a}{buf}}[i].get\_hash(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{01149\ }
+\DoxyCodeLine{01150\ \textcolor{preprocessor}{\#ifdef\ DBMS\_HASH\_MAP\_DEBUG\_RESIZES}}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ watch.stop();}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ std::cerr\ <<\ std::fixed\ <<\ std::setprecision(3)\ <<\ \textcolor{stringliteral}{"{}Resize\ from\ "{}}\ <<\ old\_size\ <<\ \textcolor{stringliteral}{"{}\ to\ "{}}}
+\DoxyCodeLine{01153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \mbox{\hyperlink{class_hash_table_ab4741a14c6f81b5f465d578592106276}{grower}}.buf\_size()\ <<\ \textcolor{stringliteral}{"{}\ took\ "{}}\ <<\ watch.elapsedSeconds()\ <<\ \textcolor{stringliteral}{"{}\ sec."{}}}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::endl;}
+\DoxyCodeLine{01155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01156\ \ \ \ \ \}}
+\DoxyCodeLine{01157\ \};}
+
+\end{DoxyCode}

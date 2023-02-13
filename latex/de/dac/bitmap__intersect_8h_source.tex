@@ -1,0 +1,338 @@
+\hypertarget{bitmap__intersect_8h_source}{}\doxysection{bitmap\+\_\+intersect.\+h}
+\label{bitmap__intersect_8h_source}\index{/Users/dabowang/be\_all/util/bitmap\_intersect.h@{/Users/dabowang/be\_all/util/bitmap\_intersect.h}}
+\mbox{\hyperlink{bitmap__intersect_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <parallel\_hashmap/phmap.h>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{udf_8h}{udf/udf.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bitmap__value_8h}{util/bitmap\_value.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{string__ref_8h}{vec/common/string\_ref.h}}"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedetail}{detail}}\ \{}
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1detail_1_1_helper}{Helper}}\ \{}
+\DoxyCodeLine{00028\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_aa99d01a9b5793be475296dd08ee47a7a}{DATETIME\_PACKED\_TIME\_BYTE\_SIZE}}\ =\ 8;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab1cd4cdfd9bf78d0cf82bb341300bf6e}{DATETIME\_TYPE\_BYTE\_SIZE}}\ =\ 4;}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{DECIMAL\_BYTE\_SIZE}}\ =\ 16;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{comment}{//\ serialize\_size\ start}}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keyword}{static}\ int32\_t\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a67f65f5c7b7e4a340eb923f1cfa0cede}{serialize\_size}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ v)\ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}});}
+\DoxyCodeLine{00037\ \ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ write\_to\ start}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a99698bdd7ea1f3756395a0814b2d87f4}{write\_to}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ v,\ \textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ type\_size\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}});}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(dest,\ \&v,\ type\_size);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ dest\ +=\ type\_size;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00046\ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ read\_from\ start}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a32db61f844ad3461c2ef460c7987ea4c}{read\_from}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ src,\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ result)\ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ type\_size\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}});}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(result,\ *src,\ type\_size);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ *src\ +=\ type\_size;}
+\DoxyCodeLine{00054\ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00058\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{char}*\ Helper::write\_to<DateTimeValue>(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_date_time_value}{DateTimeValue}}\&\ v,\ \textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00060\ \ \ \ \ v.\mbox{\hyperlink{classdoris_1_1_date_time_value_a3eaae57445c28fce95117661813717ce}{to\_datetime\_val}}(\&\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00061\ \ \ \ \ *(int64\_t*)dest\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.packed\_time;}
+\DoxyCodeLine{00062\ \ \ \ \ dest\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_aa99d01a9b5793be475296dd08ee47a7a}{DATETIME\_PACKED\_TIME\_BYTE\_SIZE}};}
+\DoxyCodeLine{00063\ \ \ \ \ *(\textcolor{keywordtype}{int}*)dest\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.type;}
+\DoxyCodeLine{00064\ \ \ \ \ dest\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab1cd4cdfd9bf78d0cf82bb341300bf6e}{DATETIME\_TYPE\_BYTE\_SIZE}};}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00069\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{char}*\ Helper::write\_to<DecimalV2Value>(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}\&\ v,\ \textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \_\_int128\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ v.\mbox{\hyperlink{classdoris_1_1_decimal_v2_value_a81748e63071bc2b5ca9ea7869d25fb90}{value}}();}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(dest,\ \&\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{DECIMAL\_BYTE\_SIZE}});}
+\DoxyCodeLine{00072\ \ \ \ \ dest\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{DECIMAL\_BYTE\_SIZE}};}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00077\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{char}*\ Helper::write\_to<StringRef>(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\&\ v,\ \textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ *(int32\_t*)dest\ =\ v.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{00079\ \ \ \ \ dest\ +=\ 4;}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(dest,\ v.\mbox{\hyperlink{structdoris_1_1_string_ref_a8f64897c7ccc5c13f276d1d07c4e7095}{data}},\ v.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}});}
+\DoxyCodeLine{00081\ \ \ \ \ dest\ +=\ v.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}};}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00083\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00086\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{char}*\ Helper::write\_to<std::string>(\textcolor{keyword}{const}\ std::string\&\ v,\ \textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ *(uint32\_t*)dest\ =\ v.size();}
+\DoxyCodeLine{00088\ \ \ \ \ dest\ +=\ 4;}
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(dest,\ v.c\_str(),\ v.size());}
+\DoxyCodeLine{00090\ \ \ \ \ dest\ +=\ v.size();}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{return}\ dest;}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ write\_to\ end}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00096\ \textcolor{keyword}{inline}\ int32\_t\ Helper::serialize\_size<DateTimeValue>(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_date_time_value}{DateTimeValue}}\&\ v)\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_aa99d01a9b5793be475296dd08ee47a7a}{Helper::DATETIME\_PACKED\_TIME\_BYTE\_SIZE}}\ +\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab1cd4cdfd9bf78d0cf82bb341300bf6e}{Helper::DATETIME\_TYPE\_BYTE\_SIZE}};}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00101\ \textcolor{keyword}{inline}\ int32\_t\ Helper::serialize\_size<DecimalV2Value>(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}\&\ v)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{Helper::DECIMAL\_BYTE\_SIZE}};}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00106\ \textcolor{keyword}{inline}\ int32\_t\ Helper::serialize\_size<StringRef>(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\&\ v)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ v.\mbox{\hyperlink{structdoris_1_1_string_ref_a854352f53b148adc24983a58a1866d66}{size}}\ +\ 4;}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00111\ \textcolor{keyword}{inline}\ int32\_t\ Helper::serialize\_size<std::string>(\textcolor{keyword}{const}\ std::string\&\ v)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{return}\ v.size()\ +\ 4;}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ serialize\_size\ end}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00117\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ Helper::read\_from<DateTimeValue>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ src,\ \mbox{\hyperlink{classdoris_1_1_date_time_value}{DateTimeValue}}*\ result)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.is\_null\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.packed\_time\ =\ *(int64\_t*)(*src);}
+\DoxyCodeLine{00121\ \ \ \ \ *src\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_aa99d01a9b5793be475296dd08ee47a7a}{DATETIME\_PACKED\_TIME\_BYTE\_SIZE}};}
+\DoxyCodeLine{00122\ \ \ \ \ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}.type\ =\ *(\textcolor{keywordtype}{int}*)(*src);}
+\DoxyCodeLine{00123\ \ \ \ \ *src\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab1cd4cdfd9bf78d0cf82bb341300bf6e}{DATETIME\_TYPE\_BYTE\_SIZE}};}
+\DoxyCodeLine{00124\ \ \ \ \ *result\ =\ \mbox{\hyperlink{classdoris_1_1_date_time_value_a305f19465341b56ddac74592070b939d}{DateTimeValue::from\_datetime\_val}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00128\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ Helper::read\_from<DecimalV2Value>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ src,\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}*\ result)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \_\_int128\ v\ =\ 0;}
+\DoxyCodeLine{00130\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&v,\ *src,\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{DECIMAL\_BYTE\_SIZE}});}
+\DoxyCodeLine{00131\ \ \ \ \ *src\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_ab83326c93f20d518dac5c413c5c7758e}{DECIMAL\_BYTE\_SIZE}};}
+\DoxyCodeLine{00132\ \ \ \ \ *result\ =\ \mbox{\hyperlink{classdoris_1_1_decimal_v2_value}{DecimalV2Value}}(v);}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00136\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ Helper::read\_from<StringRef>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ src,\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}*\ result)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ int32\_t\ length\ =\ *(int32\_t*)(*src);}
+\DoxyCodeLine{00138\ \ \ \ \ *src\ +=\ 4;}
+\DoxyCodeLine{00139\ \ \ \ \ *result\ =\ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}((\textcolor{keywordtype}{char}*)*src,\ length);}
+\DoxyCodeLine{00140\ \ \ \ \ *src\ +=\ length;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00144\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ Helper::read\_from<std::string>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ src,\ std::string*\ result)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ int32\_t\ length\ =\ *(int32\_t*)(*src);}
+\DoxyCodeLine{00146\ \ \ \ \ *src\ +=\ 4;}
+\DoxyCodeLine{00147\ \ \ \ \ *result\ =\ std::string((\textcolor{keywordtype}{char}*)*src,\ length);}
+\DoxyCodeLine{00148\ \ \ \ \ *src\ +=\ length;}
+\DoxyCodeLine{00149\ \}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ read\_from\ end}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ Calculate\ the\ intersection\ of\ two\ or\ more\ bitmaps}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ Usage:\ intersect\_count(bitmap\_column\_to\_count,\ filter\_column,\ filter\_values\ ...)}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ Example:\ intersect\_count(user\_id,\ event,\ 'A',\ 'B',\ 'C'),\ meaning\ find\ the\ intersect\ count\ of\ user\_id\ in\ all\ A/B/C\ 3\ bitmaps}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//\ Todo(kks)\ Use\ Array\ type\ instead\ of\ variable\ arguments}}
+\DoxyCodeLine{00158\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00159\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_bitmap_intersect}{BitmapIntersect}}\ \{}
+\DoxyCodeLine{00160\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_ab8d08079484844fc3bfa0fa186adc995}{BitmapIntersect}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_ab405e076128510148c0433516bff319b}{BitmapIntersect}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\ \{\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a4d7b60f1223692323daf5249cf6f9c78}{deserialize}}(src);\ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_ac7361ed8377ae16ba2ad2815e0cc22c9}{add\_key}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ key)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ empty\_bitmap;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ =\ empty\_bitmap;}
+\DoxyCodeLine{00168\ \ \ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a4f7ddf7b447653bec75f2eadeb03541b}{update}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ key,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\&\ bitmap)\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.find(key)\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end())\ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ |=\ bitmap;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_acafc37bee8b50cf473bb4e199a852562}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect}{BitmapIntersect}}\&\ other)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ other.\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.find(kv.first)\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end())\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[kv.first]\ |=\ kv.second;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[kv.first]\ =\ kv.second;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00184\ \ \ \ \ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{//\ intersection}}
+\DoxyCodeLine{00187\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a77bf1ff3a3e5cff8a7f710c7283fab3f}{intersect}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ result;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.begin();}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ result\ |=\ it-\/>second;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ it++;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ it\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end();\ it++)\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ result\ \&=\ it-\/>second;}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ calculate\ the\ intersection\ for\ \_bitmaps's\ bitmap\ values}}
+\DoxyCodeLine{00199\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a41f0775c4da29d3fd110fad1c38b167a}{intersect\_count}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.empty())\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a77bf1ff3a3e5cff8a7f710c7283fab3f}{intersect}}().\mbox{\hyperlink{classdoris_1_1_bitmap_value_a4d0b3b1cac401ac3b80bfda3fc7bb8d0}{cardinality}}();}
+\DoxyCodeLine{00204\ \ \ \ \ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ the\ serialize\ size}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}()\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ =\ 4;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a67f65f5c7b7e4a340eb923f1cfa0cede}{detail::Helper::serialize\_size}}(kv.first);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ +=\ kv.second.getSizeInBytes();}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}};}
+\DoxyCodeLine{00214\ \ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//must\ call\ size()\ first}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a8ddd07ffdcc1244e8405ef6eef7a91b7}{serialize}}(\textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ writer\ =\ dest;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ *(int32\_t*)writer\ =\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.size();}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ writer\ +=\ 4;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ =\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a99698bdd7ea1f3756395a0814b2d87f4}{detail::Helper::write\_to}}(kv.first,\ writer);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ kv.second.write(writer);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ +=\ kv.second.getSizeInBytes();}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a4d7b60f1223692323daf5249cf6f9c78}{deserialize}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ reader\ =\ src;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ int32\_t\ bitmaps\_size\ =\ *(int32\_t*)reader;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ reader\ +=\ 4;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (int32\_t\ i\ =\ 0;\ i\ <\ bitmaps\_size;\ i++)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ key;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a32db61f844ad3461c2ef460c7987ea4c}{detail::Helper::read\_from}}(\&reader,\ \&key);}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ bitmap(reader);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ reader\ +=\ bitmap.\mbox{\hyperlink{classdoris_1_1_bitmap_value_a96fe7b6560373b0d4d51e91c19f2dc26}{getSizeInBytes}}();}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ =\ bitmap;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00242\ \ \ \ \ std::map<T,\ BitmapValue>\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}};}
+\DoxyCodeLine{00243\ \};}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00246\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_bitmap_intersect}{BitmapIntersect}}<std::string\_view>\ \{}
+\DoxyCodeLine{00247\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_ab8d08079484844fc3bfa0fa186adc995}{BitmapIntersect}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_ab405e076128510148c0433516bff319b}{BitmapIntersect}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\ \{\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a4d7b60f1223692323daf5249cf6f9c78}{deserialize}}(src);\ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_ad50e1eab3d6fc1496d23a0f10b2680f9}{add\_key}}(\textcolor{keyword}{const}\ std::string\_view\ key)\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ empty\_bitmap;}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ =\ empty\_bitmap;}
+\DoxyCodeLine{00255\ \ \ \ \ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_ae07b1ce28ac93a67d590dc4f2c33b39b}{update}}(\textcolor{keyword}{const}\ std::string\_view\&\ key,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\&\ bitmap)\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.find(key)\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end())\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ |=\ bitmap;}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00261\ \ \ \ \ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_acafc37bee8b50cf473bb4e199a852562}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect}{BitmapIntersect}}\&\ other)\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ other.\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.find(kv.first)\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end())\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[kv.first]\ |=\ kv.second;}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[kv.first]\ =\ kv.second;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{comment}{//\ intersection}}
+\DoxyCodeLine{00274\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a77bf1ff3a3e5cff8a7f710c7283fab3f}{intersect}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ result;}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.begin();}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ result\ |=\ it-\/>second;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ it++;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ it\ !=\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.end();\ it++)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ result\ \&=\ it-\/>second;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00283\ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ calculate\ the\ intersection\ for\ \_bitmaps's\ bitmap\ values}}
+\DoxyCodeLine{00286\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a41f0775c4da29d3fd110fad1c38b167a}{intersect\_count}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.empty())\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a77bf1ff3a3e5cff8a7f710c7283fab3f}{intersect}}().\mbox{\hyperlink{classdoris_1_1_bitmap_value_a4d0b3b1cac401ac3b80bfda3fc7bb8d0}{cardinality}}();}
+\DoxyCodeLine{00291\ \ \ \ \ \}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ the\ serialize\ size}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a0b6b70701c46e22849f0f363861351cd}{size}}()\ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ =\ 4;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ +=\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a67f65f5c7b7e4a340eb923f1cfa0cede}{detail::Helper::serialize\_size}}(kv.first);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}}\ +=\ kv.second.getSizeInBytes();}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a0b6b70701c46e22849f0f363861351cd}{size}};}
+\DoxyCodeLine{00301\ \ \ \ \ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//must\ call\ size()\ first}}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a8ddd07ffdcc1244e8405ef6eef7a91b7}{serialize}}(\textcolor{keywordtype}{char}*\ dest)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ writer\ =\ dest;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ *(int32\_t*)writer\ =\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}.size();}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ writer\ +=\ 4;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ kv\ :\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}})\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ =\ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a99698bdd7ea1f3756395a0814b2d87f4}{detail::Helper::write\_to}}(kv.first,\ writer);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ kv.second.write(writer);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ writer\ +=\ kv.second.getSizeInBytes();}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a4d7b60f1223692323daf5249cf6f9c78}{deserialize}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ reader\ =\ src;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ int32\_t\ bitmaps\_size\ =\ *(int32\_t*)reader;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ reader\ +=\ 4;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (int32\_t\ i\ =\ 0;\ i\ <\ bitmaps\_size;\ i++)\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ key;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1detail_1_1_helper_a32db61f844ad3461c2ef460c7987ea4c}{detail::Helper::read\_from}}(\&reader,\ \&key);}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_value}{BitmapValue}}\ bitmap(reader);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ reader\ +=\ bitmap.\mbox{\hyperlink{classdoris_1_1_bitmap_value_a96fe7b6560373b0d4d51e91c19f2dc26}{getSizeInBytes}}();}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_a34f649ca300a4b4efaca1f9ddf4b4c0b}{\_bitmaps}}[key]\ =\ bitmap;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00329\ \ \ \ \ phmap::flat\_hash\_map<std::string,\ BitmapValue>\ \mbox{\hyperlink{structdoris_1_1_bitmap_intersect_3_01std_1_1string__view_01_4_a04c31bf3af242b8b66bb11ec6d500588}{\_bitmaps}};}
+\DoxyCodeLine{00330\ \};}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

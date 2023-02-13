@@ -1,0 +1,124 @@
+\hypertarget{delete__handler_8h_source}{}\doxysection{delete\+\_\+handler.\+h}
+\label{delete__handler_8h_source}\index{/Users/dabowang/be\_all/olap/delete\_handler.h@{/Users/dabowang/be\_all/olap/delete\_handler.h}}
+\mbox{\hyperlink{delete__handler_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/AgentService\_types.h"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/olap\_file.pb.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block__column__predicate_8h}{olap/block\_column\_predicate.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__predicate_8h}{olap/column\_predicate.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap__define_8h}{olap/olap\_define.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__meta_8h}{olap/rowset/rowset\_meta.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }RowCursor;}
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }Tablet;}
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }TabletReader;}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }TabletSchema;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Represent\ a\ delete\ condition.}}
+\DoxyCodeLine{00039\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_delete_conditions}{DeleteConditions}}\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_delete_conditions_ab0b545a7f1f0db3adf95c8ec592207d5}{filter\_version}}\ =\ 0;\ \textcolor{comment}{//\ The\ version\ of\ this\ condition}}
+\DoxyCodeLine{00041\ \ \ \ \ std::vector<const\ ColumnPredicate*>\ \mbox{\hyperlink{structdoris_1_1_delete_conditions_ad4b3954e8e87e8dd915ffa61368dc5f8}{column\_predicate\_vec}};}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ This\ class\ is\ used\ for\ checking\ whether\ a\ row\ should\ be\ deleted.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ It\ is\ used\ in\ the\ following\ processes：}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ 1.\ Create\ and\ initialize\ a\ DeleteHandler\ object:}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ Status\ res;}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ DeleteHandler\ delete\_handler;}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ res\ =\ delete\_handler.init(tablet,\ condition\_version);}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ 2.\ After\ all\ rows\ have\ been\ checked,\ you\ should\ release\ this\ object\ by\ calling:}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \ delete\_handler.finalize();}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ NOTE：}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ *\ In\ the\ first\ step,\ before\ calling\ delete\_handler.init(),\ you\ should\ lock\ the\ tablet's\ header\ file.}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}}\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ These\ static\ method\ is\ used\ to\ generate\ delete\ predicate\ pb\ during\ write\ or\ push\ handler}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ generated\ DeletePredicatePB\ by\ TCondition}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_aef38ff39c766ac9521dd6d226bbd2687}{generate\_delete\_predicate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}\&\ schema,}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<TCondition>\&\ conditions,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DeletePredicatePB*\ del\_pred);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ construct\ sub\ condition\ from\ TCondition}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a3d6aa6b9b0bc44c54fe624a3371c3591}{construct\_sub\_predicates}}(\textcolor{keyword}{const}\ TCondition\&\ condition);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Validate\ the\ condition\ on\ the\ schema.}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_afb922547b3d7b31d944edc3e8d635f2f}{check\_condition\_valid}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}\&\ tablet\_schema,\ \textcolor{keyword}{const}\ TCondition\&\ cond);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ Check\ whether\ the\ condition\ value\ is\ valid\ according\ to\ its\ type.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ 1.\ For\ integers(int8,int16,in32,int64,uint8,uint16,uint32,uint64),\ check\ whether\ they\ are\ overflow}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ 2.\ For\ decimal,\ check\ whether\ precision\ or\ scale\ is\ overflow}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ 3.\ For\ date\ and\ datetime,\ check\ format\ and\ value}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ 4.\ For\ char\ and\ varchar,\ check\ length}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_af82bea045f4799694eee38255fd6d107}{is\_condition\_value\_valid}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column,}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ condition\_op,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ value\_str);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_handler_a95aefa0c7f0de0987b58e6fc1ad87de7}{DeleteHandler}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_handler_aaa8002a1cccb7df1bcd89ac13ea683a6}{\string~DeleteHandler}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a32d626626eee0bc4ade146973f6abb1c}{finalize}}();\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Initialize\ DeleteHandler,\ use\ the\ delete\ conditions\ of\ this\ tablet\ whose\ version\ less\ than\ or\ equal\ to}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ 'version'\ to\ fill\ '\_del\_conds'.}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ You\ should\ lock\ the\ tablet's\ header\ file\ before\ calling\ this\ function.}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ input:}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ *\ schema:\ tablet's\ schema,\ the\ delete\ conditions\ and\ data\ rows\ are\ in\ this\ schema}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ *\ version:\ maximum\ version}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ return:}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ *\ Status::Error<DELETE\_INVALID\_PARAMETERS>():\ input\ parameters\ are\ not\ valid}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ *\ Status::Error<MEM\_ALLOC\_FAILED>():\ alloc\ memory\ failed}}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a11eac6e3793876619d23e015f6faede0}{init}}(\mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ tablet\_schema,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetMetaSharedPtr>\&\ delete\_conditions,\ int64\_t\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}});}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a644718bb2fb240de962dc3c9a1fdf0dc}{empty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a177687441f8c2a80acf69adac21b1a33}{\_del\_conds}}.empty();\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Release\ an\ instance\ of\ this\ class.}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a32d626626eee0bc4ade146973f6abb1c}{finalize}}();}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a214311ad5342907f71b4f018cd51bdde}{get\_delete\_conditions\_after\_version}}(}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{file__helper_8h_acd99bb05ca015e7d74448acb1deba7ca}{version}},\ \mbox{\hyperlink{classdoris_1_1_and_block_column_predicate}{AndBlockColumnPredicate}}*\ and\_block\_column\_predicate\_ptr,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<int32\_t,\ std::vector<const\ ColumnPredicate*>>*}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_id\_to\_del\_predicates)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ Use\ regular\ expression\ to\ extract\ 'column\_name',\ 'op'\ and\ 'operands'}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_aaf37c58f39272b591ead3e37dbbd1b4c}{\_parse\_condition}}(\textcolor{keyword}{const}\ std::string\&\ condition\_str,\ TCondition*\ condition);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a46da2f04d3ff21b5f86ec12149721e51}{\_is\_inited}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ DeleteConditions\ in\ \_del\_conds\ are\ in\ 'OR'\ relationship}}
+\DoxyCodeLine{00112\ \ \ \ \ std::vector<DeleteConditions>\ \mbox{\hyperlink{classdoris_1_1_delete_handler_a177687441f8c2a80acf69adac21b1a33}{\_del\_conds}};}
+\DoxyCodeLine{00113\ \ \ \ \ std::unique\_ptr<MemPool>\ \mbox{\hyperlink{classdoris_1_1_delete_handler_ab9e7f13ce94cbbf6f2f922368fd67cec}{\_predicate\_mem\_pool}};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_handler_a4f7877f71cd6d3ef028505ef3a89a8f6}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}});}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

@@ -1,0 +1,1174 @@
+\hypertarget{port_8h_source}{}\doxysection{port.\+h}
+\label{port_8h_source}\index{/Users/dabowang/be\_all/gutil/port.h@{/Users/dabowang/be\_all/gutil/port.h}}
+\mbox{\hyperlink{port_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (C)\ 1999\ and\ onwards\ Google,\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ These\ are\ weird\ things\ we\ need\ to\ do\ to\ get\ this\ compiling\ on}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ random\ systems\ (and\ on\ SWIG).}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <limits.h>}\ \textcolor{comment}{//\ So\ we\ can\ set\ the\ bounds\ of\ our\ types}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \textcolor{comment}{//\ for\ free()}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <string.h>}\ \textcolor{comment}{//\ for\ memcpy()}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ for\ getpagesize()\ on\ mac}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#ifndef\ \_POSIX\_C\_SOURCE}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <mach/vm\_page\_size.h>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#elif\ defined(OS\_CYGWIN)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <malloc.h>}\ \textcolor{comment}{//\ for\ memalign()}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{integral__types_8h}{gutil/integral\_types.h}}"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ Must\ happens\ before\ inttypes.h\ inclusion\ */}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{/*\ From\ MacOSX's\ inttypes.h:}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ "{}C++\ implementations\ should\ define\ these\ macros\ only\ when}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ \ \_\_STDC\_FORMAT\_MACROS\ is\ defined\ before\ <inttypes.h>\ is\ included."{}\ */}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#ifndef\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#define\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_STDC\_FORMAT\_MACROS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_APPLE\_\_\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{/*\ Default\ for\ most\ OSes\ */}}
+\DoxyCodeLine{00039\ \textcolor{comment}{/*\ We\ use\ SIGPWR\ since\ that\ seems\ unlikely\ to\ be\ used\ for\ other\ reasons.\ */}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#define\ GOOGLE\_OBSCURE\_SIGNAL\ SIGPWR}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#if\ defined\ OS\_LINUX\ ||\ defined\ OS\_CYGWIN}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \_BIG\_ENDIAN}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{endian_8h}{endian.h}}>}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ The\ uint\ mess:}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ mysql.h\ sets\ \_GNU\_SOURCE\ which\ sets\ \_\_USE\_MISC\ in\ <features.h>}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ sys/types.h\ typedefs\ uint\ if\ \_\_USE\_MISC}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ mysql\ typedefs\ uint\ if\ HAVE\_UINT\ not\ set}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ The\ following\ typedef\ is\ carefully\ considered,\ and\ should\ not\ cause}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ any\ clashes}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#if\ !defined(\_\_USE\_MISC)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#if\ !defined(HAVE\_UINT)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#define\ HAVE\_UINT\ 1}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{utfdef_8h_ad46b2ebcd4c426b06cda147ddc1001e7}{uint}};}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#if\ !defined(HAVE\_USHORT)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#define\ HAVE\_USHORT\ 1}}
+\DoxyCodeLine{00060\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ \mbox{\hyperlink{utfdef_8h_a6fafc11f63598e7fde1261792e381393}{ushort}};}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#if\ !defined(HAVE\_ULONG)}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#define\ HAVE\_ULONG\ 1}}
+\DoxyCodeLine{00064\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{utfdef_8h_a6fcafe7f84d4c52e75984340b07e714e}{ulong}};}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <cstddef>}\ \textcolor{comment}{//\ For\ \_GLIBCXX\ macros}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#if\ !defined(HAVE\_TLS)\ \&\&\ defined(\_GLIBCXX\_HAVE\_TLS)\ \&\&\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#define\ HAVE\_TLS\ 1}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#elif\ defined\ OS\_FREEBSD}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ \_BIG\_ENDIAN}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#include\ <machine/endian.h>}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#elif\ defined\ OS\_SOLARIS}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ \_BIG\_ENDIAN}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#include\ <sys/isa\_defs.h>}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ Solaris\ doesn't\ define\ sig\_t\ (function\ taking\ an\ int,\ returning\ void)}}
+\DoxyCodeLine{00087\ \textcolor{keyword}{typedef}\ void\ (*sig\_t)(int);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ Solaris\ only\ defines\ strtoll,\ not\ strtoq}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#define\ strtoq\ strtoll}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#define\ strtouq\ strtoull}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ It\ doesn't\ define\ the\ posix-\/standard(?)\ u\_int\_16}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#include\ <sys/int\_types.h>}\ \textcolor{comment}{//\ NOLINT(build/include)}}
+\DoxyCodeLine{00095\ \textcolor{keyword}{typedef}\ uint16\_t\ u\_int16\_t;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#elif\ defined\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ BIG\_ENDIAN}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#include\ <machine/endian.h>}\ \textcolor{comment}{//\ NOLINT(build/include)}}
+\DoxyCodeLine{00101\ \textcolor{comment}{/*\ Let's\ try\ and\ follow\ the\ Linux\ convention\ */}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ \_\_BYTE\_ORDER\ BYTE\_ORDER}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#define\ \_\_LITTLE\_ENDIAN\ LITTLE\_ENDIAN}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#define\ \_\_BIG\_ENDIAN\ BIG\_ENDIAN}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ The\ following\ guarenty\ declaration\ of\ the\ byte\ swap\ functions,\ and}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ define\ \_\_BYTE\_ORDER\ for\ MSVC}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \textcolor{comment}{//\ NOLINT(build/include)}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#define\ \_\_BYTE\_ORDER\ \_\_LITTLE\_ENDIAN}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#define\ bswap\_16(x)\ \_byteswap\_ushort(x)}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#define\ bswap\_32(x)\ \_byteswap\_ulong(x)}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#define\ bswap\_64(x)\ \_byteswap\_uint64(x)}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#elif\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ Mac\ OS\ X\ /\ Darwin\ features}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#include\ <libkern/OSByteOrder.h>}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#define\ bswap\_16(x)\ OSSwapInt16(x)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#define\ bswap\_32(x)\ OSSwapInt32(x)}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#define\ bswap\_64(x)\ OSSwapInt64(x)}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#elif\ defined(\_\_GLIBC\_\_)}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#include\ <byteswap.h>}\ \textcolor{comment}{//\ IWYU\ pragma:\ export}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_ac2a9e79eb120216f855626495b7bd18a}{uint16}}\ \mbox{\hyperlink{port_8h_ad409605fabe125b1d222acb94a3f480f}{bswap\_16}}(\mbox{\hyperlink{integral__types_8h_ac2a9e79eb120216f855626495b7bd18a}{uint16}}\ x)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordflow}{return}\ ((x\ \&\ 0xFF)\ <<\ 8)\ |\ ((x\ \&\ 0xFF00)\ >>\ 8);}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#define\ bswap\_16(x)\ bswap\_16(x)}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{port_8h_a5bcbf8b6ee067af4c2fd60ef3bdb39d2}{bswap\_32}}(\mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ x)\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{return}\ (((x\ \&\ 0xFF)\ <<\ 24)\ |\ ((x\ \&\ 0xFF00)\ <<\ 8)\ |\ ((x\ \&\ 0xFF0000)\ >>\ 8)\ |}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ ((x\ \&\ 0xFF000000)\ >>\ 24));}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#define\ bswap\_32(x)\ bswap\_32(x)}}
+\DoxyCodeLine{00138\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{port_8h_a0c0b427a2547aa727e2c5262a174e26b}{bswap\_64}}(\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ x)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{return}\ (((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF))\ <<\ 56)\ |\ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF00))\ <<\ 40)\ |}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF0000))\ <<\ 24)\ |\ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF000000))\ <<\ 8)\ |}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF00000000))\ >>\ 8)\ |\ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF0000000000))\ >>\ 24)\ |}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF000000000000))\ >>\ 40)\ |}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ ((x\ \&\ \mbox{\hyperlink{integral__types_8h_a786084546298ed4128cd0742d10e280c}{GG\_ULONGLONG}}(0xFF00000000000000))\ >>\ 56));}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#define\ bswap\_64(x)\ bswap\_64(x)}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ define\ the\ macros\ IS\_LITTLE\_ENDIAN\ or\ IS\_BIG\_ENDIAN}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ using\ the\ above\ endian\ definitions\ from\ endian.h\ if}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ endian.h\ was\ included}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#ifdef\ \_\_BYTE\_ORDER}}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#if\ \_\_BYTE\_ORDER\ ==\ \_\_LITTLE\_ENDIAN}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#define\ IS\_LITTLE\_ENDIAN}}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#if\ \_\_BYTE\_ORDER\ ==\ \_\_BIG\_ENDIAN}}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#define\ IS\_BIG\_ENDIAN}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#if\ defined(\_\_LITTLE\_ENDIAN\_\_)}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ IS\_LITTLE\_ENDIAN}}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#elif\ defined(\_\_BIG\_ENDIAN\_\_)}}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#define\ IS\_BIG\_ENDIAN}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ there\ is\ also\ PDP\ endian\ ...}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_BYTE\_ORDER}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{comment}{//\ Define\ the\ OS's\ path\ separator}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus\ }\textcolor{comment}{//\ C\ won't\ merge\ duplicate\ const\ variables\ at\ link\ time}}
+\DoxyCodeLine{00175\ \textcolor{comment}{//\ Some\ headers\ provide\ a\ macro\ for\ this\ (GCC's\ system.h),\ remove\ it\ so\ that\ we}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ can\ use\ our\ own.}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\#undef\ PATH\_SEPARATOR}}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#if\ defined(OS\_WINDOWS)}}
+\DoxyCodeLine{00179\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ PATH\_SEPARATOR\ =\ \textcolor{charliteral}{'\(\backslash\)\(\backslash\)'};}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00181\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ PATH\_SEPARATOR\ =\ \textcolor{charliteral}{'/'};}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ Windows\ has\ O\_BINARY\ as\ a\ flag\ to\ open()\ (like\ "{}b"{}\ for\ fopen).}}
+\DoxyCodeLine{00186\ \textcolor{comment}{//\ Linux\ doesn't\ need\ make\ this\ distinction.}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#if\ defined\ OS\_LINUX\ \&\&\ !defined\ O\_BINARY}}
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#define\ O\_BINARY\ 0}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ va\_copy\ portability\ definitions}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ MSVC\ doesn't\ have\ va\_copy\ yet.}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ This\ is\ believed\ to\ work\ for\ 32-\/bit\ msvc.\ \ This\ may\ not\ work\ at\ all\ for}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ other\ platforms.}}
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ If\ va\_list\ uses\ the\ single-\/element-\/array\ trick,\ you\ will\ probably\ get}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ a\ compiler\ error\ here.}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\#include\ <stdarg.h>}}
+\DoxyCodeLine{00200\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ va\_copy(va\_list\&\ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}},\ va\_list\&\ b)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a20972992d1a551bcd609cfb231f91d8a}{a}}\ =\ b;}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{comment}{//\ Nor\ does\ it\ have\ uid\_t}}
+\DoxyCodeLine{00205\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ uid\_t;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{//\ Mac\ OS\ X\ /\ Darwin\ features}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ For\ mmap,\ Linux\ defines\ both\ MAP\_ANONYMOUS\ and\ MAP\_ANON\ and\ says\ MAP\_ANON\ is}}
+\DoxyCodeLine{00214\ \textcolor{comment}{//\ deprecated.\ In\ Darwin,\ MAP\_ANON\ is\ all\ there\ is.}}
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\#if\ !defined\ MAP\_ANONYMOUS}}
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\#define\ MAP\_ANONYMOUS\ MAP\_ANON}}
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ Linux\ has\ this\ in\ <sys/cdefs.h>}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#define\ \_\_ptr\_t\ void*}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{comment}{//\ Linux\ has\ this\ in\ <linux/errno.h>}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\#define\ EXFULL\ ENOMEM\ }\textcolor{comment}{//\ not\ really\ that\ great\ a\ translation...}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \textcolor{comment}{//\ Darwin\ doesn't\ have\ strnlen.\ No\ comment.}}
+\DoxyCodeLine{00226\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ strnlen(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s,\ \textcolor{keywordtype}{size\_t}\ maxlen)\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ end\ =\ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)memchr(s,\ \textcolor{charliteral}{'\(\backslash\)0'},\ maxlen);}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{if}\ (end)\ \textcolor{keywordflow}{return}\ end\ -\/\ s;}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ maxlen;}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keyword}{namespace\ }std\ \{\}\ \ \ \ \ \textcolor{comment}{//\ namespace\ std}}
+\DoxyCodeLine{00233\ \textcolor{keyword}{using\ namespace\ }std;\ \textcolor{comment}{//\ Just\ like\ VC++,\ we\ need\ a\ using\ here.}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \textcolor{comment}{//\ Doesn't\ exist\ on\ OSX;\ used\ in\ google.cc\ for\ send()\ to\ mean\ "{}no\ flags"{}.}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#ifndef\ MSG\_NOSIGNAL}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#define\ MSG\_NOSIGNAL\ 0}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{comment}{//\ No\ SIGPWR\ on\ MacOSX.\ \ SIGINFO\ seems\ suitably\ obscure.}}
+\DoxyCodeLine{00241\ \textcolor{preprocessor}{\#undef\ GOOGLE\_OBSCURE\_SIGNAL}}
+\DoxyCodeLine{00242\ \textcolor{preprocessor}{\#define\ GOOGLE\_OBSCURE\_SIGNAL\ SIGINFO}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\#elif\ defined(OS\_CYGWIN)\ }\textcolor{comment}{//\ Cygwin-\/specific\ behavior.}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{\#if\ defined(\_\_CYGWIN32\_\_)}}
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\#define\ \_\_WORDSIZE\ 32}}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00249\ \textcolor{comment}{//\ It's\ probably\ possible\ to\ support\ 64-\/bit,\ but\ the\ \#defines\ will\ need\ checked.}}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\#error\ "{}Cygwin\ is\ currently\ only\ 32-\/bit."{}}}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{comment}{//\ No\ signalling\ on\ Windows.}}
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\#undef\ GOOGLE\_OBSCURE\_SIGNAL}}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#define\ GOOGLE\_OBSCURE\_SIGNAL\ 0}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{keyword}{struct\ }stack\_t\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{void}*\ ss\_sp;}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordtype}{int}\ ss\_flags;}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ ss\_size;}
+\DoxyCodeLine{00261\ \};}
+\DoxyCodeLine{00262\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ sigaltstack(stack\_t*\ ss,\ stack\_t*\ oss)\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00264\ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\#define\ PTHREAD\_STACK\_MIN\ 0\ }\textcolor{comment}{//\ Not\ provided\ by\ cygwin}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{comment}{//\ Scans\ memory\ for\ a\ character.}}
+\DoxyCodeLine{00269\ \textcolor{comment}{//\ memrchr\ is\ used\ in\ a\ few\ places,\ but\ it's\ linux-\/specific.}}
+\DoxyCodeLine{00270\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{memutil_8cc_a26b9149d447a88375f00e253e53d784f}{memrchr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ bytes,\ \textcolor{keywordtype}{int}\ find\_char,\ \textcolor{keywordtype}{size\_t}\ len)\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ cursor\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(bytes)\ +\ len\ -\/\ 1;}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ actual\_char\ =\ find\_char;}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ cursor\ >=\ bytes;\ -\/-\/cursor)\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*cursor\ ==\ actual\_char)\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(cursor));}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \textcolor{comment}{//\ Klocwork\ static\ analysis\ tool's\ C/C++\ compiler\ kwcc}}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#if\ defined(\_\_KLOCWORK\_\_)}}
+\DoxyCodeLine{00285\ \textcolor{preprocessor}{\#define\ STATIC\_ANALYSIS}}
+\DoxyCodeLine{00286\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_KLOCWORK\_\_}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \textcolor{comment}{//\ GCC-\/specific\ features}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\#if\ (defined(\_\_GNUC\_\_)\ ||\ defined(\_\_APPLE\_\_))\ \&\&\ !defined(SWIG)}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{comment}{//}}
+\DoxyCodeLine{00293\ \textcolor{comment}{//\ Tell\ the\ compiler\ to\ do\ printf\ format\ string\ checking\ if\ the}}
+\DoxyCodeLine{00294\ \textcolor{comment}{//\ compiler\ supports\ it;\ see\ the\ 'format'\ attribute\ in}}
+\DoxyCodeLine{00295\ \textcolor{comment}{//\ <http://gcc.gnu.org/onlinedocs/gcc-\/4.3.0/gcc/Function-\/Attributes.html>.}}
+\DoxyCodeLine{00296\ \textcolor{comment}{//}}
+\DoxyCodeLine{00297\ \textcolor{comment}{//\ N.B.:\ As\ the\ GCC\ manual\ states,\ "{}[s]ince\ non-\/static\ C++\ methods}}
+\DoxyCodeLine{00298\ \textcolor{comment}{//\ have\ an\ implicit\ 'this'\ argument,\ the\ arguments\ of\ such\ methods}}
+\DoxyCodeLine{00299\ \textcolor{comment}{//\ should\ be\ counted\ from\ two,\ not\ one."{}}}
+\DoxyCodeLine{00300\ \textcolor{comment}{//}}
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#define\ PRINTF\_ATTRIBUTE(string\_index,\ first\_to\_check)\ \(\backslash\)}}
+\DoxyCodeLine{00302\ \textcolor{preprocessor}{\ \ \ \ \_\_attribute\_\_((\_\_format\_\_(\_\_printf\_\_,\ string\_index,\ first\_to\_check)))}}
+\DoxyCodeLine{00303\ \textcolor{preprocessor}{\#define\ SCANF\_ATTRIBUTE(string\_index,\ first\_to\_check)\ \(\backslash\)}}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\ \ \ \ \_\_attribute\_\_((\_\_format\_\_(\_\_scanf\_\_,\ string\_index,\ first\_to\_check)))}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{comment}{//}}
+\DoxyCodeLine{00307\ \textcolor{comment}{//\ Prevent\ the\ compiler\ from\ padding\ a\ structure\ to\ natural\ alignment}}
+\DoxyCodeLine{00308\ \textcolor{comment}{//}}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\#define\ PACKED\ \_\_attribute\_\_((packed))}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ Cache\ line\ alignment}}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#if\ defined(\_\_i386\_\_)\ ||\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\#define\ CACHELINE\_SIZE\ 64}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#elif\ defined(\_\_powerpc64\_\_)}}
+\DoxyCodeLine{00315\ \textcolor{comment}{//\ TODO(user)\ This\ is\ the\ L1\ D-\/cache\ line\ size\ of\ our\ Power7\ machines.}}
+\DoxyCodeLine{00316\ \textcolor{comment}{//\ Need\ to\ check\ if\ this\ is\ appropriate\ for\ other\ PowerPC64\ systems.}}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\#define\ CACHELINE\_SIZE\ 128}}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#elif\ defined(\_\_arm\_\_)}}
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ Cache\ line\ sizes\ for\ ARM:\ These\ values\ are\ not\ strictly\ correct\ since}}
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ cache\ line\ sizes\ depend\ on\ implementations,\ not\ architectures.\ \ There}}
+\DoxyCodeLine{00321\ \textcolor{comment}{//\ are\ even\ implementations\ with\ cache\ line\ sizes\ configurable\ at\ boot}}
+\DoxyCodeLine{00322\ \textcolor{comment}{//\ time.}}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#if\ defined(\_\_ARM\_ARCH\_5T\_\_)}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\#define\ CACHELINE\_SIZE\ 32}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#elif\ defined(\_\_ARM\_ARCH\_7A\_\_)}}
+\DoxyCodeLine{00326\ \textcolor{preprocessor}{\#define\ CACHELINE\_SIZE\ 64}}
+\DoxyCodeLine{00327\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \textcolor{comment}{//\ This\ is\ a\ NOP\ if\ CACHELINE\_SIZE\ is\ not\ defined.}}
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\#ifdef\ CACHELINE\_SIZE}}
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\#define\ CACHELINE\_ALIGNED\ \_\_attribute\_\_((aligned(CACHELINE\_SIZE)))}}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00334\ \textcolor{preprocessor}{\#define\ CACHELINE\_ALIGNED}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \textcolor{comment}{//}}
+\DoxyCodeLine{00338\ \textcolor{comment}{//\ Prevent\ the\ compiler\ from\ complaining\ about\ or\ optimizing\ away\ variables}}
+\DoxyCodeLine{00339\ \textcolor{comment}{//\ that\ appear\ unused}}
+\DoxyCodeLine{00340\ \textcolor{comment}{//\ (careful,\ others\ e.g.\ third\_party/libxml/xmlversion.h\ also\ define\ this)}}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#undef\ ATTRIBUTE\_UNUSED}}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_UNUSED\ \_\_attribute\_\_((unused))}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ Same\ as\ above,\ but\ for\ class\ members.}}
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ As\ of\ 10/2013\ this\ appears\ to\ only\ be\ supported\ in\ Clang/LLVM.}}
+\DoxyCodeLine{00346\ \textcolor{comment}{//\ See\ http://patchwork.ozlabs.org/patch/232594/\ which\ is\ not\ yet\ committed}}
+\DoxyCodeLine{00347\ \textcolor{comment}{//\ in\ gcc\ trunk.}}
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#if\ defined(\_\_llvm\_\_)}}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_MEMBER\_UNUSED\ ATTRIBUTE\_UNUSED}}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_MEMBER\_UNUSED}}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \textcolor{comment}{//}}
+\DoxyCodeLine{00355\ \textcolor{comment}{//\ For\ functions\ we\ want\ to\ force\ inline\ or\ not\ inline.}}
+\DoxyCodeLine{00356\ \textcolor{comment}{//\ Introduced\ in\ gcc\ 3.1.}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_ALWAYS\_INLINE\ \_\_attribute\_\_((always\_inline))}}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#define\ HAVE\_ATTRIBUTE\_ALWAYS\_INLINE\ 1}}
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NOINLINE\ \_\_attribute\_\_((noinline))}}
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\#define\ HAVE\_ATTRIBUTE\_NOINLINE\ 1}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{comment}{//\ For\ weak\ functions}}
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\#undef\ ATTRIBUTE\_WEAK}}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_WEAK\ \_\_attribute\_\_((weak))}}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\#define\ HAVE\_ATTRIBUTE\_WEAK\ 1}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \textcolor{comment}{//\ For\ deprecated\ functions\ or\ variables,\ generate\ a\ warning\ at\ usage\ sites.}}
+\DoxyCodeLine{00368\ \textcolor{comment}{//\ Verified\ to\ work\ as\ early\ as\ GCC\ 3.1.1\ and\ clang\ 3.2\ (so\ we'll\ assume\ any}}
+\DoxyCodeLine{00369\ \textcolor{comment}{//\ clang\ is\ new\ enough).}}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)\ ||\ \(\backslash\)}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (defined(COMPILER\_GCC)\ \&\&\ (\_\_GNUC\_\_\ *\ 10000\ +\ \_\_GNUC\_MINOR\_\_\ *\ 100)\ >=\ 30200)}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_DEPRECATED(msg)\ \_\_attribute\_\_((deprecated(msg)))}}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_DEPRECATED(msg)}}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \textcolor{comment}{//\ Tell\ the\ compiler\ to\ use\ "{}initial-\/exec"{}\ mode\ for\ a\ thread-\/local\ variable.}}
+\DoxyCodeLine{00378\ \textcolor{comment}{//\ See\ http://people.redhat.com/drepper/tls.pdf\ for\ the\ gory\ details.}}
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_INITIAL\_EXEC\ \_\_attribute\_\_((tls\_model("{}initial-\/exec"{}})))}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \textcolor{comment}{//}}
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ Tell\ the\ compiler\ that\ some\ function\ parameters\ should\ be\ non-\/null\ pointers.}}
+\DoxyCodeLine{00383\ \textcolor{comment}{//\ Note:\ As\ the\ GCC\ manual\ states,\ "{}[s]ince\ non-\/static\ C++\ methods}}
+\DoxyCodeLine{00384\ \textcolor{comment}{//\ have\ an\ implicit\ 'this'\ argument,\ the\ arguments\ of\ such\ methods}}
+\DoxyCodeLine{00385\ \textcolor{comment}{//\ should\ be\ counted\ from\ two,\ not\ one."{}}}
+\DoxyCodeLine{00386\ \textcolor{comment}{//}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NONNULL(arg\_index)\ \_\_attribute\_\_((nonnull(arg\_index)))}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \textcolor{comment}{//}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ Tell\ the\ compiler\ that\ a\ given\ function\ never\ returns}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//}}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NORETURN\ \_\_attribute\_\_((noreturn))}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{comment}{//\ Tell\ AddressSanitizer\ (or\ other\ memory\ testing\ tools)\ to\ ignore\ a\ given}}
+\DoxyCodeLine{00395\ \textcolor{comment}{//\ function.\ Useful\ for\ cases\ when\ a\ function\ reads\ random\ locations\ on\ stack,}}
+\DoxyCodeLine{00396\ \textcolor{comment}{//\ calls\ \_exit\ from\ a\ cloned\ subprocess,\ deliberately\ accesses\ buffer}}
+\DoxyCodeLine{00397\ \textcolor{comment}{//\ out\ of\ bounds\ or\ does\ other\ scary\ things\ with\ memory.}}
+\DoxyCodeLine{00398\ \textcolor{preprocessor}{\#ifdef\ ADDRESS\_SANITIZER}}
+\DoxyCodeLine{00399\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NO\_ADDRESS\_SAFETY\_ANALYSIS\ \_\_attribute\_\_((no\_address\_safety\_analysis))}}
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00401\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NO\_ADDRESS\_SAFETY\_ANALYSIS}}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \textcolor{comment}{//\ Tell\ ThreadSanitizer\ to\ ignore\ a\ given\ function.\ This\ can\ dramatically\ reduce}}
+\DoxyCodeLine{00405\ \textcolor{comment}{//\ the\ running\ time\ and\ memory\ requirements\ for\ racy\ code\ when\ TSAN\ is\ active.}}
+\DoxyCodeLine{00406\ \textcolor{comment}{//\ GCC\ does\ not\ support\ this\ attribute\ at\ the\ time\ of\ this\ writing\ (GCC\ 4.8).}}
+\DoxyCodeLine{00407\ \textcolor{preprocessor}{\#if\ defined(\_\_llvm\_\_)}}
+\DoxyCodeLine{00408\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NO\_SANITIZE\_THREAD\ \_\_attribute\_\_((no\_sanitize\_thread))}}
+\DoxyCodeLine{00409\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NO\_SANITIZE\_THREAD}}
+\DoxyCodeLine{00411\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \textcolor{preprocessor}{\#ifndef\ HAVE\_ATTRIBUTE\_SECTION\ }\textcolor{comment}{//\ may\ have\ been\ pre-\/set\ to\ 0,\ e.g.\ for\ Darwin}}
+\DoxyCodeLine{00414\ \textcolor{preprocessor}{\#define\ HAVE\_ATTRIBUTE\_SECTION\ 1}}
+\DoxyCodeLine{00415\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \textcolor{comment}{//}}
+\DoxyCodeLine{00418\ \textcolor{comment}{//\ The\ legacy\ prod71\ libc\ does\ not\ provide\ the\ stack\ alignment\ required\ for\ use}}
+\DoxyCodeLine{00419\ \textcolor{comment}{//\ of\ SSE\ intrinsics.\ \ In\ order\ to\ properly\ use\ the\ intrinsics\ you\ need\ to\ use}}
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ a\ trampoline\ function\ which\ aligns\ the\ stack\ prior\ to\ calling\ your\ code,}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//\ or\ as\ of\ crosstool\ v10\ with\ gcc\ 4.2.0\ there\ is\ an\ attribute\ which\ asks}}
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ gcc\ to\ do\ this\ for\ you.}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//}}
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ It\ has\ also\ been\ discovered\ that\ crosstool\ up\ to\ and\ including\ v10\ does\ not}}
+\DoxyCodeLine{00425\ \textcolor{comment}{//\ provide\ proper\ alignment\ for\ pthread\_once()\ functions\ in\ x86-\/64\ code\ either.}}
+\DoxyCodeLine{00426\ \textcolor{comment}{//\ Unfortunately\ gcc\ does\ not\ provide\ force\_align\_arg\_pointer\ as\ an\ option\ in}}
+\DoxyCodeLine{00427\ \textcolor{comment}{//\ x86-\/64\ code,\ so\ this\ requires\ us\ to\ always\ have\ a\ trampoline.}}
+\DoxyCodeLine{00428\ \textcolor{comment}{//}}
+\DoxyCodeLine{00429\ \textcolor{comment}{//\ For\ an\ example\ of\ using\ this\ see\ util/hash/adler32*}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \textcolor{preprocessor}{\#if\ defined(\_\_i386\_\_)\ \&\&\ (\_\_GNUC\_\_\ >\ 4\ ||\ (\_\_GNUC\_\_\ ==\ 4\ \&\&\ \_\_GNUC\_MINOR\_\_\ >=\ 2))}}
+\DoxyCodeLine{00432\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_STACK\_ALIGN\_FOR\_OLD\_LIBC\ \_\_attribute\_\_((force\_align\_arg\_pointer))}}
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\#define\ REQUIRE\_STACK\_ALIGN\_TRAMPOLINE\ (0)}}
+\DoxyCodeLine{00434\ \textcolor{preprocessor}{\#elif\ defined(\_\_i386\_\_)\ ||\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\#define\ REQUIRE\_STACK\_ALIGN\_TRAMPOLINE\ (1)}}
+\DoxyCodeLine{00436\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_STACK\_ALIGN\_FOR\_OLD\_LIBC}}
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00438\ \textcolor{preprocessor}{\#define\ REQUIRE\_STACK\_ALIGN\_TRAMPOLINE\ (0)}}
+\DoxyCodeLine{00439\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_STACK\_ALIGN\_FOR\_OLD\_LIBC}}
+\DoxyCodeLine{00440\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{comment}{//}}
+\DoxyCodeLine{00443\ \textcolor{comment}{//\ Tell\ the\ compiler\ to\ warn\ about\ unused\ return\ values\ for\ functions\ declared}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ with\ this\ macro.\ \ The\ macro\ should\ be\ used\ on\ function\ declarations}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ following\ the\ argument\ list:}}
+\DoxyCodeLine{00446\ \textcolor{comment}{//}}
+\DoxyCodeLine{00447\ \textcolor{comment}{//\ \ \ Sprocket*\ AllocateSprocket()\ MUST\_USE\_RESULT;}}
+\DoxyCodeLine{00448\ \textcolor{comment}{//}}
+\DoxyCodeLine{00449\ \textcolor{preprocessor}{\#if\ defined(SWIG)}}
+\DoxyCodeLine{00450\ \textcolor{preprocessor}{\#define\ MUST\_USE\_RESULT}}
+\DoxyCodeLine{00451\ \textcolor{preprocessor}{\#elif\ \_\_GNUC\_\_\ >\ 3\ ||\ (\_\_GNUC\_\_\ ==\ 3\ \&\&\ \_\_GNUC\_MINOR\_\_\ >=\ 4)}}
+\DoxyCodeLine{00452\ \textcolor{preprocessor}{\#define\ MUST\_USE\_RESULT\ \_\_attribute\_\_((warn\_unused\_result))}}
+\DoxyCodeLine{00453\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00454\ \textcolor{preprocessor}{\#define\ MUST\_USE\_RESULT}}
+\DoxyCodeLine{00455\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00458\ \textcolor{comment}{//\ Defined\ behavior\ on\ some\ of\ the\ uarchs:}}
+\DoxyCodeLine{00459\ \textcolor{comment}{//\ PREFETCH\_HINT\_T0:}}
+\DoxyCodeLine{00460\ \textcolor{comment}{//\ \ \ prefetch\ to\ all\ levels\ of\ the\ hierarchy\ (except\ on\ p4:\ prefetch\ to\ L2)}}
+\DoxyCodeLine{00461\ \textcolor{comment}{//\ PREFETCH\_HINT\_NTA:}}
+\DoxyCodeLine{00462\ \textcolor{comment}{//\ \ \ p4:\ fetch\ to\ L2,\ but\ limit\ to\ 1\ way\ (out\ of\ the\ 8\ ways)}}
+\DoxyCodeLine{00463\ \textcolor{comment}{//\ \ \ core:\ skip\ L2,\ go\ directly\ to\ L1}}
+\DoxyCodeLine{00464\ \textcolor{comment}{//\ \ \ k8\ rev\ E\ and\ later:\ skip\ L2,\ can\ go\ to\ either\ of\ the\ 2-\/ways\ in\ L1}}
+\DoxyCodeLine{00465\ \textcolor{keyword}{enum}\ PrefetchHint\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ PREFETCH\_HINT\_T0\ =\ 3,\ \textcolor{comment}{//\ More\ temporal\ locality}}
+\DoxyCodeLine{00467\ \ \ \ \ PREFETCH\_HINT\_T1\ =\ 2,}
+\DoxyCodeLine{00468\ \ \ \ \ PREFETCH\_HINT\_T2\ =\ 1,\ \textcolor{comment}{//\ Less\ temporal\ locality}}
+\DoxyCodeLine{00469\ \ \ \ \ PREFETCH\_HINT\_NTA\ =\ 0\ \textcolor{comment}{//\ No\ temporal\ locality}}
+\DoxyCodeLine{00470\ \};}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00472\ \textcolor{comment}{//\ prefetch\ is\ a\ no-\/op\ for\ this\ target.\ Feel\ free\ to\ add\ more\ sections\ above.}}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{keyword}{extern}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_ae5a0c5024323f26c521686fe37650f66}{prefetch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ x,\ \textcolor{keywordtype}{int}\ hint)\ \{}
+\DoxyCodeLine{00476\ \textcolor{preprocessor}{\#if\ defined(\_\_llvm\_\_)}}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{comment}{//\ In\ the\ gcc\ version\ of\ prefetch(),\ hint\ is\ only\ a\ constant\ \_after\_\ inlining}}
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{comment}{//\ (assumed\ to\ have\ been\ successful).\ \ llvm\ views\ things\ differently,\ and}}
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{comment}{//\ checks\ constant-\/ness\ \_before\_\ inlining.\ \ This\ leads\ to\ compilation\ errors}}
+\DoxyCodeLine{00480\ \ \ \ \ \textcolor{comment}{//\ with\ using\ the\ other\ version\ of\ this\ code\ with\ llvm.}}
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ One\ way\ round\ this\ is\ to\ use\ a\ switch\ statement\ to\ explicitly\ match}}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{comment}{//\ prefetch\ hint\ enumerations,\ and\ invoke\ \_\_builtin\_prefetch\ for\ each\ valid}}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{comment}{//\ value.\ \ llvm's\ optimization\ removes\ the\ switch\ and\ unused\ case\ statements}}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ after\ inlining,\ so\ that\ this\ boils\ down\ in\ the\ end\ to\ the\ same\ as\ for\ gcc;}}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{comment}{//\ that\ is,\ a\ single\ inlined\ prefetchX\ instruction.}}
+\DoxyCodeLine{00487\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{comment}{//\ Note\ that\ this\ version\ of\ prefetch()\ cannot\ verify\ constant-\/ness\ of\ hint.}}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{comment}{//\ If\ client\ code\ calls\ prefetch()\ with\ a\ variable\ value\ for\ hint,\ it\ will}}
+\DoxyCodeLine{00490\ \ \ \ \ \textcolor{comment}{//\ receive\ the\ full\ expansion\ of\ the\ switch\ below,\ perhaps\ also\ not\ inlined.}}
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{comment}{//\ This\ should\ however\ not\ be\ a\ problem\ in\ the\ general\ case\ of\ well\ behaved}}
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{comment}{//\ caller\ code\ that\ uses\ the\ supplied\ prefetch\ hint\ enumerations.}}
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{keywordflow}{switch}\ (hint)\ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{case}\ PREFETCH\_HINT\_T0:}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x,\ 0,\ PREFETCH\_HINT\_T0);}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keywordflow}{case}\ PREFETCH\_HINT\_T1:}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x,\ 0,\ PREFETCH\_HINT\_T1);}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keywordflow}{case}\ PREFETCH\_HINT\_T2:}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x,\ 0,\ PREFETCH\_HINT\_T2);}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keywordflow}{case}\ PREFETCH\_HINT\_NTA:}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x,\ 0,\ PREFETCH\_HINT\_NTA);}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00506\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x);}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00509\ \ \ \ \ \}}
+\DoxyCodeLine{00510\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00511\ \textcolor{preprocessor}{\#if\ !defined(\_\_i386)\ ||\ defined(\_\_SSE\_\_)}}
+\DoxyCodeLine{00512\ \ \ \ \ \textcolor{keywordflow}{if}\ (\_\_builtin\_constant\_p(hint))\ \{}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x,\ 0,\ hint);}
+\DoxyCodeLine{00514\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Defaults\ to\ PREFETCH\_HINT\_T0}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \_\_builtin\_prefetch(x);}
+\DoxyCodeLine{00517\ \ \ \ \ \}}
+\DoxyCodeLine{00518\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{comment}{//\ We\ want\ a\ \_\_builtin\_prefetch,\ but\ we\ build\ with\ the\ default\ -\/march=i386}}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{comment}{//\ where\ \_\_builtin\_prefetch\ quietly\ turns\ into\ nothing.}}
+\DoxyCodeLine{00521\ \ \ \ \ \textcolor{comment}{//\ Once\ we\ crank\ up\ to\ -\/march=pentium3\ or\ higher\ the\ \_\_SSE\_\_}}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{comment}{//\ clause\ above\ will\ kick\ in\ with\ the\ builtin.}}
+\DoxyCodeLine{00523\ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ mec\ 2006-\/06-\/06}}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keywordflow}{if}\ (hint\ ==\ PREFETCH\_HINT\_NTA)\ \_\_asm\_\_\ \_\_volatile\_\_(\textcolor{stringliteral}{"{}prefetchnta\ (\%0)"{}}\ :\ :\ \textcolor{stringliteral}{"{}r"{}}(x));}
+\DoxyCodeLine{00525\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00526\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{comment}{//\ You\ get\ no\ effect.\ \ Feel\ free\ to\ add\ more\ sections\ above.}}
+\DoxyCodeLine{00528\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00529\ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00532\ \textcolor{comment}{//\ prefetch\ intrinsic\ (bring\ data\ to\ L1\ without\ polluting\ L2\ cache)}}
+\DoxyCodeLine{00533\ \textcolor{keyword}{extern}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_ae5a0c5024323f26c521686fe37650f66}{prefetch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ x)\ \{}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{port_8h_ae5a0c5024323f26c521686fe37650f66}{prefetch}}(x,\ 0);}
+\DoxyCodeLine{00535\ \}}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \textcolor{comment}{//}}
+\DoxyCodeLine{00539\ \textcolor{comment}{//\ GCC\ can\ be\ told\ that\ a\ certain\ branch\ is\ not\ likely\ to\ be\ taken\ (for}}
+\DoxyCodeLine{00540\ \textcolor{comment}{//\ instance,\ a\ CHECK\ failure),\ and\ use\ that\ information\ in\ static\ analysis.}}
+\DoxyCodeLine{00541\ \textcolor{comment}{//\ Giving\ it\ this\ information\ can\ help\ it\ optimize\ for\ the\ common\ case\ in}}
+\DoxyCodeLine{00542\ \textcolor{comment}{//\ the\ absence\ of\ better\ information\ (ie.\ -\/fprofile-\/arcs).}}
+\DoxyCodeLine{00543\ \textcolor{comment}{//}}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00545\ \textcolor{preprocessor}{\#define\ PREDICT\_FALSE(x)\ (\_\_builtin\_expect(x,\ 0))}}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\#define\ PREDICT\_TRUE(x)\ (\_\_builtin\_expect(!!(x),\ 1))}}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\#define\ PREDICT\_FALSE(x)\ x}}
+\DoxyCodeLine{00549\ \textcolor{preprocessor}{\#define\ PREDICT\_TRUE(x)\ x}}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{comment}{//}}
+\DoxyCodeLine{00553\ \textcolor{comment}{//\ Tell\ GCC\ that\ a\ function\ is\ hot\ or\ cold.\ GCC\ can\ use\ this\ information\ to}}
+\DoxyCodeLine{00554\ \textcolor{comment}{//\ improve\ static\ analysis,\ i.e.\ a\ conditional\ branch\ to\ a\ cold\ function}}
+\DoxyCodeLine{00555\ \textcolor{comment}{//\ is\ likely\ to\ be\ not-\/taken.}}
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ This\ annotation\ is\ used\ for\ function\ declarations,\ e.g.:}}
+\DoxyCodeLine{00557\ \textcolor{comment}{//\ \ \ int\ foo()\ ATTRIBUTE\_HOT;}}
+\DoxyCodeLine{00558\ \textcolor{comment}{//}}
+\DoxyCodeLine{00559\ \textcolor{preprocessor}{\#if\ \_\_GNUC\_\_\ >\ 4\ ||\ (\_\_GNUC\_\_\ ==\ 4\ \&\&\ \_\_GNUC\_MINOR\_\_\ >=\ 3)}}
+\DoxyCodeLine{00560\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_HOT\ \_\_attribute\_\_((hot))}}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_COLD\ \_\_attribute\_\_((cold))}}
+\DoxyCodeLine{00562\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_HOT}}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_COLD}}
+\DoxyCodeLine{00565\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \textcolor{preprocessor}{\#define\ FTELLO\ ftello}}
+\DoxyCodeLine{00568\ \textcolor{preprocessor}{\#define\ FSEEKO\ fseeko}}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \textcolor{preprocessor}{\#if\ !defined(\_\_cplusplus)\ \&\&\ !defined(\_\_APPLE\_\_)\ \&\&\ !defined(OS\_CYGWIN)}}
+\DoxyCodeLine{00571\ \textcolor{comment}{//\ stdlib.h\ only\ declares\ this\ in\ C++,\ not\ in\ C,\ so\ we\ declare\ it\ here.}}
+\DoxyCodeLine{00572\ \textcolor{comment}{//\ Also\ make\ sure\ to\ avoid\ declaring\ it\ on\ platforms\ which\ don't\ support\ it.}}
+\DoxyCodeLine{00573\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{jemalloc__hook_8cpp_ad58e19194f27b04ec472424be6304197}{posix\_memalign}}(\textcolor{keywordtype}{void}**\ memptr,\ \textcolor{keywordtype}{size\_t}\ alignment,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00574\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ aligned\_malloc(\textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{int}\ minimum\_alignment)\ \{}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{comment}{//\ mac\ lacks\ memalign(),\ posix\_memalign(),\ however,\ according\ to}}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{comment}{//\ http://stackoverflow.com/questions/196329/osx-\/lacks-\/memalign}}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{comment}{//\ mac\ allocs\ are\ already\ 16-\/byte\ aligned.}}
+\DoxyCodeLine{00581\ \ \ \ \ \textcolor{keywordflow}{if}\ (minimum\_alignment\ <=\ 16)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{malloc}}(size);}
+\DoxyCodeLine{00582\ \textcolor{comment}{//\ next,\ try\ to\ return\ page-\/aligned\ memory.\ perhaps\ overkill}}
+\DoxyCodeLine{00583\ \textcolor{preprocessor}{\#ifndef\ \_POSIX\_C\_SOURCE}}
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\ =\ getpagesize();}
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\ =\ vm\_page\_size;}
+\DoxyCodeLine{00587\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00588\ \ \ \ \ \textcolor{keywordflow}{if}\ (minimum\_alignment\ <=\ page\_size)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{jemalloc__hook_8cpp_ae12dd0c804dff8c9f06bda29023a476e}{valloc}}(size);}
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{comment}{//\ give\ up}}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00591\ \textcolor{preprocessor}{\#elif\ defined(OS\_CYGWIN)}}
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{jemalloc__hook_8cpp_a6147391663da4de372d18754c7ae907c}{memalign}}(minimum\_alignment,\ size);}
+\DoxyCodeLine{00593\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ !\_\_APPLE\_\_\ \&\&\ !OS\_CYGWIN}}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keywordtype}{void}*\ ptr\ =\ NULL;}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{jemalloc__hook_8cpp_ad58e19194f27b04ec472424be6304197}{posix\_memalign}}(\&ptr,\ minimum\_alignment,\ size)\ !=\ 0)}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00597\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ptr;}
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00600\ \}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ not\ GCC}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \textcolor{preprocessor}{\#define\ PRINTF\_ATTRIBUTE(string\_index,\ first\_to\_check)}}
+\DoxyCodeLine{00605\ \textcolor{preprocessor}{\#define\ SCANF\_ATTRIBUTE(string\_index,\ first\_to\_check)}}
+\DoxyCodeLine{00606\ \textcolor{preprocessor}{\#define\ PACKED}}
+\DoxyCodeLine{00607\ \textcolor{preprocessor}{\#define\ CACHELINE\_ALIGNED}}
+\DoxyCodeLine{00608\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_UNUSED}}
+\DoxyCodeLine{00609\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_ALWAYS\_INLINE}}
+\DoxyCodeLine{00610\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NOINLINE}}
+\DoxyCodeLine{00611\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_HOT}}
+\DoxyCodeLine{00612\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_COLD}}
+\DoxyCodeLine{00613\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_WEAK}}
+\DoxyCodeLine{00614\ \textcolor{preprocessor}{\#define\ HAVE\_ATTRIBUTE\_WEAK\ 0}}
+\DoxyCodeLine{00615\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_INITIAL\_EXEC}}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NONNULL(arg\_index)}}
+\DoxyCodeLine{00617\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_NORETURN}}
+\DoxyCodeLine{00618\ \textcolor{preprocessor}{\#define\ ATTRIBUTE\_STACK\_ALIGN\_FOR\_OLD\_LIBC}}
+\DoxyCodeLine{00619\ \textcolor{preprocessor}{\#define\ REQUIRE\_STACK\_ALIGN\_TRAMPOLINE\ (0)}}
+\DoxyCodeLine{00620\ \textcolor{preprocessor}{\#define\ MUST\_USE\_RESULT}}
+\DoxyCodeLine{00621\ \textcolor{keyword}{extern}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_ae5a0c5024323f26c521686fe37650f66}{prefetch}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ x)\ \{\}}
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#define\ PREDICT\_FALSE(x)\ x}}
+\DoxyCodeLine{00623\ \textcolor{preprocessor}{\#define\ PREDICT\_TRUE(x)\ x}}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ \textcolor{comment}{//\ These\ should\ be\ redefined\ appropriately\ if\ better\ alternatives\ to}}
+\DoxyCodeLine{00626\ \textcolor{comment}{//\ ftell/fseek\ exist\ in\ the\ compiler}}
+\DoxyCodeLine{00627\ \textcolor{preprocessor}{\#define\ FTELLO\ ftell}}
+\DoxyCodeLine{00628\ \textcolor{preprocessor}{\#define\ FSEEKO\ fseek}}
+\DoxyCodeLine{00629\ }
+\DoxyCodeLine{00630\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ GCC}}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \textcolor{comment}{//}}
+\DoxyCodeLine{00633\ \textcolor{comment}{//\ Provides\ a\ char\ array\ with\ the\ exact\ same\ alignment\ as\ another\ type.\ The}}
+\DoxyCodeLine{00634\ \textcolor{comment}{//\ first\ parameter\ must\ be\ a\ complete\ type,\ the\ second\ parameter\ is\ how\ many}}
+\DoxyCodeLine{00635\ \textcolor{comment}{//\ of\ that\ type\ to\ provide\ space\ for.}}
+\DoxyCodeLine{00636\ \textcolor{comment}{//}}
+\DoxyCodeLine{00637\ \textcolor{comment}{//\ \ \ ALIGNED\_CHAR\_ARRAY(struct\ stat,\ 16)\ storage\_;}}
+\DoxyCodeLine{00638\ \textcolor{comment}{//}}
+\DoxyCodeLine{00639\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00640\ \textcolor{preprocessor}{\#undef\ ALIGNED\_CHAR\_ARRAY}}
+\DoxyCodeLine{00641\ \textcolor{comment}{//\ Because\ MSVC\ and\ older\ GCCs\ require\ that\ the\ argument\ to\ their\ alignment}}
+\DoxyCodeLine{00642\ \textcolor{comment}{//\ construct\ to\ be\ a\ literal\ constant\ integer,\ we\ use\ a\ template\ instantiated}}
+\DoxyCodeLine{00643\ \textcolor{comment}{//\ at\ all\ the\ possible\ powers\ of\ two.}}
+\DoxyCodeLine{00644\ \textcolor{preprocessor}{\#ifndef\ SWIG}}
+\DoxyCodeLine{00645\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ alignment,\ \textcolor{keywordtype}{int}\ size>}
+\DoxyCodeLine{00646\ \textcolor{keyword}{struct\ }AlignType\ \{\};}
+\DoxyCodeLine{00647\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ size>}
+\DoxyCodeLine{00648\ \textcolor{keyword}{struct\ }AlignType<0,\ size>\ \{}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{char}\ result[size];}
+\DoxyCodeLine{00650\ \};}
+\DoxyCodeLine{00651\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00652\ \textcolor{preprocessor}{\#define\ BASE\_PORT\_H\_ALIGN\_ATTRIBUTE(X)\ \_\_declspec(align(X))}}
+\DoxyCodeLine{00653\ \textcolor{preprocessor}{\#define\ BASE\_PORT\_H\_ALIGN\_OF(T)\ \_\_alignof(T)}}
+\DoxyCodeLine{00654\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00655\ \textcolor{preprocessor}{\#define\ BASE\_PORT\_H\_ALIGN\_ATTRIBUTE(X)\ \_\_attribute\_\_((aligned(X)))}}
+\DoxyCodeLine{00656\ \textcolor{preprocessor}{\#define\ BASE\_PORT\_H\_ALIGN\_OF(T)\ \_\_alignof\_\_(T)}}
+\DoxyCodeLine{00657\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \textcolor{preprocessor}{\#if\ defined(BASE\_PORT\_H\_ALIGN\_ATTRIBUTE)}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \textcolor{preprocessor}{\#define\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(X)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00662\ \textcolor{preprocessor}{\ \ \ \ template\ <int\ size>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00663\ \textcolor{preprocessor}{\ \ \ \ struct\ AlignType<X,\ size>\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00664\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ typedef\ BASE\_PORT\_H\_ALIGN\_ATTRIBUTE(X)\ char\ result[size];\ \(\backslash\)}}
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(1);}
+\DoxyCodeLine{00668\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(2);}
+\DoxyCodeLine{00669\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(4);}
+\DoxyCodeLine{00670\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(8);}
+\DoxyCodeLine{00671\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(16);}
+\DoxyCodeLine{00672\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(32);}
+\DoxyCodeLine{00673\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(64);}
+\DoxyCodeLine{00674\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(128);}
+\DoxyCodeLine{00675\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(256);}
+\DoxyCodeLine{00676\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(512);}
+\DoxyCodeLine{00677\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(1024);}
+\DoxyCodeLine{00678\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(2048);}
+\DoxyCodeLine{00679\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(4096);}
+\DoxyCodeLine{00680\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE(8192);}
+\DoxyCodeLine{00681\ \textcolor{comment}{//\ Any\ larger\ and\ MSVC++\ will\ complain.}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \textcolor{preprocessor}{\#define\ ALIGNED\_CHAR\_ARRAY(T,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00684\ \textcolor{preprocessor}{\ \ \ \ typename\ AlignType<BASE\_PORT\_H\_ALIGN\_OF(T),\ sizeof(T)\ *\ Size>::result}}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \textcolor{preprocessor}{\#undef\ BASE\_PORT\_H\_ALIGNTYPE\_TEMPLATE}}
+\DoxyCodeLine{00687\ \textcolor{preprocessor}{\#undef\ BASE\_PORT\_H\_ALIGN\_ATTRIBUTE}}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ defined(BASE\_PORT\_H\_ALIGN\_ATTRIBUTE)}}
+\DoxyCodeLine{00690\ \textcolor{preprocessor}{\#define\ ALIGNED\_CHAR\_ARRAY\ you\_must\_define\_ALIGNED\_CHAR\_ARRAY\_for\_your\_compiler\_in\_base\_port\_h}}
+\DoxyCodeLine{00691\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined(BASE\_PORT\_H\_ALIGN\_ATTRIBUTE)}}
+\DoxyCodeLine{00692\ }
+\DoxyCodeLine{00693\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ !SWIG}}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \textcolor{comment}{//\ SWIG\ can't\ represent\ alignment\ and\ doesn't\ care\ about\ alignment\ on\ data}}
+\DoxyCodeLine{00696\ \textcolor{comment}{//\ members\ (it\ works\ fine\ without\ it).}}
+\DoxyCodeLine{00697\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Size>}
+\DoxyCodeLine{00698\ \textcolor{keyword}{struct\ }AlignType\ \{}
+\DoxyCodeLine{00699\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{char}\ result[Size];}
+\DoxyCodeLine{00700\ \};}
+\DoxyCodeLine{00701\ \textcolor{preprocessor}{\#define\ ALIGNED\_CHAR\_ARRAY(T,\ Size)\ AlignType<Size\ *\ sizeof(T)>::result}}
+\DoxyCodeLine{00702\ }
+\DoxyCodeLine{00703\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ !SWIG}}
+\DoxyCodeLine{00704\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ \_\_cpluscplus}}
+\DoxyCodeLine{00705\ \textcolor{preprocessor}{\#define\ ALIGNED\_CHAR\_ARRAY\ ALIGNED\_CHAR\_ARRAY\_is\_not\_available\_without\_Cplusplus}}
+\DoxyCodeLine{00706\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_cplusplus}}
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER\ }\textcolor{comment}{/*\ if\ Visual\ C++\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ \textcolor{comment}{//\ This\ compiler\ flag\ can\ be\ easily\ overlooked\ on\ MSVC.}}
+\DoxyCodeLine{00711\ \textcolor{comment}{//\ \_CHAR\_UNSIGNED\ gets\ set\ with\ the\ /J\ flag.}}
+\DoxyCodeLine{00712\ \textcolor{preprocessor}{\#ifndef\ \_CHAR\_UNSIGNED}}
+\DoxyCodeLine{00713\ \textcolor{preprocessor}{\#error\ chars\ must\ be\ unsigned!\ \ Use\ the\ /J\ flag\ on\ the\ compiler\ command\ line.}}
+\DoxyCodeLine{00714\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00715\ }
+\DoxyCodeLine{00716\ \textcolor{comment}{//\ MSVC\ is\ a\ little\ hyper-\/active\ in\ its\ warnings}}
+\DoxyCodeLine{00717\ \textcolor{comment}{//\ Signed\ vs.\ unsigned\ comparison\ is\ ok.}}
+\DoxyCodeLine{00718\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4018)}}
+\DoxyCodeLine{00719\ \textcolor{comment}{//\ We\ know\ casting\ from\ a\ long\ to\ a\ char\ may\ lose\ data}}
+\DoxyCodeLine{00720\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4244)}}
+\DoxyCodeLine{00721\ \textcolor{comment}{//\ Don't\ need\ performance\ warnings\ about\ converting\ ints\ to\ bools}}
+\DoxyCodeLine{00722\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4800)}}
+\DoxyCodeLine{00723\ \textcolor{comment}{//\ Integral\ constant\ overflow\ is\ apparently\ ok\ too}}
+\DoxyCodeLine{00724\ \textcolor{comment}{//\ for\ example:}}
+\DoxyCodeLine{00725\ \textcolor{comment}{//\ \ short\ k;\ \ int\ n;}}
+\DoxyCodeLine{00726\ \textcolor{comment}{//\ \ k\ =\ k\ +\ n;}}
+\DoxyCodeLine{00727\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4307)}}
+\DoxyCodeLine{00728\ \textcolor{comment}{//\ It's\ ok\ to\ use\ this*\ in\ constructor}}
+\DoxyCodeLine{00729\ \textcolor{comment}{//\ Example:}}
+\DoxyCodeLine{00730\ \textcolor{comment}{//\ \ class\ C\ \{}}
+\DoxyCodeLine{00731\ \textcolor{comment}{//\ \ \ Container\ cont\_;}}
+\DoxyCodeLine{00732\ \textcolor{comment}{//\ \ \ C()\ :\ cont\_(this)\ \{\ ...}}
+\DoxyCodeLine{00733\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4355)}}
+\DoxyCodeLine{00734\ \textcolor{comment}{//\ Truncating\ from\ double\ to\ float\ is\ ok}}
+\DoxyCodeLine{00735\ \textcolor{preprocessor}{\#pragma\ warning(disable\ :\ 4305)}}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00738\ \textcolor{preprocessor}{\#include\ <windows.h>}}
+\DoxyCodeLine{00739\ \textcolor{preprocessor}{\#include\ <winsock2.h>}}
+\DoxyCodeLine{00740\ \textcolor{preprocessor}{\#undef\ ERROR}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \textcolor{preprocessor}{\#include\ <float.h>}\ \textcolor{comment}{//\ for\ nextafter\ functionality\ on\ windows}}
+\DoxyCodeLine{00743\ \textcolor{preprocessor}{\#include\ <math.h>}\ \ \textcolor{comment}{//\ for\ HUGE\_VAL}}
+\DoxyCodeLine{00744\ }
+\DoxyCodeLine{00745\ \textcolor{preprocessor}{\#ifndef\ HUGE\_VALF}}
+\DoxyCodeLine{00746\ \textcolor{preprocessor}{\#define\ HUGE\_VALF\ (static\_cast<float>(HUGE\_VAL))}}
+\DoxyCodeLine{00747\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \textcolor{keyword}{namespace\ }std\ \{\}\ \textcolor{comment}{//\ namespace\ std}}
+\DoxyCodeLine{00750\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \textcolor{comment}{//\ VC++\ doesn't\ understand\ "{}uint"{}}}
+\DoxyCodeLine{00753\ \textcolor{preprocessor}{\#ifndef\ HAVE\_UINT}}
+\DoxyCodeLine{00754\ \textcolor{preprocessor}{\#define\ HAVE\_UINT\ 1}}
+\DoxyCodeLine{00755\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{utfdef_8h_ad46b2ebcd4c426b06cda147ddc1001e7}{uint}};}
+\DoxyCodeLine{00756\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \textcolor{comment}{//\ VC++\ doesn't\ understand\ "{}ssize\_t"{}}}
+\DoxyCodeLine{00759\ \textcolor{preprocessor}{\#ifndef\ HAVE\_SSIZET}}
+\DoxyCodeLine{00760\ \textcolor{preprocessor}{\#define\ HAVE\_SSIZET\ 1}}
+\DoxyCodeLine{00761\ \textcolor{comment}{//\ The\ following\ correctly\ defines\ ssize\_t\ on\ most\ (all?)\ VC++\ versions:}}
+\DoxyCodeLine{00762\ \textcolor{comment}{//\ \ \ \#include\ <BaseTsd.h>}}
+\DoxyCodeLine{00763\ \textcolor{comment}{//\ \ \ typedef\ SSIZE\_T\ ssize\_t;}}
+\DoxyCodeLine{00764\ \textcolor{comment}{//\ However,\ several\ projects\ in\ googleclient\ already\ use\ plain\ 'int',\ e.g.,}}
+\DoxyCodeLine{00765\ \textcolor{comment}{//\ \ \ googleclient/posix/unistd.h}}
+\DoxyCodeLine{00766\ \textcolor{comment}{//\ \ \ googleclient/earth/client/libs/base/types.h}}
+\DoxyCodeLine{00767\ \textcolor{comment}{//\ so\ to\ avoid\ conflicts\ with\ those\ definitions,\ we\ do\ the\ same\ here.}}
+\DoxyCodeLine{00768\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ ssize\_t;}
+\DoxyCodeLine{00769\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ \textcolor{preprocessor}{\#define\ strtoq\ \_strtoi64}}
+\DoxyCodeLine{00772\ \textcolor{preprocessor}{\#define\ strtouq\ \_strtoui64}}
+\DoxyCodeLine{00773\ \textcolor{preprocessor}{\#define\ strtoll\ \_strtoi64}}
+\DoxyCodeLine{00774\ \textcolor{preprocessor}{\#define\ strtoull\ \_strtoui64}}
+\DoxyCodeLine{00775\ \textcolor{preprocessor}{\#define\ atoll\ \_atoi64}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \textcolor{comment}{//\ VC++\ 6\ and\ before\ ship\ without\ an\ ostream\ <<\ operator\ for\ 64-\/bit\ ints}}
+\DoxyCodeLine{00778\ \textcolor{preprocessor}{\#if\ (\_MSC\_VER\ <=\ 1200)}}
+\DoxyCodeLine{00779\ \textcolor{preprocessor}{\#include\ <iosfwd>}}
+\DoxyCodeLine{00780\ \textcolor{keyword}{using\ }std::ostream;}
+\DoxyCodeLine{00781\ \textcolor{keyword}{inline}\ ostream\&\ \mbox{\hyperlink{namespacedoris_1_1config_a9e4ea0ca899f97b1680d4193d7372c71}{operator<<}}(ostream\&\ os,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_\_int64\&\ num)\ \{}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{comment}{//\ Fake\ operator;\ doesn't\ actually\ do\ anything.}}
+\DoxyCodeLine{00783\ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}64-\/bit\ ostream\ operator\ <<\ not\ supported\ in\ VC++\ 6"{}};}
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{keywordflow}{return}\ os;}
+\DoxyCodeLine{00785\ \}}
+\DoxyCodeLine{00786\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00787\ }
+\DoxyCodeLine{00788\ \textcolor{comment}{//\ You\ say\ tomato,\ I\ say\ atotom}}
+\DoxyCodeLine{00789\ \textcolor{preprocessor}{\#define\ PATH\_MAX\ MAX\_PATH}}
+\DoxyCodeLine{00790\ }
+\DoxyCodeLine{00791\ \textcolor{comment}{//\ You\ say\ tomato,\ I\ say\ \_tomato}}
+\DoxyCodeLine{00792\ \textcolor{preprocessor}{\#define\ vsnprintf\ \_vsnprintf}}
+\DoxyCodeLine{00793\ \textcolor{preprocessor}{\#define\ snprintf\ \_snprintf}}
+\DoxyCodeLine{00794\ \textcolor{preprocessor}{\#define\ strcasecmp\ \_stricmp}}
+\DoxyCodeLine{00795\ \textcolor{preprocessor}{\#define\ strncasecmp\ \_strnicmp}}
+\DoxyCodeLine{00796\ }
+\DoxyCodeLine{00797\ \textcolor{preprocessor}{\#define\ nextafter\ \_nextafter}}
+\DoxyCodeLine{00798\ }
+\DoxyCodeLine{00799\ \textcolor{preprocessor}{\#define\ hypot\ \_hypot}}
+\DoxyCodeLine{00800\ \textcolor{preprocessor}{\#define\ hypotf\ \_hypotf}}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \textcolor{preprocessor}{\#define\ strdup\ \_strdup}}
+\DoxyCodeLine{00803\ \textcolor{preprocessor}{\#define\ tempnam\ \_tempnam}}
+\DoxyCodeLine{00804\ \textcolor{preprocessor}{\#define\ chdir\ \_chdir}}
+\DoxyCodeLine{00805\ \textcolor{preprocessor}{\#define\ getcwd\ \_getcwd}}
+\DoxyCodeLine{00806\ \textcolor{preprocessor}{\#define\ putenv\ \_putenv}}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \textcolor{comment}{//\ You\ say\ tomato,\ I\ say\ toma}}
+\DoxyCodeLine{00809\ \textcolor{preprocessor}{\#define\ random()\ rand()}}
+\DoxyCodeLine{00810\ \textcolor{preprocessor}{\#define\ srandom(x)\ srand(x)}}
+\DoxyCodeLine{00811\ }
+\DoxyCodeLine{00812\ \textcolor{comment}{//\ You\ say\ juxtapose,\ I\ say\ transpose}}
+\DoxyCodeLine{00813\ \textcolor{preprocessor}{\#define\ bcopy(s,\ d,\ n)\ memcpy(d,\ s,\ n)}}
+\DoxyCodeLine{00814\ }
+\DoxyCodeLine{00815\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ aligned\_malloc(\textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{int}\ minimum\_alignment)\ \{}
+\DoxyCodeLine{00816\ \ \ \ \ \textcolor{keywordflow}{return}\ \_aligned\_malloc(size,\ minimum\_alignment);}
+\DoxyCodeLine{00817\ \}}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/\ BEGIN\ VC++\ STUBS\ \&\ FAKE\ DEFINITIONS\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \textcolor{comment}{//\ See\ http://en.wikipedia.org/wiki/IEEE\_754\ for\ details\ of}}
+\DoxyCodeLine{00822\ \textcolor{comment}{//\ floating\ point\ format.}}
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00825\ \ \ \ \ FP\_NAN,\ \ \ \ \ \ \textcolor{comment}{//\ \ is\ "{}Not\ a\ Number"{}}}
+\DoxyCodeLine{00826\ \ \ \ \ FP\_INFINITE,\ \textcolor{comment}{//\ \ is\ either\ plus\ or\ minus\ infinity.}}
+\DoxyCodeLine{00827\ \ \ \ \ FP\_ZERO,}
+\DoxyCodeLine{00828\ \ \ \ \ FP\_SUBNORMAL,\ \textcolor{comment}{//\ is\ too\ small\ to\ be\ represented\ in\ normalized\ format.}}
+\DoxyCodeLine{00829\ \ \ \ \ FP\_NORMAL\ \ \ \ \ \textcolor{comment}{//\ if\ nothing\ of\ the\ above\ is\ correct\ that\ it\ must\ be\ a}}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ normal\ floating-\/point\ number.}}
+\DoxyCodeLine{00831\ \};}
+\DoxyCodeLine{00832\ }
+\DoxyCodeLine{00833\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ fpclassify\_double(\textcolor{keywordtype}{double}\ x)\ \{}
+\DoxyCodeLine{00834\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ float\_point\_class\ =\ \_fpclass(x);}
+\DoxyCodeLine{00835\ \ \ \ \ \textcolor{keywordtype}{int}\ c99\_class;}
+\DoxyCodeLine{00836\ \ \ \ \ \textcolor{keywordflow}{switch}\ (float\_point\_class)\ \{}
+\DoxyCodeLine{00837\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_SNAN:\ \textcolor{comment}{//\ Signaling\ NaN}}
+\DoxyCodeLine{00838\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_QNAN:\ \textcolor{comment}{//\ Quiet\ NaN}}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_NAN;}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00841\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_NZ:\ \textcolor{comment}{//\ Negative\ zero\ (\ -\/0)}}
+\DoxyCodeLine{00842\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_PZ:\ \textcolor{comment}{//\ Positive\ 0\ (+0)}}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_ZERO;}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00845\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_NINF:\ \textcolor{comment}{//\ Negative\ infinity\ (\ -\/INF)}}
+\DoxyCodeLine{00846\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_PINF:\ \textcolor{comment}{//\ Positive\ infinity\ (+INF)}}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_INFINITE;}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00849\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_ND:\ \textcolor{comment}{//\ Negative\ denormalized}}
+\DoxyCodeLine{00850\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_PD:\ \textcolor{comment}{//\ Positive\ denormalized}}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_SUBNORMAL;}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00853\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_NN:\ \textcolor{comment}{//\ Negative\ normalized\ non-\/zero}}
+\DoxyCodeLine{00854\ \ \ \ \ \textcolor{keywordflow}{case}\ \_FPCLASS\_PN:\ \textcolor{comment}{//\ Positive\ normalized\ non-\/zero}}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_NORMAL;}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00857\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ c99\_class\ =\ FP\_NAN;\ \textcolor{comment}{//\ Should\ never\ happen}}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00860\ \ \ \ \ \}}
+\DoxyCodeLine{00861\ \ \ \ \ \textcolor{keywordflow}{return}\ c99\_class;}
+\DoxyCodeLine{00862\ \}}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \textcolor{comment}{//\ This\ function\ handle\ the\ special\ subnormal\ case\ for\ float;\ it\ will}}
+\DoxyCodeLine{00865\ \textcolor{comment}{//\ become\ a\ normal\ number\ while\ casting\ to\ double.}}
+\DoxyCodeLine{00866\ \textcolor{comment}{//\ bit\_cast\ is\ avoided\ to\ simplify\ dependency\ and\ to\ create\ a\ code\ that\ is}}
+\DoxyCodeLine{00867\ \textcolor{comment}{//\ easy\ to\ deploy\ in\ C\ code}}
+\DoxyCodeLine{00868\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ fpclassify\_float(\textcolor{keywordtype}{float}\ x)\ \{}
+\DoxyCodeLine{00869\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ bitwise\_representation;}
+\DoxyCodeLine{00870\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&bitwise\_representation,\ \&x,\ 4);}
+\DoxyCodeLine{00871\ \ \ \ \ \textcolor{keywordflow}{if}\ ((bitwise\_representation\ \&\ 0x7f800000)\ ==\ 0\ \&\&\ (bitwise\_representation\ \&\ 0x007fffff)\ !=\ 0)}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ FP\_SUBNORMAL;}
+\DoxyCodeLine{00873\ \ \ \ \ \textcolor{keywordflow}{return}\ fpclassify\_double(x);}
+\DoxyCodeLine{00874\ \}}
+\DoxyCodeLine{00875\ \textcolor{comment}{//}}
+\DoxyCodeLine{00876\ \textcolor{comment}{//\ This\ define\ takes\ care\ of\ the\ denormalized\ float;\ the\ casting\ to}}
+\DoxyCodeLine{00877\ \textcolor{comment}{//\ double\ make\ it\ a\ normal\ number}}
+\DoxyCodeLine{00878\ \textcolor{preprocessor}{\#define\ fpclassify(x)\ ((sizeof(x)\ ==\ sizeof(float))\ ?\ fpclassify\_float(x)\ :\ fpclassify\_double(x))}}
+\DoxyCodeLine{00879\ }
+\DoxyCodeLine{00880\ \textcolor{preprocessor}{\#define\ isnan\ \_isnan}}
+\DoxyCodeLine{00881\ }
+\DoxyCodeLine{00882\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ isinf(\textcolor{keywordtype}{double}\ x)\ \{}
+\DoxyCodeLine{00883\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ float\_point\_class\ =\ \_fpclass(x);}
+\DoxyCodeLine{00884\ \ \ \ \ \textcolor{keywordflow}{if}\ (float\_point\_class\ ==\ \_FPCLASS\_PINF)\ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00885\ \ \ \ \ \textcolor{keywordflow}{if}\ (float\_point\_class\ ==\ \_FPCLASS\_NINF)\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00886\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00887\ \}}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \textcolor{comment}{//\ \#include\ "{}conflict-\/signal.h"{}}}
+\DoxyCodeLine{00890\ \textcolor{keyword}{typedef}\ void\ (*sig\_t)(int);}
+\DoxyCodeLine{00891\ }
+\DoxyCodeLine{00892\ \textcolor{comment}{//\ These\ actually\ belong\ in\ errno.h\ but\ there's\ a\ name\ confilict\ in\ errno}}
+\DoxyCodeLine{00893\ \textcolor{comment}{//\ on\ WinNT.\ They\ (and\ a\ ton\ more)\ are\ also\ found\ in\ Winsock2.h,\ but}}
+\DoxyCodeLine{00894\ \textcolor{comment}{//\ if'd\ out\ under\ NT.\ We\ need\ this\ subset\ at\ minimum.}}
+\DoxyCodeLine{00895\ \textcolor{preprocessor}{\#define\ EXFULL\ ENOMEM\ }\textcolor{comment}{//\ not\ really\ that\ great\ a\ translation...}}
+\DoxyCodeLine{00896\ \textcolor{comment}{//\ The\ following\ are\ already\ defined\ in\ VS2010.}}
+\DoxyCodeLine{00897\ \textcolor{preprocessor}{\#if\ (\_MSC\_VER\ <\ 1600)}}
+\DoxyCodeLine{00898\ \textcolor{preprocessor}{\#define\ EWOULDBLOCK\ WSAEWOULDBLOCK}}
+\DoxyCodeLine{00899\ \textcolor{preprocessor}{\#ifndef\ PTHREADS\_REDHAT\_WIN32}}
+\DoxyCodeLine{00900\ \textcolor{preprocessor}{\#define\ ETIMEDOUT\ WSAETIMEDOUT}}
+\DoxyCodeLine{00901\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00902\ \textcolor{preprocessor}{\#define\ ENOTSOCK\ WSAENOTSOCK}}
+\DoxyCodeLine{00903\ \textcolor{preprocessor}{\#define\ EINPROGRESS\ WSAEINPROGRESS}}
+\DoxyCodeLine{00904\ \textcolor{preprocessor}{\#define\ ECONNRESET\ WSAECONNRESET}}
+\DoxyCodeLine{00905\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00906\ }
+\DoxyCodeLine{00907\ \textcolor{comment}{//}}
+\DoxyCodeLine{00908\ \textcolor{comment}{//\ Really\ from\ <string.h>}}
+\DoxyCodeLine{00909\ \textcolor{comment}{//}}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ bzero(\textcolor{keywordtype}{void}*\ s,\ \textcolor{keywordtype}{int}\ n)\ \{}
+\DoxyCodeLine{00912\ \ \ \ \ memset(s,\ 0,\ n);}
+\DoxyCodeLine{00913\ \}}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \textcolor{comment}{//\ From\ glob.h}}
+\DoxyCodeLine{00916\ \textcolor{preprocessor}{\#define\ \_\_ptr\_t\ void*}}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ \textcolor{comment}{//\ Defined\ all\ over\ the\ place.}}
+\DoxyCodeLine{00919\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ pid\_t;}
+\DoxyCodeLine{00920\ }
+\DoxyCodeLine{00921\ \textcolor{comment}{//\ From\ stat.h}}
+\DoxyCodeLine{00922\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ mode\_t;}
+\DoxyCodeLine{00923\ }
+\DoxyCodeLine{00924\ \textcolor{comment}{//\ u\_int16\_t,\ int16\_t\ don't\ exist\ in\ MSVC}}
+\DoxyCodeLine{00925\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ u\_int16\_t;}
+\DoxyCodeLine{00926\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{short}\ int16\_t;}
+\DoxyCodeLine{00927\ }
+\DoxyCodeLine{00928\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/\ END\ VC++\ STUBS\ \&\ FAKE\ DEFINITIONS\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00929\ }
+\DoxyCodeLine{00930\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_MSC\_VER}}
+\DoxyCodeLine{00931\ }
+\DoxyCodeLine{00932\ \textcolor{preprocessor}{\#ifdef\ STL\_MSVC\ }\textcolor{comment}{//\ not\ always\ the\ same\ as\ \_MSC\_VER}}
+\DoxyCodeLine{00933\ \textcolor{preprocessor}{\#include\ "{}base/port\_hash.h"{}}}
+\DoxyCodeLine{00934\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00935\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_portable_hash_base}{PortableHashBase}}\ \{\};}
+\DoxyCodeLine{00936\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00937\ }
+\DoxyCodeLine{00938\ \textcolor{preprocessor}{\#if\ defined(OS\_WINDOWS)\ ||\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00939\ \textcolor{comment}{//\ gethostbyname()\ *is*\ thread-\/safe\ for\ Windows\ native\ threads.\ It\ is\ also}}
+\DoxyCodeLine{00940\ \textcolor{comment}{//\ safe\ on\ Mac\ OS\ X,\ where\ it\ uses\ thread-\/local\ storage,\ even\ though\ the}}
+\DoxyCodeLine{00941\ \textcolor{comment}{//\ manpages\ claim\ otherwise.\ For\ details,\ see}}
+\DoxyCodeLine{00942\ \textcolor{comment}{//\ http://lists.apple.com/archives/Darwin-\/dev/2006/May/msg00008.html}}
+\DoxyCodeLine{00943\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00944\ \textcolor{comment}{//\ gethostbyname()\ is\ not\ thread-\/safe.\ \ So\ disallow\ its\ use.\ \ People}}
+\DoxyCodeLine{00945\ \textcolor{comment}{//\ should\ either\ use\ the\ HostLookup::Lookup*()\ methods,\ or\ gethostbyname\_r()}}
+\DoxyCodeLine{00946\ \textcolor{preprocessor}{\#define\ gethostbyname\ gethostbyname\_is\_not\_thread\_safe\_DO\_NOT\_USE}}
+\DoxyCodeLine{00947\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00948\ }
+\DoxyCodeLine{00949\ \textcolor{comment}{//\ create\ macros\ in\ which\ the\ programmer\ should\ enclose\ all\ specializations}}
+\DoxyCodeLine{00950\ \textcolor{comment}{//\ for\ hash\_maps\ and\ hash\_sets.\ This\ is\ necessary\ since\ these\ classes\ are\ not}}
+\DoxyCodeLine{00951\ \textcolor{comment}{//\ STL\ standardized.\ Depending\ on\ the\ STL\ implementation\ they\ are\ in\ different}}
+\DoxyCodeLine{00952\ \textcolor{comment}{//\ namespaces.\ Right\ now\ the\ right\ namespace\ is\ passed\ by\ the\ Makefile}}
+\DoxyCodeLine{00953\ \textcolor{comment}{//\ Examples:\ gcc3:\ -\/DHASH\_NAMESPACE=\_\_gnu\_cxx}}
+\DoxyCodeLine{00954\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ icc:\ \ -\/DHASH\_NAMESPACE=std}}
+\DoxyCodeLine{00955\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ gcc2:\ empty}}
+\DoxyCodeLine{00956\ }
+\DoxyCodeLine{00957\ \textcolor{preprocessor}{\#ifndef\ HASH\_NAMESPACE}}
+\DoxyCodeLine{00958\ \textcolor{preprocessor}{\#define\ HASH\_NAMESPACE\_DECLARATION\_START}}
+\DoxyCodeLine{00959\ \textcolor{preprocessor}{\#define\ HASH\_NAMESPACE\_DECLARATION\_END}}
+\DoxyCodeLine{00960\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00961\ \textcolor{preprocessor}{\#define\ HASH\_NAMESPACE\_DECLARATION\_START\ namespace\ HASH\_NAMESPACE\ \{}}
+\DoxyCodeLine{00962\ \textcolor{preprocessor}{\#define\ HASH\_NAMESPACE\_DECLARATION\_END\ \}}}
+\DoxyCodeLine{00963\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00964\ }
+\DoxyCodeLine{00965\ \textcolor{comment}{//\ Our\ STL-\/like\ classes\ use\ \_\_STD.}}
+\DoxyCodeLine{00966\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ ||\ defined(\_\_APPLE\_\_)\ ||\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00967\ \textcolor{preprocessor}{\#define\ \_\_STD\ std}}
+\DoxyCodeLine{00968\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00969\ }
+\DoxyCodeLine{00970\ \textcolor{preprocessor}{\#if\ defined\ \_\_GNUC\_\_}}
+\DoxyCodeLine{00971\ \textcolor{preprocessor}{\#define\ STREAM\_SET(s,\ bit)\ (s).setstate(ios\_base::bit)}}
+\DoxyCodeLine{00972\ \textcolor{preprocessor}{\#define\ STREAM\_SETF(s,\ flag)\ (s).setf(ios\_base::flag)}}
+\DoxyCodeLine{00973\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00974\ \textcolor{preprocessor}{\#define\ STREAM\_SET(s,\ bit)\ (s).set(ios::bit)}}
+\DoxyCodeLine{00975\ \textcolor{preprocessor}{\#define\ STREAM\_SETF(s,\ flag)\ (s).setf(ios::flag)}}
+\DoxyCodeLine{00976\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00977\ }
+\DoxyCodeLine{00978\ \textcolor{comment}{//\ Portable\ handling\ of\ unaligned\ loads,\ stores,\ and\ copies.}}
+\DoxyCodeLine{00979\ \textcolor{comment}{//\ On\ some\ platforms,\ like\ ARM,\ the\ copy\ functions\ can\ be\ more\ efficient}}
+\DoxyCodeLine{00980\ \textcolor{comment}{//\ then\ a\ load\ and\ a\ store.}}
+\DoxyCodeLine{00981\ }
+\DoxyCodeLine{00982\ \textcolor{preprocessor}{\#if\ defined(\_\_i386)\ ||\ defined(ARCH\_ATHLON)\ ||\ defined(\_\_x86\_64\_\_)\ ||\ defined(\_ARCH\_PPC)}}
+\DoxyCodeLine{00983\ }
+\DoxyCodeLine{00984\ \textcolor{comment}{//\ x86\ and\ x86-\/64\ can\ perform\ unaligned\ loads/stores\ directly;}}
+\DoxyCodeLine{00985\ \textcolor{comment}{//\ modern\ PowerPC\ hardware\ can\ also\ do\ unaligned\ integer\ loads\ and\ stores;}}
+\DoxyCodeLine{00986\ \textcolor{comment}{//\ but\ note:\ the\ FPU\ still\ sends\ unaligned\ loads\ and\ stores\ to\ a\ trap\ handler!}}
+\DoxyCodeLine{00987\ }
+\DoxyCodeLine{00988\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOAD16(\_p)\ (*reinterpret\_cast<const\ uint16*>(\_p))}}
+\DoxyCodeLine{00989\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOAD32(\_p)\ (*reinterpret\_cast<const\ uint32*>(\_p))}}
+\DoxyCodeLine{00990\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOAD64(\_p)\ (*reinterpret\_cast<const\ uint64*>(\_p))}}
+\DoxyCodeLine{00991\ }
+\DoxyCodeLine{00992\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STORE16(\_p,\ \_val)\ (*reinterpret\_cast<uint16*>(\_p)\ =\ (\_val))}}
+\DoxyCodeLine{00993\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STORE32(\_p,\ \_val)\ (*reinterpret\_cast<uint32*>(\_p)\ =\ (\_val))}}
+\DoxyCodeLine{00994\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STORE64(\_p,\ \_val)\ (*reinterpret\_cast<uint64*>(\_p)\ =\ (\_val))}}
+\DoxyCodeLine{00995\ }
+\DoxyCodeLine{00996\ \textcolor{preprocessor}{\#elif\ defined(\_\_arm\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_5\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_5T\_\_)\ \&\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00997\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ !defined(\_\_ARM\_ARCH\_5TE\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_5TEJ\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_6\_\_)\ \&\&\ \(\backslash\)}}
+\DoxyCodeLine{00998\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ !defined(\_\_ARM\_ARCH\_6J\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_6K\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_6Z\_\_)\ \&\&\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00999\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ !defined(\_\_ARM\_ARCH\_6ZK\_\_)\ \&\&\ !defined(\_\_ARM\_ARCH\_6T2\_\_)}}
+\DoxyCodeLine{01000\ }
+\DoxyCodeLine{01001\ \textcolor{comment}{//\ ARMv7\ and\ newer\ support\ native\ unaligned\ accesses,\ but\ only\ of\ 16-\/bit}}
+\DoxyCodeLine{01002\ \textcolor{comment}{//\ and\ 32-\/bit\ values\ (not\ 64-\/bit);\ older\ versions\ either\ raise\ a\ fatal\ signal,}}
+\DoxyCodeLine{01003\ \textcolor{comment}{//\ do\ an\ unaligned\ read\ and\ rotate\ the\ words\ around\ a\ bit,\ or\ do\ the\ reads\ very}}
+\DoxyCodeLine{01004\ \textcolor{comment}{//\ slowly\ (trip\ through\ kernel\ mode).\ There's\ no\ simple\ \#define\ that\ says\ just}}
+\DoxyCodeLine{01005\ \textcolor{comment}{//\ “ARMv7\ or\ higher”,\ so\ we\ have\ to\ filter\ away\ all\ ARMv5\ and\ ARMv6}}
+\DoxyCodeLine{01006\ \textcolor{comment}{//\ sub-\/architectures.\ Newer\ gcc\ (>=\ 4.6)\ set\ an\ \_\_ARM\_FEATURE\_ALIGNED\ \#define,}}
+\DoxyCodeLine{01007\ \textcolor{comment}{//\ so\ in\ time,\ maybe\ we\ can\ move\ on\ to\ that.}}
+\DoxyCodeLine{01008\ \textcolor{comment}{//}}
+\DoxyCodeLine{01009\ \textcolor{comment}{//\ This\ is\ a\ mess,\ but\ there's\ not\ much\ we\ can\ do\ about\ it.}}
+\DoxyCodeLine{01010\ }
+\DoxyCodeLine{01011\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOAD16(\_p)\ (*reinterpret\_cast<const\ uint16*>(\_p))}}
+\DoxyCodeLine{01012\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOAD32(\_p)\ (*reinterpret\_cast<const\ uint32*>(\_p))}}
+\DoxyCodeLine{01013\ }
+\DoxyCodeLine{01014\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STORE16(\_p,\ \_val)\ (*reinterpret\_cast<uint16*>(\_p)\ =\ (\_val))}}
+\DoxyCodeLine{01015\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STORE32(\_p,\ \_val)\ (*reinterpret\_cast<uint32*>(\_p)\ =\ (\_val))}}
+\DoxyCodeLine{01016\ }
+\DoxyCodeLine{01017\ \textcolor{comment}{//\ TODO(user):\ NEON\ supports\ unaligned\ 64-\/bit\ loads\ and\ stores.}}
+\DoxyCodeLine{01018\ \textcolor{comment}{//\ See\ if\ that\ would\ be\ more\ efficient\ on\ platforms\ supporting\ it,}}
+\DoxyCodeLine{01019\ \textcolor{comment}{//\ at\ least\ for\ copies.}}
+\DoxyCodeLine{01020\ }
+\DoxyCodeLine{01021\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{port_8h_abb0e53621af3acd6d7a67319ffb5d541}{UNALIGNED\_LOAD64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ p)\ \{}
+\DoxyCodeLine{01022\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ t;}
+\DoxyCodeLine{01023\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&t,\ p,\ \textcolor{keyword}{sizeof}\ t);}
+\DoxyCodeLine{01024\ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{01025\ \}}
+\DoxyCodeLine{01026\ }
+\DoxyCodeLine{01027\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_a4d7764c5f05f8718abbf84d9eeaea1ed}{UNALIGNED\_STORE64}}(\textcolor{keywordtype}{void}*\ p,\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ v)\ \{}
+\DoxyCodeLine{01028\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(p,\ \&v,\ \textcolor{keyword}{sizeof}\ v);}
+\DoxyCodeLine{01029\ \}}
+\DoxyCodeLine{01030\ }
+\DoxyCodeLine{01031\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01032\ }
+\DoxyCodeLine{01033\ \textcolor{preprocessor}{\#define\ NEED\_ALIGNED\_LOADS}}
+\DoxyCodeLine{01034\ }
+\DoxyCodeLine{01035\ \textcolor{comment}{//\ These\ functions\ are\ provided\ for\ architectures\ that\ don't\ support}}
+\DoxyCodeLine{01036\ \textcolor{comment}{//\ unaligned\ loads\ and\ stores.}}
+\DoxyCodeLine{01037\ }
+\DoxyCodeLine{01038\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_ac2a9e79eb120216f855626495b7bd18a}{uint16}}\ \mbox{\hyperlink{port_8h_aebbc82011fd0019f4d4d6d000580da27}{UNALIGNED\_LOAD16}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ p)\ \{}
+\DoxyCodeLine{01039\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_ac2a9e79eb120216f855626495b7bd18a}{uint16}}\ t;}
+\DoxyCodeLine{01040\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&t,\ p,\ \textcolor{keyword}{sizeof}\ t);}
+\DoxyCodeLine{01041\ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{01042\ \}}
+\DoxyCodeLine{01043\ }
+\DoxyCodeLine{01044\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ \mbox{\hyperlink{port_8h_ad884cef0ba43acd21be6e109d6a79ea4}{UNALIGNED\_LOAD32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ p)\ \{}
+\DoxyCodeLine{01045\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ t;}
+\DoxyCodeLine{01046\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&t,\ p,\ \textcolor{keyword}{sizeof}\ t);}
+\DoxyCodeLine{01047\ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{01048\ \}}
+\DoxyCodeLine{01049\ }
+\DoxyCodeLine{01050\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{port_8h_abb0e53621af3acd6d7a67319ffb5d541}{UNALIGNED\_LOAD64}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ p)\ \{}
+\DoxyCodeLine{01051\ \ \ \ \ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ t;}
+\DoxyCodeLine{01052\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&t,\ p,\ \textcolor{keyword}{sizeof}\ t);}
+\DoxyCodeLine{01053\ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{01054\ \}}
+\DoxyCodeLine{01055\ }
+\DoxyCodeLine{01056\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_a2259d7b4a03178a3677a6c3767339e85}{UNALIGNED\_STORE16}}(\textcolor{keywordtype}{void}*\ p,\ \mbox{\hyperlink{integral__types_8h_ac2a9e79eb120216f855626495b7bd18a}{uint16}}\ v)\ \{}
+\DoxyCodeLine{01057\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(p,\ \&v,\ \textcolor{keyword}{sizeof}\ v);}
+\DoxyCodeLine{01058\ \}}
+\DoxyCodeLine{01059\ }
+\DoxyCodeLine{01060\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_a5e7eed03bfe9816163c445046fe0a7c9}{UNALIGNED\_STORE32}}(\textcolor{keywordtype}{void}*\ p,\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}}\ v)\ \{}
+\DoxyCodeLine{01061\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(p,\ \&v,\ \textcolor{keyword}{sizeof}\ v);}
+\DoxyCodeLine{01062\ \}}
+\DoxyCodeLine{01063\ }
+\DoxyCodeLine{01064\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{port_8h_a4d7764c5f05f8718abbf84d9eeaea1ed}{UNALIGNED\_STORE64}}(\textcolor{keywordtype}{void}*\ p,\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ v)\ \{}
+\DoxyCodeLine{01065\ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(p,\ \&v,\ \textcolor{keyword}{sizeof}\ v);}
+\DoxyCodeLine{01066\ \}}
+\DoxyCodeLine{01067\ }
+\DoxyCodeLine{01068\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01069\ }
+\DoxyCodeLine{01070\ \textcolor{preprocessor}{\#ifdef\ \_LP64}}
+\DoxyCodeLine{01071\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOADW(\_p)\ UNALIGNED\_LOAD64(\_p)}}
+\DoxyCodeLine{01072\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STOREW(\_p,\ \_val)\ UNALIGNED\_STORE64(\_p,\ \_val)}}
+\DoxyCodeLine{01073\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01074\ \textcolor{preprocessor}{\#define\ UNALIGNED\_LOADW(\_p)\ UNALIGNED\_LOAD32(\_p)}}
+\DoxyCodeLine{01075\ \textcolor{preprocessor}{\#define\ UNALIGNED\_STOREW(\_p,\ \_val)\ UNALIGNED\_STORE32(\_p,\ \_val)}}
+\DoxyCodeLine{01076\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01077\ }
+\DoxyCodeLine{01078\ \textcolor{comment}{//\ NOTE(user):\ These\ are\ only\ exported\ to\ C++\ because\ the\ macros\ they\ depend\ on}}
+\DoxyCodeLine{01079\ \textcolor{comment}{//\ use\ C++-\/only\ syntax.\ This\ \#ifdef\ can\ be\ removed\ if/when\ the\ macros\ are\ fixed.}}
+\DoxyCodeLine{01080\ }
+\DoxyCodeLine{01081\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{01082\ }
+\DoxyCodeLine{01083\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ UnalignedCopy16(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ src,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{01084\ \ \ \ \ \mbox{\hyperlink{port_8h_a2259d7b4a03178a3677a6c3767339e85}{UNALIGNED\_STORE16}}(dst,\ \mbox{\hyperlink{port_8h_aebbc82011fd0019f4d4d6d000580da27}{UNALIGNED\_LOAD16}}(src));}
+\DoxyCodeLine{01085\ \}}
+\DoxyCodeLine{01086\ }
+\DoxyCodeLine{01087\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ UnalignedCopy32(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ src,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{01088\ \ \ \ \ \mbox{\hyperlink{port_8h_a5e7eed03bfe9816163c445046fe0a7c9}{UNALIGNED\_STORE32}}(dst,\ \mbox{\hyperlink{port_8h_ad884cef0ba43acd21be6e109d6a79ea4}{UNALIGNED\_LOAD32}}(src));}
+\DoxyCodeLine{01089\ \}}
+\DoxyCodeLine{01090\ }
+\DoxyCodeLine{01091\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ UnalignedCopy64(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ src,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{01092\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*)\ ==\ 8)\ \{}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{port_8h_a4d7764c5f05f8718abbf84d9eeaea1ed}{UNALIGNED\_STORE64}}(dst,\ \mbox{\hyperlink{port_8h_abb0e53621af3acd6d7a67319ffb5d541}{UNALIGNED\_LOAD64}}(src));}
+\DoxyCodeLine{01094\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src\_char\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(src);}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ dst\_char\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(dst);}
+\DoxyCodeLine{01097\ }
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{port_8h_a5e7eed03bfe9816163c445046fe0a7c9}{UNALIGNED\_STORE32}}(dst\_char,\ \mbox{\hyperlink{port_8h_ad884cef0ba43acd21be6e109d6a79ea4}{UNALIGNED\_LOAD32}}(src\_char));}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{port_8h_a5e7eed03bfe9816163c445046fe0a7c9}{UNALIGNED\_STORE32}}(dst\_char\ +\ 4,\ \mbox{\hyperlink{port_8h_ad884cef0ba43acd21be6e109d6a79ea4}{UNALIGNED\_LOAD32}}(src\_char\ +\ 4));}
+\DoxyCodeLine{01100\ \ \ \ \ \}}
+\DoxyCodeLine{01101\ \}}
+\DoxyCodeLine{01102\ }
+\DoxyCodeLine{01103\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined(\_\_cpluscplus)}}
+\DoxyCodeLine{01104\ }
+\DoxyCodeLine{01105\ \textcolor{comment}{//\ printf\ macros\ for\ size\_t,\ in\ the\ style\ of\ inttypes.h}}
+\DoxyCodeLine{01106\ \textcolor{preprocessor}{\#ifdef\ \_LP64}}
+\DoxyCodeLine{01107\ \textcolor{preprocessor}{\#define\ \_\_PRIS\_PREFIX\ "{}z"{}}}
+\DoxyCodeLine{01108\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01109\ \textcolor{preprocessor}{\#define\ \_\_PRIS\_PREFIX}}
+\DoxyCodeLine{01110\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01111\ }
+\DoxyCodeLine{01112\ \textcolor{comment}{//\ Use\ these\ macros\ after\ a\ \%\ in\ a\ printf\ format\ string}}
+\DoxyCodeLine{01113\ \textcolor{comment}{//\ to\ get\ correct\ 32/64\ bit\ behavior,\ like\ this:}}
+\DoxyCodeLine{01114\ \textcolor{comment}{//\ size\_t\ size\ =\ records.size();}}
+\DoxyCodeLine{01115\ \textcolor{comment}{//\ printf("{}\%"{}\ PRIuS\ "{}\(\backslash\)n"{},\ size);}}
+\DoxyCodeLine{01116\ }
+\DoxyCodeLine{01117\ \textcolor{preprocessor}{\#define\ PRIdS\ \_\_PRIS\_PREFIX\ "{}d"{}}}
+\DoxyCodeLine{01118\ \textcolor{preprocessor}{\#define\ PRIxS\ \_\_PRIS\_PREFIX\ "{}x"{}}}
+\DoxyCodeLine{01119\ \textcolor{preprocessor}{\#define\ PRIuS\ \_\_PRIS\_PREFIX\ "{}u"{}}}
+\DoxyCodeLine{01120\ \textcolor{preprocessor}{\#define\ PRIXS\ \_\_PRIS\_PREFIX\ "{}X"{}}}
+\DoxyCodeLine{01121\ \textcolor{preprocessor}{\#define\ PRIoS\ \_\_PRIS\_PREFIX\ "{}o"{}}}
+\DoxyCodeLine{01122\ }
+\DoxyCodeLine{01123\ \textcolor{preprocessor}{\#define\ GPRIuPTHREAD\ "{}lu"{}}}
+\DoxyCodeLine{01124\ \textcolor{preprocessor}{\#define\ GPRIxPTHREAD\ "{}lx"{}}}
+\DoxyCodeLine{01125\ \textcolor{preprocessor}{\#ifdef\ OS\_CYGWIN}}
+\DoxyCodeLine{01126\ \textcolor{preprocessor}{\#define\ PRINTABLE\_PTHREAD(pthreadt)\ reinterpret\_cast<uintptr\_t>(pthreadt)}}
+\DoxyCodeLine{01127\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01128\ \textcolor{preprocessor}{\#define\ PRINTABLE\_PTHREAD(pthreadt)\ pthreadt}}
+\DoxyCodeLine{01129\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01130\ }
+\DoxyCodeLine{01131\ \textcolor{preprocessor}{\#define\ SIZEOF\_MEMBER(t,\ f)\ sizeof(((t*)4096)-\/>f)}}
+\DoxyCodeLine{01132\ }
+\DoxyCodeLine{01133\ \textcolor{preprocessor}{\#define\ OFFSETOF\_MEMBER(t,\ f)\ \(\backslash\)}}
+\DoxyCodeLine{01134\ \textcolor{preprocessor}{\ \ \ \ (reinterpret\_cast<char*>(\&reinterpret\_cast<t*>(16)-\/>f)\ -\/\ reinterpret\_cast<char*>(16))}}
+\DoxyCodeLine{01135\ }
+\DoxyCodeLine{01136\ \textcolor{preprocessor}{\#ifdef\ PTHREADS\_REDHAT\_WIN32}}
+\DoxyCodeLine{01137\ \textcolor{preprocessor}{\#include\ <iosfwd>}}
+\DoxyCodeLine{01138\ \textcolor{keyword}{using\ }std::ostream;\ \ \textcolor{comment}{//\ NOLINT(build/include)}}
+\DoxyCodeLine{01139\ \textcolor{preprocessor}{\#include\ <pthread.h>}\ \textcolor{comment}{//\ NOLINT(build/include)}}
+\DoxyCodeLine{01140\ \textcolor{comment}{//\ pthread\_t\ is\ not\ a\ simple\ integer\ or\ pointer\ on\ Win32}}
+\DoxyCodeLine{01141\ std::ostream\&\ operator<<(std::ostream\&\ out,\ \textcolor{keyword}{const}\ pthread\_t\&\ thread\_id);}
+\DoxyCodeLine{01142\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01143\ }
+\DoxyCodeLine{01144\ \textcolor{comment}{//\ GXX\_EXPERIMENTAL\_CXX0X\ is\ defined\ by\ gcc\ and\ clang\ up\ to\ at\ least}}
+\DoxyCodeLine{01145\ \textcolor{comment}{//\ gcc-\/4.7\ and\ clang-\/3.1\ (2011-\/12-\/13).\ \ \_\_cplusplus\ was\ defined\ to\ 1}}
+\DoxyCodeLine{01146\ \textcolor{comment}{//\ in\ gcc\ before\ 4.7\ (Crosstool\ 16)\ and\ clang\ before\ 3.1,\ but\ is}}
+\DoxyCodeLine{01147\ \textcolor{comment}{//\ defined\ according\ to\ the\ language\ version\ in\ effect\ thereafter.\ \ I}}
+\DoxyCodeLine{01148\ \textcolor{comment}{//\ believe\ MSVC\ will\ also\ define\ \_\_cplusplus\ according\ to\ the\ language}}
+\DoxyCodeLine{01149\ \textcolor{comment}{//\ version,\ but\ haven't\ checked\ that.}}
+\DoxyCodeLine{01150\ \textcolor{preprocessor}{\#if\ defined(\_\_GXX\_EXPERIMENTAL\_CXX0X\_\_)\ ||\ \_\_cplusplus\ >=\ 201103L}}
+\DoxyCodeLine{01151\ \textcolor{comment}{//\ Define\ this\ to\ 1\ if\ the\ code\ is\ compiled\ in\ C++11\ mode;\ leave\ it}}
+\DoxyCodeLine{01152\ \textcolor{comment}{//\ undefined\ otherwise.\ \ Do\ NOT\ define\ it\ to\ 0\ -\/-\/\ that\ causes}}
+\DoxyCodeLine{01153\ \textcolor{comment}{//\ '\#ifdef\ LANG\_CXX11'\ to\ behave\ differently\ from\ '\#if\ LANG\_CXX11'.}}
+\DoxyCodeLine{01154\ \textcolor{preprocessor}{\#define\ LANG\_CXX11\ 1}}
+\DoxyCodeLine{01155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01156\ }
+\DoxyCodeLine{01157\ \textcolor{comment}{//\ On\ some\ platforms,\ a\ "{}function\ pointer"{}\ points\ to\ a\ function\ descriptor}}
+\DoxyCodeLine{01158\ \textcolor{comment}{//\ rather\ than\ directly\ to\ the\ function\ itself.\ \ Use\ FUNC\_PTR\_TO\_CHAR\_PTR(func)}}
+\DoxyCodeLine{01159\ \textcolor{comment}{//\ to\ get\ a\ char-\/pointer\ to\ the\ first\ instruction\ of\ the\ function\ func.}}
+\DoxyCodeLine{01160\ \textcolor{preprocessor}{\#if\ defined(\_\_powerpc\_\_)\ ||\ defined(\_\_ia64)}}
+\DoxyCodeLine{01161\ \textcolor{comment}{//\ use\ opd\ section\ for\ function\ descriptors\ on\ these\ platforms,\ the\ function}}
+\DoxyCodeLine{01162\ \textcolor{comment}{//\ address\ is\ the\ first\ word\ of\ the\ descriptor}}
+\DoxyCodeLine{01163\ \textcolor{keyword}{enum}\ \{\ \mbox{\hyperlink{port_8h_ac36f475ca5b446f4fde4c9b90bec77c8a661042ff2f192eb31f35a878330103f9}{kPlatformUsesOPDSections}}\ =\ 1\ \};}
+\DoxyCodeLine{01164\ \textcolor{preprocessor}{\#define\ FUNC\_PTR\_TO\_CHAR\_PTR(func)\ (reinterpret\_cast<char**>(func)[0])}}
+\DoxyCodeLine{01165\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01166\ \textcolor{keyword}{enum}\ \{\ \mbox{\hyperlink{port_8h_ac36f475ca5b446f4fde4c9b90bec77c8a661042ff2f192eb31f35a878330103f9}{kPlatformUsesOPDSections}}\ =\ 0\ \};}
+\DoxyCodeLine{01167\ \textcolor{preprocessor}{\#define\ FUNC\_PTR\_TO\_CHAR\_PTR(func)\ (reinterpret\_cast<char*>(func))}}
+\DoxyCodeLine{01168\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

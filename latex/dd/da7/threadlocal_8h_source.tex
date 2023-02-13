@@ -1,0 +1,133 @@
+\hypertarget{threadlocal_8h_source}{}\doxysection{threadlocal.\+h}
+\label{threadlocal_8h_source}\index{/Users/dabowang/be\_all/runtime/threadlocal.h@{/Users/dabowang/be\_all/runtime/threadlocal.h}}
+\mbox{\hyperlink{threadlocal_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Reference\ from\ kudu,\ Solve\ the\ problem\ of\ gcc11\ compiling}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ non-\/trivial\ thread\_local\ variables\ on\ lower\ versions\ of\ GLIBC.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ see\ https://github.com/apache/doris/pull/7911}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ Block-\/scoped\ static\ thread\ local\ implementation.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Usage\ is\ similar\ to\ a\ C++11\ thread\_local.\ The\ BLOCK\_STATIC\_THREAD\_LOCAL\ macro}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ defines\ a\ thread-\/local\ pointer\ to\ the\ specified\ type,\ which\ is\ lazily}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ instantiated\ by\ any\ thread\ entering\ the\ block\ for\ the\ first\ time.\ The}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ constructor\ for\ the\ type\ T\ is\ invoked\ at\ macro\ execution\ time,\ as\ expected,}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ and\ its\ destructor\ is\ invoked\ when\ the\ corresponding\ thread's\ Runnable}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ returns,\ or\ when\ the\ thread\ exits.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ Inspired\ by\ Poco\ <http://pocoproject.org/docs/Poco.ThreadLocal.html>,}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Andrew\ Tomazos\ <http://stackoverflow.com/questions/12049684/>,\ and}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ the\ C++11\ thread\_local\ API.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Example\ usage:}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ //\ Invokes\ a\ 3-\/arg\ constructor\ on\ SomeClass:}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ BLOCK\_STATIC\_THREAD\_LOCAL(SomeClass,\ instance,\ arg1,\ arg2,\ arg3);}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ instance-\/>DoSomething();}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{port_8h}{gutil/port.h}}"{}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ BLOCK\_STATIC\_THREAD\_LOCAL(T,\ t,\ ...)\ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ static\ \_\_thread\ T*\ t;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (PREDICT\_FALSE(t\ ==\ NULL))\ \{\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ t\ =\ new\ T(\_\_VA\_ARGS\_\_);\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ add\_destructor(destroy<T>,\ t);\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (false)}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ Class-\/scoped\ static\ thread\ local\ implementation.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ Very\ similar\ in\ implementation\ to\ the\ above\ block-\/scoped\ version,\ but}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ requires\ a\ bit\ more\ syntax\ and\ vigilance\ to\ use\ properly.}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ DECLARE\_STATIC\_THREAD\_LOCAL(Type,\ instance\_var\_)\ must\ be\ placed\ in\ the}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ class\ header,\ as\ usual\ for\ variable\ declarations.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Because\ these\ variables\ are\ static,\ they\ must\ also\ be\ defined\ in\ the\ impl}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ file\ with\ DEFINE\_STATIC\_THREAD\_LOCAL(Type,\ Classname,\ instance\_var\_),}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ which\ is\ very\ much\ like\ defining\ any\ static\ member,\ i.e.\ int\ Foo::member\_.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ Finally,\ each\ thread\ must\ initialize\ the\ instance\ before\ using\ it\ by\ calling}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ INIT\_STATIC\_THREAD\_LOCAL(Type,\ instance\_var\_,\ ...).\ This\ is\ a\ cheap}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ call,\ and\ may\ be\ invoked\ at\ the\ top\ of\ any\ method\ which\ may\ reference\ a}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ thread-\/local\ variable.}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ Due\ to\ all\ of\ these\ requirements,\ you\ should\ probably\ declare\ TLS\ members}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ as\ private.}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ Example\ usage:}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ //\ foo.h}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ \#include\ "{}kudu/utils/file.h"{}}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ class\ Foo\ \{}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ \ public:}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ \ \ void\ DoSomething(std::string\ s);}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ \ private:}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ \ \ DECLARE\_STATIC\_THREAD\_LOCAL(utils::File,\ file\_);}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ //\ foo.cc}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ \#include\ "{}kudu/foo.h"{}}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ DEFINE\_STATIC\_THREAD\_LOCAL(utils::File,\ Foo,\ file\_);}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ void\ Foo::WriteToFile(std::string\ s)\ \{}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ //\ Call\ constructor\ if\ necessary.}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ INIT\_STATIC\_THREAD\_LOCAL(utils::File,\ file\_,\ "{}/tmp/file\_location.txt"{});}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \ file\_-\/>Write(s);}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Goes\ in\ the\ class\ declaration\ (usually\ in\ a\ header\ file).}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ dtor\ must\ be\ destructed\ \_after\_\ t,\ so\ it\ gets\ defined\ first.}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ Uses\ a\ mangled\ variable\ name\ for\ dtor\ since\ it\ must\ also\ be\ a\ member\ of\ the}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ class.}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#define\ DECLARE\_STATIC\_THREAD\_LOCAL(T,\ t)\ static\ \_\_thread\ T*\ t}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ You\ must\ also\ define\ the\ instance\ in\ the\ .cc\ file.}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ DEFINE\_STATIC\_THREAD\_LOCAL(T,\ Class,\ t)\ \_\_thread\ T*\ Class::t}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ Must\ be\ invoked\ at\ least\ once\ by\ each\ thread\ that\ will\ access\ t.}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#define\ INIT\_STATIC\_THREAD\_LOCAL(T,\ t,\ ...)\ \(\backslash\)}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (PREDICT\_FALSE(t\ ==\ NULL))\ \{\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ t\ =\ new\ T(\_\_VA\_ARGS\_\_);\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ add\_destructor(destroy<T>,\ t);\ \ \(\backslash\)}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (false)}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ Internal\ implementation\ below.}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ Add\ a\ destructor\ to\ the\ list.}}
+\DoxyCodeLine{00118\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacedoris_a49047736610b2b1c4416f5ec89e14a5f}{add\_destructor}}(\textcolor{keywordtype}{void}\ (*\mbox{\hyperlink{threadlocal_8cc_abfa81d12f7f2f9554efec9782b51a10b}{destructor}})(\textcolor{keywordtype}{void}*),\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ Destroy\ the\ passed\ object\ of\ type\ T.}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00122\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacedoris_a4c00eeaaf884f53510ce1a54ba0e197c}{destroy}}(\textcolor{keywordtype}{void}*\ t)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ With\ tcmalloc,\ this\ should\ be\ pretty\ cheap\ (same\ thread\ as\ new).}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{delete}\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(t);}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

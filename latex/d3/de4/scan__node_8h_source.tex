@@ -1,0 +1,117 @@
+\hypertarget{scan__node_8h_source}{}\doxysection{scan\+\_\+node.\+h}
+\label{scan__node_8h_source}\index{/Users/dabowang/be\_all/exec/scan\_node.h@{/Users/dabowang/be\_all/exec/scan\_node.h}}
+\mbox{\hyperlink{scan__node_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/exec/scan-\/node.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exec__node_8h}{exec/exec\_node.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/PaloInternalService\_types.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }TScanRange;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Abstract\ base\ class\ of\ all\ scan\ nodes;\ introduces\ set\_scan\_range().}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Includes\ ScanNode\ common\ counters:}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ BytesRead\ -\/\ total\ bytes\ read\ by\ this\ scan\ node}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ TotalRawHdfsReadTime\ -\/\ it\ measures\ the\ total\ time\ spent\ in\ the\ disk-\/io-\/mgr's\ reading}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ \ \ \ threads\ for\ this\ node.\ For\ example,\ if\ we\ have\ 3\ reading\ threads\ and\ each\ spent}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ 1\ sec,\ this\ counter\ will\ report\ 3\ sec.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ TotalReadThroughput\ -\/\ BytesRead\ divided\ by\ the\ total\ time\ spent\ in\ this\ node}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ (from\ Open\ to\ Close).\ For\ IO\ bounded\ queries,\ this\ should\ be\ very\ close\ to\ the}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ total\ throughput\ of\ all\ the\ disks.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ PerDiskRawHdfsThroughput\ -\/\ the\ read\ throughput\ for\ each\ disk.\ If\ all\ the\ data\ reside}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ \ on\ disk,\ this\ should\ be\ the\ read\ throughput\ the\ disk,\ regardless\ of\ whether\ the}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ query\ is\ IO\ bounded\ or\ not.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ NumDisksAccessed\ -\/\ number\ of\ disks\ accessed.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ AverageIoMgrQueueCapcity\ -\/\ the\ average\ queue\ capacity\ in\ the\ io\ mgr\ for\ this\ node.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ AverageIoMgrQueueSize\ -\/\ the\ average\ queue\ size\ (for\ ready\ buffers)\ in\ the\ io\ mgr}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ for\ this\ node.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ AverageScannerThreadConcurrency\ -\/\ the\ average\ number\ of\ active\ scanner\ threads.\ A}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ \ \ scanner\ thread\ is\ considered\ active\ if\ it\ is\ not\ blocked\ by\ IO.\ This\ number\ would}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ \ \ be\ low\ (less\ than\ 1)\ for\ IO\ bounded\ queries.\ For\ cpu\ bounded\ queries,\ this\ number}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ \ would\ be\ close\ to\ the\ max\ scanner\ threads\ allowed.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ AverageHdfsReadThreadConcurrency\ -\/\ the\ average\ number\ of\ active\ hdfs\ reading\ threads}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ \ reading\ for\ this\ scan\ node.\ For\ IO\ bound\ queries,\ this\ should\ be\ close\ to\ the}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ \ \ number\ of\ disk.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ \ \ \ HdfsReadThreadConcurrencyCount=<i>\ -\/\ the\ number\ of\ samples\ taken\ when\ the\ hdfs\ read}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ \ \ \ \ thread\ concurrency\ is\ <i>.}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ ScanRangesComplete\ -\/\ number\ of\ scan\ ranges\ completed}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scan_node}{ScanNode}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_exec_node}{ExecNode}}\ \{}
+\DoxyCodeLine{00071\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scan_node_adcd8a4e2be70b16208ecac1eef91bdac}{ScanNode}}(\mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ pool,\ \textcolor{keyword}{const}\ TPlanNode\&\ tnode,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}\&\ descs)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_exec_node}{ExecNode}}(pool,\ tnode,\ descs)\ \{\}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Set\ up\ counters}}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_scan_node_aa1a9d3c8096a7d5dc7ae0b91b62b7e34}{prepare}}(\mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Convert\ scan\_ranges\ into\ node-\/specific\ scan\ restrictions.\ \ This\ should\ be}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ called\ after\ prepare()}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_scan_node_a8fef761cc18a00ee2bec0b1228cce722}{set\_scan\_ranges}}(\textcolor{keyword}{const}\ std::vector<TScanRangeParams>\&\ scan\_ranges)\ =\ 0;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_scan_node_a6e8c184a7cf2993ac33cbeb1c8cb145e}{is\_scan\_node}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_scan_node_ae58ce72bd95bd12d200a4167f8b4c50b}{set\_no\_agg\_finalize}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_scan_node_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_a8cd001982916b8a55eaa16a9790ef2da}{bytes\_read\_counter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_scan_node_a34fb4311d101ecd39979774eeb63e5ec}{\_bytes\_read\_counter}};\ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_ac062ca34a593615b07607cc5a9a39a63}{rows\_read\_counter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_scan_node_a264f665c70d09cd20e81072ab5dfd11e}{\_rows\_read\_counter}};\ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_ac0d53199dfa2b94124f098f0315559c3}{total\_throughput\_counter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_scan_node_ab77acba41f68aeeff969c58d804f5b8d}{\_total\_throughput\_counter}};\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ names\ of\ ScanNode\ common\ counters}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_scan_node_ab33ef0563b471e549110b68782097ea7}{\_s\_bytes\_read\_counter}};}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_scan_node_af920a49c11f7d46f5f2c1cc3f133e4af}{\_s\_rows\_read\_counter}};}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_scan_node_a5c3a2abe974c06436e269f28cdf594ff}{\_s\_total\_throughput\_counter}};}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_scan_node_aafa301ce616fb74840a188c9b3851eae}{\_s\_num\_disks\_accessed\_counter}};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_scan_node_a43168fba6e2a0068d8680155d9f6ece0}{\_peel\_pushed\_vconjunct}}(}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ state,}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{bool}(\textcolor{keywordtype}{int})>\&\ checker);\ \textcolor{comment}{//\ remove\ pushed\ expr\ from\ conjunct\ tree}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_a34fb4311d101ecd39979774eeb63e5ec}{\_bytes\_read\_counter}};\ \textcolor{comment}{//\ \#\ bytes\ read\ from\ the\ scanner}}
+\DoxyCodeLine{00102\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_a264f665c70d09cd20e81072ab5dfd11e}{\_rows\_read\_counter}};}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Wall\ based\ aggregate\ read\ throughput\ [bytes/sec]}}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_ab77acba41f68aeeff969c58d804f5b8d}{\_total\_throughput\_counter}};}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scan_node_a7c7ee8681ff4947c55bcd686214fac11}{\_num\_disks\_accessed\_counter}};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_scan_node_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00109\ \};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

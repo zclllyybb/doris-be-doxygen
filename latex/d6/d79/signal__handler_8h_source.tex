@@ -1,0 +1,460 @@
+\hypertarget{signal__handler_8h_source}{}\doxysection{signal\+\_\+handler.\+h}
+\label{signal__handler_8h_source}\index{/Users/dabowang/be\_all/common/signal\_handler.h@{/Users/dabowang/be\_all/common/signal\_handler.h}}
+\mbox{\hyperlink{signal__handler_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2008,\ Google\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ met:}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ \ \ \ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ \ \ \ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ copyright\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ in\ the\ documentation\ and/or\ other\ materials\ provided\ with\ the}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ distribution.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ \ \ *\ Neither\ the\ name\ of\ Google\ Inc.\ nor\ the\ names\ of\ its}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ contributors\ may\ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ this\ software\ without\ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ "{}AS\ IS"{}\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ LIMITED\ TO,\ THE\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ A\ PARTICULAR\ PURPOSE\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ Author:\ Satoru\ Takabayashi}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Implementation\ of\ InstallFailureSignalHandler().}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <glog/logging.h>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{macros_8h}{gutil/macros.h}}>}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <boost/stacktrace.hpp>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <csignal>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <ctime>}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/version.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#ifdef\ HAVE\_UCONTEXT\_H}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <ucontext.h>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#ifdef\ HAVE\_SYS\_UCONTEXT\_H}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <sys/ucontext.h>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1signal}{doris::signal}}\ \{}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespacedoris_1_1signal_ac45cb32e1916bdc303775003eb3894a3}{query\_id\_hi}};}
+\DoxyCodeLine{00055\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{namespacedoris_1_1signal_a2cadb7f2339a61dfc0a368623a1dcaeb}{query\_id\_lo}};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ We'll\ install\ the\ failure\ signal\ handler\ for\ these\ signals.\ \ We\ could}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ use\ strsignal()\ to\ get\ signal\ names,\ but\ we\ don't\ use\ it\ to\ avoid}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ introducing\ yet\ another\ \#ifdef\ complication.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ The\ list\ should\ be\ synced\ with\ the\ comment\ in\ signalhandler.h.}}
+\DoxyCodeLine{00064\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}};}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}};}
+\DoxyCodeLine{00067\ \}\ kFailureSignals[]\ =\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \{SIGSEGV,\ \textcolor{stringliteral}{"{}SIGSEGV"{}}\},\ \{SIGILL,\ \textcolor{stringliteral}{"{}SIGILL"{}}\},\ \{SIGFPE,\ \textcolor{stringliteral}{"{}SIGFPE"{}}\},}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \{SIGABRT,\ \textcolor{stringliteral}{"{}SIGABRT"{}}\},\ \{SIGBUS,\ \textcolor{stringliteral}{"{}SIGBUS"{}}\},\ \{SIGTERM,\ \textcolor{stringliteral}{"{}SIGTERM"{}}\},}
+\DoxyCodeLine{00070\ \};}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ kFailureSignalHandlerInstalled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ *\ Copyright\ (c)\ Meta\ Platforms,\ Inc.\ and\ affiliates.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ *\ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ *\ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ *\ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ *\ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ *\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ *\ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ *\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ *\ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ *\ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ *\ These\ signal\ explainer\ is\ copied\ from\ Meta's\ Folly}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00090\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ sigill\_reason(\textcolor{keywordtype}{int}\ si\_code)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{switch}\ (si\_code)\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_ILLOPC:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}illegal\ opcode"{}};}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_ILLOPN:}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}illegal\ operand"{}};}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_ILLADR:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}illegal\ addressing\ mode"{}};}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_ILLTRP:}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}illegal\ trap"{}};}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_PRVOPC:}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}privileged\ opcode"{}};}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_PRVREG:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}privileged\ register"{}};}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_COPROC:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}coprocessor\ error"{}};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{case}\ ILL\_BADSTK:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}internal\ stack\ error"{}};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ sigfpe\_reason(\textcolor{keywordtype}{int}\ si\_code)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{switch}\ (si\_code)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_INTDIV:}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}integer\ divide\ by\ zero"{}};}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_INTOVF:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}integer\ overflow"{}};}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTDIV:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}floating-\/point\ divide\ by\ zero"{}};}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTOVF:}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}floating-\/point\ overflow"{}};}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTUND:}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}floating-\/point\ underflow"{}};}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTRES:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}floating-\/point\ inexact\ result"{}};}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTINV:}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}floating-\/point\ invalid\ operation"{}};}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordflow}{case}\ FPE\_FLTSUB:}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}subscript\ out\ of\ range"{}};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ sigsegv\_reason(\textcolor{keywordtype}{int}\ si\_code)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{switch}\ (si\_code)\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{case}\ SEGV\_MAPERR:}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}address\ not\ mapped\ to\ object"{}};}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{case}\ SEGV\_ACCERR:}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}invalid\ permissions\ for\ mapped\ object"{}};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00147\ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ sigbus\_reason(\textcolor{keywordtype}{int}\ si\_code)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{switch}\ (si\_code)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{case}\ BUS\_ADRALN:}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}invalid\ address\ alignment"{}};}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{case}\ BUS\_ADRERR:}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}nonexistent\ physical\ address"{}};}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{case}\ BUS\_OBJERR:}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}object-\/specific\ hardware\ error"{}};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MCEERR\_AR\ and\ MCEERR\_AO:\ in\ sigaction(2)\ but\ not\ in\ headers.}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00163\ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ signal\_reason(\textcolor{keywordtype}{int}\ signum,\ \textcolor{keywordtype}{int}\ si\_code)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{switch}\ (signum)\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{case}\ SIGILL:}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sigill\_reason(si\_code);}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{case}\ SIGFPE:}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sigfpe\_reason(si\_code);}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{case}\ SIGSEGV:}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sigsegv\_reason(si\_code);}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{case}\ SIGBUS:}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sigbus\_reason(si\_code);}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00178\ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ The\ class\ is\ used\ for\ formatting\ error\ messages.\ \ We\ don't\ use\ printf()}}
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ as\ it's\ not\ async\ signal\ safe.}}
+\DoxyCodeLine{00183\ \textcolor{keyword}{class\ }MinimalFormatter\ \{}
+\DoxyCodeLine{00184\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00185\ \ \ \ \ MinimalFormatter(\textcolor{keywordtype}{char}*\ buffer,\ \textcolor{keywordtype}{size\_t}\ size)}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{signal__handler_8h_a37525d5cfe40669bc9ca14b3234c70d2}{buffer\_}}(buffer),\ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}(buffer),\ \mbox{\hyperlink{signal__handler_8h_a4b940a174ee931b013be56d9986f1184}{end\_}}(buffer\ +\ size)\ \{\}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ number\ of\ bytes\ written\ in\ the\ buffer.}}
+\DoxyCodeLine{00189\ \ \ \ \ std::size\_t\ num\_bytes\_written()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(\mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}\ -\/\ \mbox{\hyperlink{signal__handler_8h_a37525d5cfe40669bc9ca14b3234c70d2}{buffer\_}});\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Appends\ string\ from\ "{}str"{}\ and\ updates\ the\ internal\ cursor.}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ AppendString(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ ptrdiff\_t\ i\ =\ 0;}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (str[i]\ !=\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ cursor\_\ +\ i\ <\ end\_)\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}[i]\ =\ str[i];}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ ++i;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}\ +=\ i;}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ Formats\ "{}number"{}\ in\ "{}radix"{}\ and\ updates\ the\ internal\ cursor.}}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ Lowercase\ letters\ are\ used\ for\ 'a'\ -\/\ 'z'.}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{void}\ AppendUint64(\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}},\ \textcolor{keywordtype}{unsigned}\ radix)\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ i\ =\ 0;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cursor\_\ +\ i\ <\ end\_)\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ tmp\ =\ \mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}}\ \%\ radix;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}}\ /=\ radix;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}[i]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\textcolor{keyword}{>}(tmp\ <\ 10\ ?\ \textcolor{charliteral}{'0'}\ +\ tmp\ :\ \textcolor{charliteral}{'a'}\ +\ tmp\ -\/\ 10);}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ ++i;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reverse\ the\ bytes\ written.}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ std::reverse(cursor\_,\ cursor\_\ +\ i);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}\ +=\ i;}
+\DoxyCodeLine{00217\ \ \ \ \ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ Formats\ "{}number"{}\ as\ hexadecimal\ number,\ and\ updates\ the\ internal}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ cursor.\ \ Padding\ will\ be\ added\ in\ front\ if\ needed.}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{void}\ AppendHexWithPadding(\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\ \mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}},\ \textcolor{keywordtype}{int}\ width)\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ start\ =\ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}};}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ AppendString(\textcolor{stringliteral}{"{}0x"{}});}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ AppendUint64(\mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}},\ 16);}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ to\ right\ and\ add\ padding\ in\ front\ if\ needed.}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cursor\_\ <\ start\ +\ width)\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}}\ delta\ =\ start\ +\ width\ -\/\ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}};}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ std::copy(start,\ cursor\_,\ start\ +\ delta);}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ std::fill(start,\ start\ +\ delta,\ \textcolor{charliteral}{'\ '});}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}}\ =\ start\ +\ width;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{signal__handler_8h_a37525d5cfe40669bc9ca14b3234c70d2}{buffer\_}};}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{signal__handler_8h_a68c7c7baa3508f22db4ba292c5eb5d0c}{cursor\_}};}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{signal__handler_8h_a4b940a174ee931b013be56d9986f1184}{end\_}};}
+\DoxyCodeLine{00238\ \};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{comment}{//\ Writes\ the\ given\ data\ with\ the\ size\ to\ the\ standard\ error.}}
+\DoxyCodeLine{00241\ \textcolor{keywordtype}{void}\ WriteToStderr(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordflow}{if}\ (write(STDERR\_FILENO,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ size)\ <\ 0)\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ignore\ errors.}}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ The\ writer\ function\ can\ be\ changed\ by\ InstallFailureWriter().}}
+\DoxyCodeLine{00248\ void\ (*g\_failure\_writer)(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ size)\ =\ WriteToStderr;}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \textcolor{comment}{//\ Dumps\ time\ information.\ \ We\ don't\ dump\ human-\/readable\ time\ information}}
+\DoxyCodeLine{00251\ \textcolor{comment}{//\ as\ localtime()\ is\ not\ guaranteed\ to\ be\ async\ signal\ safe.}}
+\DoxyCodeLine{00252\ \textcolor{keywordtype}{void}\ DumpTimeInfo()\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ time\_t\ time\_in\_sec\ =\ time(NULL);}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{char}\ buf[256];\ \textcolor{comment}{//\ Big\ enough\ for\ time\ info.}}
+\DoxyCodeLine{00255\ \ \ \ \ MinimalFormatter\ formatter(buf,\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00256\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}***\ Query\ id:\ "{}});}
+\DoxyCodeLine{00257\ \ \ \ \ formatter.AppendUint64(\mbox{\hyperlink{namespacedoris_1_1signal_ac45cb32e1916bdc303775003eb3894a3}{query\_id\_hi}},\ 16);}
+\DoxyCodeLine{00258\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}-\/"{}});}
+\DoxyCodeLine{00259\ \ \ \ \ formatter.AppendUint64(\mbox{\hyperlink{namespacedoris_1_1signal_a2cadb7f2339a61dfc0a368623a1dcaeb}{query\_id\_lo}},\ 16);}
+\DoxyCodeLine{00260\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ ***\(\backslash\)n"{}});}
+\DoxyCodeLine{00261\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}***\ Aborted\ at\ "{}});}
+\DoxyCodeLine{00262\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(time\_in\_sec),\ 10);}
+\DoxyCodeLine{00263\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ (unix\ time)"{}});}
+\DoxyCodeLine{00264\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ try\ \(\backslash\)"{}date\ -\/d\ @"{}});}
+\DoxyCodeLine{00265\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(time\_in\_sec),\ 10);}
+\DoxyCodeLine{00266\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\(\backslash\)"{}\ if\ you\ are\ using\ GNU\ date\ ***\(\backslash\)n"{}});}
+\DoxyCodeLine{00267\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}***\ Current\ BE\ git\ commitID:\ "{}});}
+\DoxyCodeLine{00268\ \ \ \ \ formatter.AppendString(DORIS\_BUILD\_SHORT\_HASH);}
+\DoxyCodeLine{00269\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ ***\(\backslash\)n"{}});}
+\DoxyCodeLine{00270\ \ \ \ \ g\_failure\_writer(buf,\ formatter.num\_bytes\_written());}
+\DoxyCodeLine{00271\ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{comment}{//\ Dumps\ information\ about\ the\ signal\ to\ STDERR.}}
+\DoxyCodeLine{00274\ \textcolor{keywordtype}{void}\ DumpSignalInfo(\textcolor{keywordtype}{int}\ signal\_number,\ siginfo\_t*\ siginfo)\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{//\ Get\ the\ signal\ name.}}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ signal\_name\ =\ NULL;}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ ARRAYSIZE\_UNSAFE(kFailureSignals);\ ++i)\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (signal\_number\ ==\ kFailureSignals[i].\mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}})\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ signal\_name\ =\ kFailureSignals[i].name;}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordtype}{char}\ buf[256];\ \textcolor{comment}{//\ Big\ enough\ for\ signal\ info.}}
+\DoxyCodeLine{00284\ \ \ \ \ MinimalFormatter\ formatter(buf,\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}***\ "{}});}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keywordflow}{if}\ (signal\_name)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ formatter.AppendString(signal\_name);}
+\DoxyCodeLine{00289\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ the\ signal\ number\ if\ the\ name\ is\ unknown.\ \ The\ signal\ name}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ should\ be\ known,\ but\ just\ in\ case.}}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}Signal\ "{}});}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(signal\_number),\ 10);}
+\DoxyCodeLine{00294\ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ "{}});}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ Detail\ reason\ explain}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{auto}\ reason\ =\ signal\_reason(signal\_number,\ siginfo-\/>si\_code);}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ If\ we\ can't\ find\ a\ reason\ code\ make\ a\ best\ effort\ to\ print\ the\ (int)\ code.}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordflow}{if}\ (reason\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ formatter.AppendString(reason);}
+\DoxyCodeLine{00302\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}unkown\ detail\ explain"{}});}
+\DoxyCodeLine{00304\ \ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ (@0x"{}});}
+\DoxyCodeLine{00306\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{reinterpret\_cast<}uintptr\_t\textcolor{keyword}{>}(siginfo-\/>si\_addr),\ 16);}
+\DoxyCodeLine{00307\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{00308\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ received\ by\ PID\ "{}});}
+\DoxyCodeLine{00309\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(getpid()),\ 10);}
+\DoxyCodeLine{00310\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ (TID\ "{}});}
+\DoxyCodeLine{00311\ \ \ \ \ uint64\_t\ tid;}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#ifdef\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00313\ \ \ \ \ pthread\_threadid\_np(\textcolor{keyword}{nullptr},\ \&tid);}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00315\ \ \ \ \ tid\ =\ \mbox{\hyperlink{syscall_8h_a24b31970e512fd09f65a755c5c89ba98}{syscall}}(SYS\_gettid);}
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00317\ \ \ \ \ formatter.AppendUint64(tid,\ 10);}
+\DoxyCodeLine{00318\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}\ OR\ 0x"{}});}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{//\ We\ assume\ pthread\_t\ is\ an\ integral\ number\ or\ a\ pointer,\ rather}}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{comment}{//\ than\ a\ complex\ struct.\ \ In\ some\ environments,\ pthread\_self()}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{comment}{//\ returns\ an\ uint64\ but\ in\ some\ other\ environments\ pthread\_self()}}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{//\ returns\ a\ pointer.}}
+\DoxyCodeLine{00323\ \ \ \ \ pthread\_t\ \textcolor{keywordtype}{id}\ =\ pthread\_self();}
+\DoxyCodeLine{00324\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\textcolor{keywordtype}{id})),\ 16);}
+\DoxyCodeLine{00325\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{})\ "{}});}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{comment}{//\ Only\ linux\ has\ the\ PID\ of\ the\ signal\ sender\ in\ si\_pid.}}
+\DoxyCodeLine{00327\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}from\ PID\ "{}});}
+\DoxyCodeLine{00328\ \ \ \ \ formatter.AppendUint64(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}}\textcolor{keyword}{>}(siginfo-\/>si\_pid),\ 10);}
+\DoxyCodeLine{00329\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{};\ "{}});}
+\DoxyCodeLine{00330\ \ \ \ \ formatter.AppendString(\textcolor{stringliteral}{"{}stack\ trace:\ ***\(\backslash\)n"{}});}
+\DoxyCodeLine{00331\ \ \ \ \ g\_failure\_writer(buf,\ formatter.num\_bytes\_written());}
+\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \textcolor{comment}{//\ Invoke\ the\ default\ signal\ handler.}}
+\DoxyCodeLine{00335\ \textcolor{keywordtype}{void}\ InvokeDefaultSignalHandler(\textcolor{keywordtype}{int}\ signal\_number)\ \{}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keyword}{struct\ }sigaction\ sig\_action;}
+\DoxyCodeLine{00337\ \ \ \ \ memset(\&sig\_action,\ 0,\ \textcolor{keyword}{sizeof}(sig\_action));}
+\DoxyCodeLine{00338\ \ \ \ \ sigemptyset(\&sig\_action.sa\_mask);}
+\DoxyCodeLine{00339\ \ \ \ \ sig\_action.sa\_handler\ =\ SIG\_DFL;}
+\DoxyCodeLine{00340\ \ \ \ \ sigaction(signal\_number,\ \&sig\_action,\ NULL);}
+\DoxyCodeLine{00341\ \ \ \ \ kill(getpid(),\ signal\_number);}
+\DoxyCodeLine{00342\ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ This\ variable\ is\ used\ for\ protecting\ FailureSignalHandler()\ from}}
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ dumping\ stuff\ while\ another\ thread\ is\ doing\ it.\ \ Our\ policy\ is\ to\ let}}
+\DoxyCodeLine{00346\ \textcolor{comment}{//\ the\ first\ thread\ dump\ stuff\ and\ let\ other\ threads\ wait.}}
+\DoxyCodeLine{00347\ \textcolor{comment}{//\ See\ also\ comments\ in\ FailureSignalHandler().}}
+\DoxyCodeLine{00348\ \textcolor{keyword}{static}\ pthread\_t*\ g\_entered\_thread\_id\_pointer\ =\ NULL;}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{comment}{//\ Wrapper\ of\ \_\_sync\_val\_compare\_and\_swap.\ If\ the\ GCC\ extension\ isn't}}
+\DoxyCodeLine{00351\ \textcolor{comment}{//\ defined,\ we\ try\ the\ CPU\ specific\ logics\ (we\ only\ support\ x86\ and}}
+\DoxyCodeLine{00352\ \textcolor{comment}{//\ x86\_64\ for\ now)\ first,\ then\ use\ a\ naive\ implementation,\ which\ has\ a}}
+\DoxyCodeLine{00353\ \textcolor{comment}{//\ race\ condition.}}
+\DoxyCodeLine{00354\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00355\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ sync\_val\_compare\_and\_swap(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ ptr,\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ oldval,\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ newval)\ \{}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\#if\ defined(HAVE\_\_\_SYNC\_VAL\_COMPARE\_AND\_SWAP)}}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_ac77135f41ce5a173ebbd009cf4eff9a4}{\_\_sync\_val\_compare\_and\_swap}}(ptr,\ oldval,\ newval);}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)\ \&\&\ (defined(\_\_i386\_\_)\ ||\ defined(\_\_x86\_64\_\_))}}
+\DoxyCodeLine{00359\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}};}
+\DoxyCodeLine{00360\ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_(\textcolor{stringliteral}{"{}lock;\ cmpxchg\ \%1,\ (\%2);"{}}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}=a"{}}(\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}})}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ GCC\ may\ produces\ \%sil\ or\ \%dil\ for}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ constraint\ "{}r"{},\ but\ some\ of\ apple's\ gas}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dosn't\ know\ the\ 8\ bit\ registers.}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ use\ "{}q"{}\ to\ avoid\ these\ registers.}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}q"{}}(newval),\ \textcolor{stringliteral}{"{}q"{}}(ptr),\ \textcolor{stringliteral}{"{}a"{}}(oldval)}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}memory"{}},\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}};}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00370\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ *ptr;}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ ==\ oldval)\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ *ptr\ =\ newval;}
+\DoxyCodeLine{00373\ \ \ \ \ \}}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}};}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00376\ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{comment}{//\ Dumps\ signal\ and\ stack\ frame\ information,\ and\ invokes\ the\ default}}
+\DoxyCodeLine{00379\ \textcolor{comment}{//\ signal\ handler\ once\ our\ job\ is\ done.}}
+\DoxyCodeLine{00380\ \textcolor{keywordtype}{void}\ FailureSignalHandler(\textcolor{keywordtype}{int}\ signal\_number,\ siginfo\_t*\ signal\_info,\ \textcolor{keywordtype}{void}*\ ucontext)\ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{comment}{//\ First\ check\ if\ we've\ already\ entered\ the\ function.\ \ We\ use\ an\ atomic}}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{comment}{//\ compare\ and\ swap\ operation\ for\ platforms\ that\ support\ it.\ \ For\ other}}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{comment}{//\ platforms,\ we\ use\ a\ naive\ method\ that\ could\ lead\ to\ a\ subtle\ race.}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{comment}{//\ We\ assume\ pthread\_self()\ is\ async\ signal\ safe,\ though\ it's\ not}}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{comment}{//\ officially\ guaranteed.}}
+\DoxyCodeLine{00387\ \ \ \ \ pthread\_t\ my\_thread\_id\ =\ pthread\_self();}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ We\ could\ simply\ use\ pthread\_t\ rather\ than\ pthread\_t*\ for\ this,}}
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{comment}{//\ if\ pthread\_self()\ is\ guaranteed\ to\ return\ non-\/zero\ value\ for\ thread}}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{comment}{//\ ids,\ but\ there\ is\ no\ such\ guarantee.\ \ We\ need\ to\ distinguish\ if\ the}}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{comment}{//\ old\ value\ (value\ returned\ from\ \_\_sync\_val\_compare\_and\_swap)\ is}}
+\DoxyCodeLine{00392\ \ \ \ \ \textcolor{comment}{//\ different\ from\ the\ original\ value\ (in\ this\ case\ NULL).}}
+\DoxyCodeLine{00393\ \ \ \ \ pthread\_t*\ old\_thread\_id\_pointer\ =\ sync\_val\_compare\_and\_swap(}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \&g\_entered\_thread\_id\_pointer,\ \textcolor{keyword}{static\_cast<}pthread\_t*\textcolor{keyword}{>}(NULL),\ \&my\_thread\_id);}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_thread\_id\_pointer\ !=\ NULL)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We've\ already\ entered\ the\ signal\ handler.\ \ What\ should\ we\ do?}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pthread\_equal(my\_thread\_id,\ *g\_entered\_thread\_id\_pointer))\ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It\ looks\ the\ current\ thread\ is\ reentering\ the\ signal\ handler.}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Something\ must\ be\ going\ wrong\ (maybe\ we\ are\ reentering\ by\ another}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ type\ of\ signal?).\ \ Kill\ ourself\ by\ the\ default\ signal\ handler.}}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ InvokeDefaultSignalHandler(signal\_number);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Another\ thread\ is\ dumping\ stuff.\ \ Let's\ wait\ until\ that\ thread}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ finishes\ the\ job\ and\ kills\ the\ process.}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ sleep(1);}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00408\ \ \ \ \ \}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ This\ is\ the\ first\ time\ we\ enter\ the\ signal\ handler.\ \ We\ are\ going\ to}}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{comment}{//\ do\ some\ interesting\ stuff\ from\ here.}}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{comment}{//\ TODO(satorux):\ We\ might\ want\ to\ set\ timeout\ here\ using\ alarm(),\ but}}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//\ mixing\ alarm()\ and\ sleep()\ can\ be\ a\ bad\ idea.}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ First\ dump\ time\ info.}}
+\DoxyCodeLine{00415\ \ \ \ \ DumpTimeInfo();}
+\DoxyCodeLine{00416\ \ \ \ \ DumpSignalInfo(signal\_number,\ signal\_info);}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{comment}{//\ ***\ TRANSITION\ ***}}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{comment}{//\ BEFORE\ this\ point,\ all\ code\ must\ be\ async-\/termination-\/safe!}}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{comment}{//\ (See\ WARNING\ above.)}}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{comment}{//\ AFTER\ this\ point,\ we\ do\ unsafe\ things,\ like\ using\ LOG()!}}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//\ The\ process\ could\ be\ terminated\ or\ hung\ at\ any\ time.\ \ We\ try\ to}}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//\ do\ more\ useful\ things\ first\ and\ riskier\ things\ later.}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ Use\ boost\ stacktrace\ to\ print\ more\ detail\ info}}
+\DoxyCodeLine{00428\ \ \ \ \ std::cout\ <<\ boost::stacktrace::stacktrace()\ <<\ std::endl;}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{comment}{//\ Flush\ the\ logs\ before\ we\ do\ anything\ in\ case\ 'anything'}}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{comment}{//\ causes\ problems.}}
+\DoxyCodeLine{00432\ \ \ \ \ google::FlushLogFilesUnsafe(0);}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ Kill\ ourself\ by\ the\ default\ signal\ handler.}}
+\DoxyCodeLine{00435\ \ \ \ \ InvokeDefaultSignalHandler(signal\_number);}
+\DoxyCodeLine{00436\ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacedoris_1_1signal_aaa9d4dd298857018fc3732bfef5685b9}{InstallFailureSignalHandler}}()\ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{comment}{//\ Build\ the\ sigaction\ struct.}}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keyword}{struct\ }sigaction\ sig\_action;}
+\DoxyCodeLine{00443\ \ \ \ \ memset(\&sig\_action,\ 0,\ \textcolor{keyword}{sizeof}(sig\_action));}
+\DoxyCodeLine{00444\ \ \ \ \ sigemptyset(\&sig\_action.sa\_mask);}
+\DoxyCodeLine{00445\ \ \ \ \ sig\_action.sa\_flags\ |=\ SA\_SIGINFO;}
+\DoxyCodeLine{00446\ \ \ \ \ sig\_action.sa\_sigaction\ =\ \&FailureSignalHandler;}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ ARRAYSIZE\_UNSAFE(kFailureSignals);\ ++i)\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ CHECK\_ERR(sigaction(kFailureSignals[i].\mbox{\hyperlink{signal__handler_8h_a7106e2abc437ad981830d14176d15f09}{number}},\ \&sig\_action,\ NULL));}
+\DoxyCodeLine{00450\ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \ kFailureSignalHandlerInstalled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00452\ \}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \}\ \textcolor{comment}{//\ namespace\ doris::signal}}
+
+\end{DoxyCode}

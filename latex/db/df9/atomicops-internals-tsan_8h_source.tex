@@ -1,0 +1,195 @@
+\hypertarget{atomicops-internals-tsan_8h_source}{}\doxysection{atomicops-\/internals-\/tsan.h}
+\label{atomicops-internals-tsan_8h_source}\index{/Users/dabowang/be\_all/gutil/atomicops-\/internals-\/tsan.h@{/Users/dabowang/be\_all/gutil/atomicops-\/internals-\/tsan.h}}
+\mbox{\hyperlink{atomicops-internals-tsan_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2012\ The\ Chromium\ Authors.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Use\ of\ this\ source\ code\ is\ governed\ by\ a\ BSD-\/style\ license\ that\ can\ be}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ found\ in\ the\ LICENSE\ file.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ This\ file\ is\ an\ internal\ atomic\ implementation\ for\ compiler-\/based}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ ThreadSanitizer.\ Use\ base/atomicops.h\ instead.}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Workaround\ for\ Chromium\ BASE\_EXPORT\ definition}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ BASE\_EXPORT}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ BASE\_EXPORT}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ This\ struct\ is\ not\ part\ of\ the\ public\ API\ of\ this\ module;\ clients\ may\ not}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ use\ it.\ \ (However,\ it's\ exported\ via\ BASE\_EXPORT\ because\ clients\ implicitly}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ do\ use\ it\ at\ link\ time\ by\ inlining\ these\ functions.)}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Features\ of\ this\ x86.\ \ Values\ may\ not\ be\ correct\ before\ main()\ is\ run,}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ but\ are\ set\ conservatively.}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_atomic_ops__x86_c_p_u_feature_struct}{AtomicOps\_x86CPUFeatureStruct}}\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_atomic_ops__x86_c_p_u_feature_struct_ad87f24f582fff6992f47fef587862c5a}{has\_amd\_lock\_mb\_bug}};\ \textcolor{comment}{//\ Processor\ has\ AMD\ memory-\/barrier\ bug;\ do\ lfence}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ after\ acquire\ compare-\/and-\/swap.}}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_atomic_ops__x86_c_p_u_feature_struct_ab643e85f2542472540becb256446237a}{has\_sse2}};\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Processor\ has\ SSE2.}}
+\DoxyCodeLine{00024\ \};}
+\DoxyCodeLine{00025\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a9366d263280e9f3a126950a84c211fb7}{BASE\_EXPORT}}\ \textcolor{keyword}{extern}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_atomic_ops__x86_c_p_u_feature_struct}{AtomicOps\_x86CPUFeatureStruct}}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a8074efc3eb843ef3aeea641149ad8ad5}{AtomicOps\_Internalx86CPUFeatures}};}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ ATOMICOPS\_COMPILER\_BARRIER()\ \_\_asm\_\_\ \_\_volatile\_\_("{}"{}}\ :\ :\ :\ "{}memory"{})}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <sanitizer/tsan\_interface\_atomic.h>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{typedef}\ int32\_t\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}};}
+\DoxyCodeLine{00032\ \textcolor{keyword}{typedef}\ int64\_t\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00035\ \textcolor{keyword}{namespace\ }subtle\ \{}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{typedef}\ int32\_t\ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}};}
+\DoxyCodeLine{00038\ \textcolor{keyword}{typedef}\ int64\_t\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2a1795d0001ccd73a2246c6007ab79c2}{NoBarrier\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ old\_value,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00043\ \ \ \ \ \_\_tsan\_atomic32\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_relaxed,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ab2ed75f93c0753f2ed28c45e218b1b00}{NoBarrier\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a52330d797e1d55eec1a8c527a6fe0fcd}{Acquire\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a63953ab7f92640be53417cae40cdad67}{Release\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_release);}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{NoBarrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ increment)\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{return}\ increment\ +\ \_\_tsan\_atomic32\_fetch\_add(ptr,\ increment,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00062\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{Barrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ increment)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ increment\ +\ \_\_tsan\_atomic32\_fetch\_add(ptr,\ increment,\ \_\_tsan\_memory\_order\_acq\_rel);}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ old\_value,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00071\ \ \ \ \ \_\_tsan\_atomic32\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_acquire,}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ old\_value,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00079\ \ \ \ \ \_\_tsan\_atomic32\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_release,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_ac0f470b7b2708abf0c2b3a57a53fb514}{NoBarrier\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \_\_tsan\_atomic32\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00086\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \_\_tsan\_atomic32\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00090\ \ \ \ \ \_\_tsan\_atomic\_thread\_fence(\_\_tsan\_memory\_order\_seq\_cst);}
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \_\_tsan\_atomic32\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_release);}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a30ce3d55faca8dccb17c6256e4ff1f1a}{NoBarrier\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_load(ptr,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_load(ptr,\ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \_\_tsan\_atomic\_thread\_fence(\_\_tsan\_memory\_order\_seq\_cst);}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic32\_load(ptr,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2a1795d0001ccd73a2246c6007ab79c2}{NoBarrier\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ old\_value,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00113\ \ \ \ \ \_\_tsan\_atomic64\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_relaxed,}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ab2ed75f93c0753f2ed28c45e218b1b00}{NoBarrier\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a52330d797e1d55eec1a8c527a6fe0fcd}{Acquire\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a63953ab7f92640be53417cae40cdad67}{Release\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_exchange(ptr,\ new\_value,\ \_\_tsan\_memory\_order\_release);}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{NoBarrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ increment)\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordflow}{return}\ increment\ +\ \_\_tsan\_atomic64\_fetch\_add(ptr,\ increment,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00132\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{Barrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ increment)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{return}\ increment\ +\ \_\_tsan\_atomic64\_fetch\_add(ptr,\ increment,\ \_\_tsan\_memory\_order\_acq\_rel);}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_ac0f470b7b2708abf0c2b3a57a53fb514}{NoBarrier\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \_\_tsan\_atomic64\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \_\_tsan\_atomic64\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00144\ \ \ \ \ \_\_tsan\_atomic\_thread\_fence(\_\_tsan\_memory\_order\_seq\_cst);}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \_\_tsan\_atomic64\_store(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \_\_tsan\_memory\_order\_release);}
+\DoxyCodeLine{00149\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a30ce3d55faca8dccb17c6256e4ff1f1a}{NoBarrier\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_load(ptr,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_load(ptr,\ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \_\_tsan\_atomic\_thread\_fence(\_\_tsan\_memory\_order\_seq\_cst);}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_tsan\_atomic64\_load(ptr,\ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ old\_value,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00167\ \ \ \ \ \_\_tsan\_atomic64\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_acquire,}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_acquire);}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ old\_value,}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \mbox{\hyperlink{atomicops-internals-tsan_8h_a98ef24c2ad175b876f58696ccd5e2302}{Atomic64}}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}\ =\ old\_value;}
+\DoxyCodeLine{00175\ \ \ \ \ \_\_tsan\_atomic64\_compare\_exchange\_strong(ptr,\ \&\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ new\_value,\ \_\_tsan\_memory\_order\_release,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_tsan\_memory\_order\_relaxed);}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}};}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_a8227003ebda7d9b733c44e106e7ab607}{MemoryBarrier}}()\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \_\_tsan\_atomic\_thread\_fence(\_\_tsan\_memory\_order\_seq\_cst);}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad60472a9366d03be7dbd539549091c53}{PauseCPU}}()\ \{\}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \}\ \textcolor{comment}{//\ namespace\ subtle}}
+\DoxyCodeLine{00187\ \}\ \textcolor{comment}{//\ namespace\ base}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#undef\ ATOMICOPS\_COMPILER\_BARRIER}}
+
+\end{DoxyCode}

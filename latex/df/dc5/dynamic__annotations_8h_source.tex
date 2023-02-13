@@ -1,0 +1,698 @@
+\hypertarget{dynamic__annotations_8h_source}{}\doxysection{dynamic\+\_\+annotations.\+h}
+\label{dynamic__annotations_8h_source}\index{/Users/dabowang/be\_all/gutil/dynamic\_annotations.h@{/Users/dabowang/be\_all/gutil/dynamic\_annotations.h}}
+\mbox{\hyperlink{dynamic__annotations_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ Copyright\ (c)\ 2008-\/2009,\ Google\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ met:}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ copyright\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ in\ the\ documentation\ and/or\ other\ materials\ provided\ with\ the}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ distribution.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ \ \ \ *\ Neither\ the\ name\ of\ Google\ Inc.\ nor\ the\ names\ of\ its}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ contributors\ may\ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ this\ software\ without\ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ "{}AS\ IS"{}\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ LIMITED\ TO,\ THE\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ A\ PARTICULAR\ PURPOSE\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ -\/-\/-\/}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ Author:\ Kostya\ Serebryany}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{/*\ This\ file\ defines\ dynamic\ annotations\ for\ use\ with\ dynamic\ analysis}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ \ tool\ such\ as\ valgrind,\ PIN,\ etc.}}
+\DoxyCodeLine{00036\ \textcolor{comment}{}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ \ Dynamic\ annotation\ is\ a\ source\ code\ annotation\ that\ affects}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ \ the\ generated\ code\ (that\ is,\ the\ annotation\ is\ not\ a\ comment).}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ \ Each\ such\ annotation\ is\ attached\ to\ a\ particular}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ \ instruction\ and/or\ to\ a\ particular\ object\ (address)\ in\ the\ program.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ \ The\ annotations\ that\ should\ be\ used\ by\ users\ are\ macros\ in\ all\ upper-\/case}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ \ (e.g.,\ ANNOTATE\_NEW\_MEMORY).}}
+\DoxyCodeLine{00044\ \textcolor{comment}{}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ Actual\ implementation\ of\ these\ macros\ may\ differ\ depending\ on\ the}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ dynamic\ analysis\ tool\ being\ used.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ See\ http://code.google.com/p/data-\/race-\/test/\ \ for\ more\ information.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ \ This\ file\ supports\ the\ following\ dynamic\ analysis\ tools:}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ -\/\ None\ (DYNAMIC\_ANNOTATIONS\_ENABLED\ is\ not\ defined\ or\ zero).}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ \ \ \ \ Macros\ are\ defined\ empty.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ -\/\ ThreadSanitizer,\ Helgrind,\ DRD\ (DYNAMIC\_ANNOTATIONS\_ENABLED\ is\ 1).}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ \ \ \ \ Macros\ are\ defined\ as\ calls\ to\ non-\/inlinable\ empty\ functions}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ \ \ \ that\ are\ intercepted\ by\ Valgrind.\ */}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#ifndef\ \_\_DYNAMIC\_ANNOTATIONS\_H\_\_}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#define\ \_\_DYNAMIC\_ANNOTATIONS\_H\_\_}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#ifndef\ DYNAMIC\_ANNOTATIONS\_ENABLED}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#define\ DYNAMIC\_ANNOTATIONS\_ENABLED\ 0}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#if\ DYNAMIC\_ANNOTATIONS\_ENABLED\ !=\ 0}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ when\ implementing\ condition\ variables\ such\ as\ CondVar,}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \ using\ conditional\ critical\ sections\ (Await/LockWhen)\ and\ when\ constructing}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ \ \ \ user-\/defined\ synchronization\ mechanisms.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ \ The\ annotations\ ANNOTATE\_HAPPENS\_BEFORE()\ and\ ANNOTATE\_HAPPENS\_AFTER()\ can}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ \ be\ used\ to\ define\ happens-\/before\ arcs\ in\ user-\/defined\ synchronization}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ \ mechanisms:\ \ the\ race\ detector\ will\ infer\ an\ arc\ from\ the\ former\ to\ the}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ \ \ \ \ latter\ when\ they\ share\ the\ same\ argument\ pointer.}}
+\DoxyCodeLine{00075\ \textcolor{comment}{}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ Example\ 1\ (reference\ counting):}}
+\DoxyCodeLine{00077\ \textcolor{comment}{}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ \ void\ Unref()\ \{}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ \ \ \ ANNOTATE\_HAPPENS\_BEFORE(\&refcount\_);}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ \ \ \ if\ (AtomicDecrementByOne(\&refcount\_)\ ==\ 0)\ \{}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ ANNOTATE\_HAPPENS\_AFTER(\&refcount\_);}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ delete\ this;}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ \}}}
+\DoxyCodeLine{00085\ \textcolor{comment}{}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ \ Example\ 2\ (message\ queue):}}
+\DoxyCodeLine{00087\ \textcolor{comment}{}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ \ \ \ void\ MyQueue::Put(Type\ *e)\ \{}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ \ \ \ MutexLock\ lock(\&mu\_);}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ \ \ \ ANNOTATE\_HAPPENS\_BEFORE(e);}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ \ \ \ PutElementIntoMyQueue(e);}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ \ \ \ \}}}
+\DoxyCodeLine{00093\ \textcolor{comment}{}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ Type\ *MyQueue::Get()\ \{}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \ \ \ MutexLock\ lock(\&mu\_);}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ \ \ Type\ *e\ =\ GetElementFromMyQueue();}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ \ ANNOTATE\_HAPPENS\_AFTER(e);}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ \ \ return\ e;}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ \}}}
+\DoxyCodeLine{00100\ \textcolor{comment}{}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ \ \ \ Note:\ when\ possible,\ please\ use\ the\ existing\ reference\ counting\ and\ message}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ \ \ \ queue\ implementations\ instead\ of\ inventing\ new\ ones.\ */}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{/*\ Report\ that\ wait\ on\ the\ condition\ variable\ at\ address\ "{}cv"{}\ has\ succeeded}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ \ and\ the\ lock\ at\ address\ "{}lock"{}\ is\ held.\ */}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_LOCK\_WAIT(cv,\ lock)\ AnnotateCondVarWait(\_\_FILE\_\_,\ \_\_LINE\_\_,\ cv,\ lock)}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{/*\ Report\ that\ wait\ on\ the\ condition\ variable\ at\ "{}cv"{}\ has\ succeeded.\ \ Variant}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ \ w/o\ lock.\ */}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_WAIT(cv)\ AnnotateCondVarWait(\_\_FILE\_\_,\ \_\_LINE\_\_,\ cv,\ NULL)}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{/*\ Report\ that\ we\ are\ about\ to\ signal\ on\ the\ condition\ variable\ at\ address}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ "{}cv"{}.\ */}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_SIGNAL(cv)\ AnnotateCondVarSignal(\_\_FILE\_\_,\ \_\_LINE\_\_,\ cv)}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{comment}{/*\ Report\ that\ we\ are\ about\ to\ signal\_all\ on\ the\ condition\ variable\ at\ "{}cv"{}.\ */}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_SIGNAL\_ALL(cv)\ AnnotateCondVarSignalAll(\_\_FILE\_\_,\ \_\_LINE\_\_,\ cv)}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{comment}{/*\ Annotations\ for\ user-\/defined\ synchronization\ mechanisms.\ */}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#define\ ANNOTATE\_HAPPENS\_BEFORE(obj)\ ANNOTATE\_CONDVAR\_SIGNAL(obj)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#define\ ANNOTATE\_HAPPENS\_AFTER(obj)\ ANNOTATE\_CONDVAR\_WAIT(obj)}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{/*\ Report\ that\ the\ bytes\ in\ the\ range\ [pointer,\ pointer+size)\ are\ about}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ \ to\ be\ published\ safely.\ The\ race\ checker\ will\ create\ a\ happens-\/before}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ \ \ \ arc\ from\ the\ call\ ANNOTATE\_PUBLISH\_MEMORY\_RANGE(pointer,\ size)\ to}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ \ \ \ subsequent\ accesses\ to\ this\ memory.}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ \ \ \ Note:\ this\ annotation\ may\ not\ work\ properly\ if\ the\ race\ detector\ uses}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ \ sampling,\ i.e.\ does\ not\ observe\ all\ memory\ accesses.}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PUBLISH\_MEMORY\_RANGE(pointer,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\ \ \ \ AnnotatePublishMemoryRange(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pointer,\ size)}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{comment}{/*\ DEPRECATED.\ Don't\ use\ it.\ */}}
+\DoxyCodeLine{00134\ \textcolor{preprocessor}{\#define\ ANNOTATE\_UNPUBLISH\_MEMORY\_RANGE(pointer,\ size)\ \(\backslash\)}}
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\ \ \ \ AnnotateUnpublishMemoryRange(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pointer,\ size)}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{comment}{/*\ DEPRECATED.\ Don't\ use\ it.\ */}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#define\ ANNOTATE\_SWAP\_MEMORY\_RANGE(pointer,\ size)\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_UNPUBLISH\_MEMORY\_RANGE(pointer,\ size);\ \(\backslash\)}}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_PUBLISH\_MEMORY\_RANGE(pointer,\ size);\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{comment}{/*\ Instruct\ the\ tool\ to\ create\ a\ happens-\/before\ arc\ between\ mu-\/>Unlock()\ and}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ mu-\/>Lock().\ This\ annotation\ may\ slow\ down\ the\ race\ detector\ and\ hide\ real}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ races.\ Normally\ it\ is\ used\ only\ when\ it\ would\ be\ difficult\ to\ annotate\ each}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ of\ the\ mutex's\ critical\ sections\ individually\ using\ the\ annotations\ above.}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ This\ annotation\ makes\ sense\ only\ for\ hybrid\ race\ detectors.\ For\ pure}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ happens-\/before\ detectors\ this\ is\ a\ no-\/op.\ For\ more\ details\ see}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ http://code.google.com/p/data-\/race-\/test/wiki/PureHappensBeforeVsHybrid\ .\ */}}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PURE\_HAPPENS\_BEFORE\_MUTEX(mu)\ AnnotateMutexIsUsedAsCondVar(\_\_FILE\_\_,\ \_\_LINE\_\_,\ mu)}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{comment}{/*\ Deprecated.\ Use\ ANNOTATE\_PURE\_HAPPENS\_BEFORE\_MUTEX.\ */}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#define\ ANNOTATE\_MUTEX\_IS\_USED\_AS\_CONDVAR(mu)\ AnnotateMutexIsUsedAsCondVar(\_\_FILE\_\_,\ \_\_LINE\_\_,\ mu)}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ when\ defining\ memory\ allocators,\ or\ when\ memory\ that}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ \ was\ protected\ in\ one\ way\ starts\ to\ be\ protected\ in\ another.\ */}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{comment}{/*\ Report\ that\ a\ new\ memory\ at\ "{}address"{}\ of\ size\ "{}size"{}\ has\ been\ allocated.}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ \ \ This\ might\ be\ used\ when\ the\ memory\ has\ been\ retrieved\ from\ a\ free\ list\ and}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ \ is\ about\ to\ be\ reused,\ or\ when\ a\ the\ locking\ discipline\ for\ a\ variable}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ \ \ changes.\ */}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ ANNOTATE\_NEW\_MEMORY(address,\ size)\ AnnotateNewMemory(\_\_FILE\_\_,\ \_\_LINE\_\_,\ address,\ size)}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ when\ defining\ FIFO\ queues\ that\ transfer\ data\ between}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ threads.\ */}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{comment}{/*\ Report\ that\ the\ producer-\/consumer\ queue\ (such\ as\ ProducerConsumerQueue)\ at}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ address\ "{}pcq"{}\ has\ been\ created.\ \ The\ ANNOTATE\_PCQ\_*\ annotations}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ should\ be\ used\ only\ for\ FIFO\ queues.\ \ For\ non-\/FIFO\ queues\ use}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ ANNOTATE\_HAPPENS\_BEFORE\ (for\ put)\ and\ ANNOTATE\_HAPPENS\_AFTER\ (for\ get).\ */}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_CREATE(pcq)\ AnnotatePCQCreate(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pcq)}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \textcolor{comment}{/*\ Report\ that\ the\ queue\ at\ address\ "{}pcq"{}\ is\ about\ to\ be\ destroyed.\ */}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_DESTROY(pcq)\ AnnotatePCQDestroy(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pcq)}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{comment}{/*\ Report\ that\ we\ are\ about\ to\ put\ an\ element\ into\ a\ FIFO\ queue\ at\ address}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ \ \ \ \ "{}pcq"{}.\ */}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_PUT(pcq)\ AnnotatePCQPut(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pcq)}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{comment}{/*\ Report\ that\ we've\ just\ got\ an\ element\ from\ a\ FIFO\ queue\ at\ address\ "{}pcq"{}.\ */}}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_GET(pcq)\ AnnotatePCQGet(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pcq)}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00187\ \textcolor{comment}{\ \ \ \ \ Annotations\ that\ suppress\ errors.\ \ It\ is\ usually\ better\ to\ express\ the}}
+\DoxyCodeLine{00188\ \textcolor{comment}{\ \ \ \ \ program's\ synchronization\ using\ the\ other\ annotations,\ but\ these\ can}}
+\DoxyCodeLine{00189\ \textcolor{comment}{\ \ \ \ \ be\ used\ when\ all\ else\ fails.\ */}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{comment}{/*\ Report\ that\ we\ may\ have\ a\ benign\ race\ at\ "{}pointer"{},\ with\ size}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ \ \ \ "{}sizeof(*(pointer))"{}.\ "{}pointer"{}\ must\ be\ a\ non-\/void*\ pointer.\ \ Insert\ at\ the}}
+\DoxyCodeLine{00193\ \textcolor{comment}{\ \ \ \ \ point\ where\ "{}pointer"{}\ has\ been\ allocated,\ preferably\ close\ to\ the\ point}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ \ \ \ where\ the\ race\ happens.\ \ See\ also\ ANNOTATE\_BENIGN\_RACE\_STATIC.\ */}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE(pointer,\ description)\ \(\backslash\)}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \ \ AnnotateBenignRaceSized(\_\_FILE\_\_,\ \_\_LINE\_\_,\ pointer,\ sizeof(*(pointer)),\ description)}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{comment}{/*\ Same\ as\ ANNOTATE\_BENIGN\_RACE(address,\ description),\ but\ applies\ to}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ the\ memory\ range\ [address,\ address+size).\ */}}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE\_SIZED(address,\ size,\ description)\ \(\backslash\)}}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\ \ \ \ AnnotateBenignRaceSized(\_\_FILE\_\_,\ \_\_LINE\_\_,\ address,\ size,\ description)}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{comment}{/*\ Request\ the\ analysis\ tool\ to\ ignore\ all\ reads\ in\ the\ current\ thread}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ until\ ANNOTATE\_IGNORE\_READS\_END\ is\ called.}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ \ Useful\ to\ ignore\ intentional\ racey\ reads,\ while\ still\ checking}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ \ \ \ other\ reads\ and\ all\ writes.}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ \ \ \ See\ also\ ANNOTATE\_UNPROTECTED\_READ.\ */}}
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_BEGIN()\ AnnotateIgnoreReadsBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \textcolor{comment}{/*\ Stop\ ignoring\ reads.\ */}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_END()\ AnnotateIgnoreReadsEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{comment}{/*\ Similar\ to\ ANNOTATE\_IGNORE\_READS\_BEGIN,\ but\ ignore\ writes.\ */}}
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_BEGIN()\ AnnotateIgnoreWritesBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{comment}{/*\ Stop\ ignoring\ writes.\ */}}
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_END()\ AnnotateIgnoreWritesEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{comment}{/*\ Start\ ignoring\ all\ memory\ accesses\ (reads\ and\ writes).\ */}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN()\ \(\backslash\)}}
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_BEGIN();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_BEGIN();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{comment}{/*\ Stop\ ignoring\ all\ memory\ accesses.\ */}}
+\DoxyCodeLine{00227\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END()\ \(\backslash\)}}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_END();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_END();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00231\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{comment}{/*\ Start\ ignoring\ all\ synchronization\ until\ ANNOTATE\_IGNORE\_SYNC\_END}}
+\DoxyCodeLine{00234\ \textcolor{comment}{\ \ \ \ \ is\ called.\ */}}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_SYNC\_BEGIN()\ AnnotateIgnoreSyncBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \textcolor{comment}{/*\ Stop\ ignoring\ all\ synchronization.\ */}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_SYNC\_END()\ AnnotateIgnoreSyncEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{comment}{/*\ Enable\ (enable!=0)\ or\ disable\ (enable==0)\ race\ detection\ for\ all\ threads.}}
+\DoxyCodeLine{00241\ \textcolor{comment}{\ \ \ \ \ This\ annotation\ could\ be\ useful\ if\ you\ want\ to\ skip\ expensive\ race\ analysis}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ \ during\ some\ period\ of\ program\ execution,\ e.g.\ during\ initialization.\ */}}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\#define\ ANNOTATE\_ENABLE\_RACE\_DETECTION(enable)\ \(\backslash\)}}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\ \ \ \ AnnotateEnableRaceDetection(\_\_FILE\_\_,\ \_\_LINE\_\_,\ enable)}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00247\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ for\ debugging.\ */}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{comment}{/*\ Request\ to\ trace\ every\ access\ to\ "{}address"{}.\ */}}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\#define\ ANNOTATE\_TRACE\_MEMORY(address)\ AnnotateTraceMemory(\_\_FILE\_\_,\ \_\_LINE\_\_,\ address)}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \textcolor{comment}{/*\ Report\ the\ current\ thread\ name\ to\ a\ race\ detector.\ */}}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#define\ ANNOTATE\_THREAD\_NAME(name)\ AnnotateThreadName(\_\_FILE\_\_,\ \_\_LINE\_\_,\ name)}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ when\ implementing\ locks.\ \ They\ are\ not}}
+\DoxyCodeLine{00257\ \textcolor{comment}{\ \ \ \ \ normally\ needed\ by\ modules\ that\ merely\ use\ locks.}}
+\DoxyCodeLine{00258\ \textcolor{comment}{\ \ \ \ \ The\ "{}lock"{}\ argument\ is\ a\ pointer\ to\ the\ lock\ object.\ */}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \textcolor{comment}{/*\ Report\ that\ a\ lock\ has\ been\ created\ at\ address\ "{}lock"{}.\ */}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_CREATE(lock)\ AnnotateRWLockCreate(\_\_FILE\_\_,\ \_\_LINE\_\_,\ lock)}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \textcolor{comment}{/*\ Report\ that\ a\ linker\ initialized\ lock\ has\ been\ created\ at\ address\ "{}lock"{}.}}
+\DoxyCodeLine{00264\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\#ifdef\ THREAD\_SANITIZER}}
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_CREATE\_STATIC(lock)\ AnnotateRWLockCreateStatic(\_\_FILE\_\_,\ \_\_LINE\_\_,\ lock)}}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_CREATE\_STATIC(lock)\ ANNOTATE\_RWLOCK\_CREATE(lock)}}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \textcolor{comment}{/*\ Report\ that\ the\ lock\ at\ address\ "{}lock"{}\ is\ about\ to\ be\ destroyed.\ */}}
+\DoxyCodeLine{00272\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_DESTROY(lock)\ AnnotateRWLockDestroy(\_\_FILE\_\_,\ \_\_LINE\_\_,\ lock)}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{comment}{/*\ Report\ that\ the\ lock\ at\ address\ "{}lock"{}\ has\ been\ acquired.}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ \ \ \ \ is\_w=1\ for\ writer\ lock,\ is\_w=0\ for\ reader\ lock.\ */}}
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_ACQUIRED(lock,\ is\_w)\ AnnotateRWLockAcquired(\_\_FILE\_\_,\ \_\_LINE\_\_,\ lock,\ is\_w)}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \textcolor{comment}{/*\ Report\ that\ the\ lock\ at\ address\ "{}lock"{}\ is\ about\ to\ be\ released.\ */}}
+\DoxyCodeLine{00279\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_RELEASED(lock,\ is\_w)\ AnnotateRWLockReleased(\_\_FILE\_\_,\ \_\_LINE\_\_,\ lock,\ is\_w)}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ when\ implementing\ barriers.\ \ They\ are\ not}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ \ \ \ normally\ needed\ by\ modules\ that\ merely\ use\ barriers.}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ \ \ The\ "{}barrier"{}\ argument\ is\ a\ pointer\ to\ the\ barrier\ object.\ */}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \textcolor{comment}{/*\ Report\ that\ the\ "{}barrier"{}\ has\ been\ initialized\ with\ initial\ "{}count"{}.}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ \ \ If\ 'reinitialization\_allowed'\ is\ true,\ initialization\ is\ allowed\ to\ happen}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ \ \ multiple\ times\ w/o\ calling\ barrier\_destroy()\ */}}
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_INIT(barrier,\ count,\ reinitialization\_allowed)\ \(\backslash\)}}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\ \ \ \ AnnotateBarrierInit(\_\_FILE\_\_,\ \_\_LINE\_\_,\ barrier,\ count,\ reinitialization\_allowed)}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{comment}{/*\ Report\ that\ we\ are\ about\ to\ enter\ barrier\_wait("{}barrier"{}).\ */}}
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_WAIT\_BEFORE(barrier)\ AnnotateBarrierWaitBefore(\_\_FILE\_\_,\ \_\_LINE\_\_,\ barrier)}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \textcolor{comment}{/*\ Report\ that\ we\ just\ exited\ barrier\_wait("{}barrier"{}).\ */}}
+\DoxyCodeLine{00296\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_WAIT\_AFTER(barrier)\ AnnotateBarrierWaitAfter(\_\_FILE\_\_,\ \_\_LINE\_\_,\ barrier)}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \textcolor{comment}{/*\ Report\ that\ the\ "{}barrier"{}\ has\ been\ destroyed.\ */}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_DESTROY(barrier)\ AnnotateBarrierDestroy(\_\_FILE\_\_,\ \_\_LINE\_\_,\ barrier)}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00302\ \textcolor{comment}{\ \ \ \ \ Annotations\ useful\ for\ testing\ race\ detectors.\ */}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \textcolor{comment}{/*\ Report\ that\ we\ expect\ a\ race\ on\ the\ variable\ at\ "{}address"{}.}}
+\DoxyCodeLine{00305\ \textcolor{comment}{\ \ \ \ \ Use\ only\ in\ unit\ tests\ for\ a\ race\ detector.\ */}}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#define\ ANNOTATE\_EXPECT\_RACE(address,\ description)\ \(\backslash\)}}
+\DoxyCodeLine{00307\ \textcolor{preprocessor}{\ \ \ \ AnnotateExpectRace(\_\_FILE\_\_,\ \_\_LINE\_\_,\ address,\ description)}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \textcolor{comment}{/*\ A\ no-\/op.\ Insert\ where\ you\ like\ to\ test\ the\ interceptors.\ */}}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#define\ ANNOTATE\_NO\_OP(arg)\ AnnotateNoOp(\_\_FILE\_\_,\ \_\_LINE\_\_,\ arg)}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{comment}{/*\ Force\ the\ race\ detector\ to\ flush\ its\ state.\ The\ actual\ effect\ depends\ on}}
+\DoxyCodeLine{00313\ \textcolor{comment}{\ \ \ *\ the\ implementation\ of\ the\ detector.\ */}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#define\ ANNOTATE\_FLUSH\_STATE()\ AnnotateFlushState(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ DYNAMIC\_ANNOTATIONS\_ENABLED\ ==\ 0\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_CREATE(lock)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00319\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_CREATE\_STATIC(lock)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_DESTROY(lock)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_ACQUIRED(lock,\ is\_w)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\#define\ ANNOTATE\_RWLOCK\_RELEASED(lock,\ is\_w)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_INIT(barrier,\ count,\ reinitialization\_allowed)\ }\textcolor{comment}{/*\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_WAIT\_BEFORE(barrier)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_WAIT\_AFTER(barrier)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00326\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BARRIER\_DESTROY(barrier)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00327\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_LOCK\_WAIT(cv,\ lock)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_WAIT(cv)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_SIGNAL(cv)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\#define\ ANNOTATE\_CONDVAR\_SIGNAL\_ALL(cv)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\#define\ ANNOTATE\_HAPPENS\_BEFORE(obj)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\#define\ ANNOTATE\_HAPPENS\_AFTER(obj)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PUBLISH\_MEMORY\_RANGE(address,\ size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00334\ \textcolor{preprocessor}{\#define\ ANNOTATE\_UNPUBLISH\_MEMORY\_RANGE(address,\ size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\#define\ ANNOTATE\_SWAP\_MEMORY\_RANGE(address,\ size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00336\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_CREATE(pcq)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_DESTROY(pcq)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00338\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_PUT(pcq)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PCQ\_GET(pcq)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\#define\ ANNOTATE\_NEW\_MEMORY(address,\ size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#define\ ANNOTATE\_EXPECT\_RACE(address,\ description)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE(address,\ description)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00343\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE\_SIZED(address,\ size,\ description)\ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00344\ \textcolor{preprocessor}{\#define\ ANNOTATE\_PURE\_HAPPENS\_BEFORE\_MUTEX(mu)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00345\ \textcolor{preprocessor}{\#define\ ANNOTATE\_MUTEX\_IS\_USED\_AS\_CONDVAR(mu)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00346\ \textcolor{preprocessor}{\#define\ ANNOTATE\_TRACE\_MEMORY(arg)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00347\ \textcolor{preprocessor}{\#define\ ANNOTATE\_THREAD\_NAME(name)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_BEGIN()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_END()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_BEGIN()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_END()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_SYNC\_BEGIN()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_SYNC\_END()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\#define\ ANNOTATE\_ENABLE\_RACE\_DETECTION(enable)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#define\ ANNOTATE\_NO\_OP(arg)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#define\ ANNOTATE\_FLUSH\_STATE()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ DYNAMIC\_ANNOTATIONS\_ENABLED\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{comment}{/*\ Macro\ definitions\ for\ GCC\ attributes\ that\ allow\ static\ thread\ safety}}
+\DoxyCodeLine{00363\ \textcolor{comment}{\ \ \ analysis\ to\ recognize\ and\ use\ some\ of\ the\ dynamic\ annotations\ as}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ \ escape\ hatches.}}
+\DoxyCodeLine{00365\ \textcolor{comment}{\ \ \ TODO(user):\ remove\ the\ check\ for\ \_\_SUPPORT\_DYN\_ANNOTATION\_\_\ once\ the}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ \ default\ crosstool/GCC\ supports\ these\ GCC\ attributes.\ \ */}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_STATIC\_INLINE}}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY\ ;}}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_BEGIN}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_END}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_WRITES\_BEGIN}}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_WRITES\_END}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_UNPROTECTED\_READ}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ \&\&\ (!defined(SWIG))\ \&\&\ (!defined(\_\_clang\_\_))}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\#if\ DYNAMIC\_ANNOTATIONS\_ENABLED\ ==\ 0}}
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_ONLY\ 1}}
+\DoxyCodeLine{00380\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_STATIC\_INLINE}}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_STATIC\_INLINE\ inline\ }\textcolor{comment}{//static\ inline}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY\ \(\backslash\)}}
+\DoxyCodeLine{00384\ \textcolor{preprocessor}{\ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00385\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (void)file;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (void)line;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00388\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \textcolor{comment}{/*\ Only\ emit\ attributes\ when\ annotalysis\ is\ enabled.\ */}}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\#if\ defined(\_\_SUPPORT\_TS\_ANNOTATION\_\_)\ \&\&\ defined(\_\_SUPPORT\_DYN\_ANNOTATION\_\_)}}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_READS\_BEGIN}}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_BEGIN\ \_\_attribute\_\_((ignore\_reads\_begin))}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_READS\_END}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_END\ \_\_attribute\_\_((ignore\_reads\_end))}}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_WRITES\_BEGIN}}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_WRITES\_BEGIN\ \_\_attribute\_\_((ignore\_writes\_begin))}}
+\DoxyCodeLine{00398\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_WRITES\_END}}
+\DoxyCodeLine{00399\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_WRITES\_END\ \_\_attribute\_\_((ignore\_writes\_end))}}
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_UNPROTECTED\_READ}}
+\DoxyCodeLine{00401\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_UNPROTECTED\_READ\ \_\_attribute\_\_((unprotected\_read))}}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined(\_\_GNUC\_\_)\ \&\&\ (!defined(SWIG))\ \&\&\ (!defined(\_\_clang\_\_))}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \textcolor{comment}{/*\ TODO(user)\ -\/-\/\ Replace\ \_\_CLANG\_SUPPORT\_DYN\_ANNOTATION\_\_\ with\ the\ }}
+\DoxyCodeLine{00407\ \textcolor{comment}{\ \ \ appropriate\ feature\ ID.\ */}}
+\DoxyCodeLine{00408\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)\ \&\&\ (!defined(SWIG))\ \&\&\ defined(\_\_CLANG\_SUPPORT\_DYN\_ANNOTATION\_\_)}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \textcolor{comment}{/*\ TODO(user)\ -\/-\/\ The\ exclusive\ lock\ here\ ignores\ writes\ as\ well,\ but\ }}
+\DoxyCodeLine{00411\ \textcolor{comment}{\ \ \ allows\ INGORE\_READS\_AND\_WRITES\ to\ work\ properly.\ */}}
+\DoxyCodeLine{00412\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_READS\_BEGIN}}
+\DoxyCodeLine{00413\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_BEGIN\ \_\_attribute\_\_((exclusive\_lock\_function("{}*"{}})))}
+\DoxyCodeLine{00414\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_IGNORE\_READS\_END}}
+\DoxyCodeLine{00415\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_IGNORE\_READS\_END\ \_\_attribute\_\_((unlock\_function("{}*"{}})))}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \textcolor{preprocessor}{\#if\ DYNAMIC\_ANNOTATIONS\_ENABLED\ ==\ 0}}
+\DoxyCodeLine{00418\ \textcolor{comment}{/*\ Turn\ on\ certain\ macros\ for\ static\ analysis,\ even\ if\ dynamic\ annotations\ are\ }}
+\DoxyCodeLine{00419\ \textcolor{comment}{\ \ \ not\ enabled.\ */}}
+\DoxyCodeLine{00420\ \textcolor{preprocessor}{\#define\ CLANG\_ANNOTALYSIS\_ONLY\ 1}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_STATIC\_INLINE}}
+\DoxyCodeLine{00423\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_STATIC\_INLINE\ inline\ }\textcolor{comment}{//static\ inline}}
+\DoxyCodeLine{00424\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}
+\DoxyCodeLine{00425\ \textcolor{preprocessor}{\#define\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY\ \(\backslash\)}}
+\DoxyCodeLine{00426\ \textcolor{preprocessor}{\ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00427\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (void)file;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00428\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (void)line;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00429\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ DYNAMIC\_ANNOTATIONS\_ENABLED\ ==\ 0\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00432\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ defined(\_\_clang\_\_)\ \&\&\ (!defined(SWIG))\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \textcolor{comment}{/*\ Use\ the\ macros\ above\ rather\ than\ using\ these\ functions\ directly.\ */}}
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00436\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00438\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a438481c95ba8d377ee988cd000b8fbc8}{AnnotateRWLockCreate}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock);}
+\DoxyCodeLine{00439\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a3a43d81721ad1873dbe9725f93f2fa5a}{AnnotateRWLockCreateStatic}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock);}
+\DoxyCodeLine{00440\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a4fcf5d5c30c7a4f5706e7ff7267485ec}{AnnotateRWLockDestroy}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock);}
+\DoxyCodeLine{00441\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a7817b7ba3b012763c0e0a6668cb5434c}{AnnotateRWLockAcquired}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock,\ \textcolor{keywordtype}{long}\ is\_w);}
+\DoxyCodeLine{00442\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a2991809b9e086dfa3b26ace925ef7f40}{AnnotateRWLockReleased}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock,\ \textcolor{keywordtype}{long}\ is\_w);}
+\DoxyCodeLine{00443\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_aba35e981c449e7e31ec1ea7c55e4f8fc}{AnnotateBarrierInit}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ barrier,\ \textcolor{keywordtype}{long}\ count,}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ reinitialization\_allowed);}
+\DoxyCodeLine{00445\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a71720f9aa62f45e6763d3726c07be3d3}{AnnotateBarrierWaitBefore}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ barrier);}
+\DoxyCodeLine{00446\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a56a7ab41150de49908640a4e1a9257c8}{AnnotateBarrierWaitAfter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ barrier);}
+\DoxyCodeLine{00447\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a30e50b86e195a93e6bdf2ed3c07b3cce}{AnnotateBarrierDestroy}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ barrier);}
+\DoxyCodeLine{00448\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a9ec8669fad5689e617f2fa63f017c307}{AnnotateCondVarWait}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ cv,}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ lock);}
+\DoxyCodeLine{00450\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a79926b7f9b0249e2fefac55345c49ff6}{AnnotateCondVarSignal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ cv);}
+\DoxyCodeLine{00451\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_ad109b92bcd6eec6762cf42b9ced52357}{AnnotateCondVarSignalAll}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ cv);}
+\DoxyCodeLine{00452\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a035c67d85284d88dd77e53e2f85fddb0}{AnnotatePublishMemoryRange}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ size);}
+\DoxyCodeLine{00454\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a67fabd25d9fb4123284a6e27c0f13239}{AnnotateUnpublishMemoryRange}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ size);}
+\DoxyCodeLine{00456\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_aff0d1362eb4e5fc7c2896f3a269c5314}{AnnotatePCQCreate}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ pcq);}
+\DoxyCodeLine{00457\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_af4d2b6b48364cf1d2ee5a2bdd06b2ad8}{AnnotatePCQDestroy}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ pcq);}
+\DoxyCodeLine{00458\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a6833e6c3a02d35ffe284c96cf82be329}{AnnotatePCQPut}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ pcq);}
+\DoxyCodeLine{00459\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_abeec9f7e5c370637dde2b8cefbdc8a0e}{AnnotatePCQGet}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ pcq);}
+\DoxyCodeLine{00460\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_aa46d1b3a340cfa6c362fdbb45521796f}{AnnotateNewMemory}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,\ \textcolor{keywordtype}{long}\ size);}
+\DoxyCodeLine{00461\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_ab3b68dd2abed5c2892f7f1c04ebc4f87}{AnnotateExpectRace}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ description);}
+\DoxyCodeLine{00463\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_acb553f384fa239d9e1ce4e089b1a2127}{AnnotateBenignRace}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ description);}
+\DoxyCodeLine{00465\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a0d68dc2d41bf551e2337c3b607162b4b}{AnnotateBenignRaceSized}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ address,\ \textcolor{keywordtype}{long}\ size,}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ description);}
+\DoxyCodeLine{00467\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a981af3cae41681ed44d0b699bffd4fc1}{AnnotateMutexIsUsedAsCondVar}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ mu);}
+\DoxyCodeLine{00468\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a6e5ccc1b51398f83f77c2f8c527c01b6}{AnnotateTraceMemory}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00469\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a22c9babdcf119c240b0aa344e9cde015}{AnnotateThreadName}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{signal__handler_8h_a8f8f80d37794cde9472343e4487ba3eb}{name}});}
+\DoxyCodeLine{00470\ \mbox{\hyperlink{dynamic__annotations_8h_aecaecbed95b4bb7714524834b3e47d5c}{ANNOTALYSIS\_STATIC\_INLINE}}}
+\DoxyCodeLine{00471\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_af0ebe715a22dbc9c84ae617c2a0194ae}{AnnotateIgnoreReadsBegin}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line)}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_aabd3ba74f97982581668da8448073b42}{ANNOTALYSIS\_IGNORE\_READS\_BEGIN}}\ \mbox{\hyperlink{dynamic__annotations_8h_addfaebd6ebce20fb15fb27f0507666d9}{ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}\ \mbox{\hyperlink{dynamic__annotations_8h_aecaecbed95b4bb7714524834b3e47d5c}{ANNOTALYSIS\_STATIC\_INLINE}}}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ AnnotateIgnoreReadsEnd(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line)\ \mbox{\hyperlink{dynamic__annotations_8h_a4b29130e969b8cc68badb4fb74860482}{ANNOTALYSIS\_IGNORE\_READS\_END}}}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_addfaebd6ebce20fb15fb27f0507666d9}{ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}\ \mbox{\hyperlink{dynamic__annotations_8h_aecaecbed95b4bb7714524834b3e47d5c}{ANNOTALYSIS\_STATIC\_INLINE}}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_af74e69b1dd95b0b8e2e6a956eca86fb9}{AnnotateIgnoreWritesBegin}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line)\ \mbox{\hyperlink{dynamic__annotations_8h_ad2e03398a7ef597d986584f84bb0b0bc}{ANNOTALYSIS\_IGNORE\_WRITES\_BEGIN}}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_addfaebd6ebce20fb15fb27f0507666d9}{ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}\ \mbox{\hyperlink{dynamic__annotations_8h_aecaecbed95b4bb7714524834b3e47d5c}{ANNOTALYSIS\_STATIC\_INLINE}}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ AnnotateIgnoreWritesEnd(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line)}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_a82e85efd5300ca4d4cc18a39374bee73}{ANNOTALYSIS\_IGNORE\_WRITES\_END}}\ \mbox{\hyperlink{dynamic__annotations_8h_addfaebd6ebce20fb15fb27f0507666d9}{ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a2c9f9481f34a211a600c0bc032b9230f}{AnnotateIgnoreSyncBegin}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{00480\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a44aa43f268ce6d95eac2239a8e95fa7e}{AnnotateIgnoreSyncEnd}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{00481\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_ae98ac0bd1d52662ae23f3d91eecae2c5}{AnnotateEnableRaceDetection}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keywordtype}{int}\ enable);}
+\DoxyCodeLine{00482\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_ae6caee223d1981c4d03d4c30513e137c}{AnnotateNoOp}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00483\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_a4ea13da0131a344adee503c2be487b77}{AnnotateFlushState}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \textcolor{comment}{/*\ Return\ non-\/zero\ value\ if\ running\ under\ valgrind.}}
+\DoxyCodeLine{00486\ \textcolor{comment}{}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ If\ "{}valgrind.h"{}\ is\ included\ into\ dynamic\_annotations.c,}}
+\DoxyCodeLine{00488\ \textcolor{comment}{\ \ the\ regular\ valgrind\ mechanism\ will\ be\ used.}}
+\DoxyCodeLine{00489\ \textcolor{comment}{\ \ See\ http://valgrind.org/docs/manual/manual-\/core-\/adv.html\ about}}
+\DoxyCodeLine{00490\ \textcolor{comment}{\ \ RUNNING\_ON\_VALGRIND\ and\ other\ valgrind\ "{}client\ requests"{}.}}
+\DoxyCodeLine{00491\ \textcolor{comment}{\ \ The\ file\ "{}valgrind.h"{}\ may\ be\ obtained\ by\ doing}}
+\DoxyCodeLine{00492\ \textcolor{comment}{\ \ \ \ \ svn\ co\ svn://svn.valgrind.org/valgrind/trunk/include}}
+\DoxyCodeLine{00493\ \textcolor{comment}{}}
+\DoxyCodeLine{00494\ \textcolor{comment}{\ \ If\ for\ some\ reason\ you\ can't\ use\ "{}valgrind.h"{}\ or\ want\ to\ fake\ valgrind,}}
+\DoxyCodeLine{00495\ \textcolor{comment}{\ \ there\ are\ two\ ways\ to\ make\ this\ function\ return\ non-\/zero:}}
+\DoxyCodeLine{00496\ \textcolor{comment}{\ \ \ \ -\/\ Use\ environment\ variable:\ export\ RUNNING\_ON\_VALGRIND=1}}
+\DoxyCodeLine{00497\ \textcolor{comment}{\ \ \ \ -\/\ Make\ your\ tool\ intercept\ the\ function\ RunningOnValgrind()\ and}}
+\DoxyCodeLine{00498\ \textcolor{comment}{\ \ \ \ \ \ change\ its\ return\ value.}}
+\DoxyCodeLine{00499\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00500\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{dynamic__annotations_8h_a2cac2df354c64f06d576a308740dad22}{RunningOnValgrind}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{comment}{/*\ ValgrindSlowdown\ returns:}}
+\DoxyCodeLine{00503\ \textcolor{comment}{\ \ \ \ *\ 1.0,\ if\ (RunningOnValgrind()\ ==\ 0)}}
+\DoxyCodeLine{00504\ \textcolor{comment}{\ \ \ \ *\ 50.0,\ if\ (RunningOnValgrind()\ !=\ 0\ \&\&\ getenv("{}VALGRIND\_SLOWDOWN"{})\ ==\ NULL)}}
+\DoxyCodeLine{00505\ \textcolor{comment}{\ \ \ \ *\ atof(getenv("{}VALGRIND\_SLOWDOWN"{}))\ otherwise}}
+\DoxyCodeLine{00506\ \textcolor{comment}{\ \ \ This\ function\ can\ be\ used\ to\ scale\ timeout\ values:}}
+\DoxyCodeLine{00507\ \textcolor{comment}{\ \ \ EXAMPLE:}}
+\DoxyCodeLine{00508\ \textcolor{comment}{\ \ \ for\ (;;)\ \{}}
+\DoxyCodeLine{00509\ \textcolor{comment}{\ \ \ \ \ DoExpensiveBackgroundTask();}}
+\DoxyCodeLine{00510\ \textcolor{comment}{\ \ \ \ \ SleepForSeconds(5\ *\ ValgrindSlowdown());}}
+\DoxyCodeLine{00511\ \textcolor{comment}{\ \ \ \}}}
+\DoxyCodeLine{00512\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00513\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{dynamic__annotations_8h_a216defe47f3218a2d50016e5991775ab}{ValgrindSlowdown}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \textcolor{comment}{/*\ AddressSanitizer\ annotations\ from\ LLVM\ asan\_interface.h\ */}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \textcolor{preprocessor}{\#if\ defined(\_\_SANITIZE\_ADDRESS\_\_)\ ||\ defined(ADDRESS\_SANITIZER)}}
+\DoxyCodeLine{00518\ \textcolor{comment}{//\ Marks\ memory\ region\ [addr,\ addr+size)\ as\ unaddressable.}}
+\DoxyCodeLine{00519\ \textcolor{comment}{//\ This\ memory\ must\ be\ previously\ allocated\ by\ the\ user\ program.\ Accessing}}
+\DoxyCodeLine{00520\ \textcolor{comment}{//\ addresses\ in\ this\ region\ from\ instrumented\ code\ is\ forbidden\ until}}
+\DoxyCodeLine{00521\ \textcolor{comment}{//\ this\ region\ is\ unpoisoned.\ This\ function\ is\ not\ guaranteed\ to\ poison}}
+\DoxyCodeLine{00522\ \textcolor{comment}{//\ the\ whole\ region\ -\/\ it\ may\ poison\ only\ subregion\ of\ [addr,\ addr+size)\ due}}
+\DoxyCodeLine{00523\ \textcolor{comment}{//\ to\ ASan\ alignment\ restrictions.}}
+\DoxyCodeLine{00524\ \textcolor{comment}{//\ Method\ is\ NOT\ thread-\/safe\ in\ the\ sense\ that\ no\ two\ threads\ can}}
+\DoxyCodeLine{00525\ \textcolor{comment}{//\ (un)poison\ memory\ in\ the\ same\ memory\ region\ simultaneously.}}
+\DoxyCodeLine{00526\ \textcolor{keywordtype}{void}\ \_\_asan\_poison\_memory\_region(\textcolor{keywordtype}{void}\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}*\ addr,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00527\ \textcolor{comment}{//\ Marks\ memory\ region\ [addr,\ addr+size)\ as\ addressable.}}
+\DoxyCodeLine{00528\ \textcolor{comment}{//\ This\ memory\ must\ be\ previously\ allocated\ by\ the\ user\ program.\ Accessing}}
+\DoxyCodeLine{00529\ \textcolor{comment}{//\ addresses\ in\ this\ region\ is\ allowed\ until\ this\ region\ is\ poisoned\ again.}}
+\DoxyCodeLine{00530\ \textcolor{comment}{//\ This\ function\ may\ unpoison\ a\ superregion\ of\ [addr,\ addr+size)\ due\ to}}
+\DoxyCodeLine{00531\ \textcolor{comment}{//\ ASan\ alignment\ restrictions.}}
+\DoxyCodeLine{00532\ \textcolor{comment}{//\ Method\ is\ NOT\ thread-\/safe\ in\ the\ sense\ that\ no\ two\ threads\ can}}
+\DoxyCodeLine{00533\ \textcolor{comment}{//\ (un)poison\ memory\ in\ the\ same\ memory\ region\ simultaneously.}}
+\DoxyCodeLine{00534\ \textcolor{keywordtype}{void}\ \_\_asan\_unpoison\_memory\_region(\textcolor{keywordtype}{void}\ \textcolor{keyword}{const}\ \textcolor{keyword}{volatile}*\ addr,\ \textcolor{keywordtype}{size\_t}\ size);}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \textcolor{comment}{//\ User\ code\ should\ use\ macros\ instead\ of\ functions.}}
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{\#define\ ASAN\_POISON\_MEMORY\_REGION(addr,\ size)\ \_\_asan\_poison\_memory\_region((addr),\ (size))}}
+\DoxyCodeLine{00538\ \textcolor{preprocessor}{\#define\ ASAN\_UNPOISON\_MEMORY\_REGION(addr,\ size)\ \_\_asan\_unpoison\_memory\_region((addr),\ (size))}}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00540\ \textcolor{preprocessor}{\#define\ ASAN\_POISON\_MEMORY\_REGION(addr,\ size)\ ((void)(addr),\ (void)(size))}}
+\DoxyCodeLine{00541\ \textcolor{preprocessor}{\#define\ ASAN\_UNPOISON\_MEMORY\_REGION(addr,\ size)\ ((void)(addr),\ (void)(size))}}
+\DoxyCodeLine{00542\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \textcolor{comment}{//\ Sets\ the\ callback\ to\ be\ called\ right\ before\ death\ on\ error.}}
+\DoxyCodeLine{00545\ \textcolor{comment}{//\ Passing\ 0\ will\ unset\ the\ callback.}}
+\DoxyCodeLine{00546\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{dynamic__annotations_8h_aaf2d39d7a99e1f669b9f1d300535ab14}{\_\_asan\_set\_death\_callback}}(\textcolor{keywordtype}{void}\ (*callback)(\textcolor{keywordtype}{void}));}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\#if\ defined(\_\_SANITIZE\_ADDRESS\_\_)\ ||\ defined(ADDRESS\_SANITIZER)}}
+\DoxyCodeLine{00549\ \textcolor{preprocessor}{\#define\ ASAN\_SET\_DEATH\_CALLBACK(cb)\ \_\_asan\_set\_death\_callback((cb))}}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{\#define\ ASAN\_SET\_DEATH\_CALLBACK(cb)\ ((void)(cb))}}
+\DoxyCodeLine{00552\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00555\ \}}
+\DoxyCodeLine{00556\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \textcolor{preprocessor}{\#if\ DYNAMIC\_ANNOTATIONS\_ENABLED\ !=\ 0\ \&\&\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \textcolor{comment}{/*\ ANNOTATE\_UNPROTECTED\_READ\ is\ the\ preferred\ way\ to\ annotate\ racey\ reads.}}
+\DoxyCodeLine{00561\ \textcolor{comment}{}}
+\DoxyCodeLine{00562\ \textcolor{comment}{\ \ \ \ \ Instead\ of\ doing}}
+\DoxyCodeLine{00563\ \textcolor{comment}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_BEGIN();}}
+\DoxyCodeLine{00564\ \textcolor{comment}{\ \ \ \ \ \ \ \ ...\ =\ x;}}
+\DoxyCodeLine{00565\ \textcolor{comment}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_END();}}
+\DoxyCodeLine{00566\ \textcolor{comment}{\ \ \ \ \ one\ can\ use}}
+\DoxyCodeLine{00567\ \textcolor{comment}{\ \ \ \ \ \ \ \ ...\ =\ ANNOTATE\_UNPROTECTED\_READ(x);\ */}}
+\DoxyCodeLine{00568\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00569\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{dynamic__annotations_8h_a500758e7e3948c98b2ac55e97bf3cab2}{ANNOTATE\_UNPROTECTED\_READ}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ x)\ \mbox{\hyperlink{dynamic__annotations_8h_ad2338fbb9169b3653c29cd3400bde0d8}{ANNOTALYSIS\_UNPROTECTED\_READ}}\ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_af12d2bccda17242567c5165c0d378751}{ANNOTATE\_IGNORE\_READS\_BEGIN}}();}
+\DoxyCodeLine{00571\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ res\ =\ x;}
+\DoxyCodeLine{00572\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_a9537a31736d9e990c06f7b054a7d01be}{ANNOTATE\_IGNORE\_READS\_END}}();}
+\DoxyCodeLine{00573\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00574\ \}}
+\DoxyCodeLine{00575\ \textcolor{comment}{/*\ Apply\ ANNOTATE\_BENIGN\_RACE\_SIZED\ to\ a\ static\ variable.\ */}}
+\DoxyCodeLine{00576\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE\_STATIC(static\_var,\ description)\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\ \ \ \ namespace\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\ \ \ \ class\ static\_var\#\#\_annotator\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00579\ \textcolor{preprocessor}{\ \ \ \ public:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00580\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\_var\#\#\_annotator()\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00581\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ ANNOTATE\_BENIGN\_RACE\_SIZED(\&static\_var,\ sizeof(static\_var),\ \(\backslash\)}}
+\DoxyCodeLine{00582\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#static\_var\ "{}:\ "{}}\ description);\ \ \ \(\backslash\)}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00584\ \ \ \ \ \};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00585\ \ \ \ \ static\ static\_var\#\#\_annotator\ the\#\#static\_var\#\#\_annotator;\ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00586\ \ \ \ \ \}}
+\DoxyCodeLine{00587\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ DYNAMIC\_ANNOTATIONS\_ENABLED\ ==\ 0\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \textcolor{preprocessor}{\#define\ ANNOTATE\_UNPROTECTED\_READ(x)\ (x)}}
+\DoxyCodeLine{00590\ \textcolor{preprocessor}{\#define\ ANNOTATE\_BENIGN\_RACE\_STATIC(static\_var,\ description)\ }\textcolor{comment}{/*\ empty\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ DYNAMIC\_ANNOTATIONS\_ENABLED\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \textcolor{comment}{/*\ Annotalysis,\ a\ GCC\ based\ static\ analyzer,\ is\ able\ to\ understand\ and\ use}}
+\DoxyCodeLine{00595\ \textcolor{comment}{\ \ \ some\ of\ the\ dynamic\ annotations\ defined\ in\ this\ file.\ However,\ dynamic}}
+\DoxyCodeLine{00596\ \textcolor{comment}{\ \ \ annotations\ are\ usually\ disabled\ in\ the\ opt\ mode\ (to\ avoid\ additional}}
+\DoxyCodeLine{00597\ \textcolor{comment}{\ \ \ runtime\ overheads)\ while\ Annotalysis\ only\ works\ in\ the\ opt\ mode.}}
+\DoxyCodeLine{00598\ \textcolor{comment}{\ \ \ In\ order\ for\ Annotalysis\ to\ use\ these\ dynamic\ annotations\ when\ they}}
+\DoxyCodeLine{00599\ \textcolor{comment}{\ \ \ are\ disabled,\ we\ re-\/define\ these\ annotations\ here.\ Note\ that\ unlike\ the}}
+\DoxyCodeLine{00600\ \textcolor{comment}{\ \ \ original\ macro\ definitions\ above,\ these\ macros\ are\ expanded\ to\ calls\ to}}
+\DoxyCodeLine{00601\ \textcolor{comment}{\ \ \ static\ inline\ functions\ so\ that\ the\ compiler\ will\ be\ able\ to\ remove\ the}}
+\DoxyCodeLine{00602\ \textcolor{comment}{\ \ \ calls\ after\ the\ analysis.\ */}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \textcolor{preprocessor}{\#ifdef\ ANNOTALYSIS\_ONLY}}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_ONLY}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \textcolor{comment}{/*\ Undefine\ and\ re-\/define\ the\ macros\ that\ the\ static\ analyzer\ understands.\ */}}
+\DoxyCodeLine{00609\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_BEGIN}}
+\DoxyCodeLine{00610\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_BEGIN()\ AnnotateIgnoreReadsBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_END}}
+\DoxyCodeLine{00613\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_END()\ AnnotateIgnoreReadsEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00614\ }
+\DoxyCodeLine{00615\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_WRITES\_BEGIN}}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_BEGIN()\ AnnotateIgnoreWritesBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_WRITES\_END}}
+\DoxyCodeLine{00619\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_WRITES\_END()\ AnnotateIgnoreWritesEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00620\ }
+\DoxyCodeLine{00621\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN}}
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN()\ \(\backslash\)}}
+\DoxyCodeLine{00623\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00624\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_BEGIN();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00625\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_BEGIN();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00626\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END}}
+\DoxyCodeLine{00629\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END()\ \(\backslash\)}}
+\DoxyCodeLine{00630\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00631\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_END();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00632\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_END();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00633\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00636\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_UNPROTECTED\_READ}}
+\DoxyCodeLine{00637\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00638\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{dynamic__annotations_8h_a500758e7e3948c98b2ac55e97bf3cab2}{ANNOTATE\_UNPROTECTED\_READ}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ x)\ \mbox{\hyperlink{dynamic__annotations_8h_ad2338fbb9169b3653c29cd3400bde0d8}{ANNOTALYSIS\_UNPROTECTED\_READ}}\ \{}
+\DoxyCodeLine{00639\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_af12d2bccda17242567c5165c0d378751}{ANNOTATE\_IGNORE\_READS\_BEGIN}}();}
+\DoxyCodeLine{00640\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ res\ =\ x;}
+\DoxyCodeLine{00641\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_a9537a31736d9e990c06f7b054a7d01be}{ANNOTATE\_IGNORE\_READS\_END}}();}
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00643\ \}}
+\DoxyCodeLine{00644\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_cplusplus\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00645\ }
+\DoxyCodeLine{00646\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ ANNOTALYSIS\_ONLY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00647\ }
+\DoxyCodeLine{00648\ \textcolor{preprocessor}{\#ifdef\ CLANG\_ANNOTALYSIS\_ONLY}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \textcolor{preprocessor}{\#undef\ CLANG\_ANNOTALYSIS\_ONLY}}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \textcolor{comment}{/*\ Turn\ on\ macros\ that\ the\ static\ analyzer\ understands.\ \ These\ should\ be\ on}}
+\DoxyCodeLine{00653\ \textcolor{comment}{\ *\ even\ if\ dynamic\ annotations\ are\ off.\ */}}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_BEGIN}}
+\DoxyCodeLine{00656\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_BEGIN()\ AnnotateIgnoreReadsBegin(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_END}}
+\DoxyCodeLine{00659\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_END()\ AnnotateIgnoreReadsEnd(\_\_FILE\_\_,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN}}
+\DoxyCodeLine{00662\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_BEGIN()\ \(\backslash\)}}
+\DoxyCodeLine{00663\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00664\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_BEGIN();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_BEGIN();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00666\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END}}
+\DoxyCodeLine{00669\ \textcolor{preprocessor}{\#define\ ANNOTATE\_IGNORE\_READS\_AND\_WRITES\_END()\ \(\backslash\)}}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00671\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_WRITES\_END();\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00672\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANNOTATE\_IGNORE\_READS\_END();\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00673\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00676\ \textcolor{preprocessor}{\#undef\ ANNOTATE\_UNPROTECTED\_READ}}
+\DoxyCodeLine{00677\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00678\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{dynamic__annotations_8h_a500758e7e3948c98b2ac55e97bf3cab2}{ANNOTATE\_UNPROTECTED\_READ}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ x)\ \{}
+\DoxyCodeLine{00679\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_af12d2bccda17242567c5165c0d378751}{ANNOTATE\_IGNORE\_READS\_BEGIN}}();}
+\DoxyCodeLine{00680\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ res\ =\ x;}
+\DoxyCodeLine{00681\ \ \ \ \ \mbox{\hyperlink{dynamic__annotations_8h_a9537a31736d9e990c06f7b054a7d01be}{ANNOTATE\_IGNORE\_READS\_END}}();}
+\DoxyCodeLine{00682\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00683\ \}}
+\DoxyCodeLine{00684\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CLANG\_ANNOTALYSIS\_ONLY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \textcolor{comment}{/*\ Undefine\ the\ macros\ intended\ only\ in\ this\ file.\ */}}
+\DoxyCodeLine{00689\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_STATIC\_INLINE}}
+\DoxyCodeLine{00690\ \textcolor{preprocessor}{\#undef\ ANNOTALYSIS\_SEMICOLON\_OR\_EMPTY\_BODY}}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DYNAMIC\_ANNOTATIONS\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

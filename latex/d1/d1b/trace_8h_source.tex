@@ -1,0 +1,276 @@
+\hypertarget{trace_8h_source}{}\doxysection{trace.\+h}
+\label{trace_8h_source}\index{/Users/dabowang/be\_all/util/trace.h@{/Users/dabowang/be\_all/util/trace.h}}
+\mbox{\hyperlink{trace_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <rapidjson/writer.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <iosfwd>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{macros_8h}{gutil/macros.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stringpiece_8h}{gutil/strings/stringpiece.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{substitute_8h}{gutil/strings/substitute.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__collision__warner_8h}{gutil/threading/thread\_collision\_warner.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{spinlock_8h}{util/spinlock.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{time_8h}{util/time.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{trace__metrics_8h}{util/trace\_metrics.h}}"{}}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }Trace;}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Adopt\ a\ Trace\ on\ the\ current\ thread\ for\ the\ duration\ of\ the\ current}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ scope.\ The\ old\ current\ Trace\ is\ restored\ when\ the\ scope\ is\ exited.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ 't'\ should\ be\ a\ Trace*\ pointer.}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ ADOPT\_TRACE(t)\ doris::ScopedAdoptTrace\ \_adopt\_trace(t);}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Issue\ a\ trace\ message,\ if\ tracing\ is\ enabled\ in\ the\ current\ thread.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ See\ Trace::SubstituteAndTrace\ for\ arguments.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ Example:}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ TRACE("{}Acquired\ timestamp\ \$0"{},\ timestamp);}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ TRACE(format,\ substitutions...)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ doris::Trace*\ \_trace\ =\ doris::Trace::CurrentTrace();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (\_trace)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_trace-\/>SubstituteAndTrace(\_\_FILE\_\_,\ \_\_LINE\_\_,\ (format),\ \#\#substitutions);\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ Like\ the\ above,\ but\ takes\ the\ trace\ pointer\ as\ an\ explicit\ argument.}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#define\ TRACE\_TO(trace,\ format,\ substitutions...)\ \(\backslash\)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ (trace)-\/>SubstituteAndTrace(\_\_FILE\_\_,\ \_\_LINE\_\_,\ (format),\ \#\#substitutions)}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ Increment\ a\ counter\ associated\ with\ the\ current\ trace.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Each\ trace\ contains\ a\ map\ of\ counters\ which\ can\ be\ used\ to\ keep}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ request-\/specific\ statistics.\ It\ is\ significantly\ faster\ to\ increment}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ a\ trace\ counter\ compared\ to\ logging\ a\ message.\ Additionally,\ having}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ slightly\ more\ structured\ information\ makes\ it\ easier\ to\ aggregate}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ and\ show\ information\ back\ to\ operators.}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ NOTE:\ the\ 'counter\_name'\ MUST\ be\ a\ string\ which\ stays\ alive\ forever.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ Typically,\ this\ is\ a\ compile-\/time\ constant.\ If\ something\ other\ than}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ a\ constant\ is\ required,\ use\ TraceMetric::InternName()\ in\ order\ to}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ create\ a\ string\ which\ will\ last\ for\ the\ process\ lifetime.\ Of\ course,}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ these\ strings\ will\ never\ be\ cleaned\ up,\ so\ it's\ important\ to\ use\ this}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ judiciously.}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ If\ no\ trace\ is\ active,\ this\ does\ nothing\ and\ does\ not\ evaluate\ its}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ parameters.}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#define\ TRACE\_COUNTER\_INCREMENT(counter\_name,\ val)\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ doris::Trace*\ \_trace\ =\ doris::Trace::CurrentTrace();\ \(\backslash\)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (\_trace)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \_trace-\/>metrics()-\/>Increment(counter\_name,\ val);\ \(\backslash\)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ Increment\ a\ counter\ for\ the\ amount\ of\ wall\ time\ spent\ in\ the\ current}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ scope.\ For\ example:}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ \ void\ DoFoo()\ \{}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ \ TRACE\_COUNTER\_SCOPE\_LATENCY\_US("{}foo\_us"{});}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ \ ...\ do\ expensive\ Foo\ thing}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ \ \}}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ \ will\ result\ in\ a\ trace\ metric\ indicating\ the\ number\ of\ microseconds\ spent}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ \ in\ invocations\ of\ DoFoo().}}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#define\ TRACE\_COUNTER\_SCOPE\_LATENCY\_US(counter\_name)\ \(\backslash\)}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\ \ \ \ ::doris::ScopedTraceLatencyCounter\ \_scoped\_latency(counter\_name)}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ Construct\ a\ constant\ C\ string\ counter\ name\ which\ acts\ as\ a\ sort\ of}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ coarse-\/grained\ histogram\ for\ trace\ metrics.}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#define\ BUCKETED\_COUNTER\_NAME(prefix,\ duration\_us)\ \(\backslash\)}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\ \ \ \ []()\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (duration\_us\ >=\ 100\ *\ 1000)\ \{\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ return\ prefix\ "{}\_gt\_100\_ms"{}};\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \}\ else\ if\ (duration\_us\ >=\ 10\ *\ 1000)\ \{\ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ return\ prefix\ "{}\_10-\/100\_ms"{};\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \}\ else\ if\ (duration\_us\ >=\ 1000)\ \{\ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ return\ prefix\ "{}\_1-\/10\_ms"{};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ return\ prefix\ "{}\_lt\_1ms"{};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00112\ \ \ \ \ \}()}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keyword}{struct\ }TraceEntry;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ A\ trace\ for\ a\ request\ or\ other\ process.\ This\ supports\ collecting\ trace\ entries}}
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ from\ a\ number\ of\ threads,\ and\ later\ dumping\ the\ results\ to\ a\ stream.}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ Callers\ should\ generally\ not\ add\ trace\ messages\ directly\ using\ the\ public}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ methods\ of\ this\ class.\ Rather,\ the\ TRACE(...)\ macros\ defined\ above\ should}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ be\ used\ such\ that\ file/line\ numbers\ are\ automatically\ included,\ etc.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.}}
+\DoxyCodeLine{00126\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_trace}{Trace}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_ref_counted_thread_safe}{RefCountedThreadSafe}}<Trace>\ \{}
+\DoxyCodeLine{00127\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00128\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_adb723362c45cc0c3de9801707bbc3d70}{Trace}}();}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ Logs\ a\ message\ into\ the\ trace\ buffer.}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ See\ strings::Substitute\ for\ details.}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ N.B.:\ the\ file\ path\ passed\ here\ is\ not\ copied,\ so\ should\ be\ a\ static}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ constant\ (eg\ \_\_FILE\_\_).}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_a0d5a5c3c96c40855227d4b049cf89ddd}{SubstituteAndTrace}}(}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ filepath,\ \textcolor{keywordtype}{int}\ line\_number,\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ format,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg0\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg1\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg2\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg3\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg4\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg5\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg6\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg7\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg8\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}},}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg}{strings::internal::SubstituteArg}}\&\ arg9\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_substitute_arg_a61518395f375e140fa4801f9975c1653}{strings::internal::SubstituteArg::NoArg}});}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Dump\ the\ trace\ buffer\ to\ the\ given\ output\ stream.}}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562a37a839897f4586c0f7fbb4aba19014c7}{NO\_FLAGS}}\ =\ 0,}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ set,\ calculate\ and\ print\ the\ difference\ between\ successive\ trace\ messages.}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562a3adf15d85aa4031b41596bcebf2047d1}{INCLUDE\_TIME\_DELTAS}}\ =\ 1\ <<\ 0,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ set,\ include\ a\ 'Metrics'\ line\ showing\ any\ attached\ trace\ metrics.}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562a923cfce8b8956613abb5b8083b47ff4e}{INCLUDE\_METRICS}}\ =\ 1\ <<\ 1,}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562af7c5f148e0688dd0cab3998047f69e86}{INCLUDE\_ALL}}\ =\ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562a3adf15d85aa4031b41596bcebf2047d1}{INCLUDE\_TIME\_DELTAS}}\ |\ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562a923cfce8b8956613abb5b8083b47ff4e}{INCLUDE\_METRICS}}}
+\DoxyCodeLine{00160\ \ \ \ \ \};}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_a1bbc5fa27154119c401b0c33d80d1677}{Dump}}(std::ostream*\ out,\ \textcolor{keywordtype}{int}\ flags)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ Dump\ the\ trace\ buffer\ as\ a\ string.}}
+\DoxyCodeLine{00164\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_trace_a04d01f922aee21e671eabac3798a5720}{DumpToString}}(\textcolor{keywordtype}{int}\ flags\ =\ \mbox{\hyperlink{classdoris_1_1_trace_a1f9aebf1de3ebbf4283a4dcf73308562af7c5f148e0688dd0cab3998047f69e86}{INCLUDE\_ALL}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_trace_ab62221dfc1751a6cfee200d340e28f66}{MetricsAsJSON}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ Attaches\ the\ given\ trace\ which\ will\ get\ appended\ at\ the\ end\ when\ Dumping.}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ The\ 'label'\ does\ not\ necessarily\ have\ to\ be\ unique,\ and\ is\ used\ to\ identify}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ the\ child\ trace\ when\ dumped.\ The\ contents\ of\ the\ StringPiece\ are\ copied}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ into\ this\ trace's\ arena.}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_a632229020b230436c5392c97d6098b99}{AddChildTrace}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ label,\ \mbox{\hyperlink{classdoris_1_1_trace}{Trace}}*\ child\_trace);}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ copy\ of\ the\ current\ set\ of\ related\ "{}child"{}\ traces.}}
+\DoxyCodeLine{00176\ \ \ \ \ std::vector<std::pair<StringPiece,\ scoped\_refptr<Trace>>>\ \mbox{\hyperlink{classdoris_1_1_trace_ac63c9ddc9f07c0b281880a17c8c242a6}{ChildTraces}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ current\ trace\ attached\ to\ this\ thread,\ if\ there\ is\ one.}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_trace}{Trace}}*\ \mbox{\hyperlink{classdoris_1_1_trace_a63de7c332adb51176aa6ac591765247d}{CurrentTrace}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{threadlocal\_trace\_}};\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ Simple\ function\ to\ dump\ the\ current\ trace\ to\ stderr,\ if\ one\ is}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ available.\ This\ is\ meant\ for\ usage\ when\ debugging\ in\ gdb\ via}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ 'call\ doris::Trace::DumpCurrentTrace();'.}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_abcbf81d5bcda3a08e3c974acad40e931}{DumpCurrentTrace}}();}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics}{TraceMetrics}}*\ \mbox{\hyperlink{classdoris_1_1_trace_a993517af428638a6e41325d365314294}{metrics}}()\ \{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classdoris_1_1_trace_a83f42d8aa1e2f0bc7b02f8b23e39c527}{metrics\_}};\ \}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_trace_metrics}{TraceMetrics}}\&\ \mbox{\hyperlink{classdoris_1_1_trace_acc7ec3a64f3dc5f1a11dc51b64d76a50}{metrics}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_trace_a83f42d8aa1e2f0bc7b02f8b23e39c527}{metrics\_}};\ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace}{ScopedAdoptTrace}};}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_ref_counted_thread_safe}{RefCountedThreadSafe}}<\mbox{\hyperlink{classdoris_1_1_trace}{Trace}}>;}
+\DoxyCodeLine{00192\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_aaa705be9a3c16665ee9c94ec27bd2321}{\string~Trace}}();}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ The\ current\ trace\ for\ this\ thread.\ Threads\ should\ only\ set\ this\ using}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ using\ ScopedAdoptTrace,\ which\ handles\ reference\ counting\ the\ underlying}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ object.}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keyword}{static}\ \_\_thread\ \mbox{\hyperlink{classdoris_1_1_trace}{Trace}}*\ \mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{threadlocal\_trace\_}};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ Allocate\ a\ new\ entry\ from\ the\ arena,\ with\ enough\ space\ to\ hold\ a}}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ message\ of\ length\ 'len'.}}
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_trace_entry}{TraceEntry}}*\ \mbox{\hyperlink{classdoris_1_1_trace_a0f0d0fa689845f004215ef8eee8edcc4}{NewEntry}}(\textcolor{keywordtype}{int}\ len,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ file\_path,\ \textcolor{keywordtype}{int}\ line\_number);}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ Add\ the\ entry\ to\ the\ linked\ list\ of\ entries.}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_aad8571b8393e3d81daf4ef150f20d359}{AddEntry}}(\mbox{\hyperlink{structdoris_1_1_trace_entry}{TraceEntry}}*\ entry);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_trace_a8511c5f82636bf826d870d63a8717b32}{MetricsToJSON}}(rapidjson::Writer<rapidjson::StringBuffer>*\ jw)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ TODO(yingchun):\ now\ we\ didn't\ import\ Arena,\ instead,\ we\ use\ manual\ malloc()\ and\ free().}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ std::unique\_ptr<ThreadSafeArena>\ arena\_;}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ Lock\ protecting\ the\ entries\ linked\ list.}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{classdoris_1_1_spin_lock}{SpinLock}}\ \mbox{\hyperlink{classdoris_1_1_trace_a2ddca6daea747fedb927f1005a93f5d6}{lock\_}};}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ The\ head\ of\ the\ linked\ list\ of\ entries\ (allocated\ inside\ arena\_)}}
+\DoxyCodeLine{00214\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_trace_entry}{TraceEntry}}*\ \mbox{\hyperlink{classdoris_1_1_trace_a2aa9b22c5dcb2e01a4314806f25cb63b}{entries\_head\_}};}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ The\ tail\ of\ the\ linked\ list\ of\ entries\ (allocated\ inside\ arena\_)}}
+\DoxyCodeLine{00216\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_trace_entry}{TraceEntry}}*\ \mbox{\hyperlink{classdoris_1_1_trace_ae1da7c7a558bca260ec8c9f360a29f94}{entries\_tail\_}};}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ std::vector<std::pair<StringPiece,\ scoped\_refptr<Trace>>>\ \mbox{\hyperlink{classdoris_1_1_trace_a0e043e80e6a99b9121d5707d98dc946e}{child\_traces\_}};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_metrics}{TraceMetrics}}\ \mbox{\hyperlink{classdoris_1_1_trace_a83f42d8aa1e2f0bc7b02f8b23e39c527}{metrics\_}};}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a1e09b0058777c28f24aee3e846f76be0}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_trace}{Trace}});}
+\DoxyCodeLine{00223\ \};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \textcolor{comment}{//\ Adopt\ a\ Trace\ object\ into\ the\ current\ thread\ for\ the\ duration}}
+\DoxyCodeLine{00226\ \textcolor{comment}{//\ of\ this\ object.}}
+\DoxyCodeLine{00227\ \textcolor{comment}{//\ This\ should\ only\ be\ used\ on\ the\ stack\ (and\ thus\ created\ and\ destroyed}}
+\DoxyCodeLine{00228\ \textcolor{comment}{//\ on\ the\ same\ thread)}}
+\DoxyCodeLine{00229\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace}{ScopedAdoptTrace}}\ \{}
+\DoxyCodeLine{00230\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_a03d7edcdaa4671ddead17b95f66fdb3c}{ScopedAdoptTrace}}(\mbox{\hyperlink{classdoris_1_1_trace}{Trace}}*\ t)\ :\ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_ab33f566971719516b974714dfc916374}{old\_trace\_}}(\mbox{\hyperlink{classdoris_1_1_trace}{Trace}}::threadlocal\_trace\_)\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{Trace::threadlocal\_trace\_}}\ =\ t;}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t)\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ t-\/>\mbox{\hyperlink{classdoris_1_1_ref_counted_thread_safe_a78b49a9825a2260a867951b75bb93d52}{AddRef}}();}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__collision__warner_8h_ade2635b953f6c53aeb177f09be9daeca}{DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED}}(ctor\_dtor\_);}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_a9d65314681d7cefc7d23cc6d7a118508}{\string~ScopedAdoptTrace}}()\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{Trace::threadlocal\_trace\_}})\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{Trace::threadlocal\_trace\_}}-\/>\mbox{\hyperlink{classdoris_1_1_ref_counted_thread_safe_a9894d8f46d56be577fbf72635d6904f7}{Release}}();}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace_a0bdcf253fdfc3061b7448e42ba09cf88}{Trace::threadlocal\_trace\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_ab33f566971719516b974714dfc916374}{old\_trace\_}};}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__collision__warner_8h_ade2635b953f6c53aeb177f09be9daeca}{DFAKE\_SCOPED\_LOCK\_THREAD\_LOCKED}}(ctor\_dtor\_);}
+\DoxyCodeLine{00245\ \ \ \ \ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_a215ad901aba6eec375ec5554eeab9eca}{DFAKE\_MUTEX}}(ctor\_dtor\_);}
+\DoxyCodeLine{00249\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_trace}{Trace}}*\ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_ab33f566971719516b974714dfc916374}{old\_trace\_}};}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace_ad671891796c52d4f1b4b495df5cfda76}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_scoped_adopt_trace}{ScopedAdoptTrace}});}
+\DoxyCodeLine{00252\ \};}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{comment}{//\ Implementation\ for\ TRACE\_COUNTER\_SCOPE\_LATENCY\_US(...)\ macro\ above.}}
+\DoxyCodeLine{00255\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter}{ScopedTraceLatencyCounter}}\ \{}
+\DoxyCodeLine{00256\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_a42dfd464398489aae9ecd8d87697d049}{ScopedTraceLatencyCounter}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ counter)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_aa9d4e217f2df9793df3133207a4ea48b}{counter\_}}(counter),\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_ad2b7daebe76a6fc45cebe724a6da0ca3}{start\_time\_}}(\mbox{\hyperlink{namespacedoris_a152d420f7084ee9fb38c9d6641a76b1b}{GetCurrentTimeMicros}}())\ \{\}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_ad30723af57cc727018ed8aa0fc647193}{\string~ScopedTraceLatencyCounter}}()\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{trace_8h_a8d97947505b1ca143deae09f2664176b}{TRACE\_COUNTER\_INCREMENT}}(\mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_aa9d4e217f2df9793df3133207a4ea48b}{counter\_}},\ \mbox{\hyperlink{namespacedoris_a152d420f7084ee9fb38c9d6641a76b1b}{GetCurrentTimeMicros}}()\ -\/\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_ad2b7daebe76a6fc45cebe724a6da0ca3}{start\_time\_}});}
+\DoxyCodeLine{00262\ \ \ \ \ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_aa9d4e217f2df9793df3133207a4ea48b}{counter\_}};}
+\DoxyCodeLine{00266\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_ad2b7daebe76a6fc45cebe724a6da0ca3}{start\_time\_}};}
+\DoxyCodeLine{00267\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter_a1a56564b66ab95f815c014debf6729f3}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_scoped_trace_latency_counter}{ScopedTraceLatencyCounter}});}
+\DoxyCodeLine{00268\ \};}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

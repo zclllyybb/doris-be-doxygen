@@ -1,0 +1,562 @@
+\hypertarget{jsonb__writer_8h_source}{}\doxysection{jsonb\+\_\+writer.\+h}
+\label{jsonb__writer_8h_source}\index{/Users/dabowang/be\_all/util/jsonb\_writer.h@{/Users/dabowang/be\_all/util/jsonb\_writer.h}}
+\mbox{\hyperlink{jsonb__writer_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ \ Copyright\ (c)\ 2014,\ Facebook,\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ This\ source\ code\ is\ licensed\ under\ the\ BSD-\/style\ license\ found\ in\ the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ LICENSE\ file\ in\ the\ root\ directory\ of\ this\ source\ tree.\ An\ additional\ grant}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ of\ patent\ rights\ can\ be\ found\ in\ the\ PATENTS\ file\ in\ the\ same\ directory.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ This\ file\ defines\ JsonbWriterT\ (template)\ and\ JsonbWriter.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ JsonbWriterT\ is\ a\ template\ class\ which\ implements\ an\ JSONB\ serializer.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ Users\ call\ various\ write\ functions\ of\ JsonbWriterT\ object\ to\ write\ values}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ directly\ to\ JSONB\ packed\ bytes.\ All\ write\ functions\ of\ value\ or\ key\ return}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ the\ number\ of\ bytes\ written\ to\ JSONB,\ or\ 0\ if\ there\ is\ an\ error.\ To\ write\ an}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ object,\ an\ array,\ or\ a\ string,\ you\ must\ call\ writeStart[..]\ before\ writing}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ values\ or\ key,\ and\ call\ writeEnd[..]\ after\ finishing\ at\ the\ end.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ By\ default,\ an\ JsonbWriterT\ object\ creates\ an\ output\ stream\ buffer.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ Alternatively,\ you\ can\ also\ pass\ any\ output\ stream\ object\ to\ a\ writer,\ as}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ long\ as\ the\ stream\ object\ implements\ some\ basic\ functions\ of\ std::ostream}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ (such\ as\ JsonbOutStream,\ see\ JsonbStream.h).}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ JsonbWriter\ specializes\ JsonbWriterT\ with\ JsonbOutStream\ type\ (see}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ JsonbStream.h).\ So\ unless\ you\ want\ to\ provide\ own\ a\ different\ output\ stream}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ type,\ use\ JsonbParser\ object.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ @author\ Tian\ Xia\ <tianx@fb.com>}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ this\ file\ is\ copied\ from\ }}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ https://github.com/facebook/mysql-\/5.6/blob/fb-\/mysql-\/5.6.35/fbson/FbsonWriter.h}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#ifndef\ JSONB\_JSONBWRITER\_H}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ JSONB\_JSONBWRITER\_H}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <stack>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{jsonb__document_8h}{jsonb\_document.h}}"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{jsonb__stream_8h}{jsonb\_stream.h}}"{}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ OS\_TYPE>}
+\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t}{JsonbWriterT}}\ \{}
+\DoxyCodeLine{00050\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a4df9a55202bff5bf6beb3144c748f195}{JsonbWriterT}}()\ :\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a12e2fcabdec141f87413372c54038115}{alloc\_}}(true),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}}(false),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}}),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}(0)\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}\ =\ \textcolor{keyword}{new}\ OS\_TYPE();}
+\DoxyCodeLine{00053\ \ \ \ \ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afb23c276394b83a7264c7a2cfe9b1920}{JsonbWriterT}}(OS\_TYPE\&\ os)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}(\&os),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a12e2fcabdec141f87413372c54038115}{alloc\_}}(false),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}}(false),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}}),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}(0)\ \{\}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a9a2996cfc1a4b625f8f3f987bf479ee6}{\string~JsonbWriterT}}()\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a12e2fcabdec141f87413372c54038115}{alloc\_}})\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}};}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>clear();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(0);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ !\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty();\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.pop())}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00072\ \ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a383c5c191e8f4c0631f30a31121fbe25}{writeKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ \mbox{\hyperlink{namespacedoris_ae48e41919c16ed670759a7b14715d33d}{hDictInsert}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a383c5c191e8f4c0631f30a31121fbe25}{writeKey}}(key,\ strlen(key),\ handler);}
+\DoxyCodeLine{00076\ \ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ write\ a\ key\ string\ (or\ key\ id\ if\ an\ external\ dict\ is\ provided)}}
+\DoxyCodeLine{00079\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a92c934d0ec15c9b587d60183707383b0}{writeKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ key,\ uint8\_t\ len,\ \mbox{\hyperlink{namespacedoris_ae48e41919c16ed670759a7b14715d33d}{hDictInsert}}\ handler\ =\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a20db66c9ac61c38c74a0fc19d239f6e8}{verifyKeyState}}())\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ key\_id\ =\ -\/1;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (handler)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key\_id\ =\ handler(key,\ len);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ \textcolor{keyword}{sizeof}(uint8\_t);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_id\ <\ 0)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(len);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write(key,\ len);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ len;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (key\_id\ <=\ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a8b8b739ffd021c7f23fa52e94ebdfbd8}{JsonbKeyValue::sMaxKeyId}})\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}}\ =\ key\_id;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(0);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}}));}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \textcolor{comment}{//\ key\ id\ overflow}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(0);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a9b3df4d571424cbc34ed8363f1c62349}{WS\_Key}};}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ size;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_af5a6fd00e4eb16d2267dd0c2cd9ce022}{writeValue}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}-\/>numPackedBytes());}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}-\/>size();}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ write\ a\ key\ id}}
+\DoxyCodeLine{00119\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2b84bb6c9c4298bcdac02b63af893dc9}{writeKey}}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}}\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}})\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a20db66c9ac61c38c74a0fc19d239f6e8}{verifyKeyState}}())\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(0);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&\mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}}));}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a9b3df4d571424cbc34ed8363f1c62349}{WS\_Key}};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(uint8\_t)\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_key_value_a73a2dd0e30b0c94f5a3511f7c4bc9fcc}{JsonbKeyValue::keyid\_type}});}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00128\ \ \ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}()\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ is\ a\ new\ JSONB,\ write\ the\ header}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}})\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2e19c2ee025cf0d8494654f6baa42176}{writeHeader}}();}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a013d94362e9e86c386bcd81df1a06147}{writeNull}}()\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa613ef02b207b70979529fcc17f5fd315}{JsonbType::T\_Null}});}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}});}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00154\ \ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a40a9336cbef52c95791a7be6ed47c80a}{writeBool}}(\textcolor{keywordtype}{bool}\ b)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9bfaede0afa1be49140472b2650d02bc}{JsonbType::T\_True}});}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fad15e3ab09e20a41c57b14ea4583d0fee}{JsonbType::T\_False}});}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}});}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ This\ function\ is\ a\ helper.\ It\ will\ make\ use\ of\ smallest\ space\ to}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ write\ an\ int}}
+\DoxyCodeLine{00174\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2665f264ad484ba8ab39fa3729f4b3a6}{writeInt}}(int64\_t\ val)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (val\ >=\ std::numeric\_limits<int8\_t>::min()\ \&\&}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ val\ <=\ std::numeric\_limits<int8\_t>::max())\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a8351a3fd33ce80eff11fc8dd4154b323}{writeInt8}}((int8\_t)val);}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (val\ >=\ std::numeric\_limits<int16\_t>::min()\ \&\&}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ val\ <=\ std::numeric\_limits<int16\_t>::max())\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a407a9056eb71ba1292d09062b72f2d15}{writeInt16}}((int16\_t)val);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (val\ >=\ std::numeric\_limits<int32\_t>::min()\ \&\&}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ val\ <=\ std::numeric\_limits<int32\_t>::max())\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a8f6de0b3148370a61d375f9e9dbbb38a}{writeInt32}}((int32\_t)val);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a3e7d4a3558ea30128319e2ed29716528}{writeInt64}}(val);}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00187\ \ \ \ \ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a8351a3fd33ce80eff11fc8dd4154b323}{writeInt8}}(int8\_t\ v)\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa45059cf611d6cd3c6564e2cb6685276b}{JsonbType::T\_Int8}});}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(v);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_a44215038ec9ab9d8854dbbe0e2124f24}{JsonbInt8Val}});}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a407a9056eb71ba1292d09062b72f2d15}{writeInt16}}(int16\_t\ v)\ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18f0cfeb0feeef1f58a2181ade5cab42}{JsonbType::T\_Int16}});}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(int16\_t));}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_afd617997811506d3246c8557bd102ce7}{JsonbInt16Val}});}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00211\ \ \ \ \ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a8f6de0b3148370a61d375f9e9dbbb38a}{writeInt32}}(int32\_t\ v)\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa1416be1d14a1c85d289129c8b0affb14}{JsonbType::T\_Int32}});}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(int32\_t));}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_a3efd00eaa432faa911c7502c1bd358dd}{JsonbInt32Val}});}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00223\ \ \ \ \ \}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a3e7d4a3558ea30128319e2ed29716528}{writeInt64}}(int64\_t\ v)\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365faf55d3e56b3b305b58556a48197459986}{JsonbType::T\_Int64}});}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(int64\_t));}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_aa36a2b66e0d9b455929698dc2f36a1f5}{JsonbInt64Val}});}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00235\ \ \ \ \ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a1d398f35ac79079a36dba85b3e68a5b2}{writeInt128}}(\_\_int128\_t\ v)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac4bcbad3e1e51f2ebc38f1ac3742673d}{JsonbType::T\_Int128}});}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(\_\_int128\_t));}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_a35cc920711bd2c8d24070c6c1d2979f9}{JsonbInt128Val}});}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00246\ \ \ \ \ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a515803364e1f16f9339da1d3c4f24a27}{writeDouble}}(\textcolor{keywordtype}{double}\ v)\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa5beee66ad57faf1b6484a60cb204f6f3}{JsonbType::T\_Double}});}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{double}));}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_a68d73c6dabf5b9d3c6a5c9c73a308807}{JsonbDoubleVal}});}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a173e8e41b5b82c5c80a2fccf8fa6c862}{writeFloat}}(\textcolor{keywordtype}{float}\ v)\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa6c90b26ab7419d7000403f943256e489}{JsonbType::T\_Float}});}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&v,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}));}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{namespacedoris_a73e8bb9c395696e484a024019927058b}{JsonbFloatVal}});}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00270\ \ \ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{//\ must\ call\ writeStartString\ before\ writing\ a\ string\ val}}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_af625a69a478477494abe01bd9589f9d6}{writeStartString}}()\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa9e90ba6f8aad5f047fa1000475fdcbfa}{JsonbType::T\_String}});}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fill\ the\ size\ bytes\ with\ 0\ for\ now}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}};}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00288\ \ \ \ \ \}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ finish\ writing\ a\ string\ val}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a69c74cae78e0aa36d1af0ad2b4dbf114}{writeEndString}}()\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}})\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ std::streampos\ cur\_pos\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ size\ =\ (int32\_t)(cur\_pos\ -\/\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}\ -\/\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}});}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(cur\_pos);}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00306\ \ \ \ \ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a16aa39fad38619c1fbe35d526ad910ab}{writeString}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str,\ uint32\_t\ len)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}})\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write(str,\ len);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ len;}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00315\ \ \ \ \ \}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abed8935725dd00b8e6caa2886ab4356b}{writeString}}(\textcolor{keyword}{const}\ std::string\&\ str)\ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a16aa39fad38619c1fbe35d526ad910ab}{writeString}}(str.c\_str(),\ (uint32\_t)str.size());}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a6b1c7cf217429b05abd8dc2be08125e5}{writeString}}(\textcolor{keywordtype}{char}\ ch)\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}})\ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(ch);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00327\ \ \ \ \ \}}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//\ must\ call\ writeStartBinary\ before\ writing\ a\ binary\ val}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa64ab16003f465b5d2642098eaba1349}{writeStartBinary}}()\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ ||\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()))\ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a63bcfd0efc029a53c59c60546ad862b5}{writeFirstHeader}}())\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa59880eb1e285cd40c9ef6f71950ad9a7}{JsonbType::T\_Binary}});}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fill\ the\ size\ bytes\ with\ 0\ for\ now}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a5f66e40e2c2a91d5e9a191fac42f2d97}{WS\_Binary}};}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00345\ \ \ \ \ \}}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ finish\ writing\ a\ binary\ val}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ac24731276475f90d1812e25151d38afb}{writeEndBinary}}()\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a5f66e40e2c2a91d5e9a191fac42f2d97}{WS\_Binary}})\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ std::streampos\ cur\_pos\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ size\ =\ (int32\_t)(cur\_pos\ -\/\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}}\ -\/\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}});}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(cur\_pos);}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00363\ \ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a8a45b146709e83f6fe3a0e86c4f18c8b}{writeBinary}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ bin,\ uint32\_t\ len)\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a5f66e40e2c2a91d5e9a191fac42f2d97}{WS\_Binary}})\ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write(bin,\ len);}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ len;}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00372\ \ \ \ \ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{comment}{//\ must\ call\ writeStartObject\ before\ writing\ an\ object\ val}}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a4d9ad2bc5b91cf394edf78101df81e20}{writeStartObject}}()\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ ||\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}())\ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ is\ a\ new\ JSONB,\ write\ the\ header}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}})\ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2e19c2ee025cf0d8494654f6baa42176}{writeHeader}}();}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ object\ exceeds\ the\ maximum\ nesting\ level}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.size()\ >=\ \mbox{\hyperlink{namespacedoris_ab50143d8d97874b8a18fc65421eb9c83}{MaxNestingLevel}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fa18eebd0bd47fdcbc8ee9c2014126829c}{JsonbType::T\_Object}});}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ save\ the\ size\ position}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.push(\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info}{WriteInfo}}(\{\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}},\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp()\}));}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fill\ the\ size\ bytes\ with\ 0\ for\ now}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00401\ \ \ \ \ \}}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{comment}{//\ finish\ writing\ an\ object\ val}}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2dfaff686d6c1ede7e90470b3ac01644}{writeEndObject}}()\ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}})\ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info}{WriteInfo}}\&\ ci\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top();}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ std::streampos\ cur\_pos\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ size\ =\ (int32\_t)(cur\_pos\ -\/\ ci.\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a0b0fd1bec5802d809c11bb77046454a1}{sz\_pos}}\ -\/\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(ci.\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a0b0fd1bec5802d809c11bb77046454a1}{sz\_pos}});}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(cur\_pos);}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.pop();}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00420\ \ \ \ \ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{comment}{//\ must\ call\ writeStartArray\ before\ writing\ an\ array\ val}}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a5ee58111af649c00be0c92b4685982b5}{writeStartArray}}()\ \{}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ ||\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}())\ \{}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ \{}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ is\ a\ new\ JSONB,\ write\ the\ header}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}})\ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2e19c2ee025cf0d8494654f6baa42176}{writeHeader}}();}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ the\ array\ exceeds\ the\ maximum\ nesting\ level}}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.size()\ >=\ \mbox{\hyperlink{namespacedoris_ab50143d8d97874b8a18fc65421eb9c83}{MaxNestingLevel}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put((\mbox{\hyperlink{namespacedoris_a8b0c9a13995289fa9176d338c1646dfe}{JsonbTypeUnder}})\mbox{\hyperlink{namespacedoris_ae00cc6f3123141cbf2a954d88f50365fac839497e51fd3569658ed3736ac13242}{JsonbType::T\_Array}});}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ save\ the\ size\ position}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.push(\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info}{WriteInfo}}(\{\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a502631ea339348847d3eb61169b8af36}{WS\_Array}},\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp()\}));}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fill\ the\ size\ bytes\ with\ 0\ for\ now}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00449\ \ \ \ \ \}}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{comment}{//\ finish\ writing\ an\ array\ val}}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afa41c4c316fb9b8ba680dfc69ab4724a}{writeEndArray}}()\ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty()\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a502631ea339348847d3eb61169b8af36}{WS\_Array}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}})\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info}{WriteInfo}}\&\ ci\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top();}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ std::streampos\ cur\_pos\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>tellp();}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ size\ =\ (int32\_t)(cur\_pos\ -\/\ ci.\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a0b0fd1bec5802d809c11bb77046454a1}{sz\_pos}}\ -\/\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(ci.\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a0b0fd1bec5802d809c11bb77046454a1}{sz\_pos}});}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>write((\textcolor{keywordtype}{char}*)\&size,\ \textcolor{keyword}{sizeof}(uint32\_t));}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>seekp(cur\_pos);}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.pop();}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00468\ \ \ \ \ \}}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \ \ \ \ OS\_TYPE*\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afc8443c2e0fc182449c23c3e6b68a670}{getOutput}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}};\ \}}
+\DoxyCodeLine{00471\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_document}{JsonbDocument}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aee502b8f5d95070901dc0b18e942044a}{getDocument}}()\ \{}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a6f3d6d8641e307033b92fc8a13385afb}{JsonbDocument::createDocument}}(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afc8443c2e0fc182449c23c3e6b68a670}{getOutput}}()-\/>getBuffer(),\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afc8443c2e0fc182449c23c3e6b68a670}{getOutput}}()-\/>getSize());}
+\DoxyCodeLine{00473\ \ \ \ \ \}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_value}{JsonbValue}}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ab432a7d4f14adb11963d3cf0cd77bc6d}{getValue}}()\ \{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_document_a944f6721536b96e961eb8e1f3dab71af}{JsonbDocument::createValue}}(\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afc8443c2e0fc182449c23c3e6b68a670}{getOutput}}()-\/>getBuffer(),}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (uint32\_t)\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afc8443c2e0fc182449c23c3e6b68a670}{getOutput}}()-\/>getSize());}
+\DoxyCodeLine{00478\ \ \ \ \ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ab8e36a2a8f8455399a0166d119744c5e}{writeEnd}}()\ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty())\ \{}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ ok\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state)\ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a502631ea339348847d3eb61169b8af36}{WS\_Array}}:}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_afa41c4c316fb9b8ba680dfc69ab4724a}{writeEndArray}}();}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}}:}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2dfaff686d6c1ede7e90470b3ac01644}{writeEndObject}}();}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}}:}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a69c74cae78e0aa36d1af0ad2b4dbf114}{writeEndString}}();}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a5f66e40e2c2a91d5e9a191fac42f2d97}{WS\_Binary}}:}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ac24731276475f90d1812e25151d38afb}{writeEndBinary}}();}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ok\ ==\ \textcolor{keyword}{false})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00503\ \ \ \ \ \}}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00506\ \ \ \ \ \textcolor{comment}{//\ verify\ we\ are\ in\ the\ right\ state\ before\ writing\ a\ value}}
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa9cda595767fde31151f40da7b320aa5}{verifyValueState}}()\ \{}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty());}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ document\ can\ only\ be\ an\ Object\ or\ an\ Array\ which\ follows}}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ standard.}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a9b3df4d571424cbc34ed8363f1c62349}{WS\_Key}})\ ||}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a502631ea339348847d3eb61169b8af36}{WS\_Array}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}});}
+\DoxyCodeLine{00513\ \ \ \ \ \}}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{comment}{//\ verify\ we\ are\ in\ the\ right\ state\ before\ writing\ a\ key}}
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a20db66c9ac61c38c74a0fc19d239f6e8}{verifyKeyState}}()\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.empty());}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}}.top().state\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}}\ ==\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}};}
+\DoxyCodeLine{00519\ \ \ \ \ \}}
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a2e19c2ee025cf0d8494654f6baa42176}{writeHeader}}()\ \{}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}}-\/>put(\mbox{\hyperlink{jsonb__document_8h_a8ce5f63ceac6ce146e8c649e17113abc}{JSONB\_VER}});}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00524\ \ \ \ \ \}}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341}{WriteState}}\ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341af1716d3ff8efc8b9382e3c32e70ff46a}{WS\_NONE}},}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a502631ea339348847d3eb61169b8af36}{WS\_Array}},}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a3d1d1bc93b3d4050cf4bdb3592faa6ff}{WS\_Object}},}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a9b3df4d571424cbc34ed8363f1c62349}{WS\_Key}},}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341ada0b547d8f39290f2b903934c94aceee}{WS\_Value}},}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a4d886af585ee7d066df3d70e436dfe06}{WS\_String}},}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341a5f66e40e2c2a91d5e9a191fac42f2d97}{WS\_Binary}},}
+\DoxyCodeLine{00535\ \ \ \ \ \};}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info}{WriteInfo}}\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341}{WriteState}}\ \mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a40170aa51c689e86f9dafea6d384d0b4}{state}};}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ std::streampos\ \mbox{\hyperlink{structdoris_1_1_jsonb_writer_t_1_1_write_info_a0b0fd1bec5802d809c11bb77046454a1}{sz\_pos}};}
+\DoxyCodeLine{00540\ \ \ \ \ \};}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00543\ \ \ \ \ OS\_TYPE*\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a43cd94d6cbfbefeba0f139b604d4cc3f}{os\_}};}
+\DoxyCodeLine{00544\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a12e2fcabdec141f87413372c54038115}{alloc\_}};}
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abe1fe7ca5cced87aa8321e66fa4b0657}{hasHdr\_}};}
+\DoxyCodeLine{00546\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a00bd2ad0291cd6ebddf9a631d13b0341}{WriteState}}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_ae3d82f2c5c860e28bcf88d24c8a7ed44}{kvState\_}};\ \textcolor{comment}{//\ key\ or\ value\ state}}
+\DoxyCodeLine{00547\ \ \ \ \ std::streampos\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_a556e3efec60f0016f887117dcd015c56}{str\_pos\_}};}
+\DoxyCodeLine{00548\ \ \ \ \ std::stack<WriteInfo>\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_abf901a824c6d975e1a823a23aa3df083}{stack\_}};}
+\DoxyCodeLine{00549\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t_aa184fabd856fc0190c1f552fcc3f4143}{first\_}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00550\ \};}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classdoris_1_1_jsonb_writer_t}{JsonbWriterT<JsonbOutStream>}}\ \mbox{\hyperlink{namespacedoris_a7458f7ea3c88cb77ff518caa5ed7e38b}{JsonbWriter}};}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ JSONB\_JSONBWRITER\_H}}
+
+\end{DoxyCode}

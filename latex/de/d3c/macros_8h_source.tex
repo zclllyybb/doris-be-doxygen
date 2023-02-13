@@ -1,0 +1,208 @@
+\hypertarget{macros_8h_source}{}\doxysection{macros.\+h}
+\label{macros_8h_source}\index{/Users/dabowang/be\_all/gutil/macros.h@{/Users/dabowang/be\_all/gutil/macros.h}}
+\mbox{\hyperlink{macros_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2008\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Various\ Google-\/specific\ macros.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ This\ code\ is\ compiled\ directly\ on\ many\ platforms,\ including\ client}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ platforms\ like\ Windows,\ Mac,\ and\ embedded\ systems.\ \ Before\ making}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ any\ changes\ here,\ make\ sure\ that\ you're\ not\ breaking\ any\ platforms.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stddef.h>}\ \textcolor{comment}{//\ For\ size\_t}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}butil/macros.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{port_8h}{gutil/port.h}}"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ The\ swigged\ version\ of\ an\ abstract\ class\ must\ be\ concrete\ if\ any\ methods}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ return\ objects\ of\ the\ abstract\ type.\ We\ keep\ it\ abstract\ in\ C++\ and}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ concrete\ for\ swig.}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ SWIG}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ ABSTRACT\ =\ 0}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ The\ COMPILE\_ASSERT\ macro\ can\ be\ used\ to\ verify\ that\ a\ compile\ time}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ expression\ is\ true.\ For\ example,\ you\ could\ use\ it\ to\ verify\ the}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ size\ of\ a\ static\ array:}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ COMPILE\_ASSERT(ARRAYSIZE(content\_type\_names)\ ==\ CONTENT\_NUM\_TYPES,}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ content\_type\_names\_incorrect\_size);}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ or\ to\ make\ sure\ a\ struct\ is\ smaller\ than\ a\ certain\ size:}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ COMPILE\_ASSERT(sizeof(foo)\ <\ 128,\ foo\_too\_large);}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ The\ second\ argument\ to\ the\ macro\ is\ the\ name\ of\ the\ variable.\ If}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ the\ expression\ is\ false,\ most\ compilers\ will\ issue\ a\ warning/error}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ containing\ the\ name\ of\ the\ variable.}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}>}
+\DoxyCodeLine{00040\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_compile_assert}{CompileAssert}}\ \{\};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#ifndef\ COMPILE\_ASSERT}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ COMPILE\_ASSERT(expr,\ msg)\ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ typedef\ CompileAssert<(bool(expr))>\ msg[bool(expr)\ ?\ 1\ :\ -\/1]\ ATTRIBUTE\_UNUSED}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ Implementation\ details\ of\ COMPILE\_ASSERT:}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ -\/\ COMPILE\_ASSERT\ works\ by\ defining\ an\ array\ type\ that\ has\ -\/1}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ elements\ (and\ thus\ is\ invalid)\ when\ the\ expression\ is\ false.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ -\/\ The\ simpler\ definition}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ \#define\ COMPILE\_ASSERT(expr,\ msg)\ typedef\ char\ msg[(expr)\ ?\ 1\ :\ -\/1]}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ does\ not\ work,\ as\ gcc\ supports\ variable-\/length\ arrays\ whose\ sizes}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ are\ determined\ at\ run-\/time\ (this\ is\ gcc's\ extension\ and\ not\ part}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ of\ the\ C++\ standard).\ \ As\ a\ result,\ gcc\ fails\ to\ reject\ the}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ following\ code\ with\ the\ simple\ definition:}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ \ int\ foo;}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ \ COMPILE\_ASSERT(foo,\ msg);\ //\ not\ supposed\ to\ compile\ as\ foo\ is}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ not\ a\ compile-\/time\ constant.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ -\/\ By\ using\ the\ type\ CompileAssert<(bool(expr))>,\ we\ ensures\ that}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ expr\ is\ a\ compile-\/time\ constant.\ \ (Template\ arguments\ must\ be}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ determined\ at\ compile-\/time.)}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ -\/\ The\ outer\ parentheses\ in\ CompileAssert<(bool(expr))>\ are\ necessary}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ to\ work\ around\ a\ bug\ in\ gcc\ 3.4.4\ and\ 4.0.1.\ \ If\ we\ had\ written}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ \ \ \ \ CompileAssert<bool(expr)>}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ instead,\ these\ compilers\ will\ refuse\ to\ compile}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ \ \ \ \ COMPILE\_ASSERT(5\ >\ 0,\ some\_message);}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ \ \ (They\ seem\ to\ think\ the\ "{}>"{}\ in\ "{}5\ >\ 0"{}\ marks\ the\ end\ of\ the}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ \ \ template\ argument\ list.)}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ -\/\ The\ array\ size\ is\ (bool(expr)\ ?\ 1\ :\ -\/1),\ instead\ of\ simply}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ \ \ \ \ ((expr)\ ?\ 1\ :\ -\/1).}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ \ \ This\ is\ to\ avoid\ running\ into\ a\ bug\ in\ MS\ VC\ 7.1,\ which}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ \ \ causes\ ((0.0)\ ?\ 1\ :\ -\/1)\ to\ incorrectly\ evaluate\ to\ 1.}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ COMPILE\_ASSERT}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ A\ macro\ to\ disallow\ the\ copy\ constructor\ and\ operator=\ functions}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ This\ should\ be\ used\ in\ the\ private:\ declarations\ for\ a\ class}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ For\ disallowing\ only\ assign\ or\ copy,\ write\ the\ code\ directly,\ but\ declare}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ the\ intend\ in\ a\ comment,\ for\ example:}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ void\ operator=(const\ TypeName\&);\ \ //\ DISALLOW\_ASSIGN}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Note,\ that\ most\ uses\ of\ DISALLOW\_ASSIGN\ and\ DISALLOW\_COPY\ are\ broken}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ semantically,\ one\ should\ either\ use\ disallow\ both\ or\ neither.\ Try\ to}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ avoid\ these\ in\ new\ code.}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#ifndef\ DISALLOW\_COPY\_AND\_ASSIGN}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#define\ DISALLOW\_COPY\_AND\_ASSIGN(TypeName)\ \(\backslash\)}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\ \ \ \ TypeName(const\ TypeName\&)\ =\ delete;\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\ \ \ \ void\ operator=(const\ TypeName\&)\ =\ delete}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ An\ older,\ politically\ incorrect\ name\ for\ the\ above.}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ Prefer\ DISALLOW\_COPY\_AND\_ASSIGN\ for\ new\ code.}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ DISALLOW\_EVIL\_CONSTRUCTORS(TypeName)\ DISALLOW\_COPY\_AND\_ASSIGN(TypeName)}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ A\ macro\ to\ turn\ a\ symbol\ into\ a\ string}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ AS\_STRING(x)\ AS\_STRING\_INTERNAL(x)}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#define\ AS\_STRING\_INTERNAL(x)\ \#x}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ Macro\ that\ allows\ definition\ of\ a\ variable\ appended\ with\ the\ current\ line}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//\ number\ in\ the\ source\ file.\ Typically\ for\ use\ by\ other\ macros\ to\ allow\ the}}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ user\ to\ declare\ multiple\ variables\ with\ the\ same\ "{}base"{}\ name\ inside\ the\ same}}
+\DoxyCodeLine{00115\ \textcolor{comment}{//\ lexical\ block.}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#define\ VARNAME\_LINENUM(varname)\ VARNAME\_LINENUM\_INTERNAL(varname\#\#\_L,\ \_\_LINE\_\_)}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#define\ VARNAME\_LINENUM\_INTERNAL(v,\ line)\ VARNAME\_LINENUM\_INTERNAL2(v,\ line)}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\#define\ VARNAME\_LINENUM\_INTERNAL2(v,\ line)\ v\#\#line}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ The\ following\ enum\ should\ be\ used\ only\ as\ a\ constructor\ argument\ to\ indicate}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ that\ the\ variable\ has\ static\ storage\ class,\ and\ that\ the\ constructor\ should}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ do\ nothing\ to\ its\ state.\ \ It\ indicates\ to\ the\ reader\ that\ it\ is\ legal\ to}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ declare\ a\ static\ instance\ of\ the\ class,\ provided\ the\ constructor\ is\ given}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ the\ base::LINKER\_INITIALIZED\ argument.\ \ Normally,\ it\ is\ unsafe\ to\ declare\ a}}
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ static\ variable\ that\ has\ a\ constructor\ or\ a\ destructor\ because\ invocation}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ order\ is\ undefined.\ \ However,\ IF\ the\ type\ can\ be\ initialized\ by\ filling\ with}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ zeroes\ (which\ the\ loader\ does\ for\ static\ variables),\ AND\ the\ type's}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ destructor\ does\ nothing\ to\ the\ storage,\ then\ a\ constructor\ for\ static}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ initialization\ can\ be\ declared\ as}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ \ \ \ \ \ \ explicit\ MyClass(base::LinkerInitialized\ x)\ \{\}}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ and\ invoked\ as}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ \ \ \ \ \ \ static\ MyClass\ my\_variable\_name(base::LINKER\_INITIALIZED);}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00134\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacebase_ab0d7e85de1ca8eb3299cb527d3e9fa7e}{LinkerInitialized}}\ \{\ \mbox{\hyperlink{namespacebase_ab0d7e85de1ca8eb3299cb527d3e9fa7ea81e4a680a48c5c8c4b5f8c06801afc96}{LINKER\_INITIALIZED}}\ \};}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ The\ FALLTHROUGH\_INTENDED\ macro\ can\ be\ used\ to\ annotate\ implicit\ fall-\/through}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ between\ switch\ labels:}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ \ switch\ (x)\ \{}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ \ \ \ case\ 40:}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ \ \ \ case\ 41:}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ \ \ \ \ \ if\ (truth\_is\_out\_there)\ \{}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ \ \ \ \ \ \ \ ++x;}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ \ \ \ \ \ \ \ FALLTHROUGH\_INTENDED;\ \ //\ Use\ instead\ of/along\ with\ annotations\ in}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ comments.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ \ \ \ \ \ \}\ else\ \{}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ \ \ \ \ \ \ \ return\ x;}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ \ \ \ \ \ \}}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ \ \ \ case\ 42:}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ \ \ \ \ \ ...}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ \ As\ shown\ in\ the\ example\ above,\ the\ FALLTHROUGH\_INTENDED\ macro\ should\ be}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ \ followed\ by\ a\ semicolon.\ It\ is\ designed\ to\ mimic\ control-\/flow\ statements}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ \ like\ 'break;',\ so\ it\ can\ be\ placed\ in\ most\ places\ where\ 'break;'\ can,\ but}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ \ only\ if\ there\ are\ no\ statements\ on\ the\ execution\ path\ between\ it\ and\ the}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ \ next\ switch\ label.}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//}}
+\DoxyCodeLine{00158\ \textcolor{comment}{//\ \ When\ compiled\ with\ clang\ in\ C++11\ mode,\ the\ FALLTHROUGH\_INTENDED\ macro\ is}}
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ \ expanded\ to\ [[clang::fallthrough]]\ attribute,\ which\ is\ analysed\ when}}
+\DoxyCodeLine{00160\ \textcolor{comment}{//\ \ performing\ switch\ labels\ fall-\/through\ diagnostic\ ('-\/Wimplicit-\/fallthrough').}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ \ See\ clang\ documentation\ on\ language\ extensions\ for\ details:}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ \ http://clang.llvm.org/docs/LanguageExtensions.html\#clang\_\_fallthrough}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ \ When\ used\ with\ unsupported\ compilers,\ the\ FALLTHROUGH\_INTENDED\ macro\ has\ no}}
+\DoxyCodeLine{00165\ \textcolor{comment}{//\ \ effect\ on\ diagnostics.}}
+\DoxyCodeLine{00166\ \textcolor{comment}{//}}
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ \ In\ either\ case\ this\ macro\ has\ no\ effect\ on\ runtime\ behavior\ and\ performance}}
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ \ of\ code.}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)\ \&\&\ defined(LANG\_CXX11)\ \&\&\ defined(\_\_has\_warning)}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#if\ \_\_has\_feature(cxx\_attributes)\ \&\&\ \_\_has\_warning("{}-\/Wimplicit-\/fallthrough"{}})}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#define\ FALLTHROUGH\_INTENDED\ [[clang::fallthrough]]\ }\textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\#ifndef\ FALLTHROUGH\_INTENDED}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#define\ FALLTHROUGH\_INTENDED\ \(\backslash\)}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ Retry\ on\ EINTR\ for\ functions\ like\ read()\ that\ return\ -\/1\ on\ error.}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#define\ RETRY\_ON\_EINTR(err,\ expr)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\_assert(std::is\_signed<decltype(err)>::value,\ \#err\ "{}\ must\ be\ a\ signed\ integer"{}});\ \(\backslash\)}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ (err)\ =\ (expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00186\ \ \ \ \ \}\ while\ ((err)\ ==\ -\/1\ \&\&\ errno\ ==\ EINTR)}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{comment}{//\ Same\ as\ above\ but\ for\ stream\ API\ calls\ like\ fread()\ and\ fwrite().}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#define\ STREAM\_RETRY\_ON\_EINTR(nread,\ stream,\ expr)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\_assert(std::is\_unsigned<decltype(nread)>::value\ ==\ true,\ \(\backslash\)}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#nread\ "{}\ must\ be\ an\ unsigned\ integer"{}});\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ (nread)\ =\ (expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00194\ \ \ \ \ \}\ while\ ((nread)\ ==\ 0\ \&\&\ ferror(stream)\ ==\ EINTR)}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ Same\ as\ above\ but\ for\ functions\ that\ return\ pointer\ types\ (like}}
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ fopen()\ and\ freopen()).}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\#define\ POINTER\_RETRY\_ON\_EINTR(ptr,\ expr)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\_assert(std::is\_pointer<decltype(ptr)>::value\ ==\ true,\ \#ptr\ "{}\ must\ be\ a\ pointer"{}});\ \(\backslash\)}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ (ptr)\ =\ (expr);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00202\ \ \ \ \ \}\ while\ ((ptr)\ ==\ nullptr\ \&\&\ errno\ ==\ EINTR)}
+
+\end{DoxyCode}

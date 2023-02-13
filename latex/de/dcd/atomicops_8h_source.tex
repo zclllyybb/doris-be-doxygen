@@ -1,0 +1,273 @@
+\hypertarget{atomicops_8h_source}{}\doxysection{atomicops.\+h}
+\label{atomicops_8h_source}\index{/Users/dabowang/be\_all/gutil/atomicops.h@{/Users/dabowang/be\_all/gutil/atomicops.h}}
+\mbox{\hyperlink{atomicops_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2003\ Google\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ For\ atomic\ operations\ on\ statistics\ counters,\ see\ atomic\_stats\_counter.h.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ For\ atomic\ operations\ on\ sequence\ numbers,\ see\ atomic\_sequence\_num.h.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ For\ atomic\ operations\ on\ reference\ counts,\ see\ atomic\_refcount.h.}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Some\ fast\ atomic\ operations\ -\/-\/\ typically\ with\ machine-\/dependent}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ implementations.\ \ This\ file\ may\ need\ editing\ as\ Google\ code\ is}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ ported\ to\ different\ architectures.}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ The\ routines\ exported\ by\ this\ module\ are\ subtle.\ \ If\ you\ use\ them,\ even\ if}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ you\ get\ the\ code\ right,\ it\ will\ depend\ on\ careful\ reasoning\ about\ atomicity}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ and\ memory\ ordering;\ it\ will\ be\ less\ readable,\ and\ harder\ to\ maintain.\ \ If}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ you\ plan\ to\ use\ these\ routines,\ you\ should\ have\ a\ good\ reason,\ such\ as\ solid}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ evidence\ that\ performance\ would\ otherwise\ suffer,\ or\ there\ being\ no}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ alternative.\ \ You\ should\ assume\ only\ properties\ explicitly\ guaranteed\ by\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ specifications\ in\ this\ file.\ \ You\ are\ almost\ certainly\ \_not\_\ writing\ code}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ just\ for\ the\ x86;\ if\ you\ assume\ x86\ semantics,\ x86\ hardware\ bugs\ and}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ implementations\ on\ other\ architectures\ will\ cause\ your\ code\ to\ break.\ \ If\ you}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ do\ not\ know\ what\ you\ are\ doing,\ avoid\ these\ routines,\ and\ use\ a\ Mutex.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ These\ following\ lower-\/level\ operations\ are\ typically\ useful\ only\ to\ people}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ implementing\ higher-\/level\ synchronization\ operations\ like\ spinlocks,}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ mutexes,\ and\ condition-\/variables.\ \ They\ combine\ CompareAndSwap(),}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ addition,\ exchange,\ a\ load,\ or\ a\ store\ with\ appropriate\ memory-\/ordering}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ instructions.\ \ "{}Acquire"{}\ operations\ ensure\ that\ no\ later\ memory\ access\ by}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ the\ same\ thread\ can\ be\ reordered\ ahead\ of\ the\ operation.\ \ "{}Release"{}}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ operations\ ensure\ that\ no\ previous\ memory\ access\ by\ the\ same\ thread\ can\ be}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ reordered\ after\ the\ operation.\ \ "{}Barrier"{}\ operations\ have\ both\ "{}Acquire"{}\ and}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ "{}Release"{}\ semantics.\ \ A\ MemoryBarrier()\ has\ "{}Barrier"{}\ semantics,\ but\ does\ no}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ memory\ access.\ \ "{}NoBarrier"{}\ operations\ have\ no\ barrier:\ \ the\ CPU\ is}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ permitted\ to\ reorder\ them\ freely\ (as\ seen\ by\ other\ threads),\ even\ in\ ways}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ the\ appear\ to\ violate\ functional\ dependence,\ just\ as\ it\ can\ for\ any\ normal}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ variable\ access.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ It\ is\ incorrect\ to\ make\ direct\ assignments\ to/from\ an\ atomic\ variable.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ You\ should\ use\ one\ of\ the\ Load\ or\ Store\ routines.\ \ The\ NoBarrier}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ versions\ are\ provided\ when\ no\ barriers\ are\ needed:}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ NoBarrier\_Store()}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ NoBarrier\_Load()}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Although\ there\ are\ currently\ no\ compiler\ enforcement,\ you\ are\ encouraged}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ to\ use\ these.\ \ Moreover,\ if\ you\ choose\ to\ use\ base::subtle::Atomic64\ type,}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ you\ MUST\ use\ one\ of\ the\ Load\ or\ Store\ routines\ to\ get\ correct\ behavior}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ on\ 32-\/bit\ platforms.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ The\ intent\ is\ eventually\ to\ put\ all\ of\ these\ routines\ in\ namespace}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ base::subtle}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ Include\ the\ platform\ specific\ implementations\ of\ the\ types}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ and\ operations\ listed\ below.\ \ Implementations\ are\ to\ provide\ Atomic32}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ and\ Atomic64\ operations.\ If\ there\ is\ a\ mismatch\ between\ intptr\_t\ and}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ the\ Atomic32\ or\ Atomic64\ types\ for\ a\ platform,\ the\ platform-\/specific\ header}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ should\ define\ the\ macro,\ AtomicWordCastType\ in\ a\ clause\ similar\ to\ the}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ following:}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \#if\ ...pointers\ are\ 64\ bits...}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \#\ define\ AtomicWordCastType\ base::subtle::Atomic64}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \#else}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \#\ define\ AtomicWordCastType\ Atomic32}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \#endif}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#define\ GCC\_VERSION\ (\_\_GNUC\_\_\ *\ 10000\ +\ \_\_GNUC\_MINOR\_\_\ *\ 100\ +\ \_\_GNUC\_PATCHLEVEL\_\_)}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#define\ CLANG\_VERSION\ (\_\_clang\_major\_\_\ *\ 10000\ +\ \_\_clang\_minor\_\_\ *\ 100\ +\ \_\_clang\_patchlevel\_\_)}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ ThreadSanitizer\ provides\ own\ implementation\ of\ atomicops.}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#if\ defined(THREAD\_SANITIZER)}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops-internals-tsan_8h}{gutil/atomicops-\/internals-\/tsan.h}}"{}}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)\ \&\&\ (defined(\_\_i386)\ ||\ defined(\_\_x86\_64\_\_))}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops-internals-x86_8h}{gutil/atomicops-\/internals-\/x86.h}}"{}}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)\ \&\&\ GCC\_VERSION\ >=\ 40700}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops-internals-gcc_8h}{gutil/atomicops-\/internals-\/gcc.h}}"{}}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#elif\ defined(\_\_clang\_\_)\ \&\&\ CLANG\_VERSION\ >=\ 30400}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops-internals-gcc_8h}{gutil/atomicops-\/internals-\/gcc.h}}"{}}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#error\ You\ need\ to\ implement\ atomic\ operations\ for\ this\ architecture}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ Signed\ type\ that\ can\ hold\ a\ pointer\ and\ supports\ the\ atomic\ ops\ below,\ as}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ well\ as\ atomic\ loads\ and\ stores.\ \ Instances\ must\ be\ naturally-\/aligned.}}
+\DoxyCodeLine{00088\ \textcolor{keyword}{typedef}\ intptr\_t\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#ifdef\ AtomicWordCastType}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ This\ section\ is\ needed\ only\ when\ explicit\ type\ casting\ is\ required\ to}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ cast\ AtomicWord\ to\ one\ of\ the\ basic\ atomic\ types\ (Atomic64\ or\ Atomic32).}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ It\ also\ serves\ to\ document\ the\ AtomicWord\ interface.}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00098\ \textcolor{keyword}{namespace\ }subtle\ \{}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ Atomically\ execute:}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ \ \ \ \ \ result\ =\ *ptr;}}
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ \ \ \ \ \ if\ (*ptr\ ==\ old\_value)}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ \ \ \ \ \ \ \ *ptr\ =\ new\_value;}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ \ \ \ \ \ return\ result;}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ I.e.,\ replace\ "{}*ptr"{}\ with\ "{}new\_value"{}\ if\ "{}*ptr"{}\ used\ to\ be\ "{}old\_value"{}.}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ Always\ return\ the\ old\ value\ of\ "{}*ptr"{}}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ This\ routine\ implies\ no\ memory\ barriers.}}
+\DoxyCodeLine{00110\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2a1795d0001ccd73a2246c6007ab79c2}{NoBarrier\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ old\_value,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a2a1795d0001ccd73a2246c6007ab79c2}{NoBarrier\_CompareAndSwap}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ old\_value,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_value);}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ Atomically\ store\ new\_value\ into\ *ptr,\ returning\ the\ previous\ value\ held\ in}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ *ptr.\ \ This\ routine\ implies\ no\ memory\ barriers.}}
+\DoxyCodeLine{00118\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ab2ed75f93c0753f2ed28c45e218b1b00}{NoBarrier\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_ab2ed75f93c0753f2ed28c45e218b1b00}{NoBarrier\_AtomicExchange}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ new\_value);}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a52330d797e1d55eec1a8c527a6fe0fcd}{Acquire\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a52330d797e1d55eec1a8c527a6fe0fcd}{Acquire\_AtomicExchange}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ new\_value);}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a63953ab7f92640be53417cae40cdad67}{Release\_AtomicExchange}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a63953ab7f92640be53417cae40cdad67}{Release\_AtomicExchange}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ new\_value);}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ Atomically\ increment\ *ptr\ by\ "{}increment"{}.\ \ Returns\ the\ new\ value\ of}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ *ptr\ with\ the\ increment\ applied.\ \ This\ routine\ implies\ no\ memory}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ barriers.}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{NoBarrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ increment)\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{NoBarrier\_AtomicIncrement}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ increment);}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{Barrier\_AtomicIncrement}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ increment)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{Barrier\_AtomicIncrement}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ increment);}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ old\_value,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{base::subtle::Acquire\_CompareAndSwap}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_value,\ new\_value);}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ old\_value,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{base::subtle::Release\_CompareAndSwap}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_value,\ new\_value);}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_ac0f470b7b2708abf0c2b3a57a53fb514}{NoBarrier\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_ac0f470b7b2708abf0c2b3a57a53fb514}{NoBarrier\_Store}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00156\ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{base::subtle::Acquire\_Store}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00160\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{base::subtle::Release\_Store}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00164\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_a30ce3d55faca8dccb17c6256e4ff1f1a}{NoBarrier\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a30ce3d55faca8dccb17c6256e4ff1f1a}{NoBarrier\_Load}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }\textcolor{keyword}{const\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr));}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }\textcolor{keyword}{const\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr));}
+\DoxyCodeLine{00172\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{base::subtle::Release\_Load}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }\textcolor{keyword}{const\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr));}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \}\ \textcolor{comment}{//\ namespace\ subtle}}
+\DoxyCodeLine{00179\ \}\ \textcolor{comment}{//\ namespace\ base}}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ AtomicWordCastType}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ Commented\ out\ type\ definitions\ and\ method\ declarations\ for\ documentation}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ of\ the\ interface\ provided\ by\ this\ module.}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//\ The\ following\ are\ to\ be\ deprecated\ when\ all\ uses\ have\ been\ changed\ to}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ use\ the\ base::subtle\ namespace.}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\#ifdef\ AtomicWordCastType}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ AtomicWord\ versions\ to\ be\ deprecated}}
+\DoxyCodeLine{00194\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{atomicops_8h_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ old\_value,}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{base::subtle::Acquire\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00197\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{atomicops_8h_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ old\_value,}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ new\_value)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{base::subtle::Release\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{base::subtle::Acquire\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00206\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{base::subtle::Release\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00210\ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{atomicops_8h_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr);}
+\DoxyCodeLine{00214\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ \mbox{\hyperlink{atomicops_8h_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{base::subtle::Release\_Load}}(ptr);}
+\DoxyCodeLine{00218\ \}}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ AtomicWordCastType}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ 32-\/bit\ Acquire/Release\ operations\ to\ be\ deprecated.}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{atomicops_8h_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ old\_value,}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{base::subtle::Acquire\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{atomicops_8h_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ old\_value,}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ new\_value)\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{base::subtle::Release\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{base::subtle::Acquire\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00233\ \}}
+\DoxyCodeLine{00234\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{base::subtle::Release\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{atomicops_8h_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr);}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ \mbox{\hyperlink{atomicops_8h_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{base::subtle::Release\_Load}}(ptr);}
+\DoxyCodeLine{00242\ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{comment}{//\ 64-\/bit\ Acquire/Release\ operations\ to\ be\ deprecated.}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{atomicops_8h_a399f1d2e4b6e3258c51cf5b3c8982598}{Acquire\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ old\_value,}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a399f1d2e4b6e3258c51cf5b3c8982598}{base::subtle::Acquire\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00250\ \}}
+\DoxyCodeLine{00251\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{atomicops_8h_a64cfdbc7563ec95e701f62dd820ea4ea}{Release\_CompareAndSwap}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ old\_value,}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ new\_value)\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a64cfdbc7563ec95e701f62dd820ea4ea}{base::subtle::Release\_CompareAndSwap}}(ptr,\ old\_value,\ new\_value);}
+\DoxyCodeLine{00255\ \}}
+\DoxyCodeLine{00256\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_afc68313141b486c60a21b2045acea902}{Acquire\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_afc68313141b486c60a21b2045acea902}{base::subtle::Acquire\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00258\ \}}
+\DoxyCodeLine{00259\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{atomicops_8h_a731e905899b30b6d6877147de39a6b39}{Release\_Store}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_a731e905899b30b6d6877147de39a6b39}{base::subtle::Release\_Store}}(ptr,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{atomicops_8h_af5c61a0416c41ffad86c0f88d259aff8}{Acquire\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr);}
+\DoxyCodeLine{00264\ \}}
+\DoxyCodeLine{00265\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ \mbox{\hyperlink{atomicops_8h_abfe398c3ff7eda61cef556bd81551102}{Release\_Load}}(\textcolor{keyword}{volatile}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_abfe398c3ff7eda61cef556bd81551102}{base::subtle::Release\_Load}}(ptr);}
+\DoxyCodeLine{00267\ \}}
+
+\end{DoxyCode}

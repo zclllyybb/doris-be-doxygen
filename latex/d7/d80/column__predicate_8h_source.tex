@@ -1,0 +1,246 @@
+\hypertarget{column__predicate_8h_source}{}\doxysection{column\+\_\+predicate.\+h}
+\label{column__predicate_8h_source}\index{/Users/dabowang/be\_all/olap/column\_predicate.h@{/Users/dabowang/be\_all/olap/column\_predicate.h}}
+\mbox{\hyperlink{column__predicate_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <roaring/roaring.hh>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bitmap__index__reader_8h}{olap/rowset/segment\_v2/bitmap\_index\_reader.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bloom__filter_8h}{olap/rowset/segment\_v2/bloom\_filter.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{inverted__index__reader_8h}{olap/rowset/segment\_v2/inverted\_index\_reader.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{schema_8h}{olap/schema.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{selection__vector_8h}{olap/selection\_vector.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column_8h}{vec/columns/column.h}}"{}}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacedoris_1_1segment__v2}{doris::segment\_v2}};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_schema}{Schema}};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_predicate_params}{PredicateParams}}\ \{}
+\DoxyCodeLine{00036\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_predicate_params_a5c33da5929c9f2f9ef8d006d2350e6ec}{value}};}
+\DoxyCodeLine{00037\ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a4353a75834bb35c4acd80b51434eef59a6ce26a62afab55d7606ad4e92428b30c}{UNKNOWN}}\ =\ 0,}
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a2dcbad7477fd40561e8b8198f173bd47}{EQ}}\ =\ 1,}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adc33066c3993e0d50896e533fd692ce0}{NE}}\ =\ 2,}
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac562607189d77eb9dfb707464c1e7b0b}{LT}}\ =\ 3,}
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acfe6055d2e0503be378bb63449ec7ba6}{LE}}\ =\ 4,}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020}{GT}}\ =\ 5,}
+\DoxyCodeLine{00046\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9}{GE}}\ =\ 6,}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac1c1bad9f643c2b92220b417d15d9273}{IN\_LIST}}\ =\ 7,}
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a067ba8ca31149dcced4316c7e722f0c8}{NOT\_IN\_LIST}}\ =\ 8,}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adbd9c38e0339e6c34bd48cafc59be388}{IS\_NULL}}\ =\ 9,}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a05dd132ba23ff57c0ca5ec4100c31fdc}{IS\_NOT\_NULL}}\ =\ 10,}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a7b8d2f92148f52cad46e331936922e80}{BF}}\ =\ 11,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ BloomFilter}}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a80c9e61f43cc9208e4a85397032190b2a32e90bb264b639296bf2d35a655501a9}{BITMAP\_FILTER}}\ =\ 12,\ \textcolor{comment}{//\ BitmapFilter}}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a6ac3227c311790fb4c3ebbe16920f93a}{MATCH}}\ =\ 13,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fulltext\ match}}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{inline}\ std::string\ \mbox{\hyperlink{namespacedoris_a66421d0e4ffabe98bf2e77cdaeabdee0}{type\_to\_string}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ type)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{switch}\ (type)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a696b031073e74bf2cb98e5ef201d4aa3}{PredicateType::UNKNOWN}}:}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}UNKNOWN"{}};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a2dcbad7477fd40561e8b8198f173bd47}{PredicateType::EQ}}:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}EQ"{}};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adc33066c3993e0d50896e533fd692ce0}{PredicateType::NE}}:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}NE"{}};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac562607189d77eb9dfb707464c1e7b0b}{PredicateType::LT}}:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LT"{}};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acfe6055d2e0503be378bb63449ec7ba6}{PredicateType::LE}}:}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LE"{}};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020}{PredicateType::GT}}:}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}GT"{}};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9}{PredicateType::GE}}:}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}GE"{}};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac1c1bad9f643c2b92220b417d15d9273}{PredicateType::IN\_LIST}}:}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}IN\_LIST"{}};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a067ba8ca31149dcced4316c7e722f0c8}{PredicateType::NOT\_IN\_LIST}}:}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}NOT\_IN\_LIST"{}};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adbd9c38e0339e6c34bd48cafc59be388}{PredicateType::IS\_NULL}}:}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}IS\_NULL"{}};}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a05dd132ba23ff57c0ca5ec4100c31fdc}{PredicateType::IS\_NOT\_NULL}}:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}IS\_NOT\_NULL"{}};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a7b8d2f92148f52cad46e331936922e80}{PredicateType::BF}}:}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}BF"{}};}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00095\ \ \ \ \ \};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_predicate_type_traits}{PredicateTypeTraits}}\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_predicate_type_traits_a8fdb7acb0b1b285a091b73774d01fe2c}{is\_range}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ type)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac562607189d77eb9dfb707464c1e7b0b}{PredicateType::LT}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acfe6055d2e0503be378bb63449ec7ba6}{PredicateType::LE}}\ ||}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020}{PredicateType::GT}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9}{PredicateType::GE}});}
+\DoxyCodeLine{00104\ \ \ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_predicate_type_traits_a47f9698b7c32ad867692e54bdd05d2bf}{is\_bloom\_filter}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ type)\ \{\ \textcolor{keywordflow}{return}\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a7b8d2f92148f52cad46e331936922e80}{PredicateType::BF}};\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_predicate_type_traits_aff6888b4e62167ed0c8e478ef0068e74}{is\_list}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ type)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac1c1bad9f643c2b92220b417d15d9273}{PredicateType::IN\_LIST}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a067ba8ca31149dcced4316c7e722f0c8}{PredicateType::NOT\_IN\_LIST}});}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_predicate_type_traits_a3cc7fe3d1632941cb3346c071452fd97}{is\_comparison}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ type)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a2dcbad7477fd40561e8b8198f173bd47}{PredicateType::EQ}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adc33066c3993e0d50896e533fd692ce0}{PredicateType::NE}}\ ||}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac562607189d77eb9dfb707464c1e7b0b}{PredicateType::LT}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acfe6055d2e0503be378bb63449ec7ba6}{PredicateType::LE}}\ ||}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020}{PredicateType::GT}}\ ||\ type\ ==\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9}{PredicateType::GE}});}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}\ \{}
+\DoxyCodeLine{00120\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a3ce6420cf33ee4ff5d6168a1d9982e8b}{ColumnPredicate}}(uint32\_t\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a1dc741e0ee4ae02d671b288213c01fc3}{column\_id}},\ \textcolor{keywordtype}{bool}\ opposite\ =\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a61c74eed77511d2d0cdff7d827c11f22}{\_column\_id}}(\mbox{\hyperlink{classdoris_1_1_column_predicate_a1dc741e0ee4ae02d671b288213c01fc3}{column\_id}}),\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a3d4dbf9b82944c74134bd48aa074778b}{\_opposite}}(opposite)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate_a6b849a91968c50577fbd262c0d6b8c80}{\_predicate\_params}}\ =\ std::make\_shared<PredicateParams>();}
+\DoxyCodeLine{00124\ \ \ \ \ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a17a801380ed5085215439adf55253976}{\string~ColumnPredicate}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a04a508ffaed9d561a1598424071b89d7}{type}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//evaluate\ predicate\ on\ Bitmap}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_acdfabc7cc6b9bf3caaba0adaa9da94ec}{evaluate}}(\mbox{\hyperlink{classdoris_1_1segment__v2_1_1_bitmap_index_iterator}{BitmapIndexIterator}}*\ iterator,\ uint32\_t\ num\_rows,}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ roaring::Roaring*\ roaring)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//evaluate\ predicate\ on\ inverted}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ad946429d963e9bcd4359b553f2f3631e}{evaluate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_schema}{Schema}}\&\ schema,\ \mbox{\hyperlink{classdoris_1_1segment__v2_1_1_inverted_index_iterator}{InvertedIndexIterator}}*\ iterator,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ num\_rows,\ roaring::Roaring*\ bitmap)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::NotSupported(}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ Implemented\ evaluate\ with\ inverted\ index,\ please\ check\ the\ predicate"{}});}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ evaluate\ predicate\ on\ IColumn}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ a\ short\ circuit\ eval\ way}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{virtual}\ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a54ea0268c9677cd74155dd6ab66ae2fb}{evaluate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{vectorized::IColumn}}\&\ column,\ uint16\_t*\ sel,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ size)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ size;}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a0486508d3d6580f19d813bd6dfaf0844}{evaluate\_and}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{vectorized::IColumn}}\&\ column,\ \textcolor{keyword}{const}\ uint16\_t*\ sel,\ uint16\_t\ size,}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ flags)\textcolor{keyword}{\ const\ }\{\}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_aad74172ce36dbdec23029c8e0654dea6}{evaluate\_or}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{vectorized::IColumn}}\&\ column,\ \textcolor{keyword}{const}\ uint16\_t*\ sel,\ uint16\_t\ size,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ flags)\textcolor{keyword}{\ const\ }\{\}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a33d4f793b5437714274a71f13946d9cd}{evaluate\_and}}(\textcolor{keyword}{const}\ std::pair<WrapperField*,\ WrapperField*>\&\ statistic)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00154\ \ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ac263e04eb62ca257e5110daf173ef04c}{evaluate\_del}}(\textcolor{keyword}{const}\ std::pair<WrapperField*,\ WrapperField*>\&\ statistic)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00158\ \ \ \ \ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_af4ada740211f6cb397caac521f3dba06}{evaluate\_and}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_bloom_filter}{BloomFilter}}*\ bf)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a0879ef79a424602db166c04d4cdb06a1}{can\_do\_bloom\_filter}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ used\ to\ evaluate\ pre\ read\ column\ in\ lazy\ materialization}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ now\ only\ support\ integer/float}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ a\ vectorized\ eval\ way}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ae9335f86aa2d29c0a71f22abc313ade3}{evaluate\_vec}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{vectorized::IColumn}}\&\ column,\ uint16\_t\ size,\ \textcolor{keywordtype}{bool}*\ flags)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ DCHECK(\textcolor{keyword}{false})\ <<\ \textcolor{stringliteral}{"{}should\ not\ reach\ here"{}};}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a70f4aa1c4986b11a898da20e14532f93}{evaluate\_and\_vec}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{vectorized::IColumn}}\&\ column,\ uint16\_t\ size,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ flags)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ DCHECK(\textcolor{keyword}{false})\ <<\ \textcolor{stringliteral}{"{}should\ not\ reach\ here"{}};}
+\DoxyCodeLine{00173\ \ \ \ \ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{virtual}\ std::string\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ad9e52a6989f74ef5be3a92dc366ac7f1}{get\_search\_str}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ DCHECK(\textcolor{keyword}{false})\ <<\ \textcolor{stringliteral}{"{}should\ not\ reach\ here"{}};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00178\ \ \ \ \ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a1607b84b12746603b33b6794dbe40a3e}{set\_page\_ng\_bf}}(std::unique\_ptr<segment\_v2::BloomFilter>)\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ DCHECK(\textcolor{keyword}{false})\ <<\ \textcolor{stringliteral}{"{}should\ not\ reach\ here"{}};}
+\DoxyCodeLine{00182\ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a1dc741e0ee4ae02d671b288213c01fc3}{column\_id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a61c74eed77511d2d0cdff7d827c11f22}{\_column\_id}};\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{virtual}\ std::string\ \mbox{\hyperlink{classdoris_1_1_column_predicate_aa3893622c18368fdf8f736b78b1130e5}{debug\_string}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ae2617a5aa0dcec057bac8f4559868c51}{\_debug\_string}}()\ +\ \textcolor{stringliteral}{"{},\ column\_id="{}}\ +\ std::to\_string(\mbox{\hyperlink{classdoris_1_1_column_predicate_a61c74eed77511d2d0cdff7d827c11f22}{\_column\_id}})\ +}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{},\ opposite="{}}\ +\ (\mbox{\hyperlink{classdoris_1_1_column_predicate_a3d4dbf9b82944c74134bd48aa074778b}{\_opposite}}\ ?\ \textcolor{stringliteral}{"{}true"{}}\ :\ \textcolor{stringliteral}{"{}false"{}});}
+\DoxyCodeLine{00188\ \ \ \ \ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ std::shared\_ptr<PredicateParams>\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ae829a2bccba15ef657d5f9332258b313}{predicate\_params}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a6b849a91968c50577fbd262c0d6b8c80}{\_predicate\_params}};\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_column_predicate_af77f3598f5d18c013a7a1168b2c0b0c5}{pred\_type\_string}}(\mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667}{PredicateType}}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a04a508ffaed9d561a1598424071b89d7}{type}})\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{classdoris_1_1_column_predicate_a04a508ffaed9d561a1598424071b89d7}{type}})\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a2dcbad7477fd40561e8b8198f173bd47}{PredicateType::EQ}}:}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}eq"{}};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adc33066c3993e0d50896e533fd692ce0}{PredicateType::NE}}:}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}ne"{}};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac562607189d77eb9dfb707464c1e7b0b}{PredicateType::LT}}:}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}lt"{}};}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acfe6055d2e0503be378bb63449ec7ba6}{PredicateType::LE}}:}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}le"{}};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020}{PredicateType::GT}}:}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}gt"{}};}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9}{PredicateType::GE}}:}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}ge"{}};}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667ac1c1bad9f643c2b92220b417d15d9273}{PredicateType::IN\_LIST}}:}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}in\_list"{}};}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a067ba8ca31149dcced4316c7e722f0c8}{PredicateType::NOT\_IN\_LIST}}:}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}not\_in\_list"{}};}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667adbd9c38e0339e6c34bd48cafc59be388}{PredicateType::IS\_NULL}}:}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}is\_null"{}};}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a05dd132ba23ff57c0ca5ec4100c31fdc}{PredicateType::IS\_NOT\_NULL}}:}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}is\_not\_null"{}};}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a7b8d2f92148f52cad46e331936922e80}{PredicateType::BF}}:}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}bf"{}};}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_a74200fe7b3fc40cf1385f05359608667a6ac3227c311790fb4c3ebbe16920f93a}{PredicateType::MATCH}}:}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}match"{}};}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}unknown"{}};}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ Just\ prevent\ access\ not\ align\ memory\ address\ coredump}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ad4bc1b306fa4ea6849393bca7216ac01}{\_get\_zone\_map\_value}}(\textcolor{keywordtype}{void}*\ data\_ptr)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ res;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&res,\ data\_ptr,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}));}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00230\ \ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keyword}{virtual}\ std::string\ \mbox{\hyperlink{classdoris_1_1_column_predicate_ae2617a5aa0dcec057bac8f4559868c51}{\_debug\_string}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a61c74eed77511d2d0cdff7d827c11f22}{\_column\_id}};}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ TODO:\ the\ value\ is\ only\ in\ delete\ condition,\ better\ be\ template\ value}}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a3d4dbf9b82944c74134bd48aa074778b}{\_opposite}};}
+\DoxyCodeLine{00237\ \ \ \ \ std::shared\_ptr<PredicateParams>\ \mbox{\hyperlink{classdoris_1_1_column_predicate_a6b849a91968c50577fbd262c0d6b8c80}{\_predicate\_params}};}
+\DoxyCodeLine{00238\ \};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \}\ \textcolor{comment}{//namespace\ doris}}
+
+\end{DoxyCode}

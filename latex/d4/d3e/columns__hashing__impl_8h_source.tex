@@ -1,0 +1,461 @@
+\hypertarget{columns__hashing__impl_8h_source}{}\doxysection{columns\+\_\+hashing\+\_\+impl.\+h}
+\label{columns__hashing__impl_8h_source}\index{/Users/dabowang/be\_all/vec/common/columns\_hashing\_impl.h@{/Users/dabowang/be\_all/vec/common/columns\_hashing\_impl.h}}
+\mbox{\hyperlink{columns__hashing__impl_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/ClickHouse/ClickHouse/blob/master/src/Common/ColumnsHashingImpl.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column_8h}{vec/columns/column.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__nullable_8h}{vec/columns/column\_nullable.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{aggregation__common_8h}{vec/common/aggregation\_common.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{assert__cast_8h}{vec/common/assert\_cast.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__table__key__holder_8h}{vec/common/hash\_table/hash\_table\_key\_holder.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ph__hash__map_8h}{vec/common/hash\_table/ph\_hash\_map.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \#include\ <Interpreters/AggregationCommon.h>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }ColumnsHashing\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1_hash_method_context}{HashMethodContext}}\ \{}
+\DoxyCodeLine{00038\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1_hash_method_context_a31baed4023e67832a9af0fa8708fc0bc}{\string~HashMethodContext}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_hash_method_context_1_1_settings}{Settings}}\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_hash_method_context_1_1_settings_ae30aa199f28649e8b95865c6ae67b0ce}{max\_threads}};}
+\DoxyCodeLine{00043\ \ \ \ \ \};}
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_columns_hashing_afd3c8aed8ac68ef0e683b396d21f7eec}{HashMethodContextPtr}}\ =\ std::shared\_ptr<HashMethodContext>;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{namespace\ }columns\_hashing\_impl\ \{}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Value,\ \textcolor{keywordtype}{bool}\ consecutive\_keys\_optimization\_>}
+\DoxyCodeLine{00051\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache}{LastElementCache}}\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{consecutive\_keys\_optimization}}\ =\ consecutive\_keys\_optimization\_;}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_value}{Value}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}};}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a444fd9ed4662a7b3f2b9ca7748d261ac}{check}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_value}{Value}}\&\ value\_)\ \{\ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ \&\&\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ ==\ value\_;\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key>}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_ae5c1ee3a6fcfe1df65b3db9936c59fde}{check}}(\textcolor{keyword}{const}\ Key\&\ key)\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ \&\&\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ ==\ key;}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00066\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache}{LastElementCache}}<Data,\ false>\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{consecutive\_keys\_optimization}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Mapped>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResultImpl}}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ Mapped\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a3168150bf8dd833a0d6fc7a17f0d5a4a}{value}};}
+\DoxyCodeLine{00073\ \ \ \ \ Mapped\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a09ced57a6bae535ebc3c7433bcbe81f6}{cached\_value}};}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a325385b8d6787835cb03a2f364ab2c56}{inserted}};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_ae6257700d4e7ff13c95f3e17b7063251}{EmplaceResultImpl}}(Mapped\&\ value\_,\ Mapped\&\ cached\_value\_,\ \textcolor{keywordtype}{bool}\ inserted\_)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a3168150bf8dd833a0d6fc7a17f0d5a4a}{value}}(value\_),\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a09ced57a6bae535ebc3c7433bcbe81f6}{cached\_value}}(cached\_value\_),\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a325385b8d6787835cb03a2f364ab2c56}{inserted}}(inserted\_)\ \{\}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a49ef77afe16c7783c4384f88a957cd6e}{is\_inserted}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a325385b8d6787835cb03a2f364ab2c56}{inserted}};\ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a5451f441474104a7a71c1765d34e2178}{get\_mapped}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a3168150bf8dd833a0d6fc7a17f0d5a4a}{value}};\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_ade5b71ee64c350738e6690b10eff63b3}{set\_mapped}}(\textcolor{keyword}{const}\ Mapped\&\ mapped)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a09ced57a6bae535ebc3c7433bcbe81f6}{cached\_value}}\ =\ mapped;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a3168150bf8dd833a0d6fc7a17f0d5a4a}{value}}\ =\ mapped;}
+\DoxyCodeLine{00086\ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00090\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResultImpl}}<void>\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_3_01void_01_4_a325385b8d6787835cb03a2f364ab2c56}{inserted}};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_3_01void_01_4_a349ac20980a05f8065714e9d3959f2fc}{EmplaceResultImpl}}(\textcolor{keywordtype}{bool}\ inserted\_)\ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a325385b8d6787835cb03a2f364ab2c56}{inserted}}(inserted\_)\ \{\}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_3_01void_01_4_a49ef77afe16c7783c4384f88a957cd6e}{is\_inserted}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl_a325385b8d6787835cb03a2f364ab2c56}{inserted}};\ \}}
+\DoxyCodeLine{00096\ \};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Mapped>}
+\DoxyCodeLine{00099\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResultImpl}}\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ Mapped*\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a412b84b89ff88f5a7c0998182996736d}{value}};}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a7141f237b2648c631ce5b73215683565}{found}};}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_aaf1ed2795faeda7d0bc8a07fe8cefabd}{FindResultImpl}}(Mapped*\ value\_,\ \textcolor{keywordtype}{bool}\ found\_)\ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a412b84b89ff88f5a7c0998182996736d}{value}}(value\_),\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a7141f237b2648c631ce5b73215683565}{found}}(found\_)\ \{\}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a72543d6cef50faf4ea9c1a0a7a6702f6}{is\_found}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a7141f237b2648c631ce5b73215683565}{found}};\ \}}
+\DoxyCodeLine{00106\ \ \ \ \ Mapped\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_afcddf961092ea4655fc360e5d4287da4}{get\_mapped}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a412b84b89ff88f5a7c0998182996736d}{value}};\ \}}
+\DoxyCodeLine{00107\ \};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00110\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResultImpl}}<void>\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_3_01void_01_4_a7141f237b2648c631ce5b73215683565}{found}};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_3_01void_01_4_ad6ab858e780d065a558cc00953381426}{FindResultImpl}}(\textcolor{keywordtype}{bool}\ found\_)\ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a7141f237b2648c631ce5b73215683565}{found}}(found\_)\ \{\}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_3_01void_01_4_a72543d6cef50faf4ea9c1a0a7a6702f6}{is\_found}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl_a7141f237b2648c631ce5b73215683565}{found}};\ \}}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ Value,\ \textcolor{keyword}{typename}\ Mapped,\ \textcolor{keywordtype}{bool}\ consecutive\_keys\_optimization>}
+\DoxyCodeLine{00119\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base}{HashMethodBase}}\ \{}
+\DoxyCodeLine{00120\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResultImpl<Mapped>}};}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResult}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResultImpl<Mapped>}};}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}}\ =\ !std::is\_same<Mapped,\ void>::value;}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache}{Cache}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache}{LastElementCache<Value,\ consecutive\_keys\_optimization>}};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_1_1_columns_hashing_afd3c8aed8ac68ef0e683b396d21f7eec}{HashMethodContextPtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a01e1a4cd53c5059bed989e608110f6a3}{createContext}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1_hash_method_context_1_1_settings}{HashMethodContext::Settings}}\&)\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00128\ \ \ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00131\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a071203dd24a0aea26b80cdcdbff33b89}{emplace\_key}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_aa8a60bdb7a6bd1d9c7d862afcc004b11}{emplaceImpl}}(key\_holder,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00134\ \ \ \ \ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_ab20f3691ce0a15f02dd2eafe40fd2a74}{emplace\_key}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \textcolor{keywordtype}{size\_t}\ row,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_aa8a60bdb7a6bd1d9c7d862afcc004b11}{emplaceImpl}}(key\_holder,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00144\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{typename}\ std::enable\_if\_t<has\_mapped,\ Mapped>\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a3da32cfc31ce0a357f9313ac407c85d7}{lazy\_emplace\_key}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ row,}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool,}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a781b374e8b925a38efe107f243ecfe8b}{lazy\_emplace\_impl}}(key\_holder,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ std::forward<Func>(f));}
+\DoxyCodeLine{00150\ \ \ \ \ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{typename}\ std::enable\_if\_t<has\_mapped,\ Mapped>\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a4341e786acce23a1d75885e905fb9bb3}{lazy\_emplace\_key}}(}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool,\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a781b374e8b925a38efe107f243ecfe8b}{lazy\_emplace\_impl}}(key\_holder,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ std::forward<Func>(f));}
+\DoxyCodeLine{00157\ \ \ \ \ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00160\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a20dfa88e3dbfc98a1f778d39a0a7aa74}{find\_key}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a47a400e4c673ee5e1833a7bfc6fec835}{find\_key\_impl}}(\mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder),\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00163\ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_ab94c06e127645e2f5c5bf5a8f8fe697e}{find\_key\_with\_hash}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \textcolor{keywordtype}{size\_t}\ row,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a47a400e4c673ee5e1833a7bfc6fec835}{find\_key\_impl}}(\mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder),\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00173\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a42a2366447f83ed1cfa14155a084d3b3}{get\_hash}}(\textcolor{keyword}{const}\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.hash(\mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder));}
+\DoxyCodeLine{00176\ \ \ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a660905c3ebc578ad412d0a7e07135dca}{prefetch}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.prefetch(key\_holder);}
+\DoxyCodeLine{00182\ \ \ \ \ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ READ,\ \textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00185\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_affab5388cc1e22a57ab9110c52c518fd}{prefetch}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ key\_holder\ =\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.template\ prefetch<READ>(key\_holder);}
+\DoxyCodeLine{00188\ \ \ \ \ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ READ,\ \textcolor{keyword}{typename}\ Data>}
+\DoxyCodeLine{00191\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_aeadc72085ddf6039d4d0453688048b8c}{prefetch\_by\_hash}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}})\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.template\ prefetch\_by\_hash<READ>(\mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}});}
+\DoxyCodeLine{00193\ \ \ \ \ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a558819cfaf6919c1e55d36a3d9e627b1}{get\_key\_holder}}(\textcolor{keywordtype}{size\_t}\ row,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}\&\ pool)\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this).get\_key\_holder(row,\ pool);}
+\DoxyCodeLine{00197\ \ \ \ \ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00200\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a84c47fdd8d8cac510b8ce85174bc0daf}{emplace\_key}}(Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ KeyHolder\ key\_holder)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_aa8a60bdb7a6bd1d9c7d862afcc004b11}{emplaceImpl}}(key\_holder,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00205\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache}{Cache}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_ab63af2e5b8343b29515b832c5b7c159d}{HashMethodBase}}()\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (consecutive\_keys\_optimization)\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second\ =\ Mapped();}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ =\ \{\};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_value}{Value}}();}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00219\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_aa8a60bdb7a6bd1d9c7d862afcc004b11}{emplaceImpl}}(KeyHolder\&\ key\_holder,\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{Cache::consecutive\_keys\_optimization}})\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a444fd9ed4662a7b3f2b9ca7748d261ac}{check}}(\mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder)))\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(\textcolor{keyword}{false});}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Data::LookupResult\ it;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inserted\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.emplace(key\_holder,\ it,\ inserted);}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ [[maybe\_unused]]\ Mapped*\ cached\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ cached\ =\ \mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (inserted)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it))\ Mapped();}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (consecutive\_keys\_optimization)\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ =\ *\mbox{\hyperlink{hash__map_8h_aba91cd5aadc8749b8afffb78a1d3167b}{lookup\_result\_get\_key}}(it);}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second\ =\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cached\ =\ \&\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ =\ *\mbox{\hyperlink{hash__map_8h_aba91cd5aadc8749b8afffb78a1d3167b}{lookup\_result\_get\_key}}(it);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(*\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it),\ *cached,\ inserted);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(inserted);}
+\DoxyCodeLine{00259\ \ \ \ \ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ KeyHolder>}
+\DoxyCodeLine{00262\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_emplace_result_impl}{EmplaceResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_ac05a1fe3364822bbc09e64f0544db628}{emplaceImpl}}(KeyHolder\&\ key\_holder,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{Cache::consecutive\_keys\_optimization}})\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a444fd9ed4662a7b3f2b9ca7748d261ac}{check}}(\mbox{\hyperlink{hash__table__key__holder_8h_a4fac8bfd05ae4013aa33bd42a824f9eb}{key\_holder\_get\_key}}(key\_holder)))\ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(\textcolor{keyword}{false});}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Data::LookupResult\ it;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inserted\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.emplace(key\_holder,\ it,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ inserted);}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ [[maybe\_unused]]\ Mapped*\ cached\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ cached\ =\ \mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (inserted)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it))\ Mapped();}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (consecutive\_keys\_optimization)\ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ =\ *\mbox{\hyperlink{hash__map_8h_aba91cd5aadc8749b8afffb78a1d3167b}{lookup\_result\_get\_key}}(it);}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second\ =\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cached\ =\ \&\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second;}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ =\ *\mbox{\hyperlink{hash__map_8h_aba91cd5aadc8749b8afffb78a1d3167b}{lookup\_result\_get\_key}}(it);}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(*\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it),\ *cached,\ inserted);}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a25b79500630d2aca1883e5d331970499}{EmplaceResult}}(inserted);}
+\DoxyCodeLine{00302\ \ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00305\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{typename}\ std::enable\_if\_t<has\_mapped,\ Mapped>\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a781b374e8b925a38efe107f243ecfe8b}{lazy\_emplace\_impl}}(}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ KeyHolder\&\ key\_holder,\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Data::LookupResult\ it;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.lazy\_emplace(key\_holder,\ it,\ std::forward<Func>(f));}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00310\ \ \ \ \ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ KeyHolder,\ \textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00313\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \textcolor{keyword}{typename}\ std::enable\_if\_t<has\_mapped,\ Mapped>\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a6c2aaeca043f5783405c144377732d85}{lazy\_emplace\_impl}}(}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ KeyHolder\&\ key\_holder,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ Func\&\&\ f)\ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Data::LookupResult\ it;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.lazy\_emplace(key\_holder,\ it,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ std::forward<Func>(f));}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ Key>}
+\DoxyCodeLine{00322\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a47a400e4c673ee5e1833a7bfc6fec835}{find\_key\_impl}}(Key\ key,\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{Cache::consecutive\_keys\_optimization}})\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a444fd9ed4662a7b3f2b9ca7748d261ac}{check}}(key))\ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(\&\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}});}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}});}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.find(key);}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (consecutive\_keys\_optimization)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ =\ it\ !=\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ =\ key;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it)\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second\ =\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ =\ key;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(it\ ?\ \mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it)\ :\ \textcolor{keyword}{nullptr},\ it\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(it\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00352\ \ \ \ \ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Data,\ \textcolor{keyword}{typename}\ Key>}
+\DoxyCodeLine{00355\ \ \ \ \ \mbox{\hyperlink{compiler__util_8h_aa1dec568e79152c892dcf63f445cbd7a}{ALWAYS\_INLINE}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_find_result_impl}{FindResult}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_ac3fc7dcaec54d309199e716c543bd70b}{find\_key\_impl}}(Key\ key,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}},\ Data\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a90cbdec5bf5f322b4203b32346d776af}{Cache::consecutive\_keys\_optimization}})\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a444fd9ed4662a7b3f2b9ca7748d261ac}{check}}(key))\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(\&\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}});}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}});}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}.find(key,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aab612a4ab0658075fb7900a2fa22f077}{hash\_value}});}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (consecutive\_keys\_optimization)\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a7141f237b2648c631ce5b73215683565}{found}}\ =\ it\ !=\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a9625b002313a3fef67010c74415e5911}{empty}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.first\ =\ key;}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it)\ \{}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}.second\ =\ *\mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a2e04d85dc20a1954a4de697308825c96}{cache}}.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_last_element_cache_a85d24cb027a7b0c3b75a0d708b3483b7}{value}}\ =\ key;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a8bef9cb91e2702341f3f3b2a62752c1d}{has\_mapped}})}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(it\ ?\ \mbox{\hyperlink{fixed__hash__map_8h_aa108eac6ca26f3273743dc16932510f6}{lookup\_result\_get\_mapped}}(it)\ :\ \textcolor{keyword}{nullptr},\ it\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_hash_method_base_a52a3f0405df8ffc401d8d76e42d2ce13}{FindResult}}(it\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00385\ \ \ \ \ \}}
+\DoxyCodeLine{00386\ \};}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00389\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_mapped_cache}{MappedCache}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray}}<T>\ \{\};}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00392\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_mapped_cache}{MappedCache}}<void>\ \{\};}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00397\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keywordtype}{bool}\ has\_nullable\_keys>}
+\DoxyCodeLine{00398\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed}{BaseStateKeysFixed}};}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00401\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key>}
+\DoxyCodeLine{00402\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed}{BaseStateKeysFixed}}<Key,\ true>\ \{}
+\DoxyCodeLine{00403\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00404\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01true_01_4_a860495fd9062396cbe6f24ee18f4a451}{BaseStateKeysFixed}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\&\ key\_columns)\ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ null\_maps.reserve(key\_columns.size());}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ actual\_columns.reserve(key\_columns.size());}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ col\ :\ key\_columns)\ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{auto}*\ nullable\_col\ =\ check\_and\_get\_column<ColumnNullable>(col))\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_columns.push\_back(\&nullable\_col-\/>get\_nested\_column());}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_maps.push\_back(\&nullable\_col-\/>get\_null\_map\_column());}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_columns.push\_back(col);}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ null\_maps.push\_back(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00417\ \ \ \ \ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01true_01_4_a1b3d3d42c505d93e21a6d99e252ece90}{get\_actual\_columns}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ actual\_columns;\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00426\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5cb3ca4f7fe6de0f912e245370b89532}{KeysNullMap<Key>}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01true_01_4_acce1b171936764c29f9a338068d52281}{create\_bitmap}}(\textcolor{keywordtype}{size\_t}\ row)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5cb3ca4f7fe6de0f912e245370b89532}{KeysNullMap<Key>}}\ bitmap\ \{\};}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ k\ =\ 0;\ k\ <\ null\_maps.size();\ ++k)\ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (null\_maps[k]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ null\_map\ =\ assert\_cast<const\ ColumnUInt8\&>(*null\_maps[k]).get\_data();}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (null\_map[row]\ ==\ 1)\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bucket\ =\ k\ /\ 8;}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset\ =\ k\ \%\ 8;}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitmap[bucket]\ |=\ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac82f32fb6f16dbdc32cb4076004e63c4}{UInt8}}(1)\ <<\ offset;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ bitmap;}
+\DoxyCodeLine{00441\ \ \ \ \ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00444\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01true_01_4_a9cb48bbe27c30cdfec03fa657f08a102}{actual\_columns}};}
+\DoxyCodeLine{00445\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01true_01_4_a37353d5997c5ea8ea325ae421ef753bf}{null\_maps}};}
+\DoxyCodeLine{00446\ \};}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00449\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key>}
+\DoxyCodeLine{00450\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed}{BaseStateKeysFixed}}<Key,\ false>\ \{}
+\DoxyCodeLine{00451\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00452\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01false_01_4_a8742199f9b580c1786c771bb3d85ef5d}{BaseStateKeysFixed}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\&\ columns)\ :\ actual\_columns(columns)\ \{\}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01false_01_4_a1b3d3d42c505d93e21a6d99e252ece90}{get\_actual\_columns}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ actual\_columns;\ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5cb3ca4f7fe6de0f912e245370b89532}{KeysNullMap<Key>}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01false_01_4_a6cd07be40a7440876e8010564ccc5bc2}{create\_bitmap}}(\textcolor{keywordtype}{size\_t})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}Internal\ error:\ calling\ create\_bitmap()\ for\ non-\/nullable\ keys\ is\ forbidden"{}};}
+\DoxyCodeLine{00458\ \ \ \ \ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00461\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a21d8623653ca0034d9268644110394b6}{ColumnRawPtrs}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_columns_hashing_1_1columns__hashing__impl_1_1_base_state_keys_fixed_3_01_key_00_01false_01_4_a9cb48bbe27c30cdfec03fa657f08a102}{actual\_columns}};}
+\DoxyCodeLine{00462\ \};}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \}\ \textcolor{comment}{//\ namespace\ columns\_hashing\_impl}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \}\ \textcolor{comment}{//\ namespace\ ColumnsHashing}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

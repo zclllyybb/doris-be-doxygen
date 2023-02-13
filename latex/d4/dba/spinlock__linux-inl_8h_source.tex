@@ -1,0 +1,104 @@
+\hypertarget{spinlock__linux-inl_8h_source}{}\doxysection{spinlock\+\_\+linux-\/inl.h}
+\label{spinlock__linux-inl_8h_source}\index{/Users/dabowang/be\_all/gutil/spinlock\_linux-\/inl.h@{/Users/dabowang/be\_all/gutil/spinlock\_linux-\/inl.h}}
+\mbox{\hyperlink{spinlock__linux-inl_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ -\/*-\/\ Mode:\ C++;\ c-\/basic-\/offset:\ 2;\ indent-\/tabs-\/mode:\ nil\ -\/*-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{/*\ Copyright\ (c)\ 2009,\ Google\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ met:}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ \ \ \ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ copyright\ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ in\ the\ documentation\ and/or\ other\ materials\ provided\ with\ the}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ distribution.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ \ *\ Neither\ the\ name\ of\ Google\ Inc.\ nor\ the\ names\ of\ its}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ contributors\ may\ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ this\ software\ without\ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ "{}AS\ IS"{}\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ LIMITED\ TO,\ THE\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ A\ PARTICULAR\ PURPOSE\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ -\/-\/-\/}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ This\ file\ is\ a\ Linux-\/specific\ part\ of\ spinlock\_internal.cc}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{errno_8h}{errno.h}}>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <sched.h>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{time_8h}{time.h}}>}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{linux__syscall__support_8h}{gutil/linux\_syscall\_support.h}}"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#define\ FUTEX\_WAIT\ 0}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ FUTEX\_WAKE\ 1}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ FUTEX\_PRIVATE\_FLAG\ 128}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}};}
+\DoxyCodeLine{00047\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{spinlock__linux-inl_8h_aa8e33211906e9b60cd9ea902f2500e03}{futex\_private\_flag}}\ =\ \mbox{\hyperlink{spinlock__linux-inl_8h_ae09f198bed9a0954caf736196ea468ec}{FUTEX\_PRIVATE\_FLAG}};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00050\ \textcolor{keyword}{static}\ \textcolor{keyword}{struct\ }InitModule\ \{}
+\DoxyCodeLine{00051\ \ \ \ \ InitModule()\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ 0;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ futexes\ are\ ints,\ so\ we\ can\ use\ them\ only\ when}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ that's\ the\ same\ size\ as\ the\ lockword\_\ in\ SpinLock.}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}}\ =\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}})\ ==\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int})\ \&\&}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sys\_futex(\&x,\ \mbox{\hyperlink{spinlock__linux-inl_8h_a1830ac17170b47e0585aafbf58c079fd}{FUTEX\_WAKE}},\ 1,\ NULL,\ NULL,\ 0)\ >=\ 0);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}}\ \&\&\ sys\_futex(\&x,\ \mbox{\hyperlink{spinlock__linux-inl_8h_a1830ac17170b47e0585aafbf58c079fd}{FUTEX\_WAKE}}\ |\ \mbox{\hyperlink{spinlock__linux-inl_8h_aa8e33211906e9b60cd9ea902f2500e03}{futex\_private\_flag}},\ 1,\ NULL,\ NULL,\ 0)\ <\ 0)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{spinlock__linux-inl_8h_aa8e33211906e9b60cd9ea902f2500e03}{futex\_private\_flag}}\ =\ 0;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \}\ init\_module;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \}\ \textcolor{comment}{//\ anonymous\ namespace}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00066\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1internal_ae842ba0907f41a878dc0c2cec6f64587}{SpinLockDelay}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ w,\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{int}\ loop)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{if}\ (loop\ !=\ 0)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ save\_errno\ =\ errno;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ tm;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ tm.tv\_sec\ =\ 0;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}})\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ tm.tv\_nsec\ =\ \mbox{\hyperlink{namespacebase_1_1internal_a7959de51c438703692962cb505724c05}{base::internal::SuggestedDelayNS}}(loop);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ tm.tv\_nsec\ =\ 2000001;\ \textcolor{comment}{//\ above\ 2ms\ so\ linux\ 2.4\ doesn't\ spin}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}})\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ tm.tv\_nsec\ *=\ 16;\ \textcolor{comment}{//\ increase\ the\ delay;\ we\ expect\ explicit\ wakeups}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ sys\_futex(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{int}*\textcolor{keyword}{>}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\textcolor{keyword}{>}(w)),}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{spinlock__linux-inl_8h_a4d9dd0962be215fe1d3e861c8bb4815b}{FUTEX\_WAIT}}\ |\ \mbox{\hyperlink{spinlock__linux-inl_8h_aa8e33211906e9b60cd9ea902f2500e03}{futex\_private\_flag}},\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}struct\ kernel\_timespec*\textcolor{keyword}{>}(\&tm),\ NULL,\ 0);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ nanosleep(\&tm,\ NULL);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ errno\ =\ save\_errno;}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_1_1internal_ac0750da5757c8aaa1889deb0aaf1d833}{SpinLockWake}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ w,\ \textcolor{keywordtype}{bool}\ all)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{spinlock__linux-inl_8h_a231c35f648d95e218b052f991f69b03a}{have\_futex}})\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ sys\_futex(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{int}*\textcolor{keyword}{>}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\textcolor{keyword}{>}(w)),\ \mbox{\hyperlink{spinlock__linux-inl_8h_a1830ac17170b47e0585aafbf58c079fd}{FUTEX\_WAKE}}\ |\ \mbox{\hyperlink{spinlock__linux-inl_8h_aa8e33211906e9b60cd9ea902f2500e03}{futex\_private\_flag}},}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ all\ ?\ INT\_MAX\ :\ 1,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00094\ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00098\ \}\ \textcolor{comment}{//\ namespace\ base}}
+
+\end{DoxyCode}

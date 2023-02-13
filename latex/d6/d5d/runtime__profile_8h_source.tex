@@ -1,0 +1,596 @@
+\hypertarget{runtime__profile_8h_source}{}\doxysection{runtime\+\_\+profile.\+h}
+\label{runtime__profile_8h_source}\index{/Users/dabowang/be\_all/util/runtime\_profile.h@{/Users/dabowang/be\_all/util/runtime\_profile.h}}
+\mbox{\hyperlink{runtime__profile_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/apache/impala/blob/branch-\/2.9.0/be/src/util/runtime-\/profile.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <sys/resource.h>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <sys/time.h>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <functional>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/RuntimeProfile\_types.h"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}rapidjson/stringbuffer.h"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}rapidjson/writer.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{binary__cast_8hpp}{util/binary\_cast.hpp}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pretty__printer_8h}{util/pretty\_printer.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stopwatch_8hpp}{util/stopwatch.hpp}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{telemetry_8h}{util/telemetry/telemetry.h}}"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ Some\ macro\ magic\ to\ generate\ unique\ ids\ using\ \_\_COUNTER\_\_}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ CONCAT\_IMPL(x,\ y)\ x\#\#y}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ MACRO\_CONCAT(x,\ y)\ CONCAT\_IMPL(x,\ y)}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ ADD\_COUNTER(profile,\ name,\ type)\ (profile)-\/>add\_counter(name,\ type)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ ADD\_TIMER(profile,\ name)\ (profile)-\/>add\_counter(name,\ TUnit::TIME\_NS)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ ADD\_CHILD\_COUNTER(profile,\ name,\ type,\ parent)\ (profile)-\/>add\_counter(name,\ type,\ parent)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ ADD\_CHILD\_TIMER(profile,\ name,\ parent)\ (profile)-\/>add\_counter(name,\ TUnit::TIME\_NS,\ parent)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ SCOPED\_TIMER(c)\ ScopedTimer<MonotonicStopWatch>\ MACRO\_CONCAT(SCOPED\_TIMER,\ \_\_COUNTER\_\_)(c)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#define\ SCOPED\_TIMER\_ATOMIC(c)\ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ ScopedTimer<MonotonicStopWatch,\ std::atomic\_bool>\ MACRO\_CONCAT(SCOPED\_TIMER,\ \_\_COUNTER\_\_)(c)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#define\ SCOPED\_CPU\_TIMER(c)\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ \ \ ScopedTimer<ThreadCpuStopWatch>\ MACRO\_CONCAT(SCOPED\_TIMER,\ \_\_COUNTER\_\_)(c)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#define\ CANCEL\_SAFE\_SCOPED\_TIMER(c,\ is\_cancelled)\ \(\backslash\)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \ \ ScopedTimer<MonotonicStopWatch>\ MACRO\_CONCAT(SCOPED\_TIMER,\ \_\_COUNTER\_\_)(c,\ is\_cancelled)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ CANCEL\_SAFE\_SCOPED\_TIMER\_ATOMIC(c,\ is\_cancelled)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ ScopedTimer<MonotonicStopWatch,\ std::atomic\_bool>\ MACRO\_CONCAT(SCOPED\_TIMER,\ \_\_COUNTER\_\_)(\ \(\backslash\)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ c,\ is\_cancelled)}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#define\ SCOPED\_RAW\_TIMER(c)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ \ \ doris::ScopedRawTimer<doris::MonotonicStopWatch,\ int64\_t>\ MACRO\_CONCAT(SCOPED\_RAW\_TIMER,\ \(\backslash\)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_COUNTER\_\_)(c)}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#define\ SCOPED\_ATOMIC\_TIMER(c)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \ ScopedRawTimer<MonotonicStopWatch,\ std::atomic<int64\_t>>\ MACRO\_CONCAT(SCOPED\_ATOMIC\_TIMER,\ \(\backslash\)}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_COUNTER\_\_)(c)}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#define\ COUNTER\_UPDATE(c,\ v)\ (c)-\/>update(v)}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#define\ COUNTER\_SET(c,\ v)\ (c)-\/>set(v)}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{class\ }ObjectPool;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Runtime\ profile\ is\ a\ group\ of\ profiling\ counters.\ \ It\ supports\ adding\ named\ counters}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ and\ being\ able\ to\ serialize\ and\ deserialize\ them.}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ The\ profiles\ support\ a\ tree\ structure\ to\ form\ a\ hierarchy\ of\ counters.}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ Runtime\ profiles\ supports\ measuring\ wall\ clock\ rate\ based\ counters.\ \ There\ is\ a}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ single\ thread\ per\ process\ that\ will\ convert\ an\ amount\ (i.e.\ bytes)\ counter\ to\ a}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ corresponding\ rate\ based\ counter.\ \ This\ thread\ wakes\ up\ at\ fixed\ intervals\ and\ updates}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ all\ of\ the\ rate\ counters.}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ Thread-\/safe.}}
+\DoxyCodeLine{00079\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}\ \{}
+\DoxyCodeLine{00080\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a9b2810971dc47dc3f10d21fd608881e7}{Counter}}(TUnit::type\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}},\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}\ =\ 0)\ :\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}),\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a42ed8f39f88b60fac5f4a0da22972bc9}{\_type}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}})\ \{\}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a55971926ac6a0680b4612676357c10cc}{\string~Counter}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3a5b31a711e7ab302587f2334c0648f9}{update}}(int64\_t\ delta)\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.fetch\_add(delta,\ std::memory\_order\_relaxed);\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a1793931b373273e0b6c4fb406c4a2f65}{bit\_or}}(int64\_t\ delta)\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.fetch\_or(delta,\ std::memory\_order\_relaxed);\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_aef395a9dff70512069b03cda90399487}{set}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}})\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.store(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}},\ std::memory\_order\_relaxed);\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_aa2e4083194118248cb9135d2433f7555}{set}}(\textcolor{keywordtype}{double}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}})\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK\_EQ(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}),\ \textcolor{keyword}{sizeof}(int64\_t));}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.store(binary\_cast<double,\ int64\_t>(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}),\ std::memory\_order\_relaxed);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.load(std::memory\_order\_relaxed);\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a2f035186ea39738ac93b218640e79860}{double\_value}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ binary\_cast<int64\_t,\ double>(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.load(std::memory\_order\_relaxed));}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ TUnit::type\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a42ed8f39f88b60fac5f4a0da22972bc9}{\_type}};\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}};}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ TUnit::type\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a42ed8f39f88b60fac5f4a0da22972bc9}{\_type}};}
+\DoxyCodeLine{00110\ \ \ \ \ \};}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter}{DerivedCounter}};}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence}{EventSequence}};}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter}{HighWaterMarkCounter}};}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter}{HighWaterMarkCounter}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a9af5e7204d66b20df7d3e1efa5d4dfd7}{HighWaterMarkCounter}}(TUnit::type\ unit)\ :\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}(unit),\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}(0)\ \{\}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_aabe30c223f7d9d108c6b0217a1681133}{add}}(int64\_t\ delta)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}.fetch\_add(delta,\ std::memory\_order\_relaxed);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (delta\ >\ 0)\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a843e17bb8d8d326f21400ad14f9ae84b}{UpdateMax}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}});}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_abe4a5b403bfdd5005b8b81945654d15a}{try\_add}}(int64\_t\ delta,\ int64\_t\ max)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ old\_val\ =\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}.load(std::memory\_order\_relaxed);}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ new\_val\ =\ old\_val\ +\ delta;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a9acc330d508b9a3b775cfdf7ce405e7d}{UNLIKELY}}(new\_val\ >\ max))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}.compare\_exchange\_weak(old\_val,\ new\_val,}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::memory\_order\_relaxed)))\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a843e17bb8d8d326f21400ad14f9ae84b}{UpdateMax}}(new\_val);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a52694a006a5989b9583e8e1b638988ea}{set}}(int64\_t\ v)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}.store(v,\ std::memory\_order\_relaxed);}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a843e17bb8d8d326f21400ad14f9ae84b}{UpdateMax}}(v);}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a312d59315551bb95b01dcdbc41b9d27c}{current\_value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}}.load(std::memory\_order\_relaxed);\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_a843e17bb8d8d326f21400ad14f9ae84b}{UpdateMax}}(int64\_t\ v)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ old\_max\ =\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.load(std::memory\_order\_relaxed);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ new\_max\ =\ std::max(old\_max,\ v);}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_max\ ==\ old\_max)\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ Avoid\ atomic\ update.}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{compiler__util_8h_a262afcfe437f4addb13fb1b47a6a7086}{LIKELY}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a7da59e843c5074212c73a33d64cff799}{\_value}}.compare\_exchange\_weak(old\_max,\ new\_max,}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::memory\_order\_relaxed)))\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ std::atomic<int64\_t>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter_ac9698c66b76f7f129e8e5e630702ddca}{current\_value\_}};}
+\DoxyCodeLine{00171\ \ \ \ \ \};}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_a69ac4ef174d387fcbd7d6561bee9f314}{DerivedCounterFunction}}\ =\ std::function<int64\_t()>;}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ A\ DerivedCounter\ also\ has\ a\ name\ and\ type,\ but\ the\ value\ is\ computed.}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ Do\ not\ call\ Set()\ and\ Update().}}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter}{DerivedCounter}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter_a451bee3185999051b045cf01c0fda9cc}{DerivedCounter}}(TUnit::type\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a69ac4ef174d387fcbd7d6561bee9f314}{DerivedCounterFunction}}\&\ counter\_fn)}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}},\ 0),\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter_a0264bd03cfe21426481c51ceb7f198ea}{\_counter\_fn}}(counter\_fn)\ \{\}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter_ad31d274efd111e82aec5480d1f1ebd40}{value}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter_a0264bd03cfe21426481c51ceb7f198ea}{\_counter\_fn}}();\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a69ac4ef174d387fcbd7d6561bee9f314}{DerivedCounterFunction}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_derived_counter_a0264bd03cfe21426481c51ceb7f198ea}{\_counter\_fn}};}
+\DoxyCodeLine{00186\ \ \ \ \ \};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ An\ EventSequence\ captures\ a\ sequence\ of\ events\ (each\ added\ by}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ calling\ MarkEvent).\ Each\ event\ has\ a\ text\ label,\ and\ a\ time}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ (measured\ relative\ to\ the\ moment\ start()\ was\ called\ as\ t=0).\ It\ is}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ useful\ for\ tracking\ the\ evolution\ of\ some\ serial\ process,\ such\ as}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ the\ query\ lifecycle.}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ Not\ thread-\/safe.}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence}{EventSequence}}\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aae5b1517c16448fa0d1b7e00a0f92a74}{EventSequence}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ starts\ the\ timer\ without\ resetting\ it.}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a60de64d75454385b23995437f1d72669}{start}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aacffbb17723b9291ff712017d448c51b}{\_sw}}.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ stops\ (or\ effectively\ pauses)\ the\ timer.}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a8c528baf37154d347366083f0f816846}{stop}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aacffbb17723b9291ff712017d448c51b}{\_sw}}.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a8c528baf37154d347366083f0f816846}{stop}}();\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stores\ an\ event\ in\ sequence\ with\ the\ given\ label\ and\ the}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ current\ time\ (relative\ to\ the\ first\ time\ start()\ was\ called)\ as}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ timestamp.}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_ab886ce227a51ccc37d54bbc1a7c33bb7}{mark\_event}}(\textcolor{keyword}{const}\ std::string\&\ label)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aa6359645e9ca49a595ce195f6c957b2e}{\_events}}.push\_back(make\_pair(label,\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aacffbb17723b9291ff712017d448c51b}{\_sw}}.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}()));}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a84a8b2a8354dfd61c36c2ecaa4e492e0}{elapsed\_time}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aacffbb17723b9291ff712017d448c51b}{\_sw}}.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();\ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ An\ Event\ is\ a\ <label,\ timestamp>\ pair}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aef55d28165b6a34ffcf3ad04cbc51889}{Event}}\ =\ std::pair<std::string,\ int64\_t>;}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ An\ EventList\ is\ a\ sequence\ of\ Events,\ in\ increasing\ timestamp\ order}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a3aafdf60d36be176c14afd700c141919}{EventList}}\ =\ std::vector<Event>;}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a3aafdf60d36be176c14afd700c141919}{EventList}}\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a43e1b615bec7d8c9f81f10b46755216b}{events}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aa6359645e9ca49a595ce195f6c957b2e}{\_events}};\ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stored\ in\ increasing\ time\ order}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_a3aafdf60d36be176c14afd700c141919}{EventList}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aa6359645e9ca49a595ce195f6c957b2e}{\_events}};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Timer\ which\ allows\ events\ to\ be\ timestamped\ when\ they\ are\ recorded.}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_event_sequence_aacffbb17723b9291ff712017d448c51b}{\_sw}};}
+\DoxyCodeLine{00227\ \ \ \ \ \};}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ runtime\ profile\ object\ with\ 'name'.}}
+\DoxyCodeLine{00230\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keywordtype}{bool}\ is\_averaged\_profile\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a6485373c4c236bdce39592de4a113610}{\string~RuntimeProfile}}();}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ Adds\ a\ child\ profile.\ \ This\ is\ thread\ safe.}}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ 'indent'\ indicates\ whether\ the\ child\ will\ be\ printed\ w/\ extra\ indentation}}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ relative\ to\ the\ parent.}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ If\ location\ is\ non-\/null,\ child\ will\ be\ inserted\ after\ location.\ \ Location\ must}}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{//\ already\ be\ added\ to\ the\ profile.}}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a6029aa6cdd8fbdbb866951d00634541d}{add\_child}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{posix__spawn_8c_a90a7b20363e18ef6ec5f22741c81e375}{child}},\ \textcolor{keywordtype}{bool}\ indent,\ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ location);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a32783f68fbcd44dac181b182efb874cc}{insert\_child\_head}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{posix__spawn_8c_a90a7b20363e18ef6ec5f22741c81e375}{child}},\ \textcolor{keywordtype}{bool}\ indent);}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a15578163bba3cd0ed75be1910c520125}{add\_child\_unlock}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{posix__spawn_8c_a90a7b20363e18ef6ec5f22741c81e375}{child}},\ \textcolor{keywordtype}{bool}\ indent,\ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ loc);}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a772b49f46b77aeb76fdfff01807477d4}{create\_child}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \textcolor{keywordtype}{bool}\ indent\ =\ \textcolor{keyword}{true},\ \textcolor{keywordtype}{bool}\ prepend\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{//\ Sorts\ all\ children\ according\ to\ a\ custom\ comparator.\ Does\ not}}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ invalidate\ pointers\ to\ profiles.}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ab149261fcfbf19da42e309af104cf662}{sort\_childer}}(\textcolor{keyword}{const}\ Compare\&\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}})\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_runtime_profile_ad4ac1073b9057d416974fad50ea09c5c}{\_children\_lock}});}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ std::sort(\mbox{\hyperlink{classdoris_1_1_runtime_profile_a5d6889efd94a434c26dfa91c49736795}{\_children}}.begin(),\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a5d6889efd94a434c26dfa91c49736795}{\_children}}.end(),\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}});}
+\DoxyCodeLine{00256\ \ \ \ \ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{comment}{//\ Merges\ the\ src\ profile\ into\ this\ one,\ combining\ counters\ that\ have\ an\ identical}}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{comment}{//\ path.\ Info\ strings\ from\ profiles\ are\ not\ merged.\ 'src'\ would\ be\ a\ const\ if\ it}}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{comment}{//\ weren't\ for\ locking.}}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{comment}{//\ Calling\ this\ concurrently\ on\ two\ RuntimeProfiles\ in\ reverse\ order\ results\ in}}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ undefined\ behavior.}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_adafc4ea11988fa6a231eda5402132536}{merge}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ src);}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ Updates\ this\ profile\ w/\ the\ thrift\ profile:\ behaves\ like\ Merge(),\ except}}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{comment}{//\ that\ existing\ counters\ are\ updated\ rather\ than\ added\ up.}}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ Info\ strings\ matched\ up\ by\ key\ and\ are\ updated\ or\ added,\ depending\ on\ whether}}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{comment}{//\ the\ key\ has\ already\ been\ registered.}}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a3ef66c7862f5e72c0e5b1d3328820f67}{update}}(\textcolor{keyword}{const}\ TRuntimeProfileTree\&\ thrift\_profile);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ counter\ with\ 'name'/'type'.\ \ Returns\ a\ counter\ object\ that\ the\ caller\ can}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{//\ update.\ \ The\ counter\ is\ owned\ by\ the\ RuntimeProfile\ object.}}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{comment}{//\ If\ parent\_counter\_name\ is\ a\ non-\/empty\ string,\ the\ counter\ is\ added\ as\ a\ child\ of}}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//\ parent\_counter\_name.}}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{//\ If\ the\ counter\ already\ exists,\ the\ existing\ counter\ object\ is\ returned.}}
+\DoxyCodeLine{00276\ \ \ \ \ Counter*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a8d99f0127512d003f795f5bb8e6f9af5}{add\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ TUnit::type\ type,}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ parent\_counter\_name);}
+\DoxyCodeLine{00278\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_af276c52f0d5245ffca7a19fa812d34d0}{add\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ TUnit::type\ type)\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a8d99f0127512d003f795f5bb8e6f9af5}{add\_counter}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ type,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00280\ \ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ derived\ counter\ with\ 'name'/'type'.\ The\ counter\ is\ owned\ by\ the}}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ RuntimeProfile\ object.}}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{comment}{//\ If\ parent\_counter\_name\ is\ a\ non-\/empty\ string,\ the\ counter\ is\ added\ as\ a\ child\ of}}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ parent\_counter\_name.}}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{comment}{//\ Returns\ nullptr\ if\ the\ counter\ already\ exists.}}
+\DoxyCodeLine{00287\ \ \ \ \ DerivedCounter*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a1a00fd7cc962ea3cdfc544c18a70b45d}{add\_derived\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ TUnit::type\ type,}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a69ac4ef174d387fcbd7d6561bee9f314}{DerivedCounterFunction}}\&\ counter\_fn,}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ parent\_counter\_name);}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ Gets\ the\ counter\ object\ with\ 'name'.\ \ Returns\ nullptr\ if\ there\ is\ no\ counter\ with}}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{comment}{//\ that\ name.}}
+\DoxyCodeLine{00293\ \ \ \ \ Counter*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a42ba30fca2349c65d5c643acd37bf07c}{get\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}});}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ Adds\ all\ counters\ with\ 'name'\ that\ are\ registered\ either\ in\ this\ or}}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ in\ any\ of\ the\ child\ profiles\ to\ 'counters'.}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_acb56d71cd055384cde05bb457ce41703}{get\_counters}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ std::vector<Counter*>*\ counters);}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ Helper\ to\ append\ to\ the\ "{}ExecOption"{}\ info\ string.}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae0e94d4bfea8cecc33065545adfa2de5}{append\_exec\_option}}(\textcolor{keyword}{const}\ std::string\&\ option)\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a1e8e7e6f95a43d0ccef31386313685e5}{add\_info\_string}}(\textcolor{stringliteral}{"{}ExecOption"{}},\ option);\ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ Adds\ a\ string\ to\ the\ runtime\ profile.\ \ If\ a\ value\ already\ exists\ for\ 'key',}}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//\ the\ value\ will\ be\ updated.}}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a1e8e7e6f95a43d0ccef31386313685e5}{add\_info\_string}}(\textcolor{keyword}{const}\ std::string\&\ key,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ Creates\ and\ returns\ a\ new\ EventSequence\ (owned\ by\ the\ runtime}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{comment}{//\ profile)\ -\/\ unless\ a\ timer\ with\ the\ same\ 'key'\ already\ exists,\ in}}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{comment}{//\ which\ case\ it\ is\ returned.}}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ TODO:\ EventSequences\ are\ not\ merged\ by\ Merge()}}
+\DoxyCodeLine{00310\ \ \ \ \ EventSequence*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a7b60c8028b33de61800d18323f9df831}{add\_event\_sequence}}(\textcolor{keyword}{const}\ std::string\&\ key);}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ pointer\ to\ the\ info\ string\ value\ for\ 'key'.\ \ Returns\ nullptr\ if}}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{//\ the\ key\ does\ not\ exist.}}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{const}\ std::string*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad64bbffc43cbfe4c51a41c3b73e8c646}{get\_info\_string}}(\textcolor{keyword}{const}\ std::string\&\ key);}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ counter\ for\ the\ total\ elapsed\ time.}}
+\DoxyCodeLine{00317\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a9ba2374b86d6111f6822d5fc6ffe5569}{total\_time\_counter}}()\ \{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classdoris_1_1_runtime_profile_aee1096301d23b77eef344ba650518cfd}{\_counter\_total\_time}};\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{//\ Prints\ the\ counters\ in\ a\ name:\ value\ format.}}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{comment}{//\ Does\ not\ hold\ locks\ when\ it\ makes\ any\ function\ calls.}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aac27e38355d25752fb3bdb74076aeee9}{pretty\_print}}(std::ostream*\ s,\ \textcolor{keyword}{const}\ std::string\&\ prefix\ =\ \textcolor{stringliteral}{"{}"{}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a7f9e4116502c6aa37ff850c1437ad95f}{add\_to\_span}}();}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ Serializes\ profile\ to\ thrift.}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{comment}{//\ Does\ not\ hold\ locks\ when\ it\ makes\ any\ function\ calls.}}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a40312915df3f9d7297b961df9f5a5a6b}{to\_thrift}}(TRuntimeProfileTree*\ tree);}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a40312915df3f9d7297b961df9f5a5a6b}{to\_thrift}}(std::vector<TRuntimeProfileNode>*\ nodes);}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ Divides\ all\ counters\ by\ n}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf1eea2fa24a83c75703a01142158dd5}{divide}}(\textcolor{keywordtype}{int}\ n);}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_af13f715420b68accdd88f7920880c15e}{get\_children}}(std::vector<RuntimeProfile*>*\ children);}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ Gets\ all\ profiles\ in\ tree,\ including\ this\ one.}}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a56003aa821801b1bf2011aa82227e041}{get\_all\_children}}(std::vector<RuntimeProfile*>*\ children);}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ number\ of\ counters\ in\ this\ profile}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a63c2d00ffe91f788f845c9422e8c3e26}{num\_counters}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aa1392f8e4bf9c4ce2eec0177896e5b01}{\_counter\_map}}.size();\ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Returns\ name\ of\ this\ profile}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};\ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ *only\ call\ this\ on\ top-\/level\ profiles*}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{//\ (because\ it\ doesn't\ re-\/file\ child\ profiles)}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad5260b9627048b854b45d05ed34adc22}{set\_name}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}})\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}}\ =\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}};\ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aa55984ea9c7d2f95d794990cf917295f}{metadata}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a4784190df9a9c1ded0126984f021eec7}{\_metadata}};\ \}}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_add25953e7bee8258fa121ea7000922b5}{set\_metadata}}(int64\_t\ md)\ \{\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a4784190df9a9c1ded0126984f021eec7}{\_metadata}}\ =\ md;\ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ Derived\ counter\ function:\ return\ measured\ throughput\ as\ input\_value/second.}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac6598944fd817d29f09ca31ca3c018ad}{units\_per\_second}}(\textcolor{keyword}{const}\ Counter*\ total\_counter,\ \textcolor{keyword}{const}\ Counter*\ timer);}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{comment}{//\ Derived\ counter\ function:\ return\ aggregated\ value}}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{static}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a5440dbfddfa7717a6a753130125ae2d0}{counter\_sum}}(\textcolor{keyword}{const}\ std::vector<Counter*>*\ counters);}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{comment}{//\ Function\ that\ returns\ a\ counter\ metric.}}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{comment}{//\ Note:\ this\ function\ should\ not\ block\ (or\ take\ a\ long\ time).}}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_ac801a99b6c464f44fa7d03b40ec2a4cd}{SampleFn}}\ =\ std::function<int64\_t()>;}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ rate\ counter\ to\ the\ current\ profile\ based\ on\ src\_counter\ with\ name.}}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ The\ rate\ counter\ is\ updated\ periodically\ based\ on\ the\ src\ counter.}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{comment}{//\ The\ rate\ counter\ has\ units\ in\ src\_counter\ unit\ per\ second.}}
+\DoxyCodeLine{00364\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a7f7297446debc4043c777d8ad3b6dc97}{add\_rate\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ src\_counter);}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ 'add\_rate\_counter'\ above\ except\ values\ are\ taken\ by\ calling\ fn.}}
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{//\ The\ resulting\ counter\ will\ be\ of\ 'type'.}}
+\DoxyCodeLine{00368\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a7f7297446debc4043c777d8ad3b6dc97}{add\_rate\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac801a99b6c464f44fa7d03b40ec2a4cd}{SampleFn}}\ fn,\ TUnit::type\ type);}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ Add\ a\ sampling\ counter\ to\ the\ current\ profile\ based\ on\ src\_counter\ with\ name.}}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{comment}{//\ The\ sampling\ counter\ is\ updated\ periodically\ based\ on\ the\ src\ counter\ by\ averaging}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ the\ samples\ taken\ from\ the\ src\ counter.}}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ The\ sampling\ counter\ has\ the\ same\ unit\ as\ src\_counter\ unit.}}
+\DoxyCodeLine{00374\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a68e49b4bc4561ab43047f3c7b663f460}{add\_sampling\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ src\_counter);}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ 'add\_sampling\_counter'\ above\ except\ the\ samples\ are\ taken\ by\ calling\ fn.}}
+\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a68e49b4bc4561ab43047f3c7b663f460}{add\_sampling\_counter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac801a99b6c464f44fa7d03b40ec2a4cd}{SampleFn}}\ fn);}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00381\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_high_water_mark_counter}{HighWaterMarkCounter}}*\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a3b20f5c8a2e7c41041db09b0f1116e59}{AddHighWaterMarkCounter}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ TUnit::type\ unit,}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ parent\_counter\_name\ =\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{comment}{//\ Only\ for\ create\ MemTracker(using\ profile's\ counter\ to\ calc\ consumption)}}
+\DoxyCodeLine{00385\ \ \ \ \ std::shared\_ptr<HighWaterMarkCounter>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a1129f8258e68cc81c0a1022546d045fb}{AddSharedHighWaterMarkCounter}}(}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24dcbf29c0d6cd766009a182a6484e3b}{name}},\ TUnit::type\ unit,\ \textcolor{keyword}{const}\ std::string\&\ parent\_counter\_name\ =\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{comment}{//\ Recursively\ compute\ the\ fraction\ of\ the\ 'total\_time'\ spent\ in\ this\ profile\ and}}
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{comment}{//\ its\ children.}}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{comment}{//\ This\ function\ updates\ \_local\_time\_percent\ for\ each\ profile.}}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aed25768f2265b2c1bd2d1af1a9d22358}{compute\_time\_in\_profile}}();}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_abb7bcc3e9aa8fe6e49d5f39b2684e675}{clear\_children}}();}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{comment}{//\ Pool\ for\ allocated\ counters.\ Usually\ owned\ by\ the\ creator\ of\ this}}
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{comment}{//\ object,\ but\ occasionally\ allocated\ in\ the\ constructor.}}
+\DoxyCodeLine{00398\ \ \ \ \ std::unique\_ptr<ObjectPool>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae342532f13fab2e527b195cbb6e38642}{\_pool}};}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{comment}{//\ Pool\ for\ allocated\ counters.\ These\ counters\ are\ shared\ with\ some\ other\ objects.}}
+\DoxyCodeLine{00401\ \ \ \ \ std::map<std::string,\ std::shared\_ptr<HighWaterMarkCounter>>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a61b85297f54f615b832d04f83b54a687}{\_shared\_counter\_pool}};}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{comment}{//\ Name\ for\ this\ runtime\ profile.}}
+\DoxyCodeLine{00404\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//\ user-\/supplied,\ uninterpreted\ metadata.}}
+\DoxyCodeLine{00407\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a4784190df9a9c1ded0126984f021eec7}{\_metadata}};}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aae9adfb3ecb9c698f6df7a1dbf126240}{\_is\_averaged\_profile}};}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{comment}{//\ Map\ from\ counter\ names\ to\ counters.\ \ The\ profile\ owns\ the\ memory\ for\ the}}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ counters.}}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_ae25b44a3020e1ba8ba279fd243c33809}{CounterMap}}\ =\ std::map<std::string,\ Counter*>;}
+\DoxyCodeLine{00416\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae25b44a3020e1ba8ba279fd243c33809}{CounterMap}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aa1392f8e4bf9c4ce2eec0177896e5b01}{\_counter\_map}};}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{comment}{//\ Map\ from\ parent\ counter\ name\ to\ a\ set\ of\ child\ counter\ name.}}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{comment}{//\ All\ top\ level\ counters\ are\ the\ child\ of\ "{}"{}\ (root).}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_ad854968ee5bfb13c5b351071f82b6f2c}{ChildCounterMap}}\ =\ std::map<std::string,\ std::set<std::string>>;}
+\DoxyCodeLine{00421\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad854968ee5bfb13c5b351071f82b6f2c}{ChildCounterMap}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae053755bdb207dce360aad0fc48e6cb6}{\_child\_counter\_map}};}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{comment}{//\ A\ set\ of\ bucket\ counters\ registered\ in\ this\ runtime\ profile.}}
+\DoxyCodeLine{00424\ \ \ \ \ std::set<std::vector<Counter*>*>\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a621442fffae02c4f642220c0dba63131}{\_bucketing\_counters}};}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ protects\ \_counter\_map,\ \_counter\_child\_map\ and\ \_bucketing\_counters}}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a4729a127a30b59e9404a86cfb7924a6a}{\_counter\_map\_lock}};}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{comment}{//\ Child\ profiles.\ \ Does\ not\ own\ memory.}}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{comment}{//\ We\ record\ children\ in\ both\ a\ map\ (to\ facilitate\ updates)\ and\ a\ vector}}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{comment}{//\ (to\ print\ things\ in\ the\ order\ they\ were\ registered)}}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_a10a58875728198dc83e845d3d038bde4}{ChildMap}}\ =\ std::map<std::string,\ RuntimeProfile*>;}
+\DoxyCodeLine{00433\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a10a58875728198dc83e845d3d038bde4}{ChildMap}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a2ab2836cfd201ecbca1a3c0f0dcf2e31}{\_child\_map}};}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ vector\ of\ (profile,\ indentation\ flag)}}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_a4fcf9a6ad31309fb8fd7d71fee32fa5e}{ChildVector}}\ =\ std::vector<std::pair<RuntimeProfile*,\ bool>>;}
+\DoxyCodeLine{00436\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a4fcf9a6ad31309fb8fd7d71fee32fa5e}{ChildVector}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a5d6889efd94a434c26dfa91c49736795}{\_children}};}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad4ac1073b9057d416974fad50ea09c5c}{\_children\_lock}};\ \textcolor{comment}{//\ protects\ \_child\_map\ and\ \_children}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf967ee2a1fc40fa95e5300880f5e4e1}{InfoStrings}}\ =\ std::map<std::string,\ std::string>;}
+\DoxyCodeLine{00440\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aaf967ee2a1fc40fa95e5300880f5e4e1}{InfoStrings}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a02eb596656e827655a86aa94c8eb3b48}{\_info\_strings}};}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{comment}{//\ Keeps\ track\ of\ the\ order\ in\ which\ InfoStrings\ are\ displayed\ when\ printed}}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_a7900984af393916a4f27488466d453e3}{InfoStringsDisplayOrder}}\ =\ std::vector<std::string>;}
+\DoxyCodeLine{00444\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a7900984af393916a4f27488466d453e3}{InfoStringsDisplayOrder}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a6be557888fb757a8d272bb619cd5d181}{\_info\_strings\_display\_order}};}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{comment}{//\ Protects\ \_info\_strings\ and\ \_info\_strings\_display\_order}}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a9c2bab7ec61ac64a688677ea86270d9b}{\_info\_strings\_lock}};}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_runtime_profile_a14b77976d313ee202cdbf4f874279217}{EventSequenceMap}}\ =\ std::map<std::string,\ EventSequence*>;}
+\DoxyCodeLine{00450\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a14b77976d313ee202cdbf4f874279217}{EventSequenceMap}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a24d5ad09018db76ebb4e4bc51b539108}{\_event\_sequence\_map}};}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_af693d45b4c4b1eac72933a6c4df7b144}{\_event\_sequences\_lock}};}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aee1096301d23b77eef344ba650518cfd}{\_counter\_total\_time}};}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ Time\ spent\ in\ just\ in\ this\ profile\ (i.e.\ not\ the\ children)\ as\ a\ fraction}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//\ of\ the\ total\ time\ in\ the\ entire\ profile\ tree.}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac148065576f306afce6faeb4abddd2da}{\_local\_time\_percent}};}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a87e5d53b9d074de778d4ae3af0b7991a}{\_added\_to\_span}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_acf315c495c75eaf2bbc01e82f4bc174c}{PeriodicCounterType}}\ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_acf315c495c75eaf2bbc01e82f4bc174ca4138f7dbee1d97c87cf7ea8b53731b95}{RATE\_COUNTER}}\ =\ 0,}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_acf315c495c75eaf2bbc01e82f4bc174ca31e5109fd5333f0e1ff28e6a17c81ebc}{SAMPLING\_COUNTER}},}
+\DoxyCodeLine{00463\ \ \ \ \ \};}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_rate_counter_info}{RateCounterInfo}}\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_rate_counter_info_afe6ebd1985fd614840590a34a3f7edcf}{src\_counter}};}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac801a99b6c464f44fa7d03b40ec2a4cd}{SampleFn}}\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_rate_counter_info_ac5b2f8c8f6badf0b483a6789486d2986}{sample\_fn}};}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_rate_counter_info_ac4864b2271e2a1866a54939d80955a6f}{elapsed\_ms}};}
+\DoxyCodeLine{00469\ \ \ \ \ \};}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_sampling_counter_info}{SamplingCounterInfo}}\ \{}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_sampling_counter_info_afe6ebd1985fd614840590a34a3f7edcf}{src\_counter}};\ \textcolor{comment}{//\ the\ counter\ to\ be\ sampled}}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ac801a99b6c464f44fa7d03b40ec2a4cd}{SampleFn}}\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_sampling_counter_info_ac5b2f8c8f6badf0b483a6789486d2986}{sample\_fn}};}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_sampling_counter_info_a3eeb8370bb431e1fbaf6bc326926eb51}{total\_sampled\_value}};\ \textcolor{comment}{//\ sum\ of\ all\ sampled\ values;}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_sampling_counter_info_aaff48ba97b1b4a77dde52e2a958b70ff}{num\_sampled}};\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ number\ of\ samples\ taken}}
+\DoxyCodeLine{00476\ \ \ \ \ \};}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_bucket_counters_info}{BucketCountersInfo}}\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_bucket_counters_info_afe6ebd1985fd614840590a34a3f7edcf}{src\_counter}};\ \textcolor{comment}{//\ the\ counter\ to\ be\ sampled}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris_1_1_runtime_profile_1_1_bucket_counters_info_aaff48ba97b1b4a77dde52e2a958b70ff}{num\_sampled}};\ \ \textcolor{comment}{//\ number\ of\ samples\ taken}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ customize\ bucketing}}
+\DoxyCodeLine{00482\ \ \ \ \ \};}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{comment}{//\ update\ a\ subtree\ of\ profiles\ from\ nodes,\ rooted\ at\ *idx.}}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ On\ return,\ *idx\ points\ to\ the\ node\ immediately\ following\ this\ subtree.}}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a3ef66c7862f5e72c0e5b1d3328820f67}{update}}(\textcolor{keyword}{const}\ std::vector<TRuntimeProfileNode>\&\ nodes,\ \textcolor{keywordtype}{int}*\ \mbox{\hyperlink{rowset__tree_8cpp_ae40354a1051342eb5a9db005715dcfa9}{idx}});}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{comment}{//\ Helper\ function\ to\ compute\ compute\ the\ fraction\ of\ the\ total\ time\ spent\ in}}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{comment}{//\ this\ profile\ and\ its\ children.}}
+\DoxyCodeLine{00490\ \ \ \ \ \textcolor{comment}{//\ Called\ recursively.}}
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_aed25768f2265b2c1bd2d1af1a9d22358}{compute\_time\_in\_profile}}(int64\_t\ total\_time);}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{comment}{//\ Print\ the\ child\ counters\ of\ the\ given\ counter\ name}}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a9de76500880a142f6c1c64310dec5d53}{print\_child\_counters}}(\textcolor{keyword}{const}\ std::string\&\ prefix,\ \textcolor{keyword}{const}\ std::string\&\ counter\_name,}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae25b44a3020e1ba8ba279fd243c33809}{CounterMap}}\&\ counter\_map,}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad854968ee5bfb13c5b351071f82b6f2c}{ChildCounterMap}}\&\ child\_counter\_map,\ std::ostream*\ s);}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a3547a57f51e7bba7e6b95d11c677c79f}{add\_child\_counters\_to\_span}}(\mbox{\hyperlink{namespacedoris_ab7a11c8b8a43361d7691f6c573635824}{OpentelemetrySpan}}\ span,\ \textcolor{keyword}{const}\ std::string\&\ profile\_name,}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ counter\_name,}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ae25b44a3020e1ba8ba279fd243c33809}{CounterMap}}\&\ counter\_map,}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_ad854968ee5bfb13c5b351071f82b6f2c}{ChildCounterMap}}\&\ child\_counter\_map);}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a62bc80998515452584ebcc745cabfe9f}{print\_json\_counter}}(\textcolor{keyword}{const}\ std::string\&\ profile\_name,\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{Counter}}*\ counter)\ \{}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a46cf59a00a2e66e400a585d412a87a71}{print\_json\_info}}(profile\_name,}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_pretty_printer_aaa3ce08858081586e0f1e563733cadf2}{PrettyPrinter::print}}(counter-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3ad5729c8c11273b9cb61e59e3101f5e}{value}}(),\ counter-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}}()));}
+\DoxyCodeLine{00506\ \ \ \ \ \}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classdoris_1_1_runtime_profile_a46cf59a00a2e66e400a585d412a87a71}{print\_json\_info}}(\textcolor{keyword}{const}\ std::string\&\ profile\_name,\ std::string\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00509\ \};}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \textcolor{comment}{//\ Utility\ class\ to\ update\ the\ counter\ at\ object\ construction\ and\ destruction.}}
+\DoxyCodeLine{00512\ \textcolor{comment}{//\ When\ the\ object\ is\ constructed,\ decrement\ the\ counter\ by\ val.}}
+\DoxyCodeLine{00513\ \textcolor{comment}{//\ When\ the\ object\ goes\ out\ of\ scope,\ increment\ the\ counter\ by\ val.}}
+\DoxyCodeLine{00514\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_counter}{ScopedCounter}}\ \{}
+\DoxyCodeLine{00515\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00516\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter_a7f8029171165d1fc3e2a1bf009181fc2}{ScopedCounter}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ counter,\ int64\_t\ val)\ :\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_af21bc0a1d592988ee93e51b0cc455552}{\_val}}(val),\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_aff0f54945f56ad4d09c20c4054438326}{\_counter}}(counter)\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (counter\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter_aff0f54945f56ad4d09c20c4054438326}{\_counter}}-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3a5b31a711e7ab302587f2334c0648f9}{update}}(-\/1L\ *\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_af21bc0a1d592988ee93e51b0cc455552}{\_val}});}
+\DoxyCodeLine{00522\ \ \ \ \ \}}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ counter\ when\ object\ is\ destroyed}}
+\DoxyCodeLine{00525\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter_a762107be3b340db0781dc7bcf8650d17}{\string~ScopedCounter}}()\ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_scoped_counter_aff0f54945f56ad4d09c20c4054438326}{\_counter}}\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter_aff0f54945f56ad4d09c20c4054438326}{\_counter}}-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3a5b31a711e7ab302587f2334c0648f9}{update}}(\mbox{\hyperlink{classdoris_1_1_scoped_counter_af21bc0a1d592988ee93e51b0cc455552}{\_val}});}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00529\ \ \ \ \ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ constructor\ and\ assignment}}
+\DoxyCodeLine{00532\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter_a42f88d384ab0555276b987ba2b623671}{ScopedCounter}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_counter}{ScopedCounter}}\&\ counter)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00533\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_counter}{ScopedCounter}}\&\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_aac3e87c50aefe39e2fb4ecc56dd22702}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_counter}{ScopedCounter}}\&\ counter)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00536\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_af21bc0a1d592988ee93e51b0cc455552}{\_val}};}
+\DoxyCodeLine{00537\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scoped_counter_aff0f54945f56ad4d09c20c4054438326}{\_counter}};}
+\DoxyCodeLine{00538\ \};}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \textcolor{comment}{//\ Utility\ class\ to\ update\ time\ elapsed\ when\ the\ object\ goes\ out\ of\ scope.}}
+\DoxyCodeLine{00541\ \textcolor{comment}{//\ 'T'\ must\ implement\ the\ stopWatch\ "{}interface"{}\ (start,stop,elapsed\_time)\ but}}
+\DoxyCodeLine{00542\ \textcolor{comment}{//\ we\ use\ templates\ not\ to\ pay\ for\ virtual\ function\ overhead.}}
+\DoxyCodeLine{00543\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{typename}\ Bool\ =\ \textcolor{keywordtype}{bool}>}
+\DoxyCodeLine{00544\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_timer}{ScopedTimer}}\ \{}
+\DoxyCodeLine{00545\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00546\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad5289b6775355800a544b87dc1d5a2b3}{ScopedTimer}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ counter,\ \textcolor{keyword}{const}\ Bool*\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a364f619f880707cca656c3bc8f65009d}{is\_cancelled}}\ =\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_aff0f54945f56ad4d09c20c4054438326}{\_counter}}(counter),\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a1df19cc8ee93699e183cae13f3900fcc}{\_is\_cancelled}}(\mbox{\hyperlink{classdoris_1_1_scoped_timer_a364f619f880707cca656c3bc8f65009d}{is\_cancelled}})\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (counter\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ DCHECK\_EQ(counter-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a060cb58ca1914eb9f853b510f4585b25}{type}}(),\ TUnit::TIME\_NS);}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.start();}
+\DoxyCodeLine{00553\ \ \ \ \ \}}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a8c528baf37154d347366083f0f816846}{stop}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.stop();\ \}}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a60de64d75454385b23995437f1d72669}{start}}()\ \{\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.start();\ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a364f619f880707cca656c3bc8f65009d}{is\_cancelled}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a1df19cc8ee93699e183cae13f3900fcc}{\_is\_cancelled}}\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ *\mbox{\hyperlink{classdoris_1_1_scoped_timer_a1df19cc8ee93699e183cae13f3900fcc}{\_is\_cancelled}};\ \}}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a15b7147c9248adf6ab3b3f8d1f8e185f}{UpdateCounter}}()\ \{}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_scoped_timer_aff0f54945f56ad4d09c20c4054438326}{\_counter}}\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_scoped_timer_a364f619f880707cca656c3bc8f65009d}{is\_cancelled}}())\ \{}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_aff0f54945f56ad4d09c20c4054438326}{\_counter}}-\/>\mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter_a3a5b31a711e7ab302587f2334c0648f9}{update}}(\mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.elapsed\_time());}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00565\ \ \ \ \ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \ \ \textcolor{comment}{//\ Update\ counter\ when\ object\ is\ destroyed}}
+\DoxyCodeLine{00568\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ac0d9dbda276901ee8642dc51934b7712}{\string~ScopedTimer}}()\ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_scoped_timer_aff0f54945f56ad4d09c20c4054438326}{\_counter}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.stop();}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a15b7147c9248adf6ab3b3f8d1f8e185f}{UpdateCounter}}();}
+\DoxyCodeLine{00574\ \ \ \ \ \}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ constructor\ and\ assignment}}
+\DoxyCodeLine{00577\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer_adbc9280fafbbfb26e0d04a25ae4fa4aa}{ScopedTimer}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer}{ScopedTimer}}\&\ timer)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00578\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_timer}{ScopedTimer}}\&\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a20d3ec082c3e0b8facfedd9d4daf90b9}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer}{ScopedTimer}}\&\ timer)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00581\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}};}
+\DoxyCodeLine{00582\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_aff0f54945f56ad4d09c20c4054438326}{\_counter}};}
+\DoxyCodeLine{00583\ \ \ \ \ \textcolor{keyword}{const}\ Bool*\ \mbox{\hyperlink{classdoris_1_1_scoped_timer_a1df19cc8ee93699e183cae13f3900fcc}{\_is\_cancelled}};}
+\DoxyCodeLine{00584\ \};}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \textcolor{comment}{//\ Utility\ class\ to\ update\ time\ elapsed\ when\ the\ object\ goes\ out\ of\ scope.}}
+\DoxyCodeLine{00587\ \textcolor{comment}{//\ 'T'\ must\ implement\ the\ stopWatch\ "{}interface"{}\ (start,stop,elapsed\_time)\ but}}
+\DoxyCodeLine{00588\ \textcolor{comment}{//\ we\ use\ templates\ not\ to\ pay\ for\ virtual\ function\ overhead.}}
+\DoxyCodeLine{00589\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ C>}
+\DoxyCodeLine{00590\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_scoped_raw_timer}{ScopedRawTimer}}\ \{}
+\DoxyCodeLine{00591\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00592\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_ad1776069d8bbb5ca700c9a844240c663}{ScopedRawTimer}}(\mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ counter)\ :\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_aa9af9f74fec619753c18daab202da3f4}{\_counter}}(counter)\ \{\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.start();\ \}}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{comment}{//\ Update\ counter\ when\ object\ is\ destroyed}}
+\DoxyCodeLine{00594\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_a80217f83910db76b0350b51176bec57b}{\string~ScopedRawTimer}}()\ \{\ *\mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_aa9af9f74fec619753c18daab202da3f4}{\_counter}}\ +=\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}}.elapsed\_time();\ \}}
+\DoxyCodeLine{00595\ }
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ constructor\ and\ assignment}}
+\DoxyCodeLine{00597\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_a0ab52ddbc7fe07a7c25c5d564ed0e0c1}{ScopedRawTimer}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer}{ScopedRawTimer}}\&\ timer)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00598\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer}{ScopedRawTimer}}\&\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_a7be55457c2ac0f25d55ed4dc481b559c}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer}{ScopedRawTimer}}\&\ timer)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00599\ }
+\DoxyCodeLine{00600\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00601\ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_ad7a42fab049c67ced722750a16a5e843}{\_sw}};}
+\DoxyCodeLine{00602\ \ \ \ \ \mbox{\hyperlink{exp2f_8c_ac4cf4b2ab929bd23951a8676eeac086b}{C}}*\ \mbox{\hyperlink{classdoris_1_1_scoped_raw_timer_aa9af9f74fec619753c18daab202da3f4}{\_counter}};}
+\DoxyCodeLine{00603\ \};}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

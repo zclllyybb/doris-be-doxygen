@@ -1,0 +1,246 @@
+\hypertarget{plan__fragment__executor_8h_source}{}\doxysection{plan\+\_\+fragment\+\_\+executor.\+h}
+\label{plan__fragment__executor_8h_source}\index{/Users/dabowang/be\_all/runtime/plan\_fragment\_executor.h@{/Users/dabowang/be\_all/runtime/plan\_fragment\_executor.h}}
+\mbox{\hyperlink{plan__fragment__executor_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ This\ file\ is\ copied\ from}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ https://github.com/cloudera/Impala/blob/v0.7refresh/be/src/runtime/plan-\/fragment-\/executor.h}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <functional>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{object__pool_8h}{common/object\_pool.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{query__fragments__ctx_8h}{runtime/query\_fragments\_ctx.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{query__statistics_8h}{runtime/query\_statistics.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__state_8h}{runtime/runtime\_state.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block_8h}{vec/core/block.h}}"{}}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }QueryFragmentsCtx;}
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }ExecNode;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }RowDescriptor;}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }DataSink;}
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }DataStreamMgr;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }RuntimeProfile;}
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }RuntimeState;}
+\DoxyCodeLine{00043\ \textcolor{keyword}{class\ }TNetworkAddress;}
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }TPlanExecRequest;}
+\DoxyCodeLine{00045\ \textcolor{keyword}{class\ }TPlanFragment;}
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }TPlanFragmentExecParams;}
+\DoxyCodeLine{00047\ \textcolor{keyword}{class\ }TPlanExecParams;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ PlanFragmentExecutor\ handles\ all\ aspects\ of\ the\ execution\ of\ a\ single\ plan\ fragment,}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ including\ setup\ and\ tear-\/down,\ both\ in\ the\ success\ and\ error\ case.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Tear-\/down\ frees\ all\ memory\ allocated\ for\ this\ plan\ fragment\ and\ closes\ all\ data}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ streams;\ it\ happens\ automatically\ in\ the\ d'tor.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ The\ executor\ makes\ an\ aggregated\ profile\ for\ the\ entire\ fragment\ available,}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ which\ includes\ profile\ information\ for\ the\ plan\ itself\ as\ well\ as\ the\ output}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ sink,\ if\ any.}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ The\ ReportStatusCallback\ passed\ into\ the\ c'tor\ is\ invoked\ periodically\ to\ report\ the}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ execution\ status.\ The\ frequency\ of\ those\ reports\ is\ controlled\ by\ the\ flag}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ status\_report\_interval;\ setting\ that\ flag\ to\ 0\ disables\ periodic\ reporting\ altogether}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ Regardless\ of\ the\ value\ of\ that\ flag,\ if\ a\ report\ callback\ is\ specified,\ it\ is}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ invoked\ at\ least\ once\ at\ the\ end\ of\ execution\ with\ an\ overall\ status\ and\ profile}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ (and\ 'done'\ indicator).\ The\ only\ exception\ is\ when\ execution\ is\ cancelled,\ in\ which}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ case\ the\ callback\ is\ *not*\ invoked\ (the\ coordinator\ already\ knows\ that\ execution}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ stopped,\ because\ it\ initiated\ the\ cancellation).}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ Aside\ from\ Cancel(),\ which\ may\ be\ called\ asynchronously,\ this\ class\ is\ not}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ thread-\/safe.}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_plan_fragment_executor}{PlanFragmentExecutor}}\ \{}
+\DoxyCodeLine{00069\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ Callback\ to\ report\ execution\ status\ of\ plan\ fragment.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ 'profile'\ is\ the\ cumulative\ profile,\ 'done'\ indicates\ whether\ the\ execution}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ is\ done\ or\ still\ continuing.}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ Note:\ this\ does\ not\ take\ a\ const\ RuntimeProfile\&,\ because\ it\ might\ need\ to\ call}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ functions\ like\ PrettyPrint()\ or\ to\_thrift(),\ neither\ of\ which\ is\ const}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ because\ they\ take\ locks.}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ae8f7c9a746c97b91cce954ef0b8512c6}{report\_status\_callback}}\ =\ std::function<void(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\&,\ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*,\ \textcolor{keywordtype}{bool})>;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ report\_status\_cb,\ if\ !empty(),\ is\ used\ to\ report\ the\ accumulated\ profile}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ information\ periodically\ during\ execution\ (open()\ or\ get\_next()).}}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor}{PlanFragmentExecutor}}(\mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ exec\_env,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ae8f7c9a746c97b91cce954ef0b8512c6}{report\_status\_callback}}\&\ report\_status\_cb);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ Closes\ the\ underlying\ plan\ fragment\ and\ frees\ up\ all\ resources\ allocated}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ in\ open()/get\_next().}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ It\ is\ an\ error\ to\ delete\ a\ PlanFragmentExecutor\ with\ a\ report\ callback}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ before\ open()/get\_next()\ (depending\ on\ whether\ the\ fragment\ has\ a\ sink)}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ indicated\ that\ execution\ is\ finished.}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ad7fa3f1f766990bcf1d28d7221a419a0}{\string~PlanFragmentExecutor}}();}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ prepare\ for\ execution.\ Call\ this\ prior\ to\ open().}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ This\ call\ won't\ block.}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ runtime\_state()\ and\ row\_desc()\ will\ not\ be\ valid\ until\ prepare()\ is\ called.}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ If\ request.query\_options.mem\_limit\ >\ 0,\ it\ is\ used\ as\ an\ approximate\ limit\ on\ the}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ number\ of\ bytes\ this\ query\ can\ consume\ at\ runtime.}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ The\ query\ will\ be\ aborted\ (MEM\_LIMIT\_EXCEEDED)\ if\ it\ goes\ over\ that\ limit.}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ If\ fragments\_ctx\ is\ not\ null,\ some\ components\ will\ be\ got\ from\ fragments\_ctx.}}
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a1a1c11e2ea434ac4f99103a61f327ae7}{prepare}}(\textcolor{keyword}{const}\ TExecPlanFragmentParams\&\ request,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx}{QueryFragmentsCtx}}*\ fragments\_ctx\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ Start\ execution.\ Call\ this\ prior\ to\ get\_next().}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ If\ this\ fragment\ has\ a\ sink,\ open()\ will\ send\ all\ rows\ produced}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ by\ the\ fragment\ to\ that\ sink.\ Therefore,\ open()\ may\ block\ until}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ all\ rows\ are\ produced\ (and\ a\ subsequent\ call\ to\ get\_next()\ will\ not\ return}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ any\ rows).}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ This\ also\ starts\ the\ status-\/reporting\ thread,\ if\ the\ interval\ flag}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ is\ >\ 0\ and\ a\ callback\ was\ specified\ in\ the\ c'tor.}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ If\ this\ fragment\ has\ a\ sink,\ report\_status\_cb\ will\ have\ been\ called\ for\ the\ final}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ time\ when\ open()\ returns,\ and\ the\ status-\/reporting\ thread\ will\ have\ been\ stopped.}}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_afbfe7ce3274db0eff63382a83d559439}{open}}();}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Closes\ the\ underlying\ plan\ fragment\ and\ frees\ up\ all\ resources\ allocated}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ in\ open()/get\_next().}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a5ae591df94fc66ccb85cbb6565368bca}{close}}();}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ Initiate\ cancellation.\ Must\ not\ be\ called\ until\ after\ prepare()\ returned.}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a841e14442a392f25bb8f4f77ba832999}{cancel}}(\textcolor{keyword}{const}\ PPlanFragmentCancelReason\&\ reason\ =\ PPlanFragmentCancelReason::INTERNAL\_ERROR,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ msg\ =\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ call\ these\ only\ after\ prepare()}}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a188e97a8900df82e0ca93f713d2d5c1f}{runtime\_state}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a46170bcb9a55ad401f8f75781afc1544}{\_runtime\_state}}.get();\ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_row_descriptor}{RowDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a48a09d232178e1821ad6d3f9b39eaf55}{row\_desc}}();}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ Profile\ information\ for\ plan\ and\ output\ sink.}}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aa8d86fb3edbf11ea5f80f8c251dd03a3}{profile}}();}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\&\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ab1e9c4f5009c84c6380427f1e673119c}{status}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a6cdf6e6db875a442f3ab6db542bd2bb5}{\_status}};\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_data_sink}{DataSink}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a063724c9c7a586287c5a827dbcea95ac}{get\_sink}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_acb8d89b2fd8cdccdaa8872d1554593a3}{\_sink}}.get();\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a2a0fe8fad20f0a7ecfdeb20ae0cea6a1}{set\_is\_report\_on\_cancel}}(\textcolor{keywordtype}{bool}\ val)\ \{\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a8f1bf16a4a1edfea2a43394c704317f2}{\_is\_report\_on\_cancel}}\ =\ val;\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}};\ \textcolor{comment}{//\ not\ owned}}
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_node}{ExecNode}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a2c4ab5d61876c29e2a1648da60a8a7e4}{\_plan}};\ \ \ \ \textcolor{comment}{//\ lives\ in\ \_runtime\_state-\/>obj\_pool()}}
+\DoxyCodeLine{00134\ \ \ \ \ TUniqueId\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ac2bc236893fc726dd0f12dcd7cafab3c}{\_query\_id}};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ profile\ reporting-\/related}}
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ae8f7c9a746c97b91cce954ef0b8512c6}{report\_status\_callback}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_abe629c3937afd3cece4e144b085dd11e}{\_report\_status\_cb}};}
+\DoxyCodeLine{00138\ \ \ \ \ std::thread\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a32845cebd07db1f83118f7b35e144064}{\_report\_thread}};}
+\DoxyCodeLine{00139\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ab12b41cab65d5dc1d060d3aed9799769}{\_report\_thread\_lock}};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Indicates\ that\ profile\ reporting\ thread\ should\ stop.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Tied\ to\ \_report\_thread\_lock.}}
+\DoxyCodeLine{00143\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a151fb9ec0c9b1e737a1f2b986d30b7b9}{\_stop\_report\_thread\_cv}};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ Indicates\ that\ profile\ reporting\ thread\ started.}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ Tied\ to\ \_report\_thread\_lock.}}
+\DoxyCodeLine{00147\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aafa7a3e82a67d34dea0626a1070e819f}{\_report\_thread\_started\_cv}};}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aa97d8611060e513fb40836a8b17a1f7e}{\_report\_thread\_active}};\ \textcolor{comment}{//\ true\ if\ we\ started\ the\ thread}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ true\ if\ \_plan-\/>get\_next()\ indicated\ that\ it's\ done}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ad67d48bf91d44bdcbfee10ff62611471}{\_done}};}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ true\ if\ prepare()\ returned\ OK}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a172dfd8fdb71d5342bea7ab847110cdb}{\_prepared}};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ true\ if\ close()\ has\ been\ called}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_af4a8be523945fd0c4187dddbbc732d87}{\_closed}};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a70cede923313c14029f44d1a83a003b1}{\_is\_report\_success}};}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ If\ this\ is\ set\ to\ false,\ and\ '\_is\_report\_success'\ is\ false\ as\ well,}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ This\ executor\ will\ not\ report\ status\ to\ FE\ on\ being\ cancelled.}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a8f1bf16a4a1edfea2a43394c704317f2}{\_is\_report\_on\_cancel}};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Overall\ execution\ status.\ Either\ ok()\ or\ set\ to\ the\ first\ error\ status\ that}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ was\ encountered.}}
+\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a6cdf6e6db875a442f3ab6db542bd2bb5}{\_status}};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ Protects\ \_status}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ lock\ ordering:}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ 1.\ \_report\_thread\_lock}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ 2.\ \_status\_lock}}
+\DoxyCodeLine{00173\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aa9c9b5347d15af23481a7f2583b5b69b}{\_status\_lock}};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ note\ that\ RuntimeState\ should\ be\ constructed\ before\ and\ destructed\ after\ `\_sink'\ and\ `\_row\_batch',}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ therefore\ we\ declare\ it\ before\ `\_sink'\ and\ `\_row\_batch'}}
+\DoxyCodeLine{00177\ \ \ \ \ std::unique\_ptr<RuntimeState>\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a46170bcb9a55ad401f8f75781afc1544}{\_runtime\_state}};}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ Output\ sink\ for\ rows\ sent\ to\ this\ fragment.\ May\ not\ be\ set,\ in\ which\ case\ rows\ are}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ returned\ via\ get\_next's\ row\ batch}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//\ Created\ in\ prepare\ (if\ required),\ owned\ by\ this\ object.}}
+\DoxyCodeLine{00181\ \ \ \ \ std::unique\_ptr<DataSink>\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_acb8d89b2fd8cdccdaa8872d1554593a3}{\_sink}};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ rows\ returned\ by\ this\ fragment}}
+\DoxyCodeLine{00184\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ab80af353fac2b821e5ba34f9054af566}{\_rows\_produced\_counter}};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile_1_1_counter}{RuntimeProfile::Counter}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aad588080309538aef78880127dba1720}{\_fragment\_cpu\_timer}};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ It\ is\ shared\ with\ BufferControlBlock\ and\ will\ be\ called\ in\ two\ different}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ threads.\ But\ their\ calls\ are\ all\ at\ different\ time,\ there\ is\ no\ problem\ of}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ multithreaded\ access.}}
+\DoxyCodeLine{00191\ \ \ \ \ std::shared\_ptr<QueryStatistics>\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a1409e18c324a1e43b4572ad73cb034a6}{\_query\_statistics}};}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a0798b8d49f1aff903927a8e5b2eb9d73}{\_collect\_query\_statistics\_with\_every\_batch}};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ Record\ the\ cancel\ information\ when\ calling\ the\ cancel()\ method,\ return\ it\ to\ FE}}
+\DoxyCodeLine{00195\ \ \ \ \ PPlanFragmentCancelReason\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_aa508f3cd3a6cd1287a6ad6920c8f5ba1}{\_cancel\_reason}};}
+\DoxyCodeLine{00196\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a93c1a2e56335774be22ff19c5efac081}{\_cancel\_msg}};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}*\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a15e5f1eeedf03728aee6864e35811889}{obj\_pool}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a46170bcb9a55ad401f8f75781afc1544}{\_runtime\_state}}-\/>obj\_pool();\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ typedef\ for\ TPlanFragmentExecParams.per\_node\_scan\_ranges}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a6839ce44b18a43f03e70d53c36edcaff}{PerNodeScanRanges}}\ =\ std::map<TPlanNodeId,\ std::vector<TScanRangeParams>>;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ Main\ loop\ of\ profile\ reporting\ thread.}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Exits\ when\ notified\ on\ \_done\_cv.}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{//\ On\ exit,\ *no\ report\ is\ sent*,\ ie,\ this\ will\ not\ send\ the\ final\ report.}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_af63bb00345c521735d273ff388561c99}{report\_profile}}();}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ Invoked\ the\ report\ callback\ if\ there\ is\ a\ report\ callback\ and\ the\ current}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ status\ isn't\ CANCELLED.\ Sets\ 'done'\ to\ true\ in\ the\ callback\ invocation\ if}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ done\ ==\ true\ or\ we\ have\ an\ error\ status.}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a219171a7c9b8e3236ed5f41b58a70936}{send\_report}}(\textcolor{keywordtype}{bool}\ done);}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ If\ \_status.ok(),\ sets\ \_status\ to\ status.}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ If\ we're\ transitioning\ to\ an\ error\ status,\ stops\ report\ thread\ and}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ sends\ a\ final\ report.}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a360d0659922be9a059d872f8cf0c4525}{update\_status}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\&\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ab1e9c4f5009c84c6380427f1e673119c}{status}});}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ Executes\ open()\ logic\ and\ returns\ resulting\ status.\ Does\ not\ set\ \_status.}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ If\ this\ plan\ fragment\ has\ no\ sink,\ open\_internal()\ does\ nothing.}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ If\ this\ plan\ fragment\ has\ a\ sink\ and\ open\_internal()\ returns\ without\ an}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ error\ condition,\ all\ rows\ will\ have\ been\ sent\ to\ the\ sink,\ the\ sink\ will}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ have\ been\ closed,\ a\ final\ report\ will\ have\ been\ sent\ and\ the\ report\ thread\ will}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ have\ been\ stopped.\ \_sink\ will\ be\ set\ to\ nullptr\ after\ successful\ execution.}}
+\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_ab5c7a47d9b360cfb71ab6b6cbc0bd67d}{open\_vectorized\_internal}}();}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ Executes\ get\_next()\ logic\ and\ returns\ resulting\ status.}}
+\DoxyCodeLine{00227\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a513e92911d2d60f6938b4d6d64f2acf4}{get\_vectorized\_internal}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{::doris::vectorized::Block}}*\ block,\ \textcolor{keywordtype}{bool}*\ eos);}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ Stops\ report\ thread,\ if\ one\ is\ running.\ Blocks\ until\ report\ thread\ terminates.}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ Idempotent.}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_abd06c0353168562cef8b163dfd68e97b}{stop\_report\_thread}}();}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}\&\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a30658623d7910cf0bc08751d2476b2d8}{desc\_tbl}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a46170bcb9a55ad401f8f75781afc1544}{\_runtime\_state}}-\/>desc\_tbl();\ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a4fd25d6167bba155d423fd0eefd5c87e}{\_collect\_query\_statistics}}();}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_plan_fragment_executor_a07c7376538fe38019952224837c50407}{\_collect\_node\_statistics}}();}
+\DoxyCodeLine{00238\ \};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

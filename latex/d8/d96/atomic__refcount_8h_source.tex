@@ -1,0 +1,153 @@
+\hypertarget{atomic__refcount_8h_source}{}\doxysection{atomic\+\_\+refcount.\+h}
+\label{atomic__refcount_8h_source}\index{/Users/dabowang/be\_all/gutil/atomic\_refcount.h@{/Users/dabowang/be\_all/gutil/atomic\_refcount.h}}
+\mbox{\hyperlink{atomic__refcount_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2008\ Google\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Atomic\ increment\ and\ decrement\ for\ reference\ counting.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ For\ atomic\ operations\ on\ statistics\ counters\ and\ sequence\ numbers,}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ see\ atomic\_stats\_counter.h\ and\ atomic\_sequence\_num.h\ respectively.}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Some\ clients\ use\ atomic\ operations\ for\ reference\ counting.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ you\ use\ one\ of\ them:}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ util/refcount/reference\_counted.h}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ util/gtl/refcounted\_ptr.h}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ util/gtl/shared\_ptr.h}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Alternatively,\ use\ a\ Mutex\ to\ maintain\ your\ reference\ count.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ If\ you\ really\ must\ build\ your\ own\ reference\ counts\ with\ atomic\ operations,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ use\ the\ following\ routines\ in\ the\ way\ suggested\ by\ this\ example:}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ AtomicWord\ ref\_count\_;\ \ //\ remember\ to\ initialize\ this\ to\ 0}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ \ ...}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ void\ Ref()\ \{}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ \ \ base::RefCountInc(\&this-\/>ref\_count\_);}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ \ void\ Unref()\ \{}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ \ \ if\ (!base::RefCountDec(\&this-\/>ref\_count\_))\ \{}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ \ \ \ delete\ this;}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ \ \}}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ Using\ these\ routines\ (rather\ than\ the\ ones\ in\ atomicops.h)\ will\ provide\ the}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ correct\ semantics;\ in\ particular,\ the\ memory\ ordering\ needed\ to\ make}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ reference\ counting\ work\ will\ be\ guaranteed.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ You\ need\ not\ declare\ the\ reference\ count\ word\ "{}volatile"{}.\ \ After}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ initialization\ you\ should\ use\ the\ word\ only\ via\ the\ routines\ below;\ the}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ "{}volatile"{}\ in\ the\ signatures\ below\ is\ for\ backwards\ compatibility.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ If\ you\ need\ to\ do\ something\ very\ different\ from\ this,\ use\ a\ Mutex.}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <glog/logging.h>}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomicops_8h}{gutil/atomicops.h}}"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{integral__types_8h}{gutil/integral\_types.h}}"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging-inl_8h}{gutil/logging-\/inl.h}}"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacebase}{base}}\ \{}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ These\ calls\ are\ available\ for\ both\ Atomic32,\ and\ AtomicWord\ types,}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ and\ also\ for\ base::subtle::Atomic64\ if\ available\ on\ the\ platform.}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ Normally,\ clients\ are\ expected\ to\ use\ RefCountInc/RefCountDec.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ In\ rare\ cases,\ it\ may\ be\ necessary\ to\ adjust\ the\ reference\ count\ by}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ more\ than\ 1,\ in\ which\ case\ they\ may\ use\ RefCountIncN/RefCountDecN.}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ Increment\ a\ reference\ count\ by\ "{}increment"{},\ which\ must\ exceed\ 0.}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{RefCountIncN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ increment)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ DCHECK\_GT(increment,\ 0);}
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{base::subtle::NoBarrier\_AtomicIncrement}}(ptr,\ increment);}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ Decrement\ a\ reference\ count\ by\ "{}decrement"{},\ which\ must\ exceed\ 0,}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ and\ return\ whether\ the\ result\ is\ non-\/zero.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ Insert\ barriers\ to\ ensure\ that\ state\ written\ before\ the\ reference\ count}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ became\ zero\ will\ be\ visible\ to\ a\ thread\ that\ has\ just\ made\ the\ count\ zero.}}
+\DoxyCodeLine{00062\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{RefCountDecN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr,\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}\ decrement)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ DCHECK\_GT(decrement,\ 0);}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{bool}\ res\ =\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{base::subtle::Barrier\_AtomicIncrement}}(ptr,\ -\/decrement)\ !=\ 0;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ Increment\ a\ reference\ count\ by\ 1.}}
+\DoxyCodeLine{00069\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_a0a9413aa775245688d31e9b5a8089581}{RefCountInc}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{base::RefCountIncN}}(ptr,\ 1);}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ Decrement\ a\ reference\ count\ by\ 1\ and\ return\ whether\ the\ result\ is\ non-\/zero.}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ Insert\ barriers\ to\ ensure\ that\ state\ written\ before\ the\ reference\ count}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ became\ zero\ will\ be\ visible\ to\ a\ thread\ that\ has\ just\ made\ the\ count\ zero.}}
+\DoxyCodeLine{00076\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a6e3119250618f888bdff079a40a9bc6e}{RefCountDec}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{base::RefCountDecN}}(ptr,\ 1);}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ Return\ whether\ the\ reference\ count\ is\ one.}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ If\ the\ reference\ count\ is\ used\ in\ the\ conventional\ way,\ a}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ reference\ count\ of\ 1\ implies\ that\ the\ current\ thread\ owns\ the}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ reference\ and\ no\ other\ thread\ shares\ it.}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ This\ call\ performs\ the\ test\ for\ a\ reference\ count\ of\ one,\ and}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ performs\ the\ memory\ barrier\ needed\ for\ the\ owning\ thread}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ to\ act\ on\ the\ object,\ knowing\ that\ it\ has\ exclusive\ access\ to\ the}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ object.}}
+\DoxyCodeLine{00088\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a928263c61ec42dcc8975fe27a314dfb8}{RefCountIsOne}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr)\ ==\ 1;}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ Return\ whether\ the\ reference\ count\ is\ zero.\ \ With\ conventional\ object}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ referencing\ counting,\ the\ object\ will\ be\ destroyed,\ so\ the\ reference\ count}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ should\ never\ be\ zero.\ \ Hence\ this\ is\ generally\ used\ for\ a\ debug\ check.}}
+\DoxyCodeLine{00095\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a60a3a4872762efa98af927132d1bf90f}{RefCountIsZero}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops-internals-gcc_8h_a2ed7901bceb772acd55d33551f752dab}{Atomic32}}*\ ptr)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{subtle::Acquire\_Load}}(ptr)\ ==\ 0;}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#if\ BASE\_HAS\_ATOMIC64}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ Implementations\ for\ Atomic64,\ if\ available.}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{RefCountIncN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ increment)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ DCHECK\_GT(increment,\ 0);}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{namespacebase_1_1subtle_a6848f74652d4699284da0ef2b9bb55d4}{base::subtle::NoBarrier\_AtomicIncrement}}(ptr,\ increment);}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{RefCountDecN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr,\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}\ decrement)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ DCHECK\_GT(decrement,\ 0);}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_ad79514e8ecd776445eca569256801441}{base::subtle::Barrier\_AtomicIncrement}}(ptr,\ -\/decrement)\ !=\ 0;}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_a0a9413aa775245688d31e9b5a8089581}{RefCountInc}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{base::RefCountIncN}}(ptr,\ 1);}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a6e3119250618f888bdff079a40a9bc6e}{RefCountDec}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{base::RefCountDecN}}(ptr,\ 1);}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a928263c61ec42dcc8975fe27a314dfb8}{RefCountIsOne}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr)\ ==\ 1;}
+\DoxyCodeLine{00117\ \}}
+\DoxyCodeLine{00118\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a60a3a4872762efa98af927132d1bf90f}{RefCountIsZero}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{namespacebase_1_1subtle_a98ef24c2ad175b876f58696ccd5e2302}{base::subtle::Atomic64}}*\ ptr)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(ptr)\ ==\ 0;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#ifdef\ AtomicWordCastType}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ Implementations\ for\ AtomicWord,\ if\ it's\ a\ different\ type\ from\ the\ above.}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{RefCountIncN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ increment)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{base::RefCountIncN}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ increment);}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{RefCountDecN}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr,\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}\ decrement)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{base::RefCountDecN}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr),\ decrement);}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacebase_a0a9413aa775245688d31e9b5a8089581}{RefCountInc}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{namespacebase_aa9fc01f901fff08797d1343dd4e5b298}{base::RefCountIncN}}(ptr,\ 1);}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a6e3119250618f888bdff079a40a9bc6e}{RefCountDec}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_af920fc644d372858d1442afe6744bfa4}{base::RefCountDecN}}(ptr,\ 1);}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a928263c61ec42dcc8975fe27a314dfb8}{RefCountIsOne}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr))\ ==}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ 1;}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacebase_a60a3a4872762efa98af927132d1bf90f}{RefCountIsZero}}(\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{atomicops_8h_ae5c6c8ee8720723c5370ed15f33cc531}{AtomicWord}}*\ ptr)\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacebase_1_1subtle_af5c61a0416c41ffad86c0f88d259aff8}{base::subtle::Acquire\_Load}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keyword}{volatile\ }AtomicWordCastType*\textcolor{keyword}{>}(ptr))\ ==}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ 0;}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \}\ \textcolor{comment}{//\ namespace\ base}}
+
+\end{DoxyCode}

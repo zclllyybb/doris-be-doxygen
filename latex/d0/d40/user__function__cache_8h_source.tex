@@ -1,0 +1,102 @@
+\hypertarget{user__function__cache_8h_source}{}\doxysection{user\+\_\+function\+\_\+cache.\+h}
+\label{user__function__cache_8h_source}\index{/Users/dabowang/be\_all/runtime/user\_function\_cache.h@{/Users/dabowang/be\_all/runtime/user\_function\_cache.h}}
+\mbox{\hyperlink{user__function__cache_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{struct\ }UserFunctionCacheEntry;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ Used\ to\ cache\ a\ user\ function.\ Theses\ functions\ include}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ UDF(User\ Defined\ Function)\ and\ UDAF(User\ Defined\ Aggregate}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Function),\ and\ maybe\ include\ UDTF(User\ Defined\ Table}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Function)\ in\ future.\ A\ user\ defined\ function\ may\ be\ splitted}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ into\ several\ functions,\ for\ example,\ UDAF\ is\ splitted\ into}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ InitFn,\ MergeFn,\ FinalizeFn...}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ In\ Doris,\ we\ call\ UDF/UDAF/UDTF\ UserFunction,\ and\ we\ call}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ implement\ function\ Function.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ An\ UserFunction\ have\ a\ function\ id,\ we\ can\ find\ library\ with}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ this\ id.\ When\ we\ add\ user\ function\ into\ cache,\ we\ need\ to}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ download\ from\ URL\ and\ check\ its\ checksum.\ So\ if\ we\ find\ a\ function}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ with\ id,\ this\ function\ library\ is\ valid.\ And\ when\ user\ wants\ to}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ change\ its\ implementation(URL),\ Doris\ will\ generate\ a\ new\ function}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ id.}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespacedoris_a6bd8133fc17124d3215b7fc6edecf616}{LibType}}\ \{\ \mbox{\hyperlink{namespacedoris_a6bd8133fc17124d3215b7fc6edecf616a529e625c8c2bf37c6334aae495a1d0f8}{JAR}},\ \mbox{\hyperlink{namespacedoris_a6bd8133fc17124d3215b7fc6edecf616a98d0360b392de5f1d53acdd6489b6e88}{SO}}\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_user_function_cache}{UserFunctionCache}}\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ local\_dir\ is\ the\ directory\ which\ contain\ cached\ library.}}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a9fa255070ec3d7cb1096769df316c8f2}{UserFunctionCache}}();}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_user_function_cache_aeeed374e9debd95695ddcd2c7026aa9b}{\string~UserFunctionCache}}();}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ initialize\ this\ cache,\ call\ this\ function\ before\ others}}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_ae7f09f078f863af85e0041b508b03bb6}{init}}(\textcolor{keyword}{const}\ std::string\&\ local\_path);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache}{UserFunctionCache}}*\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a851235bb0479462a35a76e4a49c0fb44}{instance}}();}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ Return\ function\ pointer\ for\ given\ fid\ and\ symbol.}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ If\ fid\ is\ 0,\ lookup\ symbol\ from\ this\ doris-\/be\ process.}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ Otherwise\ find\ symbol\ in\ UserFunction's\ library.}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ Found\ function\ pointer\ is\ returned\ in\ fn\_ptr,\ and\ cache\ entry}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ is\ returned\ by\ entry.\ Client\ must\ call\ release\_entry\ to\ release}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ cache\ entry\ if\ didn't\ need\ it.}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ If\ *entry\ is\ not\ true\ means\ that\ we\ should\ find\ symbol\ in\ this}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ entry.}}
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a9dd55a5c27973d1b3da9a3fef0d3a65d}{get\_function\_ptr}}(int64\_t\ fid,\ \textcolor{keyword}{const}\ std::string\&\ symbol,\ \textcolor{keyword}{const}\ std::string\&\ url,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__helper_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}},\ \textcolor{keywordtype}{void}**\ fn\_ptr,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}**\ entry);}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_ab92a8c7880d018bf81864dc79fc6d45a}{release\_entry}}(\mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}*\ entry);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a3688b2df69cb82531ec5499f7da5f15a}{get\_jarpath}}(int64\_t\ fid,\ \textcolor{keyword}{const}\ std::string\&\ url,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__helper_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}},}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string*\ libpath);}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_ae5790cf5f27c9c73fc2fce199965164d}{check\_jar}}(int64\_t\ fid,\ \textcolor{keyword}{const}\ std::string\&\ url,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__helper_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}});}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a1e8d11b01591fc5cc6f2948485304466}{\_load\_cached\_lib}}();}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_aeb200d488e11fe847b33c4c7ebcdd438}{\_load\_entry\_from\_lib}}(\textcolor{keyword}{const}\ std::string\&\ dir,\ \textcolor{keyword}{const}\ std::string\&\ file);}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a122f2494920b286ebd65f42d6b5dcdff}{\_get\_cache\_entry}}(int64\_t\ fid,\ \textcolor{keyword}{const}\ std::string\&\ url,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__helper_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}},}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}**\ output\_entry,\ \mbox{\hyperlink{namespacedoris_a6bd8133fc17124d3215b7fc6edecf616}{LibType}}\ type);}
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a00f95fe24424e62760a82d96efcc24a9}{\_load\_cache\_entry}}(\textcolor{keyword}{const}\ std::string\&\ url,\ \mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}*\ entry);}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a990ee32ae9bf581f8325833b546b8f9a}{\_download\_lib}}(\textcolor{keyword}{const}\ std::string\&\ url,\ \mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}*\ entry);}
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a372425b5cc59bf8e9f7889d9fe8ccf3c}{\_load\_cache\_entry\_internal}}(\mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}*\ entry);}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_afef0f86e6ff61384012d9066e1da257b}{\_make\_lib\_file}}(int64\_t\ function\_id,\ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__helper_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}},\ \mbox{\hyperlink{namespacedoris_a6bd8133fc17124d3215b7fc6edecf616}{LibType}}\ type);}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a8458868de834e6051f081fe0bc1667c6}{\_destroy\_cache\_entry}}(\mbox{\hyperlink{structdoris_1_1_user_function_cache_entry}{UserFunctionCacheEntry}}*\ entry);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a73db21488d353aa73fbb6d3cb9262253}{\_get\_real\_url}}(\textcolor{keyword}{const}\ std::string\&\ url);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00089\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a63be99a78b3d636df240e1ebd4e6e790}{\_lib\_dir}};}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_aa2d0862638e8afa69b76a97612e3fbd9}{\_current\_process\_handle}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_adacdb13af3eaf8b74b6913af8fecc8e5}{\_cache\_lock}};}
+\DoxyCodeLine{00093\ \ \ \ \ std::unordered\_map<int64\_t,\ UserFunctionCacheEntry*>\ \mbox{\hyperlink{classdoris_1_1_user_function_cache_a6ebf5c34abea3d41879c5bfbb32fa3bc}{\_entry\_map}};}
+\DoxyCodeLine{00094\ \};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

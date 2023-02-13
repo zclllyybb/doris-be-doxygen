@@ -1,0 +1,191 @@
+\hypertarget{jsonb__stream_8h_source}{}\doxysection{jsonb\+\_\+stream.\+h}
+\label{jsonb__stream_8h_source}\index{/Users/dabowang/be\_all/util/jsonb\_stream.h@{/Users/dabowang/be\_all/util/jsonb\_stream.h}}
+\mbox{\hyperlink{jsonb__stream_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ \ Copyright\ (c)\ 2014,\ Facebook,\ Inc.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ This\ source\ code\ is\ licensed\ under\ the\ BSD-\/style\ license\ found\ in\ the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ LICENSE\ file\ in\ the\ root\ directory\ of\ this\ source\ tree.\ An\ additional\ grant}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ of\ patent\ rights\ can\ be\ found\ in\ the\ PATENTS\ file\ in\ the\ same\ directory.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ This\ header\ file\ defines\ JsonbInBuffer\ and\ JsonbOutStream\ classes.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ **\ Input\ Buffer\ **}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ JsonbInBuffer\ is\ a\ customer\ input\ buffer\ to\ wrap\ raw\ character\ buffer.\ Its}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ object\ instances\ are\ used\ to\ create\ std::istream\ objects\ interally.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ **\ Output\ Stream\ **}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ JsonbOutStream\ is\ a\ custom\ output\ stream\ classes,\ to\ contain\ the\ JSONB}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ serialized\ binary.\ The\ class\ is\ conveniently\ used\ to\ specialize\ templates\ of}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ JsonbParser\ and\ JsonbWriter.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ @author\ Tian\ Xia\ <tianx@fb.com>}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ this\ file\ is\ copied\ from\ }}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ https://github.com/facebook/mysql-\/5.6/blob/fb-\/mysql-\/5.6.35/fbson/FbsonStream.h}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ and\ modified\ by\ Doris}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#ifndef\ JSONB\_JSONBSTREAM\_H}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#define\ JSONB\_JSONBSTREAM\_H}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#ifndef\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#define\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ lengths\ includes\ sign}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#define\ MAX\_INT\_DIGITS\ 11}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ MAX\_INT64\_DIGITS\ 20}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ MAX\_DOUBLE\_DIGITS\ 23\ }\textcolor{comment}{//\ 1(sign)+16(significant)+1(decimal)+5(exponent)}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *\ JSONB's\ implementation\ of\ input\ buffer}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_in_buffer}{JsonbInBuffer}}\ :\ \textcolor{keyword}{public}\ std::streambuf\ \{}
+\DoxyCodeLine{00053\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_in_buffer_a2ea230d229dd536d07ded77f2635b915}{JsonbInBuffer}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str,\ uint32\_t\ len)\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ is\ read\ buffer\ and\ the\ str\ will\ not\ be\ changed}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ we\ use\ const\_cast\ (ugly!)\ to\ remove\ constness}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ pch(\textcolor{keyword}{const\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(str));}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ setg(pch,\ pch,\ pch\ +\ len);}
+\DoxyCodeLine{00059\ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ *\ JSONB's\ implementation\ of\ output\ stream.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ *\ This\ is\ a\ wrapper\ of\ a\ char\ buffer.\ By\ default,\ the\ buffer\ capacity\ is\ 1024}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ *\ bytes.\ We\ will\ double\ the\ buffer\ if\ realloc\ is\ needed\ for\ writes.}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream}{JsonbOutStream}}\ :\ \textcolor{keyword}{public}\ std::ostream\ \{}
+\DoxyCodeLine{00069\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_ab2b10a28a5acd494b3261af5409e761b}{JsonbOutStream}}(uint32\_t\ capacity\ =\ 1024)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::ostream(nullptr),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}(nullptr),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}(0),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}(capacity),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}}(true)\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ =\ 1024;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ =\ (\textcolor{keywordtype}{char}*)\mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{malloc}}(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}});}
+\DoxyCodeLine{00077\ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a3c164172a211132e07fe99cb7fe5b3b0}{JsonbOutStream}}(\textcolor{keywordtype}{char}*\ buffer,\ uint32\_t\ capacity)}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::ostream(nullptr),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}(buffer),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}(0),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}(capacity),\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}}(false)\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ assert(buffer\ \&\&\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ >\ 0);}
+\DoxyCodeLine{00082\ \ \ \ \ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_ae70208a455765ddaacadfac73686fabf}{\string~JsonbOutStream}}()\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}})\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jemalloc__hook_8cpp_a3c12ec6b8e8368e804827d604b2979d7}{free}}(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}});}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a30ac9d6ab47903731da84bf97172b0d0}{put}}(\textcolor{keywordtype}{char}\ c)\ \{\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a7c6fe8e47e742b1304dbaeccc238913a}{write}}(\&c,\ 1);\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a7c6fe8e47e742b1304dbaeccc238913a}{write}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ c\_str)\ \{\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a7c6fe8e47e742b1304dbaeccc238913a}{write}}(c\_str,\ (uint32\_t)strlen(c\_str));\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_ad7f037dfcc1375df1de9c59d730270f4}{write}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ bytes,\ uint32\_t\ len)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +\ len\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}})\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{realloc}}(len);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}},\ bytes,\ len);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +=\ len;}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ write\ the\ integer\ to\ string}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a83cf31b1c64c8eda31c07524f0b17243}{write}}(\textcolor{keywordtype}{int}\ i)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ snprintf\ automatically\ adds\ a\ NULL,\ so\ we\ need\ one\ more\ char}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +\ \mbox{\hyperlink{jsonb__stream_8h_a1fccfa8bf71f34ab931eb60051a66ea4}{MAX\_INT\_DIGITS}}\ +\ 1\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}})\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{realloc}}(\mbox{\hyperlink{jsonb__stream_8h_a1fccfa8bf71f34ab931eb60051a66ea4}{MAX\_INT\_DIGITS}}\ +\ 1);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ len\ =\ snprintf(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}},\ \mbox{\hyperlink{jsonb__stream_8h_a1fccfa8bf71f34ab931eb60051a66ea4}{MAX\_INT\_DIGITS}}\ +\ 1,\ \textcolor{stringliteral}{"{}\%d"{}},\ i);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ assert(len\ >\ 0);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +=\ len;}
+\DoxyCodeLine{00115\ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ write\ the\ 64bit\ integer\ to\ string}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52b3bc3b8d4656c104b2d0a67565a057}{write}}(int64\_t\ l)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ snprintf\ automatically\ adds\ a\ NULL,\ so\ we\ need\ one\ more\ char}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +\ \mbox{\hyperlink{jsonb__stream_8h_a2a6c2d2e4dbbe7377016ae5bfef4a4e3}{MAX\_INT64\_DIGITS}}\ +\ 1\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}})\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{realloc}}(\mbox{\hyperlink{jsonb__stream_8h_a2a6c2d2e4dbbe7377016ae5bfef4a4e3}{MAX\_INT64\_DIGITS}}\ +\ 1);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ len\ =\ snprintf(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}},\ \mbox{\hyperlink{jsonb__stream_8h_a2a6c2d2e4dbbe7377016ae5bfef4a4e3}{MAX\_INT64\_DIGITS}}\ +\ 1,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIi64,\ l);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ assert(len\ >\ 0);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +=\ len;}
+\DoxyCodeLine{00127\ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_adb25947b4599e9e73c929cf55ba6a7b0}{write}}(\_\_int128\ l)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ write\ the\ double\ to\ string}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acf956d4b63e426e3b4188b515edf71d8}{write}}(\textcolor{keywordtype}{double}\ d)\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ snprintf\ automatically\ adds\ a\ NULL,\ so\ we\ need\ one\ more\ char}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +\ \mbox{\hyperlink{jsonb__stream_8h_a5cbcf0f3005fee40418f52a3ce538007}{MAX\_DOUBLE\_DIGITS}}\ +\ 1\ >\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}})\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{realloc}}(\mbox{\hyperlink{jsonb__stream_8h_a5cbcf0f3005fee40418f52a3ce538007}{MAX\_DOUBLE\_DIGITS}}\ +\ 1);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ len\ =\ snprintf(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ +\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}},\ \mbox{\hyperlink{jsonb__stream_8h_a5cbcf0f3005fee40418f52a3ce538007}{MAX\_DOUBLE\_DIGITS}}\ +\ 1,\ \textcolor{stringliteral}{"{}\%.15g"{}},\ d);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ assert(len\ >\ 0);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +=\ len;}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ pos\_type\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a381b06ea671987a6900110c312977e54}{tellp}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}};\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_ab7c601ee9f5738373027856ddad011fb}{seekp}}(pos\_type\ pos)\ \{\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ =\ (uint32\_t)pos;\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a3ae764a1c27814cb7a08d5ad46afdb0d}{getBuffer}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}};\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ pos\_type\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_aa8cee121417269cf60e367ca010a36bd}{getSize}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a381b06ea671987a6900110c312977e54}{tellp}}();\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{realloc}}(uint32\_t\ len)\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ >\ 0);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ *=\ 2;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ <\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}}\ +\ len)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}}\ *=\ 2;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}})\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ new\_buf\ =\ (\textcolor{keywordtype}{char}*)\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a52d542cf6093630f8842b023b86d3f4e}{::realloc}}(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}},\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}});}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ assert(new\_buf);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ =\ new\_buf;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ new\_buf\ =\ (\textcolor{keywordtype}{char}*)\mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{::malloc}}(\mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}});}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ assert(new\_buf);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_buf,\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}},\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}});}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}}\ =\ new\_buf;}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_acc6bd7122ebbbb12990df8e4f170014a}{head\_}};}
+\DoxyCodeLine{00178\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a13656a4861697290c264e82cab25ecfe}{size\_}};}
+\DoxyCodeLine{00179\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a04a2d320015f88cfeff0f17feb9d3495}{capacity\_}};}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_jsonb_out_stream_a12e2fcabdec141f87413372c54038115}{alloc\_}};}
+\DoxyCodeLine{00181\ \};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ JSONB\_JSONBSTREAM\_H}}
+
+\end{DoxyCode}

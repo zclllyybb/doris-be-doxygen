@@ -1,0 +1,71 @@
+\hypertarget{lower__upper__impl_8h_source}{}\doxysection{lower\+\_\+upper\+\_\+impl.\+h}
+\label{lower__upper__impl_8h_source}\index{/Users/dabowang/be\_all/util/simd/lower\_upper\_impl.h@{/Users/dabowang/be\_all/util/simd/lower\_upper\_impl.h}}
+\mbox{\hyperlink{lower__upper__impl_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifdef\ \_\_SSE2\_\_}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <emmintrin.h>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#elif\ \_\_aarch64\_\_}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <sse2neon.h>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ the\ code\ refer:\ https://clickhouse.tech/codebrowser/html\_report//ClickHouse/src/Functions/LowerUpperImpl.h.html}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ Doris\ only\ handle\ one\ character\ at\ a\ time,\ this\ function\ use\ SIMD\ to\ more\ characters\ at\ a\ time}}
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1simd}{doris::simd}}\ \{}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{char}\ not\_case\_lower\_bound,\ \textcolor{keywordtype}{char}\ not\_case\_upper\_bound>}
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1simd_1_1_lower_upper_impl}{LowerUpperImpl}}\ \{}
+\DoxyCodeLine{00036\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1simd_1_1_lower_upper_impl_a726ed750c673b959e012c7ce63ee994b}{transfer}}(\textcolor{keyword}{const}\ uint8\_t*\ src,\ \textcolor{keyword}{const}\ uint8\_t*\ src\_end,\ uint8\_t*\ dst)\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ flip\_case\_mask\ =\ \textcolor{charliteral}{'A'}\ \string^\ \textcolor{charliteral}{'a'};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#if\ defined(\_\_SSE2\_\_)\ ||\ defined(\_\_aarch64\_\_)}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ bytes\_sse\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{memcpy__aarch64_8cpp_ae568b00e462205af997f7d5d84814f70}{\_\_m128i}});}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_end\_sse\ =\ src\_end\ -\/\ (src\_end\ -\/\ src)\ \%\ bytes\_sse;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ v\_not\_case\_lower\_bound\ =\ \_mm\_set1\_epi8(not\_case\_lower\_bound\ -\/\ 1);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ v\_not\_case\_upper\_bound\ =\ \_mm\_set1\_epi8(not\_case\_upper\_bound\ +\ 1);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ v\_flip\_case\_mask\ =\ \_mm\_set1\_epi8(flip\_case\_mask);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ src\ <\ src\_end\_sse;\ src\ +=\ bytes\_sse,\ dst\ +=\ bytes\_sse)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ chars\ =\ \_mm\_loadu\_si128(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{memcpy__aarch64_8cpp_ae568b00e462205af997f7d5d84814f70}{\_\_m128i}}*\textcolor{keyword}{>}(src));}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ is\_not\_case\ =\ \_mm\_and\_si128(\_mm\_cmpgt\_epi8(chars,\ v\_not\_case\_lower\_bound),}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_mm\_cmplt\_epi8(chars,\ v\_not\_case\_upper\_bound));}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ xor\_mask\ =\ \_mm\_and\_si128(v\_flip\_case\_mask,\ is\_not\_case);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ cased\_chars\ =\ \_mm\_xor\_si128(chars,\ xor\_mask);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \_mm\_storeu\_si128(\textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{memcpy__aarch64_8cpp_ae568b00e462205af997f7d5d84814f70}{\_\_m128i}}*\textcolor{keyword}{>}(dst),\ cased\_chars);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ src\ <\ src\_end;\ ++src,\ ++dst)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*src\ >=\ not\_case\_lower\_bound\ \&\&\ *src\ <=\ not\_case\_upper\_bound)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *dst\ =\ *src\ \string^\ flip\_case\_mask;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *dst\ =\ *src;}
+\DoxyCodeLine{00063\ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \};}
+\DoxyCodeLine{00065\ \}\ \textcolor{comment}{//\ namespace\ doris::simd}}
+
+\end{DoxyCode}

@@ -1,0 +1,466 @@
+\hypertarget{aggregate__function__percentile__approx_8h_source}{}\doxysection{aggregate\+\_\+function\+\_\+percentile\+\_\+approx.\+h}
+\label{aggregate__function__percentile__approx_8h_source}\index{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_percentile\_approx.h@{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_percentile\_approx.h}}
+\mbox{\hyperlink{aggregate__function__percentile__approx_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{counts_8h}{util/counts.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tdigest_8h}{util/tdigest.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{aggregate__function_8h}{vec/aggregate\_functions/aggregate\_function.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__array_8h}{vec/columns/column\_array.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__nullable_8h}{vec/columns/column\_nullable.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__vector_8h}{vec/columns/column\_vector.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__array_8h}{vec/data\_types/data\_type\_array.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__number_8h}{vec/data\_types/data\_type\_number.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{io__helper_8h}{vec/io/io\_helper.h}}"{}}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state}{PercentileApproxState}}\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a57762d38dffdf2c9cc2e8c11220cf659}{INIT\_QUANTILE}}\ =\ -\/1.0;}
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a2cd66f7238a60945439aef81247afa7c}{PercentileApproxState}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00035\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a2c4c465ef91cc21a39d1b18be898c02d}{\string~PercentileApproxState}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a2556a33e4eb62c784c86a2d9a9fcf0d1}{init}}(\textcolor{keywordtype}{double}\ compression\ =\ 10000)\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//https://doris.apache.org/zh-\/CN/sql-\/reference/sql-\/functions/aggregate-\/functions/percentile\_approx.html\#description}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//The\ compression\ parameter\ setting\ range\ is\ [2048,\ 10000].}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//If\ the\ value\ of\ compression\ parameter\ is\ not\ specified\ set,\ or\ is\ outside\ the\ range\ of\ [2048,\ 10000],}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//will\ use\ the\ default\ value\ of\ 10000}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (compression\ <\ 2048\ ||\ compression\ >\ 10000)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ compression\ =\ 10000;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(compression));}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}}\ =\ compression;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8f098b3edf81803035538596bf24028f}{write}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}},\ buf);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}},\ buf);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}},\ buf);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ uint32\_t\ serialize\_size\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>serialized\_size();}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ std::string\ result(serialize\_size,\ \textcolor{charliteral}{'0'});}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.get()\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>serialize((uint8\_t*)result.c\_str());}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(result,\ buf);}
+\DoxyCodeLine{00066\ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_adee1f511c659624c5e46db33f73bf249}{read}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}},\ buf);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}},\ buf);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}},\ buf);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ std::string\ str;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(str,\ buf);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}}));}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>unserialize((uint8\_t*)str.c\_str());}
+\DoxyCodeLine{00080\ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_af53ec2e557ea14cce1373e0f77954c82}{get}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>quantile(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}});}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::nan(\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_ab6822d75ec75f613436153383b49b2b0}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state}{PercentileApproxState}}\&\ rhs)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}})\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.get()\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>merge(rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.get());}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}}));}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>merge(rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.get());}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}}\ ==\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a57762d38dffdf2c9cc2e8c11220cf659}{PercentileApproxState::INIT\_QUANTILE}})\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}}\ =\ rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}};}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_afa6f7fb3668d09ee364211058093849c}{add}}(\textcolor{keywordtype}{double}\ source,\ \textcolor{keywordtype}{double}\ quantile)\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}-\/>add(source);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}}\ =\ quantile;}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a57762d38dffdf2c9cc2e8c11220cf659}{INIT\_QUANTILE}};}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_t_digest}{TDigest}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}}));}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a9298e04a9d0130ff1545e0914d419de5}{init\_flag}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00119\ \ \ \ \ std::unique\_ptr<TDigest>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8a3e4d658089a789ec3b4f348e42a8e4}{digest}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a40e37788ff0705ef96f6c23ec6eacddc}{target\_quantile}}\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a57762d38dffdf2c9cc2e8c11220cf659}{INIT\_QUANTILE}};}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a96f881d3086210f65229f36ec29123c5}{compressions}}\ =\ 10000;}
+\DoxyCodeLine{00122\ \};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<PercentileApproxState,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AggregateFunctionPercentileApprox>\ \{}
+\DoxyCodeLine{00127\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00128\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_aa39d73bee211331244f79b7ea57aa3ad}{AggregateFunctionPercentileApprox}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state}{PercentileApproxState}},}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}>(argument\_types\_,\ \{\})\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}percentile\_approx"{}};\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_a576a9559872b7b902fcec2bbdb1ff214}{get\_return\_type}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_aac8e73eaa6aee54ea37e6d3fbfc970b6}{make\_nullable}}(std::make\_shared<DataTypeFloat64>());}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_a14c38ad3f3a91dbc8bb9a4767f08479e}{reset}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_ad20897c5c8bd47f5d4005989bead0e55}{reset}}();}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_ae2b6a83216392e87441b8d57a683d75d}{merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ rhs,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_ab6822d75ec75f613436153383b49b2b0}{merge}}(}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(rhs));}
+\DoxyCodeLine{00147\ \ \ \ \ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_a55336ef83a948829e989d77518ddfec1}{serialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_a8f098b3edf81803035538596bf24028f}{write}}(buf);}
+\DoxyCodeLine{00151\ \ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_a1ec7bd073eba83357d823adc0743051c}{deserialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_adee1f511c659624c5e46db33f73bf249}{read}}(buf);}
+\DoxyCodeLine{00156\ \ \ \ \ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_ad81b3ac3e979a4cfc70ec1472cf74009}{insert\_result\_into}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable}{ColumnNullable}}\&\ nullable\_column\ =\ assert\_cast<ColumnNullable\&>(to);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ result\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileApprox::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_approx_state_af53ec2e557ea14cce1373e0f77954c82}{get}}();}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::isnan(result))\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ nullable\_column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_a6df2ecbab548a51440ef47a89d5950a7}{insert\_default}}();}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ col\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(nullable\_column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_aa9e5d9e2d52e72e8d397e1f7f6ac943a}{get\_nested\_column}}());}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ col.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}().\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_a4fe88e30f68ec72ad91dee2dcf5fc1b8}{push\_back}}(result);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ nullable\_column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable_a329544ef446bb324378a2f28efa2b53a}{get\_null\_map\_data}}().\mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array_a4fe88e30f68ec72ad91dee2dcf5fc1b8}{push\_back}}(0);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \};}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ only\ for\ merge}}
+\DoxyCodeLine{00173\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ is\_nullable>}
+\DoxyCodeLine{00174\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_merge}{AggregateFunctionPercentileApproxMerge}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}\ \{}
+\DoxyCodeLine{00175\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00176\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_merge_a9ada1f3c3e03fda3c051fab507aef92d}{AggregateFunctionPercentileApproxMerge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}(argument\_types\_)\ \{\}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_merge_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ LOG(FATAL)\ <<\ \textcolor{stringliteral}{"{}AggregateFunctionPercentileApproxMerge\ do\ not\ support\ add()"{}};}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ is\_nullable>}
+\DoxyCodeLine{00185\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_two_params}{AggregateFunctionPercentileApproxTwoParams}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}\ \{}
+\DoxyCodeLine{00186\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00187\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_two_params_a8004663faf419c66a980b369dba5824e}{AggregateFunctionPercentileApproxTwoParams}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}(argument\_types\_)\ \{\}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_two_params_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_nullable)\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ column\_data[2]\ =\ \{0,\ 0\};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ ++i)\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ nullable\_column\ =\ check\_and\_get\_column<ColumnNullable>(columns[i]);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nullable\_column\ ==\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{comment}{//Not\ Nullable\ column}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ column\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[i]);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_data[i]\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!nullable\_column-\/>is\_null\_at(}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ row\_num))\ \{\ \textcolor{comment}{//\ Nullable\ column\ \&\&\ Not\ null\ data}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ column\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nullable\_column-\/>get\_nested\_column());}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_data[i]\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num);}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \textcolor{comment}{//\ Nullable\ column\ \&\&\ null\ data}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ 0)\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).init();}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).add(column\_data[0],\ column\_data[1]);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ sources\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[0]);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ quantile\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[1]);}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).init();}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).add(sources.get\_float64(row\_num),\ quantile.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num));}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ \};}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ is\_nullable>}
+\DoxyCodeLine{00225\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_three_params}{AggregateFunctionPercentileApproxThreeParams}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}\ \{}
+\DoxyCodeLine{00226\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00227\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_three_params_a12391367425bb4a8a50441a9a8549966}{AggregateFunctionPercentileApproxThreeParams}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx}{AggregateFunctionPercentileApprox}}(argument\_types\_)\ \{\}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_approx_three_params_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_nullable)\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ column\_data[3]\ =\ \{0,\ 0,\ 0\};}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 3;\ ++i)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ nullable\_column\ =\ check\_and\_get\_column<ColumnNullable>(columns[i]);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nullable\_column\ ==\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{comment}{//Not\ Nullable\ column}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ column\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[i]);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_data[i]\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!nullable\_column-\/>is\_null\_at(}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ row\_num))\ \{\ \textcolor{comment}{//\ Nullable\ column\ \&\&\ Not\ null\ data}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ column\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nullable\_column-\/>get\_nested\_column());}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ column\_data[i]\ =\ column.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num);}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \textcolor{comment}{//\ Nullable\ column\ \&\&\ null\ data}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ 0)\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).init(column\_data[2]);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).add(column\_data[0],\ column\_data[1]);}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ sources\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[0]);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ quantile\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[1]);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ compression\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[2]);}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).init(compression.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num));}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).add(sources.get\_float64(row\_num),\ quantile.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_ac24f813a90eb30d0a2bb9b2a20b959de}{get\_float64}}(row\_num));}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \};}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state}{PercentileState}}\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ std::vector<Counts>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}};}
+\DoxyCodeLine{00267\ \ \ \ \ std::vector<double>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}\ \{-\/1\};}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8f098b3edf81803035538596bf24028f}{write}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}},\ buf);}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ size\_num\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.size();}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(size\_num,\ buf);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ quantile\ :\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}})\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(quantile,\ buf);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ std::string\ serialize\_str;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ counts\ :\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}})\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ serialize\_str.resize(counts.serialized\_size(),\ \textcolor{charliteral}{'0'});}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ counts.serialize((uint8\_t*)serialize\_str.c\_str());}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(serialize\_str,\ buf);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_adee1f511c659624c5e46db33f73bf249}{read}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf)\ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}},\ buf);}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ size\_num\ =\ 0;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(size\_num,\ buf);}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}\ =\ 0.0;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.clear();}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size\_num;\ ++i)\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}},\ buf);}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.emplace\_back(\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}});}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ ref;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.clear();}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.resize(size\_num);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size\_num;\ ++i)\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(ref,\ buf);}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[i].unserialize((uint8\_t*)ref.\mbox{\hyperlink{structdoris_1_1_string_ref_a8f64897c7ccc5c13f276d1d07c4e7095}{data}});}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00302\ \ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a99fdff46bc3ec991fd4d254923435b21}{add}}(int64\_t\ source,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_p_o_d_array}{PaddedPODArray<Float64>}}\&\ quantiles,\ \textcolor{keywordtype}{int}\ arg\_size)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}})\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.resize(arg\_size);}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.resize(arg\_size,\ -\/1);}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ arg\_size;\ ++i)\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[i]\ =\ quantiles[i];}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ arg\_size;\ ++i)\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[i].increment(source,\ 1);}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8d18538024749baa8e942293781fab34}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state}{PercentileState}}\&\ rhs)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}})\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ size\_num\ =\ rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.size();}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}})\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.resize(size\_num);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.resize(size\_num,\ -\/1);}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size\_num;\ ++i)\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[i]\ ==\ -\/1.0)\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[i]\ =\ rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[i];}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[i].merge(\&(rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[i]));}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad20897c5c8bd47f5d4005989bead0e55}{reset}}()\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.clear();}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}.clear();}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a6a1ceec5f9aa43e21d2314bff2100e89}{inited\_flag}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00341\ \ \ \ \ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_af53ec2e557ea14cce1373e0f77954c82}{get}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ result\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[0].terminate(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[0]);\ \textcolor{comment}{//DoubleVal}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result.val;}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_aef466762983fade6e4b8aa0c7e996803}{insert\_result\_into}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ column\_data\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(to).\mbox{\hyperlink{uint24_8h_a2548205c24a5abb8e9a504a1f8cf5862}{get\_data}}();}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}.size();\ ++i)\ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ column\_data.push\_back(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad4929322c40cb587fff70ebebdf9bb5b}{vec\_counts}}[i].terminate(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ac94ae2122e676d8c2848b81092ba61ae}{vec\_quantile}}[i]).val);}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00353\ \ \ \ \ \}}
+\DoxyCodeLine{00354\ \};}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile}{AggregateFunctionPercentile}}\ final}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<PercentileState,\ AggregateFunctionPercentile>\ \{}
+\DoxyCodeLine{00358\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00359\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_ab92d6a492e854d7a09c6c4317035d91d}{AggregateFunctionPercentile}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state}{PercentileState}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile}{AggregateFunctionPercentile}}>(}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ argument\_types\_,\ \{\})\ \{\}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}percentile"{}};\ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_a576a9559872b7b902fcec2bbdb1ff214}{get\_return\_type}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ std::make\_shared<DataTypeFloat64>();\ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ sources\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Int64>}}\&\textcolor{keyword}{>}(*columns[0]);}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ quantile\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(*columns[1]);}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a99fdff46bc3ec991fd4d254923435b21}{add}}(sources.get\_int(row\_num),\ quantile.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}(),}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1);}
+\DoxyCodeLine{00373\ \ \ \ \ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_a14c38ad3f3a91dbc8bb9a4767f08479e}{reset}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad20897c5c8bd47f5d4005989bead0e55}{reset}}();}
+\DoxyCodeLine{00377\ \ \ \ \ \}}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_ae2b6a83216392e87441b8d57a683d75d}{merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ rhs,}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8d18538024749baa8e942293781fab34}{merge}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(rhs));}
+\DoxyCodeLine{00382\ \ \ \ \ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_a55336ef83a948829e989d77518ddfec1}{serialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8f098b3edf81803035538596bf24028f}{write}}(buf);}
+\DoxyCodeLine{00386\ \ \ \ \ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_a1ec7bd073eba83357d823adc0743051c}{deserialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_adee1f511c659624c5e46db33f73bf249}{read}}(buf);}
+\DoxyCodeLine{00391\ \ \ \ \ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_ad81b3ac3e979a4cfc70ec1472cf74009}{insert\_result\_into}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ col\ =\ assert\_cast<ColumnVector<Float64>\&>(to);}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ col.insert\_value(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentile::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_af53ec2e557ea14cce1373e0f77954c82}{get}}());}
+\DoxyCodeLine{00396\ \ \ \ \ \}}
+\DoxyCodeLine{00397\ \};}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array}{AggregateFunctionPercentileArray}}\ final}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<PercentileState,\ AggregateFunctionPercentileArray>\ \{}
+\DoxyCodeLine{00401\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00402\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a44a0506774760f55d294405dd909916f}{AggregateFunctionPercentileArray}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types\_)}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state}{PercentileState}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array}{AggregateFunctionPercentileArray}}>(}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ argument\_types\_,\ \{\})\ \{\}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}percentile\_array"{}};\ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a576a9559872b7b902fcec2bbdb1ff214}{get\_return\_type}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_shared<DataTypeArray>(\mbox{\hyperlink{namespacedoris_1_1vectorized_aac8e73eaa6aee54ea37e6d3fbfc970b6}{make\_nullable}}(std::make\_shared<DataTypeFloat64>()));}
+\DoxyCodeLine{00410\ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ sources\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Int64>}}\&\textcolor{keyword}{>}(*columns[0]);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ quantile\_array\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_array}{ColumnArray}}\&\textcolor{keyword}{>}(*columns[1]);}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ offset\_column\_data\ =\ quantile\_array.get\_offsets();}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ nested\_column\ =}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable}{ColumnNullable}}\&\textcolor{keyword}{>}(quantile\_array.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector_a3206c08675c03058605f3a6e5a452b5c}{get\_data}}()).get\_nested\_column();}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ nested\_column\_data\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_vector}{ColumnVector<Float64>}}\&\textcolor{keyword}{>}(nested\_column);}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a99fdff46bc3ec991fd4d254923435b21}{add}}(}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sources.get\_int(row\_num),\ nested\_column\_data.get\_data(),}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offset\_column\_data.data()[row\_num]\ -\/\ offset\_column\_data.data()[row\_num\ -\/\ 1]);}
+\DoxyCodeLine{00424\ \ \ \ \ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a14c38ad3f3a91dbc8bb9a4767f08479e}{reset}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_ad20897c5c8bd47f5d4005989bead0e55}{reset}}();}
+\DoxyCodeLine{00428\ \ \ \ \ \}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_ae2b6a83216392e87441b8d57a683d75d}{merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ rhs,}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8d18538024749baa8e942293781fab34}{merge}}(}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(rhs));}
+\DoxyCodeLine{00434\ \ \ \ \ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a55336ef83a948829e989d77518ddfec1}{serialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_a8f098b3edf81803035538596bf24028f}{write}}(buf);}
+\DoxyCodeLine{00438\ \ \ \ \ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_a1ec7bd073eba83357d823adc0743051c}{deserialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_adee1f511c659624c5e46db33f73bf249}{read}}(buf);}
+\DoxyCodeLine{00443\ \ \ \ \ \}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_function_percentile_array_ad81b3ac3e979a4cfc70ec1472cf74009}{insert\_result\_into}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ to\_arr\ =\ assert\_cast<ColumnArray\&>(to);}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ to\_nested\_col\ =\ to\_arr.get\_data();}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (to\_nested\_col.is\_nullable())\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ col\_null\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classdoris_1_1vectorized_1_1_column_nullable}{ColumnNullable}}*\textcolor{keyword}{>}(\&to\_nested\_col);}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_aef466762983fade6e4b8aa0c7e996803}{insert\_result\_into}}(}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_null-\/>get\_nested\_column());}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ col\_null-\/>get\_null\_map\_data().resize\_fill(col\_null-\/>get\_nested\_column().size(),\ 0);}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4d9713caf23038dda12a0742d0ea1800}{AggregateFunctionPercentileArray::data}}(place).\mbox{\hyperlink{structdoris_1_1vectorized_1_1_percentile_state_aef466762983fade6e4b8aa0c7e996803}{insert\_result\_into}}(to\_nested\_col);}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ to\_arr.get\_offsets().push\_back(to\_nested\_col.size());}
+\DoxyCodeLine{00457\ \ \ \ \ \}}
+\DoxyCodeLine{00458\ \};}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

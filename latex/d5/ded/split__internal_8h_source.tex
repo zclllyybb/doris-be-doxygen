@@ -1,0 +1,402 @@
+\hypertarget{split__internal_8h_source}{}\doxysection{split\+\_\+internal.\+h}
+\label{split__internal_8h_source}\index{/Users/dabowang/be\_all/gutil/strings/split\_internal.h@{/Users/dabowang/be\_all/gutil/strings/split\_internal.h}}
+\mbox{\hyperlink{split__internal_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2012\ Google\ Inc.\ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ This\ file\ declares\ INTERNAL\ parts\ of\ the\ Split\ API\ that\ are\ inline/templated}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ or\ otherwise\ need\ to\ be\ available\ at\ compile\ time.\ The\ main\ two\ abstractions}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ defined\ in\ here\ are}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ \ \ -\/\ SplitIterator<>}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ \ \ -\/\ Splitter<>}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Everything\ else\ is\ plumbing\ for\ those\ two.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ DO\ NOT\ INCLUDE\ THIS\ FILE\ DIRECTLY.\ Use\ this\ file\ by\ including}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ strings/split.h.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ IWYU\ pragma:\ private,\ include\ "{}strings/split.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <iterator>}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{using\ }std::back\_insert\_iterator;}
+\DoxyCodeLine{00021\ \textcolor{keyword}{using\ }std::iterator\_traits;}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00023\ \textcolor{keyword}{using\ }std::map;}
+\DoxyCodeLine{00024\ \textcolor{keyword}{using\ }std::multimap;}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00026\ \textcolor{keyword}{using\ }std::vector;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{port_8h}{gutil/port.h}}"{}}\ \textcolor{comment}{//\ for\ LANG\_CXX11}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stringpiece_8h}{gutil/strings/stringpiece.h}}"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#ifdef\ LANG\_CXX11}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ This\ must\ be\ included\ after\ "{}base/port.h"{},\ which\ defines\ LANG\_CXX11.}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <initializer\_list>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ LANG\_CXX11}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacestrings}{strings}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ The\ default\ Predicate\ object,\ which\ doesn't\ filter\ out\ anything.}}
+\DoxyCodeLine{00041\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_no_filter}{NoFilter}}\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_no_filter_a8dee11e89faabf00cfa4172e2bee9cbf}{operator()}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ \textcolor{comment}{/*\ ignored\ */})\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00043\ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ This\ class\ splits\ a\ string\ using\ the\ given\ delimiter,\ returning\ the\ split}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ substrings\ via\ an\ iterator\ interface.\ An\ optional\ Predicate\ functor\ may\ be}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ supplied,\ which\ will\ be\ used\ to\ filter\ the\ split\ strings:\ strings\ for\ which}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ the\ predicate\ returns\ false\ will\ be\ skipped.\ A\ Predicate\ object\ is\ any}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ functor\ that\ takes\ a\ StringPiece\ and\ returns\ bool.\ By\ default,\ the\ NoFilter}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Predicate\ is\ used,\ which\ does\ not\ filter\ out\ anything.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ This\ class\ is\ NOT\ part\ of\ the\ public\ splitting\ API.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ Usage:}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ using\ strings::delimiter::Literal;}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ Literal\ d("{},"{});}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ for\ (SplitIterator<Literal>\ it("{}a,b,c"{},\ d),\ end(d);\ it\ !=\ end;\ ++it)\ \{}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ \ StringPiece\ substring\ =\ *it;}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ \ DoWork(substring);}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ The\ explicit\ single-\/argument\ constructor\ is\ used\ to\ create\ an\ "{}end"{}\ iterator.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ The\ two-\/argument\ constructor\ is\ used\ to\ split\ the\ given\ text\ using\ the\ given}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ delimiter.}}
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Delimiter,\ \textcolor{keyword}{typename}\ Predicate\ =\ NoFilter>}
+\DoxyCodeLine{00067\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\ \{}
+\DoxyCodeLine{00068\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac30d83b0d8b71234a7c33ba93c63482c}{iterator\_category}}\ =\ std::input\_iterator\_tag;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_string_piece}{value\_type}}\ =\ \mbox{\hyperlink{class_string_piece}{StringPiece}};}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aec07e0ee98729a19bc41fe09e433f5d0}{difference\_type}}\ =\ ptrdiff\_t;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_string_piece}{pointer}}\ =\ \mbox{\hyperlink{class_string_piece}{StringPiece}}*;}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{class_string_piece}{reference}}\ =\ \mbox{\hyperlink{class_string_piece}{StringPiece}}\&;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Two\ constructors\ for\ "{}end"{}\ iterators.}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aa99f34d762744f4aaa44f90ef98d715e}{SplitIterator}}(Delimiter\ d)\ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}}(std::move(d)),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}}(),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}(true)\ \{\}}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ad24a7829b22ec178da964428d481bc01}{SplitIterator}}(Delimiter\ d,\ Predicate\ p)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}}(std::move(d)),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}}(std::move(p)),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}(true)\ \{\}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ Two\ constructors\ taking\ the\ text\ to\ iterator.}}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a61e218a43d585feb547002f32d87ebde}{SplitIterator}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ text,\ Delimiter\ d)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}(std::move(text)),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}}(std::move(d)),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}}(),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}(false)\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ ++(*this);}
+\DoxyCodeLine{00083\ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ad735b09c7b95e6e54e1f7c2d4f13ef8b}{SplitIterator}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ text,\ Delimiter\ d,\ Predicate\ p)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}(std::move(text)),}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}}(std::move(d)),}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}}(std::move(p)),}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}(false)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ ++(*this);}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a4c221db3e342e8746173c0c42e7a1767}{operator*}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}};\ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}*\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a3f61966d558c71468f11f013899a0d24}{operator-\/>}}()\ \{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}};\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\&\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_afef940d5d6b52dbbb1321c23ae786df6}{operator++}}()\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a68b688a51bd0cf6fb5bc2cba292209a8}{end}}()\ ==\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}.\mbox{\hyperlink{class_string_piece_a68b688a51bd0cf6fb5bc2cba292209a8}{end}}())\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Already\ consumed\ all\ of\ text\_,\ so\ we're\ done.}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ found\_delimiter\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}}.Find(\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}});}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ assert(found\_delimiter.\mbox{\hyperlink{class_string_piece_aa3affb1becdd976aba1036a161a3134d}{data}}()\ !=\ NULL);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}()\ <=\ found\_delimiter.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}());}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ assert(found\_delimiter.\mbox{\hyperlink{class_string_piece_a68b688a51bd0cf6fb5bc2cba292209a8}{end}}()\ <=\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a68b688a51bd0cf6fb5bc2cba292209a8}{end}}());}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\_delimiter\ is\ allowed\ to\ be\ empty.}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sets\ curr\_piece\_\ to\ all\ text\ up\ to\ but\ excluding\ the\ delimiter\ itself.}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sets\ text\_\ to\ remaining\ data\ after\ the\ delimiter.}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}.\mbox{\hyperlink{class_string_piece_a437d4c009bcc2c8794446ef121209792}{set}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}(),\ found\_delimiter.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}()\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}());}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a59ea335a45cf183fb65e28ed434cad10}{remove\_prefix}}(found\_delimiter.\mbox{\hyperlink{class_string_piece_a68b688a51bd0cf6fb5bc2cba292209a8}{end}}()\ -\/\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_a0c62c15c8ed609e7e5e9518cf5f5c712}{begin}}());}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}));}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00113\ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a347fd363eca0bcc26f681a4ad9f11f87}{operator++}}(\textcolor{keywordtype}{int}\ \textcolor{comment}{/*\ postincrement\ */})\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\ old(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ ++(*this);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ old;}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a02d2703ad2991574b832081aaa945565}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Two\ "{}end"{}\ iterators\ are\ always\ equal.\ If\ the\ two\ iterators\ being\ compared}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ aren't\ both\ end\ iterators,\ then\ we\ fallback\ to\ comparing\ their\ fields.}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Importantly,\ the\ text\ being\ split\ must\ be\ equal\ and\ the\ current\ piece}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ within\ the\ text\ being\ split\ must\ also\ be\ equal.\ The\ delimiter\_\ and}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ predicate\_\ fields\ need\ not\ be\ checked\ here\ because\ they're\ template}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parameters\ that\ are\ already\ part\ of\ the\ SplitIterator's\ type.}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}\ \&\&\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}})\ ||}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}\ ==\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}}\ \&\&\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}\ ==\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}\ \&\&}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_aa3affb1becdd976aba1036a161a3134d}{data}}()\ ==\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}}.\mbox{\hyperlink{class_string_piece_aa3affb1becdd976aba1036a161a3134d}{data}}()\ \&\&\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}\ ==\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}\ \&\&}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}.\mbox{\hyperlink{class_string_piece_aa3affb1becdd976aba1036a161a3134d}{data}}()\ ==\ other.\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}}.\mbox{\hyperlink{class_string_piece_aa3affb1becdd976aba1036a161a3134d}{data}}());}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a1d6cc4d6096f85239204fae7b40a0cfb}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{SplitIterator}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ The\ text\ being\ split.\ Modified\ as\ delimited\ pieces\ are\ consumed.}}
+\DoxyCodeLine{00138\ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a52cc55c25acad7e2ed8b156ea41cbf15}{text\_}};}
+\DoxyCodeLine{00139\ \ \ \ \ Delimiter\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_ac6acabc266b0a2e5f1aa2fd48f4f3ef8}{delimiter\_}};}
+\DoxyCodeLine{00140\ \ \ \ \ Predicate\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_aaaafa4bf766d42e3e057a5289352a928}{predicate\_}};}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a7c3ab0e6a580aa91421f76acf462735f}{is\_end\_}};}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Holds\ the\ currently\ split\ piece\ of\ text.\ Will\ always\ refer\ to\ string\ data}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ within\ text\_.\ This\ value\ is\ returned\ when\ the\ iterator\ is\ dereferenced.}}
+\DoxyCodeLine{00144\ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator_a148d6755500b0d8686f7f789bfc60257}{curr\_piece\_}};}
+\DoxyCodeLine{00145\ \};}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ Declares\ a\ functor\ that\ can\ convert\ a\ StringPiece\ to\ another\ type.\ This\ works}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ for\ any\ type\ that\ has\ a\ constructor\ (explicit\ or\ not)\ taking\ a\ single}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ StringPiece\ argument.\ A\ specialization\ exists\ for\ converting\ to\ string}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ because\ the\ underlying\ data\ needs\ to\ be\ copied.\ In\ theory,\ these}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ specializations\ could\ be\ extended\ to\ work\ with\ other\ types\ (e.g.,\ int32),\ but}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ then\ a\ solution\ for\ error\ reporting\ would\ need\ to\ be\ devised.}}
+\DoxyCodeLine{00153\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ To>}
+\DoxyCodeLine{00154\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo}}\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ To\ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to_abda7d616994a71cb2ce1477d5ed06b21}{operator()}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ from)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ To(from);\ \}}
+\DoxyCodeLine{00156\ \};}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \textcolor{comment}{//\ Specialization\ for\ converting\ to\ string.}}
+\DoxyCodeLine{00159\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00160\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo}}<string>\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to_3_01string_01_4_a88c58861bf8261057f58dff885376c42}{operator()}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ from)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ from.\mbox{\hyperlink{class_string_piece_a19c380b03cea21d7ac7325136a131ff0}{ToString}}();\ \}}
+\DoxyCodeLine{00162\ \};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ Specialization\ for\ converting\ to\ *const*\ string.}}
+\DoxyCodeLine{00165\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00166\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo}}<const\ string>\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to_3_01const_01string_01_4_a88c58861bf8261057f58dff885376c42}{operator()}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ from)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ from.\mbox{\hyperlink{class_string_piece_a19c380b03cea21d7ac7325136a131ff0}{ToString}}();\ \}}
+\DoxyCodeLine{00168\ \};}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#ifdef\ LANG\_CXX11}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//\ IsNotInitializerList<T>::type\ exists\ iff\ T\ is\ not\ an\ initializer\_list.\ More}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ details\ below\ in\ Splitter<>\ where\ this\ is\ used.}}
+\DoxyCodeLine{00173\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00174\ \textcolor{keyword}{struct\ }IsNotInitializerList\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ type;}
+\DoxyCodeLine{00176\ \};}
+\DoxyCodeLine{00177\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00178\ \textcolor{keyword}{struct\ }IsNotInitializerList<std::initializer\_list<T>>\ \{\};}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ LANG\_CXX11}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ This\ class\ implements\ the\ behavior\ of\ the\ split\ API\ by\ giving\ callers\ access}}
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ to\ the\ underlying\ split\ substrings\ in\ various\ convenient\ ways,\ such\ as}}
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ through\ iterators\ or\ implicit\ conversion\ functions.\ Do\ not\ construct\ this}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ class\ directly,\ rather\ use\ the\ Split()\ function\ instead.}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//}}
+\DoxyCodeLine{00186\ \textcolor{comment}{//\ Output\ containers\ can\ be\ collections\ of\ either\ StringPiece\ or\ string\ objects.}}
+\DoxyCodeLine{00187\ \textcolor{comment}{//\ StringPiece\ is\ more\ efficient\ because\ the\ underlying\ data\ will\ not\ need\ to\ be}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//\ copied;\ the\ returned\ StringPieces\ will\ all\ refer\ to\ the\ data\ within\ the}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ original\ input\ string.\ If\ a\ collection\ of\ string\ objects\ is\ used,\ then\ each}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ substring\ will\ be\ copied.}}
+\DoxyCodeLine{00191\ \textcolor{comment}{//}}
+\DoxyCodeLine{00192\ \textcolor{comment}{//\ An\ optional\ Predicate\ functor\ may\ be\ supplied.\ This\ predicate\ will\ be\ used\ to}}
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ filter\ the\ split\ strings:\ only\ strings\ for\ which\ the\ predicate\ returns\ true}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ will\ be\ kept.\ A\ Predicate\ object\ is\ any\ unary\ functor\ that\ takes\ a}}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ StringPiece\ and\ returns\ bool.\ By\ default,\ the\ NoFilter\ predicate\ is\ used,}}
+\DoxyCodeLine{00196\ \textcolor{comment}{//\ which\ does\ not\ filter\ out\ anything.}}
+\DoxyCodeLine{00197\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Delimiter,\ \textcolor{keyword}{typename}\ Predicate\ =\ NoFilter>}
+\DoxyCodeLine{00198\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classstrings_1_1internal_1_1_splitter}{Splitter}}\ \{}
+\DoxyCodeLine{00199\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{internal::SplitIterator<Delimiter,\ Predicate>}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a73d1036674a62d8c53f378de9c872258}{Iterator}};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_abb064d49f17589150a3ae6b6647e0f67}{Splitter}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ text,\ Delimiter\ d)\ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a5cf75574c424244c5449bf2a2f0f81b3}{begin\_}}(text,\ d),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}}(d)\ \{\}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a970e4a82be6b3b5e3c839f989421ac3e}{Splitter}}(\mbox{\hyperlink{class_string_piece}{StringPiece}}\ text,\ Delimiter\ d,\ Predicate\ p)\ :\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a5cf75574c424244c5449bf2a2f0f81b3}{begin\_}}(text,\ d,\ p),\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}}(d,\ p)\ \{\}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Range\ functions\ that\ iterate\ the\ split\ substrings\ as\ StringPiece\ objects.}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ These\ methods\ enable\ a\ Splitter\ to\ be\ used\ in\ a\ range-\/based\ for\ loop\ in}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ C++11,\ for\ example:}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ \ \ for\ (StringPiece\ sp\ :\ my\_splitter)\ \{}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ DoWork(sp);}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\&\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_adb457e41b8ae386adb2e74331662cd07}{begin}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a5cf75574c424244c5449bf2a2f0f81b3}{begin\_}};\ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\&\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a24bb6b3d4d2a9cefc0de0d0c2a4ca1e0}{end}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}};\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\#ifdef\ LANG\_CXX11}}
+\DoxyCodeLine{00217\ \textcolor{comment}{//\ Support\ for\ default\ template\ arguments\ for\ function\ templates\ was\ added\ in}}
+\DoxyCodeLine{00218\ \textcolor{comment}{//\ C++11,\ but\ it\ is\ not\ allowed\ if\ compiled\ in\ C++98\ compatibility\ mode.\ Since}}
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ this\ code\ is\ under\ a\ LANG\_CXX11\ guard,\ we\ can\ safely\ ignore\ the}}
+\DoxyCodeLine{00220\ \textcolor{comment}{//\ -\/Wc++98-\/compat\ flag\ and\ use\ default\ template\ arguments\ on\ the\ implicit}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ conversion\ operator\ below.}}
+\DoxyCodeLine{00222\ \textcolor{comment}{//}}
+\DoxyCodeLine{00223\ \textcolor{comment}{//\ This\ use\ of\ default\ template\ arguments\ on\ a\ function\ template\ was\ approved}}
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ by\ tgs\ and\ sanjay\ on\ behalf\ of\ the\ c-\/style-\/arbiters\ in\ email\ thread}}
+\DoxyCodeLine{00225\ \textcolor{comment}{//}}
+\DoxyCodeLine{00226\ \textcolor{comment}{//\ All\ compiler\ flags\ are\ first\ saved\ with\ a\ diagnostic\ push\ and\ restored\ with\ a}}
+\DoxyCodeLine{00227\ \textcolor{comment}{//\ diagnostic\ pop\ below.}}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ push}}
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wpragmas"{}}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wc++98-\/compat"{}}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ Uses\ SFINAE\ to\ restrict\ conversion\ to\ container-\/like\ types\ (by\ testing\ for}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{comment}{//\ the\ presence\ of\ a\ const\_iterator\ member\ type)\ and\ also\ to\ disable}}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ conversion\ to\ an\ initializer\_list\ (which\ also\ has\ a\ const\_iterator).}}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ Otherwise,\ code\ compiled\ in\ C++11\ will\ get\ an\ error\ due\ to\ ambiguous}}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ conversion\ paths\ (in\ C++11\ vector<T>::operator=\ is\ overloaded\ to\ take}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ either\ a\ vector<T>\ or\ an\ initializer\_list<T>).}}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{comment}{//\ This\ trick\ was\ taken\ from\ util/gtl/container\_literal.h}}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Container,}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ IsNotInitializerListChecker\ =\ \textcolor{keyword}{typename}\ IsNotInitializerList<Container>::type,}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ ContainerChecker\ =\ \textcolor{keyword}{typename}\ Container::const\_iterator>}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keyword}{operator}\ Container()\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SelectContainer<Container,\ is\_map<Container>::value>()(\textcolor{keyword}{this});}
+\DoxyCodeLine{00245\ \ \ \ \ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ Restores\ diagnostic\ settings,\ i.e.,\ removes\ the\ "{}ignore"{}\ on\ -\/Wpragmas\ and}}
+\DoxyCodeLine{00248\ \textcolor{comment}{//\ -\/Wc++98-\/compat.}}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ pop}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{comment}{//\ Not\ under\ LANG\_CXX11}}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Container>}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keyword}{operator}\ Container()\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1_select_container}{SelectContainer<Container,\ is\_map<Container>::value}}>()(\textcolor{keyword}{this});}
+\DoxyCodeLine{00256\ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ LANG\_CXX11}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ First,\ \textcolor{keyword}{typename}\ Second>}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keyword}{operator}\ std::pair<First,\ Second>()\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ToPair<First,\ Second>();}
+\DoxyCodeLine{00262\ \ \ \ \ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ is\_map<T>::value\ is\ true\ iff\ there\ exists\ a\ type\ T::mapped\_type.\ This\ is}}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{comment}{//\ used\ to\ dispatch\ to\ one\ of\ the\ SelectContainer<>\ functors\ (below)\ from\ the}}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ implicit\ conversion\ operator\ (above).}}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1is__map}{is\_map}}\ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structbase_1_1big__}{base::big\_}}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1is__map_ad4c093d612acf2c56f80030cd305f356}{test}}(\textcolor{keyword}{typename}\ U::mapped\_type*);}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}>}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacebase_a85e1ef5b4cd26f81bc8dcae716ac4880}{base::small\_}}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1is__map_ad0cba0286886799337a246b619f4f04e}{test}}(...);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1is__map_a11ddd051208250c32dc4985abcafa86d}{value}}\ =\ (\textcolor{keyword}{sizeof}(test<T>(0))\ ==\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structbase_1_1big__}{base::big\_}}));}
+\DoxyCodeLine{00275\ \ \ \ \ \};}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ Base\ template\ handles\ splitting\ to\ non-\/map\ containers}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Container,\ \textcolor{keywordtype}{bool}>}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1_select_container}{SelectContainer}}\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ Container\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1_select_container_a7f99afa6f29ff2fa0c1320b6a8f8364a}{operator()}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_splitter}{Splitter}}*\ splitter)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ splitter-\/>template\ ToContainer<Container>();}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \};}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ Partial\ template\ specialization\ for\ splitting\ to\ map-\/like\ containers.}}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Container>}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1_select_container}{SelectContainer}}<Container,\ true>\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ Container\ \mbox{\hyperlink{structstrings_1_1internal_1_1_splitter_1_1_select_container_3_01_container_00_01true_01_4_a7f99afa6f29ff2fa0c1320b6a8f8364a}{operator()}}(\mbox{\hyperlink{classstrings_1_1internal_1_1_splitter}{Splitter}}*\ splitter)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ splitter-\/>template\ ToMap<Container>();}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \};}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ Inserts\ split\ results\ into\ the\ container.\ To\ do\ this\ the\ results\ are\ first}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//\ stored\ in\ a\ vector<StringPiece>.\ This\ is\ where\ the\ input\ text\ is\ actually}}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ "{}parsed"{}.\ This\ vector\ is\ then\ used\ to\ possibly\ reserve\ space\ in\ the\ output}}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ container,\ and\ the\ StringPieces\ in\ "{}v"{}\ are\ converted\ as\ necessary\ to\ the}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{//\ output\ container's\ value\ type.}}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ The\ reason\ to\ use\ an\ intermediate\ vector\ of\ StringPiece\ is\ so\ we\ can\ learn}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{comment}{//\ the\ needed\ capacity\ of\ the\ output\ container.\ This\ is\ needed\ when\ the\ output}}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ container\ is\ a\ vector<string>\ in\ which\ case\ resizes\ can\ be\ expensive\ due\ to}}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ copying\ of\ the\ ::string\ objects.}}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{comment}{//\ At\ some\ point\ in\ the\ future\ we\ might\ add\ a\ C++11\ move\ constructor\ to}}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{comment}{//\ ::string,\ in\ which\ case\ the\ vector\ resizes\ are\ much\ less\ expensive\ and\ the}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ use\ of\ this\ intermediate\ vector\ "{}v"{}\ can\ be\ removed.}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Container>}
+\DoxyCodeLine{00308\ \ \ \ \ Container\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a197e0f167f47d082c2d634a93df86b43}{ToContainer}}()\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ vector<StringPiece>\ v;}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\ it\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_adb457e41b8ae386adb2e74331662cd07}{begin}}();\ it\ !=\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}};\ ++it)\ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ v.push\_back(*it);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Container::value\_type\ ToType;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{internal::StringPieceTo<ToType>}}\ converter;}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ Container\ c;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_abde9b233378f4d5b694ace130b70acc6}{ReserveCapacity}}(\&c,\ v.size());}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ std::insert\_iterator<Container>\ inserter(c,\ c.begin());}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ sp\ :\ v)\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ *inserter++\ =\ converter(sp);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ c;}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{comment}{//\ The\ algorithm\ is\ to\ insert\ a\ new\ pair\ into\ the\ map\ for\ each\ even-\/numbered}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ item,\ with\ the\ even-\/numbered\ item\ as\ the\ key\ with\ a\ default-\/constructed}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{comment}{//\ value.\ Each\ odd-\/numbered\ item\ will\ then\ be\ assigned\ to\ the\ last\ pair's}}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{comment}{//\ value.}}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Map>}
+\DoxyCodeLine{00329\ \ \ \ \ Map\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_aa8ad609d94a1f58915c466e65c17f7cb}{ToMap}}()\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Map::key\_type\ Key;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Map::mapped\_type\ Data;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ Map\ m;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo<Key>}}\ key\_converter;}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo<Data>}}\ val\_converter;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Map::iterator\ curr\_pair;}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_even\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\ it\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_adb457e41b8ae386adb2e74331662cd07}{begin}}();\ it\ !=\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}};\ ++it)\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_even)\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ curr\_pair\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a58375897283e15ad31d81ee631b47961}{InsertInMap}}(std::make\_pair(key\_converter(*it),\ Data()),\ \&m);}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ curr\_pair-\/>second\ =\ val\_converter(*it);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ is\_even\ =\ !is\_even;}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m;}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ pair\ with\ its\ .first\ and\ .second\ members\ set\ to\ the\ first\ two}}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{comment}{//\ strings\ returned\ by\ the\ begin()\ iterator.\ Either/both\ of\ .first\ and\ .second}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{comment}{//\ will\ be\ empty\ strings\ if\ the\ iterator\ doesn't\ have\ a\ corresponding\ value.}}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ First,\ \textcolor{keyword}{typename}\ Second>}
+\DoxyCodeLine{00352\ \ \ \ \ std::pair<First,\ Second>\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a3a89485e7d9cd32dca4f717f7b73b617}{ToPair}}()\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo<First>}}\ first\_converter;}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structstrings_1_1internal_1_1_string_piece_to}{StringPieceTo<Second>}}\ second\_converter;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_string_piece}{StringPiece}}\ first,\ second;}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\ it\ =\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_adb457e41b8ae386adb2e74331662cd07}{begin}}();}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ !=\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a24bb6b3d4d2a9cefc0de0d0c2a4ca1e0}{end}}())\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ first\ =\ *it;}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (++it\ !=\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a24bb6b3d4d2a9cefc0de0d0c2a4ca1e0}{end}}())\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ second\ =\ *it;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(first\_converter(first),\ second\_converter(second));}
+\DoxyCodeLine{00364\ \ \ \ \ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ Overloaded\ InsertInMap()\ function.\ The\ first\ overload\ is\ the\ commonly\ used}}
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{//\ one\ for\ most\ map-\/like\ objects.\ The\ second\ overload\ is\ a\ special\ case\ for}}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{comment}{//\ multimap,\ because\ multimap's\ insert()\ member\ function\ directly\ returns\ an}}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{comment}{//\ iterator,\ rather\ than\ a\ pair<iterator,\ bool>\ like\ map's.}}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Map>}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keyword}{typename}\ Map::iterator\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a58375897283e15ad31d81ee631b47961}{InsertInMap}}(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Map::value\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ Map*\ map)\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ map-\/>insert(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}).first;}
+\DoxyCodeLine{00373\ \ \ \ \ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ InsertInMap\ overload\ for\ multimap.}}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A>}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keyword}{typename}\ std::multimap<K,\ T,\ C,\ A>::iterator\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a9bc1dfc96c13d3803368cb642277eaa9}{InsertInMap}}(}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ std::multimap<K,\ T,\ C,\ A>::value\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ std::multimap<K,\ T,\ C,\ A>*\ map)\ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ map-\/>insert(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00381\ \ \ \ \ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{comment}{//\ Reserves\ the\ given\ amount\ of\ capacity\ in\ a\ vector<string>}}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_abde9b233378f4d5b694ace130b70acc6}{ReserveCapacity}}(vector<string,\ A>*\ v,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ v-\/>reserve(size);}
+\DoxyCodeLine{00387\ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a7348a937c13312114e53db08cee01463}{ReserveCapacity}}(...)\ \{\}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_a5cf75574c424244c5449bf2a2f0f81b3}{begin\_}};}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_split_iterator}{Iterator}}\ \mbox{\hyperlink{classstrings_1_1internal_1_1_splitter_afebc355832c501b1ce91e1b932f2a96b}{end\_}};}
+\DoxyCodeLine{00392\ \};}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \}\ \textcolor{comment}{//\ namespace\ strings}}
+
+\end{DoxyCode}

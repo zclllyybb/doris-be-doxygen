@@ -1,0 +1,411 @@
+\hypertarget{aggregate__function__rpc_8h_source}{}\doxysection{aggregate\+\_\+function\+\_\+rpc.\+h}
+\label{aggregate__function__rpc_8h_source}\index{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_rpc.h@{/Users/dabowang/be\_all/vec/aggregate\_functions/aggregate\_function\_rpc.h}}
+\mbox{\hyperlink{aggregate__function__rpc_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rpc__fn__comm_8h}{exprs/rpc\_fn\_comm.h}}"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/Exprs\_types.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}json2pb/json\_to\_pb.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}json2pb/pb\_to\_json.h"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exec__env_8h}{runtime/exec\_env.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{user__function__cache_8h}{runtime/user\_function\_cache.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{brpc__client__cache_8h}{util/brpc\_client\_cache.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{jni-util_8h}{util/jni-\/util.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{aggregate__function_8h}{vec/aggregate\_functions/aggregate\_function.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__string_8h}{vec/columns/column\_string.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__vector_8h}{vec/columns/column\_vector.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{columns__number_8h}{vec/columns/columns\_number.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2common_2exception_8h}{vec/common/exception.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{string__ref_8h}{vec/common/string\_ref.h}}"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{block_8h}{vec/core/block.h}}"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{column__numbers_8h}{vec/core/column\_numbers.h}}"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2field_8h}{vec/core/field.h}}"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2core_2types_8h}{vec/core/types.h}}"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{data__type__string_8h}{vec/data\_types/data\_type\_string.h}}"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{io__helper_8h}{vec/io/io\_helper.h}}"{}}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris_1_1vectorized}{doris::vectorized}}\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#define\ error\_default\_str\ "{}\#\$@"{}}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{constexpr}\ int64\_t\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8ac41ed2afc9b816ccfe6a2c6492d8cd}{max\_buffered\_rows}}\ =\ 4096;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data}{AggregateRpcUdafData}}\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00052\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae4c0b5f6391881d9f701557e1bee20c4}{\_update\_fn}};}
+\DoxyCodeLine{00053\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a2ddb0b996aeb298aec5ea481494383b0}{\_merge\_fn}};}
+\DoxyCodeLine{00054\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}};}
+\DoxyCodeLine{00055\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a98737ab9b43489a1d926e6d3209c8eca}{\_finalize\_fn}};}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a494aa028980ba2eec8711b0cb8d3a3b3}{\_saved\_last\_result}};}
+\DoxyCodeLine{00057\ \ \ \ \ std::shared\_ptr<PFunctionService\_Stub>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a15ae6bbfc379eb500d04d8e92552241a}{\_client}};}
+\DoxyCodeLine{00058\ \ \ \ \ PFunctionCallResponse\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}};}
+\DoxyCodeLine{00059\ \ \ \ \ std::vector<PFunctionCallRequest>\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}};}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aa8c08019b306764e7d5f315d070ce632}{\_error}};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a4ae58c191da4570b8c23eb8f1450c269}{AggregateRpcUdafData}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a5c12509817eb93b2f0265b93946434b9}{AggregateRpcUdafData}}(int64\_t\ num\_args)\ \{\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a69555e611540f14e46422e35abdc8f5e}{has\_last\_result}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a494aa028980ba2eec8711b0cb8d3a3b3}{\_saved\_last\_result}}\ ==\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_aa22c8aa4a1f9eb102cc140540239702e}{flag}})\ \{\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a494aa028980ba2eec8711b0cb8d3a3b3}{\_saved\_last\_result}}\ =\ \mbox{\hyperlink{namespacedoris_aa22c8aa4a1f9eb102cc140540239702e}{flag}};\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a69d262f11c99443c89d54ef828c46176}{\string~AggregateRpcUdafData}}()\ \{\}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacedoris_aa22c8aa4a1f9eb102cc140540239702e}{flag}})\ \{\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aa8c08019b306764e7d5f315d070ce632}{\_error}}\ =\ \mbox{\hyperlink{namespacedoris_aa22c8aa4a1f9eb102cc140540239702e}{flag}};\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ab062313921f86cffba8f1e86edf1f7f8}{has\_error}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aa8c08019b306764e7d5f315d070ce632}{\_error}}\ ==\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a86d2bc0df9fa07428d36d8856da2ce10}{merge}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data}{AggregateRpcUdafData}}\&\ rhs)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a69555e611540f14e46422e35abdc8f5e}{has\_last\_result}}())\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallRequest\ request;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallResponse\ response;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ brpc::Controller\ cntl;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallResponse\ current\_res\ =\ rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ad74d1832a3f47445bb6c805433486b21}{get\_result}}();}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ request.set\_function\_name(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a2ddb0b996aeb298aec5ea481494383b0}{\_merge\_fn}});}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//last\ result}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ PValues*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}\ =\ request.add\_args();}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}-\/>CopyFrom(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.result(0));}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}\ =\ request.add\_args();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//current\ result}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}-\/>CopyFrom(current\_res.result(0));}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//send\ to\ rpc\ server\ \ that\ impl\ the\ merge\ op,\ the\ will\ save\ the\ result}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0afba6010eac0223de58a0c474eca320}{send\_rpc\_request}}(cntl,\ request,\ response));}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}\ =\ response;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}\ =\ rhs.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ad74d1832a3f47445bb6c805433486b21}{get\_result}}();}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a8487a6ba142ca408214be561d879c0ac}{init}}(\textcolor{keyword}{const}\ TFunction\&\ fn)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae4c0b5f6391881d9f701557e1bee20c4}{\_update\_fn}}\ =\ fn.aggregate\_fn.update\_fn\_symbol;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a2ddb0b996aeb298aec5ea481494383b0}{\_merge\_fn}}\ =\ fn.aggregate\_fn.merge\_fn\_symbol;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}}\ =\ fn.hdfs\_location;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a98737ab9b43489a1d926e6d3209c8eca}{\_finalize\_fn}}\ =\ fn.aggregate\_fn.finalize\_fn\_symbol;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{false});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a15ae6bbfc379eb500d04d8e92552241a}{\_client}}\ =\ \mbox{\hyperlink{classdoris_1_1_exec_env_a920023e1afb35093f05bf7b69cc5e889}{ExecEnv::GetInstance}}()-\/>\mbox{\hyperlink{classdoris_1_1_exec_env_ac058fe9e57a12012a3dd404cb301d32d}{brpc\_function\_client\_cache}}()-\/>\mbox{\hyperlink{classdoris_1_1_brpc_client_cache_a5cbfd066c3016f8b26b6936993cd7791}{get\_client}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}});}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a15ae6bbfc379eb500d04d8e92552241a}{\_client}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ err\_msg\ =\ \textcolor{stringliteral}{"{}init\ rpc\ error,\ addr:"{}}\ +\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}};}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err\_msg;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InternalError(err\_msg);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0afba6010eac0223de58a0c474eca320}{send\_rpc\_request}}(brpc::Controller\&\ cntl,\ PFunctionCallRequest\&\ request,}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallResponse\&\ response)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a15ae6bbfc379eb500d04d8e92552241a}{\_client}}-\/>fn\_call(\&cntl,\ \&request,\ \&response,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cntl.Failed())\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ std::stringstream\ err\_msg;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ call\ rpc\ function\ failed"{}};}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ \_server\_addr:"{}}\ <<\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ function\_name:"{}}\ <<\ request.function\_name();}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ err:"{}}\ <<\ cntl.ErrorText();}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err\_msg.str();}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InternalError(err\_msg.str());}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!response.has\_status()\ ||\ response.result\_size()\ ==\ 0)\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ std::stringstream\ err\_msg;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ call\ rpc\ function\ failed,\ status\ or\ result\ is\ not\ set"{}};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ \_server\_addr:"{}}\ <<\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}};}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ function\_name:"{}}\ <<\ request.function\_name();}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err\_msg.str();}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InternalError(err\_msg.str());}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (response.status().status\_code()\ !=\ 0)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ std::stringstream\ err\_msg;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ call\ rpc\ function\ failed"{}};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ \_server\_addr:"{}}\ <<\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}};}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ function\_name:"{}}\ <<\ request.function\_name();}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ err\_msg\ <<\ \textcolor{stringliteral}{"{}\ err:"{}}\ <<\ response.status().DebugString();}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err\_msg.str();}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InternalError(err\_msg.str());}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00149\ \ \ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aed7f5f1a8aeaa26f9801eb6451760467}{gen\_request\_data}}(PFunctionCallRequest\&\ request,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{int}\ start,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ end,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types)\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ argument\_types.size();\ i++)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ PValues*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}\ =\ request.add\_args();}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{auto}*\ nullable\ =\ vectorized::check\_and\_get\_column<const\ vectorized::ColumnNullable>(}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *columns[i]))\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ data\_col\ =\ nullable-\/>get\_nested\_column\_ptr();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ null\_col\ =\ nullable-\/>get\_null\_map\_column();}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ data\_type\ =\ std::reinterpret\_pointer\_cast<const\ vectorized::DataTypeNullable>(}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ argument\_types[i]);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_col-\/>get\_data\_at(0);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab588858a4da63050b29864116f94c6ab}{convert\_nullable\_col\_to\_pvalue}}(data\_col-\/>convert\_to\_full\_column\_if\_const(),}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_type-\/>get\_nested\_type(),\ null\_col,\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}},\ start,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ end);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ convert\_col\_to\_pvalue<false>(columns[i]-\/>convert\_to\_full\_column\_if\_const(),}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ argument\_types[i],\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}},\ start,\ end);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00172\ \ \ \ \ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#define\ ADD\_VALUE(TYPEVALUE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\ \ \ \ if\ (\_buffer\_request[j].args(i).TYPEVALUE\#\#\_\#\#size()\ >\ 0)\ \{\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ arg-\/>add\_\#\#TYPEVALUE(\_buffer\_request[j].args(i).TYPEVALUE(0));\ \(\backslash\)}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\ \ \ \ \}}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ PFunctionCallRequest\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a5ed53116064077a33c78ca93957ec6d1}{merge\_buffer\_request}}(PFunctionCallRequest\&\ request)\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ args\_size\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}[0].args\_size();}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ request.set\_function\_name(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae4c0b5f6391881d9f701557e1bee20c4}{\_update\_fn}});}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ args\_size;\ i++)\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ PValues*\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}\ =\ request.add\_args();}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}-\/>mutable\_type()-\/>CopyFrom(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}[0].\mbox{\hyperlink{structargs}{args}}(i).type());}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}.size();\ j++)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(double\_value);}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(float\_value);}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(int32\_value);}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(int64\_value);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(uint32\_value);}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(uint64\_value);}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(bool\_value);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(string\_value);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_a1f8df7b0649166f80fb96f13dddc5c3c}{ADD\_VALUE}}(bytes\_value);}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ request;}
+\DoxyCodeLine{00198\ \ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ called\ in\ group\ agg\ op}}
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ad346463c6c38d3bd1aeb82a879896809}{buffer\_add}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{int}\ start,\ \textcolor{keywordtype}{int}\ end,}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ PFunctionCallRequest\ request;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aed7f5f1a8aeaa26f9801eb6451760467}{gen\_request\_data}}(request,\ columns,\ start,\ end,\ argument\_types);}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}.push\_back(request);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}.size()\ >=\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8ac41ed2afc9b816ccfe6a2c6492d8cd}{max\_buffered\_rows}})\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00210\ \ \ \ \ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//clear\ buffer\ request}}
+\DoxyCodeLine{00213\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}()\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}.size()\ >\ 0)\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallRequest\ request;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ PFunctionCallResponse\ response;}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ brpc::Controller\ cntl;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a5ed53116064077a33c78ca93957ec6d1}{merge\_buffer\_request}}(request);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a69555e611540f14e46422e35abdc8f5e}{has\_last\_result}}())\ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ request.mutable\_context()}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>mutable\_function\_context()}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>mutable\_args\_data()}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>CopyFrom(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.result());}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0afba6010eac0223de58a0c474eca320}{send\_rpc\_request}}(cntl,\ request,\ response));}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}\ =\ response;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a299d0e7f1f6cb550aa92e8b80b84355c}{\_buffer\_request}}.clear();}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aa2dd8a051d2815b5d40039a2d5718319}{add}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{int}\ start,\ \textcolor{keywordtype}{int}\ end,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ argument\_types)\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ PFunctionCallRequest\ request;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ PFunctionCallResponse\ response;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ brpc::Controller\ cntl;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ request.set\_function\_name(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae4c0b5f6391881d9f701557e1bee20c4}{\_update\_fn}});}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_aed7f5f1a8aeaa26f9801eb6451760467}{gen\_request\_data}}(request,\ columns,\ start,\ end,\ argument\_types);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a69555e611540f14e46422e35abdc8f5e}{has\_last\_result}}())\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ request.mutable\_context()-\/>mutable\_function\_context()-\/>mutable\_args\_data()-\/>CopyFrom(}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.result());}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0afba6010eac0223de58a0c474eca320}{send\_rpc\_request}}(cntl,\ request,\ response));}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}\ =\ response;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a3491f3d54b8766f242d2ea7f7ff85f0d}{serialize}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ std::string\ serialize\_data\ =\ \mbox{\hyperlink{aggregate__function__rpc_8h_ad764b3e3a9b3a1ad69711fe27c4639dc}{error\_default\_str}};}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ab062313921f86cffba8f1e86edf1f7f8}{has\_error}}())\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ serialize\_data\ =\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.SerializeAsString();}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ \textcolor{stringliteral}{"{}serialize\ empty\ buf"{}};}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ab3e36df557bf0efbeb4e48880a43ddf4}{write\_binary}}(serialize\_data,\ buf);}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a8a7b68c8c3d7f3021c9124d61defe7c4}{deserialize}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf)\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ std::string\ serialize\_data;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_ac8e58b1be2f3db71f2f4b833c63dd1d8}{read\_binary}}(serialize\_data,\ buf);}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{aggregate__function__rpc_8h_ad764b3e3a9b3a1ad69711fe27c4639dc}{error\_default\_str}}\ !=\ serialize\_data)\ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.ParseFromString(serialize\_data);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7677295f3a5d1e8e3f60852b3935eab8}{set\_last\_result}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ \textcolor{stringliteral}{"{}deserialize\ empty\ buf"{}};}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a312e64e94125288f928822b3a7cc90ca}{set\_error}}(\textcolor{keyword}{true});}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\#define\ GETDATA(LOCATTYPE,\ TYPEVALUE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00274\ \textcolor{preprocessor}{\ \ \ \ if\ (response.result\_size()\ >\ 0\ \&\&\ response.result(0).TYPEVALUE\#\#\_\#\#value\_size()\ >\ 0)\ \{\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00275\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOCATTYPE\ ret\ =\ response.result(0).TYPEVALUE\#\#\_\#\#value(0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ to.insert\_data((char*)\&ret,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00277\ \textcolor{preprocessor}{\ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ "{}\_server\_addr:"{}}\ <<\ \_server\_addr\ <<\ "{},\_finalize\_fn:"{}\ <<\ \_finalize\_fn\ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{},msg:\ failed\ to\ get\ final\ result\ cause\ return\ type\ need\ "{}\ <<\ \#TYPEVALUE\ \(\backslash\)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}but\ result\ is\ empty"{};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ to.insert\_default();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00282\ \ \ \ \ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{comment}{//if\ any\ unexpected\ error\ happen\ will\ return\ NULL}}
+\DoxyCodeLine{00285\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0869d531e08448b68e6766945a7082af}{get}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ return\_type)\ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ab062313921f86cffba8f1e86edf1f7f8}{has\_error}}())\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_a63c25b8c7843d76d95e1654d52fc76fc}{insert\_default}}();}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ PFunctionCallRequest\ request;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ PFunctionCallResponse\ response;}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ brpc::Controller\ cntl;}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ request.set\_function\_name(\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a98737ab9b43489a1d926e6d3209c8eca}{\_finalize\_fn}});}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ request.mutable\_context()-\/>mutable\_function\_context()-\/>mutable\_args\_data()-\/>CopyFrom(}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}}.result());}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a0afba6010eac0223de58a0c474eca320}{send\_rpc\_request}}(cntl,\ request,\ response);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ab062313921f86cffba8f1e86edf1f7f8}{has\_error}}())\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_a63c25b8c7843d76d95e1654d52fc76fc}{insert\_default}}();}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ result\_type\ =\ return\_type;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (return\_type-\/>is\_nullable())\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ result\_type\ =}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_data_type_nullable}{DataTypeNullable}}*\textcolor{keyword}{>}(return\_type.get())-\/>get\_nested\_type();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type}{WhichDataType}}\ which(result\_type);}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_a22202dba2e675e9081c8c6593cd38d99}{is\_float32}}())\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(\textcolor{keywordtype}{float},\ \textcolor{keywordtype}{float});}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_a7ab956911daf17b69370926c677b543b}{is\_float64}}())\ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(\textcolor{keywordtype}{double},\ \textcolor{keywordtype}{double});}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_a11b17179852d8ab26b1bc64210b26567}{is\_int32}}())\ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(int32\_t,\ \mbox{\hyperlink{integral__types_8h_ab7903878916593daecbeb95b98115ab0}{int32}});}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_ab1f45fdb5c1f53d83adbc986d2122f93}{is\_uint32}}())\ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(uint32\_t,\ \mbox{\hyperlink{integral__types_8h_acbd4acd0d29e2d6c43104827f77d9cd2}{uint32}});}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_a5286c28aae6eb953ad35e755dd8169e1}{is\_int64}}())\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(int64\_t,\ \mbox{\hyperlink{integral__types_8h_a7cde0074dfd288f2d70c0e035dacb28a}{int64}});}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_ac2ae09224e3bfeeeb4fe5570a1c31e27}{is\_uint64}}())\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(uint64\_t,\ \mbox{\hyperlink{integral__types_8h_abc0f5bc07737e498f287334775dff2b6}{uint64}});}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_afb63f4f9bf6acdc9942c60a35c828b72}{is\_uint8}}())\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{aggregate__function__rpc_8h_ae05b5a01b0d845fa38aee84e18b8dee5}{GETDATA}}(uint8\_t,\ \textcolor{keywordtype}{bool});}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (which.\mbox{\hyperlink{structdoris_1_1vectorized_1_1_which_data_type_a4293e6e4ab9eedb048557be4900aa3af}{is\_string}}())\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (response.result\_size()\ >\ 0\ \&\&\ response.result(0).string\_value\_size()\ >\ 0)\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ response.result(0).string\_value(0);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_a44cded43f89608d9e4202c649e7e5498}{insert\_data}}(\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.c\_str(),\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.size());}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ \textcolor{stringliteral}{"{}\_server\_addr:"{}}\ <<\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ae47cb24503d318e7c428260bcb597643}{\_server\_addr}}\ <<\ \textcolor{stringliteral}{"{},\_finalize\_fn:"{}}\ <<\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a98737ab9b43489a1d926e6d3209c8eca}{\_finalize\_fn}}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},msg:\ failed\ to\ get\ final\ result\ cause\ return\ type\ need\ string\ but\ "{}}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}result\ is\ empty"{}};}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_a63c25b8c7843d76d95e1654d52fc76fc}{insert\_default}}();}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ \textcolor{stringliteral}{"{}failed\ to\ get\ result\ cause\ unkown\ return\ type"{}};}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ to.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column_a63c25b8c7843d76d95e1654d52fc76fc}{insert\_default}}();}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ PFunctionCallResponse\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ad74d1832a3f47445bb6c805433486b21}{get\_result}}()\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_ac724c0b1d6d2f920ec5cb7cd13f23da9}{send\_buffer\_to\_rpc\_server}}();}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris_1_1vectorized_1_1_aggregate_rpc_udaf_data_a7bb039c0727d5ab6a09184f64785c504}{\_res}};}
+\DoxyCodeLine{00342\ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \};}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf}{AggregateRpcUdaf}}\ final}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}<AggregateRpcUdafData,\ AggregateRpcUdaf>\ \{}
+\DoxyCodeLine{00347\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00348\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a7abd5f5663215ac7ad8cfc84968df29d}{AggregateRpcUdaf}}(\textcolor{keyword}{const}\ TFunction\&\ fn,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a927ff84d34a7989fb159d63d6b4eaf04a4410ec34d9e6c1a68100ca0ce033fb17}{Array}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a82324941123241ea2a0c73dbb9fe441d}{parameters}},}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ return\_type)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper}{IAggregateFunctionDataHelper}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a82324941123241ea2a0c73dbb9fe441d}{parameters}}),}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0b708d08f80b3138a70aa6316f136766}{\_fn}}(fn),}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0db5062827b42f44eddd6456a5481fd8}{\_return\_type}}(return\_type)\ \{\}}
+\DoxyCodeLine{00353\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_adafe8c4541ad2eac6f2d7523a3fbb2d3}{\string~AggregateRpcUdaf}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a3f3eb346db14f97f4f56c38a29918ad6}{AggregateFunctionPtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a7422670c4304efa8d9370e0c9d0865b5}{create}}(\textcolor{keyword}{const}\ TFunction\&\ fn,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a8af1a73e445f52cef52b8d3c12fed85e}{DataTypes}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}},}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a927ff84d34a7989fb159d63d6b4eaf04a4410ec34d9e6c1a68100ca0ce033fb17}{Array}}\&\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a82324941123241ea2a0c73dbb9fe441d}{parameters}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\&\ return\_type)\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_shared<AggregateRpcUdaf>(fn,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a82324941123241ea2a0c73dbb9fe441d}{parameters}},\ return\_type);}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_afca9084d3af5dc678bb5f609b39eac5f}{create}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (place)\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_data_helper_a4701f0b6051888cee0d0b84540a6f331}{Data}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}}.size());}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ status\ =\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a8f0ae4086316142464c590548fc491f2}{RETURN\_IF\_STATUS\_ERROR}}(status,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).init(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0b708d08f80b3138a70aa6316f136766}{\_fn}}));}
+\DoxyCodeLine{00364\ \ \ \ \ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a5573b97b9e5129f61d289e037d7e806c}{String}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_ab9010f82586f714358e9fa84c4af7c53}{get\_name}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0b708d08f80b3138a70aa6316f136766}{\_fn}}.name.function\_name;\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a576a9559872b7b902fcec2bbdb1ff214}{get\_return\_type}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0db5062827b42f44eddd6456a5481fd8}{\_return\_type}};\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a5a66bd9d0e3a63bfd0d316be2f2640f3}{add}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,\ \textcolor{keywordtype}{size\_t}\ row\_num,}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).buffer\_add(columns,\ row\_num,\ row\_num\ +\ 1,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}});}
+\DoxyCodeLine{00373\ \ \ \ \ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a020a15f065e0a272cddf1a63515f2ed2}{add\_batch\_single\_place}}(\textcolor{keywordtype}{size\_t}\ batch\_size,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ place,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}**\ columns,}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).add(columns,\ 0,\ batch\_size,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_aggregate_function_a79131988d47555dcf0ff37e4544d9342}{argument\_types}});}
+\DoxyCodeLine{00378\ \ \ \ \ \}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a1f3497bcc0ce2d8e91748eca98fb444f}{reset}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ place)\textcolor{keyword}{\ const\ override\ }\{\}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_ae2b6a83216392e87441b8d57a683d75d}{merge}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ rhs,}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).merge(this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\textcolor{keyword}{>}(rhs)));}
+\DoxyCodeLine{00385\ \ \ \ \ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a55336ef83a948829e989d77518ddfec1}{serialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_writable}{BufferWritable}}\&\ buf)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\&\textcolor{keyword}{>}(place)).serialize(buf);}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a1ec7bd073eba83357d823adc0743051c}{deserialize}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_buffer_readable}{BufferReadable}}\&\ buf,}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{Arena}}*)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(place).deserialize(buf);}
+\DoxyCodeLine{00394\ \ \ \ \ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_ad81b3ac3e979a4cfc70ec1472cf74009}{insert\_result\_into}}(\mbox{\hyperlink{namespacedoris_1_1vectorized_a7b48989f24dd5b33dbd858fc2df39f08}{ConstAggregateDataPtr}}\ \_\_restrict\ place,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_i_column}{IColumn}}\&\ to)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{namespacedoris_1_1vectorized_a9cd6a7a79a0d0dc7caf825e50970c099}{AggregateDataPtr}}\textcolor{keyword}{>}(place)).get(to,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0db5062827b42f44eddd6456a5481fd8}{\_return\_type}});}
+\DoxyCodeLine{00398\ \ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00401\ \ \ \ \ TFunction\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0b708d08f80b3138a70aa6316f136766}{\_fn}};}
+\DoxyCodeLine{00402\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1vectorized_a160d474c1487ffb0ca43c78931aedc2a}{DataTypePtr}}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_aggregate_rpc_udaf_a0db5062827b42f44eddd6456a5481fd8}{\_return\_type}};}
+\DoxyCodeLine{00403\ \};}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \}\ \textcolor{comment}{//\ namespace\ doris::vectorized}}
+
+\end{DoxyCode}

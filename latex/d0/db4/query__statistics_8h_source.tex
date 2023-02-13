@@ -1,0 +1,144 @@
+\hypertarget{query__statistics_8h_source}{}\doxysection{query\+\_\+statistics.\+h}
+\label{query__statistics_8h_source}\index{/Users/dabowang/be\_all/runtime/query\_statistics.h@{/Users/dabowang/be\_all/runtime/query\_statistics.h}}
+\mbox{\hyperlink{query__statistics_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/data.pb.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{spinlock_8h}{util/spinlock.h}}"{}}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }QueryStatistics;}
+\DoxyCodeLine{00028\ \textcolor{keyword}{class\ }QueryStatisticsRecvr;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_node_statistics}{NodeStatistics}}\ \{}
+\DoxyCodeLine{00031\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_node_statistics_aa47495cdc0aeb69f0ba634f11c7caafc}{NodeStatistics}}()\ :\ \mbox{\hyperlink{classdoris_1_1_node_statistics_a4dfee552c822b57f75108bb0ea2856dd}{peak\_memory\_bytes}}(0)\ \{\}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_node_statistics_a70c1f4bb6d5866b1ebcd899ee7387022}{add\_peak\_memory}}(int64\_t\ peak\_memory)\ \{\ this-\/>\mbox{\hyperlink{classdoris_1_1_node_statistics_a4dfee552c822b57f75108bb0ea2856dd}{peak\_memory\_bytes}}\ +=\ peak\_memory;\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_node_statistics_aa4a8053f4c4176065603905d27fcb722}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_node_statistics}{NodeStatistics}}\&\ other);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_node_statistics_af0c9ec6fad101361e3685f8ecbd8ca2e}{to\_pb}}(PNodeStatistics*\ node\_statistics);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_node_statistics_a4be15f32b57d30d7b997f3590826dbc3}{from\_pb}}(\textcolor{keyword}{const}\ PNodeStatistics\&\ node\_statistics);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_statistics}{QueryStatistics}};}
+\DoxyCodeLine{00044\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_node_statistics_a4dfee552c822b57f75108bb0ea2856dd}{peak\_memory\_bytes}};}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ This\ is\ responsible\ for\ collecting\ query\ statistics,\ usually\ it\ consists\ of}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ two\ parts,\ one\ is\ current\ fragment\ or\ plan's\ statistics,\ the\ other\ is\ sub\ fragment}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ or\ plan's\ statistics\ and\ QueryStatisticsRecvr\ is\ responsible\ for\ collecting\ it.}}
+\DoxyCodeLine{00050\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_statistics}{QueryStatistics}}\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_ac3cb9e4ecc5ea215dbcd93ebd3439ede}{QueryStatistics}}()}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_query_statistics_abc58863d9f5c418728c7af4ef3bd67b8}{scan\_rows}}(0),\ \mbox{\hyperlink{classdoris_1_1_query_statistics_aee40528b91326bf40419eee09e5d204d}{scan\_bytes}}(0),\ \mbox{\hyperlink{classdoris_1_1_query_statistics_ae237900682f0292036c51b15cba60836}{cpu\_ms}}(0),\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a24cdb045ab67c1902ab70deb8c9c934c}{returned\_rows}}(0),\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83fc12211b0d26511d1c2d7e96987972}{max\_peak\_memory\_bytes}}(0)\ \{\}}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a87c19aebe11f0281b4e7bacfcea36f0a}{\string~QueryStatistics}}();}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_af40b1cf68877278383f30194e13681fb}{merge}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_query_statistics}{QueryStatistics}}\&\ other);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a6d1907346379e9438e9f12eef8a10c2b}{add\_scan\_rows}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_abc58863d9f5c418728c7af4ef3bd67b8}{scan\_rows}})\ \{\ this-\/>scan\_rows\ +=\ \mbox{\hyperlink{classdoris_1_1_query_statistics_abc58863d9f5c418728c7af4ef3bd67b8}{scan\_rows}};\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a9b39184a7bc274508e04614318c757b2}{add\_scan\_bytes}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_aee40528b91326bf40419eee09e5d204d}{scan\_bytes}})\ \{\ this-\/>scan\_bytes\ +=\ \mbox{\hyperlink{classdoris_1_1_query_statistics_aee40528b91326bf40419eee09e5d204d}{scan\_bytes}};\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a3db85c91867f9b6d320e2f75e32814cd}{add\_cpu\_ms}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_ae237900682f0292036c51b15cba60836}{cpu\_ms}})\ \{\ this-\/>cpu\_ms\ +=\ \mbox{\hyperlink{classdoris_1_1_query_statistics_ae237900682f0292036c51b15cba60836}{cpu\_ms}};\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_node_statistics}{NodeStatistics}}*\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a6566bfed6c529539fbe99618b8751fc1}{add\_nodes\_statistics}}(int64\_t\ node\_id)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_node_statistics}{NodeStatistics}}*\ nodeStatistics\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ iter\ =\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8cade8bd925ebe53da5ee09ba97f5266}{\_nodes\_statistics\_map}}.find(node\_id);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iter\ ==\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8cade8bd925ebe53da5ee09ba97f5266}{\_nodes\_statistics\_map}}.end())\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ nodeStatistics\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_node_statistics}{NodeStatistics}};}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8cade8bd925ebe53da5ee09ba97f5266}{\_nodes\_statistics\_map}}[node\_id]\ =\ nodeStatistics;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ nodeStatistics\ =\ iter-\/>second;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ nodeStatistics;}
+\DoxyCodeLine{00074\ \ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a5e667e141bb3e58312e1344263a6c005}{set\_returned\_rows}}(int64\_t\ num\_rows)\ \{\ this-\/>\mbox{\hyperlink{classdoris_1_1_query_statistics_a24cdb045ab67c1902ab70deb8c9c934c}{returned\_rows}}\ =\ num\_rows;\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_aa1baeca3d38d4923ffd7415fb7e53406}{set\_max\_peak\_memory\_bytes}}(int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83fc12211b0d26511d1c2d7e96987972}{max\_peak\_memory\_bytes}})\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ this-\/>max\_peak\_memory\_bytes\ =\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83fc12211b0d26511d1c2d7e96987972}{max\_peak\_memory\_bytes}};}
+\DoxyCodeLine{00080\ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_af40b1cf68877278383f30194e13681fb}{merge}}(\mbox{\hyperlink{classdoris_1_1_query_statistics_recvr}{QueryStatisticsRecvr}}*\ recvr);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ Get\ the\ maximum\ value\ from\ the\ peak\ memory\ collected\ by\ all\ node\ statistics}}
+\DoxyCodeLine{00085\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83d2cfc68dd44b956da06ce71ffc1440}{calculate\_max\_peak\_memory\_bytes}}();}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8722ae0bd27de3a83d04aa18cf1ceafe}{clearNodeStatistics}}();}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_ac8bb3912a3ce86b15842e79d0b421204}{clear}}()\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_abc58863d9f5c418728c7af4ef3bd67b8}{scan\_rows}}\ =\ 0;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_aee40528b91326bf40419eee09e5d204d}{scan\_bytes}}\ =\ 0;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_ae237900682f0292036c51b15cba60836}{cpu\_ms}}\ =\ 0;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a24cdb045ab67c1902ab70deb8c9c934c}{returned\_rows}}\ =\ 0;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83fc12211b0d26511d1c2d7e96987972}{max\_peak\_memory\_bytes}}\ =\ 0;}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8722ae0bd27de3a83d04aa18cf1ceafe}{clearNodeStatistics}}();}
+\DoxyCodeLine{00096\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a765c59cee29d25f7f4ca114871c2f9e8}{to\_pb}}(PQueryStatistics*\ statistics);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a11ef8c1e9938c587d32610faca036e46}{from\_pb}}(\textcolor{keyword}{const}\ PQueryStatistics\&\ statistics);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00103\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_abc58863d9f5c418728c7af4ef3bd67b8}{scan\_rows}};}
+\DoxyCodeLine{00104\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_aee40528b91326bf40419eee09e5d204d}{scan\_bytes}};}
+\DoxyCodeLine{00105\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_ae237900682f0292036c51b15cba60836}{cpu\_ms}};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ number\ rows\ returned\ by\ query.}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ only\ set\ once\ by\ result\ sink\ when\ closing.}}
+\DoxyCodeLine{00108\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a24cdb045ab67c1902ab70deb8c9c934c}{returned\_rows}};}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Maximum\ memory\ peak\ for\ all\ backends.}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ only\ set\ once\ by\ result\ sink\ when\ closing.}}
+\DoxyCodeLine{00111\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a83fc12211b0d26511d1c2d7e96987972}{max\_peak\_memory\_bytes}};}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ The\ statistics\ of\ the\ query\ on\ each\ backend.}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<int64\_t,\ NodeStatistics*>\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8d4dfdafbc003f46a3cabae1cc7bac49}{NodeStatisticsMap}};}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8d4dfdafbc003f46a3cabae1cc7bac49}{NodeStatisticsMap}}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_a8cade8bd925ebe53da5ee09ba97f5266}{\_nodes\_statistics\_map}};}
+\DoxyCodeLine{00115\ \};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ It\ is\ used\ for\ collecting\ sub\ plan\ query\ statistics\ in\ DataStreamRecvr.}}
+\DoxyCodeLine{00118\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_statistics_recvr}{QueryStatisticsRecvr}}\ \{}
+\DoxyCodeLine{00119\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_a29b461bff0af682da985f50c0285b024}{\string~QueryStatisticsRecvr}}();}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_a74246cbedc287c2c969fd4a5709ffa8c}{insert}}(\textcolor{keyword}{const}\ PQueryStatistics\&\ statistics,\ \textcolor{keywordtype}{int}\ sender\_id);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_statistics}{QueryStatistics}};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_ad69dec79a44bd762f4013e5a69603235}{merge}}(\mbox{\hyperlink{classdoris_1_1_query_statistics}{QueryStatistics}}*\ statistics)\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ std::lock\_guard<SpinLock>\ l(\mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_aaeda4b6262d10eb73734e61e27d42052}{\_lock}});}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ pair\ :\ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_a08ddd8912bd93a7ba2e4501e735e1172}{\_query\_statistics}})\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ statistics-\/>\mbox{\hyperlink{classdoris_1_1_query_statistics_af40b1cf68877278383f30194e13681fb}{merge}}(*(pair.second));}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ std::map<int,\ QueryStatistics*>\ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_a08ddd8912bd93a7ba2e4501e735e1172}{\_query\_statistics}};}
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_spin_lock}{SpinLock}}\ \mbox{\hyperlink{classdoris_1_1_query_statistics_recvr_aaeda4b6262d10eb73734e61e27d42052}{\_lock}};}
+\DoxyCodeLine{00136\ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}

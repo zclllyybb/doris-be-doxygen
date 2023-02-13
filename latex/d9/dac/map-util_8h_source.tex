@@ -1,0 +1,873 @@
+\hypertarget{map-util_8h_source}{}\doxysection{map-\/util.h}
+\label{map-util_8h_source}\index{/Users/dabowang/be\_all/gutil/map-\/util.h@{/Users/dabowang/be\_all/gutil/map-\/util.h}}
+\mbox{\hyperlink{map-util_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ 2005\ Google\ Inc.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ \#status:\ RECOMMENDED}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ \#category:\ maps}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ \#summary:\ Utility\ functions\ for\ use\ with\ map-\/like\ containers.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ file\ provides\ utility\ functions\ for\ use\ with\ STL\ map-\/like\ data}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ structures,\ such\ as\ std::map\ and\ hash\_map.\ Some\ functions\ will\ also\ work\ with}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ sets,\ such\ as\ ContainsKey().}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ The\ main\ functions\ in\ this\ file\ fall\ into\ the\ following\ categories:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ -\/\ Find*()}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ -\/\ Contains*()}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ -\/\ Insert*()}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ -\/\ Lookup*()}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ These\ functions\ often\ have\ "{}...OrDie"{}\ or\ "{}...OrDieNoPrint"{}\ variants.\ These}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ variants\ will\ crash\ the\ process\ with\ a\ CHECK()\ failure\ on\ error,\ including}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ the\ offending\ key/data\ in\ the\ log\ message.\ The\ NoPrint\ variants\ will\ not}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ include\ the\ key/data\ in\ the\ log\ output\ under\ the\ assumption\ that\ it's\ not\ a}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ printable\ type.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Most\ functions\ are\ fairly\ self\ explanatory\ from\ their\ names,\ with\ the}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ exception\ of\ Find*()\ vs\ Lookup*().\ The\ Find\ functions\ typically\ use\ the\ map's}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ .find()\ member\ function\ to\ locate\ and\ return\ the\ map's\ value\ type.\ The}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ Lookup*()\ functions\ typically\ use\ the\ map's\ .insert()\ (yes,\ insert)\ member}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ function\ to\ insert\ the\ given\ value\ if\ necessary\ and\ returns\ (usually\ a}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ reference\ to)\ the\ map's\ value\ type\ for\ the\ found\ item.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ See\ the\ per-\/function\ comments\ for\ specifics.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ There\ are\ also\ a\ handful\ of\ functions\ for\ doing\ other\ miscellaneous\ things.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ A\ note\ on\ terminology:}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Map-\/like\ containers\ are\ collections\ of\ pairs.\ Like\ all\ STL\ containers\ they}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ contain\ a\ few\ standard\ typedefs\ identifying\ the\ types\ of\ data\ they\ contain.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Given\ the\ following\ map\ declaration:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ map<string,\ int>\ my\_map;}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ the\ notable\ typedefs\ would\ be\ as\ follows:}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ -\/\ key\_type\ \ \ \ -\/-\/\ string}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ -\/\ value\_type\ \ -\/-\/\ pair<const\ string,\ int>}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ -\/\ mapped\_type\ -\/-\/\ int}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ Note\ that\ the\ map\ above\ contains\ two\ types\ of\ "{}values"{}:\ the\ key-\/value\ pairs}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ themselves\ (value\_type)\ and\ the\ values\ within\ the\ key-\/value\ pairs}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ (mapped\_type).\ A\ value\_type\ consists\ of\ a\ key\_type\ and\ a\ mapped\_type.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ The\ documentation\ below\ is\ written\ for\ programmers\ thinking\ in\ terms\ of\ keys}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ and\ the\ (mapped\_type)\ values\ associated\ with\ a\ given\ key.\ \ For\ example,\ the}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ statement}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ my\_map["{}foo"{}]\ =\ 3;}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ has\ a\ key\ of\ "{}foo"{}\ (type:\ string)\ with\ a\ value\ of\ 3\ (type:\ int).}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ <glog/logging.h>}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging-inl_8h}{gutil/logging-\/inl.h}}"{}}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ Find*()}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ Returns\ a\ const\ reference\ to\ the\ value\ associated\ with\ the\ given\ key\ if\ it}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ exists.\ Crashes\ otherwise.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ This\ is\ intended\ as\ a\ replacement\ for\ operator[]\ as\ an\ rvalue\ (for\ reading)}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ when\ the\ key\ is\ guaranteed\ to\ exist.}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ operator[]\ for\ lookup\ is\ discouraged\ for\ several\ reasons:}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ \ *\ It\ has\ a\ side-\/effect\ of\ inserting\ missing\ keys}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ \ *\ It\ is\ not\ thread-\/safe\ (even\ when\ it\ is\ not\ inserting,\ it\ can\ still}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ \ \ \ \ \ choose\ to\ resize\ the\ underlying\ storage)}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ \ *\ It\ invalidates\ iterators\ (when\ it\ chooses\ to\ resize)}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ \ *\ It\ default\ constructs\ a\ value\ object\ even\ if\ it\ doesn't\ need\ to}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ This\ version\ assumes\ the\ key\ is\ printable,\ and\ includes\ it\ in\ the\ fatal\ log}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ message.}}
+\DoxyCodeLine{00092\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00093\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a2b34aa76e4ec8ec06328dcefa3fefafa}{FindOrDie}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00096\ \ \ \ \ CHECK(it\ !=\ collection.end())\ <<\ \textcolor{stringliteral}{"{}Map\ key\ not\ found:\ "{}}\ <<\ key;}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ Same\ as\ above,\ but\ returns\ a\ non-\/const\ reference.}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00102\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a2b34aa76e4ec8ec06328dcefa3fefafa}{FindOrDie}}(Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00105\ \ \ \ \ CHECK(it\ !=\ collection.end())\ <<\ \textcolor{stringliteral}{"{}Map\ key\ not\ found:\ "{}}\ <<\ key;}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ Same\ as\ FindOrDie\ above,\ but\ doesn't\ log\ the\ key\ on\ failure.}}
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00111\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_ad64265f6ba0c251d4978e711f3c3fc09}{FindOrDieNoPrint}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{typename}\ Collection::const\_iterator\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00114\ \ \ \ \ CHECK(it\ !=\ collection.end())\ <<\ \textcolor{stringliteral}{"{}Map\ key\ not\ found"{}};}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ Same\ as\ above,\ but\ returns\ a\ non-\/const\ reference.}}
+\DoxyCodeLine{00119\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00120\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_ad64265f6ba0c251d4978e711f3c3fc09}{FindOrDieNoPrint}}(Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{typename}\ Collection::iterator\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00123\ \ \ \ \ CHECK(it\ !=\ collection.end())\ <<\ \textcolor{stringliteral}{"{}Map\ key\ not\ found"{}};}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ Returns\ a\ const\ reference\ to\ the\ value\ associated\ with\ the\ given\ key\ if\ it}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ exists,\ otherwise\ a\ const\ reference\ to\ the\ provided\ default\ value\ is}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ returned.}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ WARNING:\ If\ a\ temporary\ object\ is\ passed\ as\ the\ default\ "{}value,"{}\ this}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ function\ will\ return\ a\ reference\ to\ that\ temporary\ object,\ which\ will\ be}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//\ destroyed\ by\ the\ end\ of\ the\ statement.\ Specifically,\ if\ you\ have\ a\ map\ with}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ string\ values,\ and\ you\ pass\ a\ char*\ as\ the\ default\ "{}value,"{}\ either\ use\ the}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ returned\ value\ immediately\ or\ store\ it\ in\ a\ string\ (not\ string\&).\ Details:}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00137\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a0e0568b132cecc1a7617d6c402b040c2}{FindWithDefault}}(}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Collection\&\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ Returns\ a\ pointer\ to\ the\ const\ value\ associated\ with\ the\ given\ key\ if\ it}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ exists,\ or\ NULL\ otherwise.}}
+\DoxyCodeLine{00149\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00150\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_a8e92687bdffec88c636aed74d5a0c235}{FindOrNull}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{return}\ \&it-\/>second;}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ Same\ as\ above\ but\ returns\ a\ pointer\ to\ the\ non-\/const\ value.}}
+\DoxyCodeLine{00160\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00161\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_a8e92687bdffec88c636aed74d5a0c235}{FindOrNull}}(Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{return}\ \&it-\/>second;}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ Returns\ a\ pointer\ to\ the\ const\ value\ associated\ with\ the\ greatest\ key}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//\ that's\ less\ than\ or\ equal\ to\ the\ given\ key,\ or\ NULL\ if\ no\ such\ key\ exists.}}
+\DoxyCodeLine{00172\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00173\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_abf59a6f92722ea6a98ba5c225753bc95}{FindFloorOrNull}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.upper\_bound(key);}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.begin())\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00178\ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordflow}{return}\ \&(-\/-\/it)-\/>second;}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{comment}{//\ Same\ as\ above\ but\ returns\ a\ pointer\ to\ the\ non-\/const\ value.}}
+\DoxyCodeLine{00183\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00184\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_abf59a6f92722ea6a98ba5c225753bc95}{FindFloorOrNull}}(Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.upper\_bound(key);}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.begin())\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00189\ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordflow}{return}\ \&(-\/-\/it)-\/>second;}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ Returns\ a\ const-\/reference\ to\ the\ value\ associated\ with\ the\ greatest\ key}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ that's\ less\ than\ or\ equal\ to\ the\ given\ key,\ or\ crashes\ if\ it\ does\ not\ exist.}}
+\DoxyCodeLine{00195\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00196\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a91a2793540644ae64a8994d64a65c560}{FindFloorOrDie}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.upper\_bound(key);}
+\DoxyCodeLine{00199\ \ \ \ \ CHECK(it\ !=\ collection.begin());}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordflow}{return}\ (-\/-\/it)-\/>second;}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{comment}{//\ Same\ as\ above,\ but\ returns\ a\ non-\/const\ reference.}}
+\DoxyCodeLine{00204\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00205\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a91a2793540644ae64a8994d64a65c560}{FindFloorOrDie}}(Collection\&\ collection,}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.upper\_bound(key);}
+\DoxyCodeLine{00208\ \ \ \ \ CHECK(it\ !=\ collection.begin());}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{return}\ (-\/-\/it)-\/>second;}
+\DoxyCodeLine{00210\ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ Returns\ the\ pointer\ value\ associated\ with\ the\ given\ key.\ If\ none\ is\ found,}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ NULL\ is\ returned.\ The\ function\ is\ designed\ to\ be\ used\ with\ a\ map\ of\ keys\ to}}
+\DoxyCodeLine{00214\ \textcolor{comment}{//\ pointers.}}
+\DoxyCodeLine{00215\ \textcolor{comment}{//}}
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ This\ function\ does\ not\ distinguish\ between\ a\ missing\ key\ and\ a\ key\ mapped}}
+\DoxyCodeLine{00217\ \textcolor{comment}{//\ to\ a\ NULL\ value.}}
+\DoxyCodeLine{00218\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00219\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ \mbox{\hyperlink{map-util_8h_a1c7c69ed20aafbd71b71ad13cd76871d}{FindPtrOrNull}}(\textcolor{keyword}{const}\ Collection\&\ collection,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{typename}\ Collection::mapped\_type(0);}
+\DoxyCodeLine{00224\ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{comment}{//\ Same\ as\ above,\ except\ takes\ non-\/const\ reference\ to\ collection.}}
+\DoxyCodeLine{00229\ \textcolor{comment}{//}}
+\DoxyCodeLine{00230\ \textcolor{comment}{//\ This\ function\ is\ needed\ for\ containers\ that\ propagate\ constness\ to\ the}}
+\DoxyCodeLine{00231\ \textcolor{comment}{//\ pointee,\ such\ as\ boost::ptr\_map.}}
+\DoxyCodeLine{00232\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00233\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ \mbox{\hyperlink{map-util_8h_a1c7c69ed20aafbd71b71ad13cd76871d}{FindPtrOrNull}}(Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{typename}\ Collection::mapped\_type(0);}
+\DoxyCodeLine{00238\ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00240\ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ FindPtrOrNull\ like\ function\ for\ maps\ whose\ value\ is\ a\ smart\ pointer\ like\ shared\_ptr\ or}}
+\DoxyCodeLine{00243\ \textcolor{comment}{//\ unique\_ptr.}}
+\DoxyCodeLine{00244\ \textcolor{comment}{//\ Returns\ the\ raw\ pointer\ contained\ in\ the\ smart\ pointer\ for\ the\ first\ found\ key,\ if\ it\ exists,}}
+\DoxyCodeLine{00245\ \textcolor{comment}{//\ or\ null\ if\ it\ doesn't.}}
+\DoxyCodeLine{00246\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00247\ \textcolor{keyword}{typename}\ Collection::mapped\_type::element\_type*\ \mbox{\hyperlink{map-util_8h_a64ca18bd3a5f2cc6152fde7e3f808dee}{FindPointeeOrNull}}(}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Collection\&\ collection,\ \textcolor{comment}{//\ NOLINT,}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00253\ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second.get();}
+\DoxyCodeLine{00255\ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{comment}{//\ Finds\ the\ value\ associated\ with\ the\ given\ key\ and\ copies\ it\ to\ *value\ (if\ not}}
+\DoxyCodeLine{00258\ \textcolor{comment}{//\ NULL).\ Returns\ false\ if\ the\ key\ was\ not\ found,\ true\ otherwise.}}
+\DoxyCodeLine{00259\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ Key,\ \textcolor{keyword}{class}\ Value>}
+\DoxyCodeLine{00260\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_abcbe1296c9c6fed0be62615bbee171c9}{FindCopy}}(\textcolor{keyword}{const}\ Collection\&\ collection,\ \textcolor{keyword}{const}\ Key\&\ key,\ Value*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection.find(key);}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection.end())\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =\ it-\/>second;}
+\DoxyCodeLine{00267\ \ \ \ \ \}}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00269\ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \textcolor{comment}{//}}
+\DoxyCodeLine{00272\ \textcolor{comment}{//\ Contains*()}}
+\DoxyCodeLine{00273\ \textcolor{comment}{//}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{comment}{//\ Returns\ true\ iff\ the\ given\ collection\ contains\ the\ given\ key.}}
+\DoxyCodeLine{00276\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ Key>}
+\DoxyCodeLine{00277\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a61ea0cef6455ea447785187674b1aa60}{ContainsKey}}(\textcolor{keyword}{const}\ Collection\&\ collection,\ \textcolor{keyword}{const}\ Key\&\ key)\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordflow}{return}\ collection.find(key)\ !=\ collection.end();}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{comment}{//\ Returns\ true\ iff\ the\ given\ collection\ contains\ the\ given\ key-\/value\ pair.}}
+\DoxyCodeLine{00282\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ Key,\ \textcolor{keyword}{class}\ Value>}
+\DoxyCodeLine{00283\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a34848032fedc1fe1c28a5c8a4cdc1168}{ContainsKeyValuePair}}(\textcolor{keyword}{const}\ Collection\&\ collection,\ \textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keyword}{const}\ Value\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::const\_iterator\ const\_iterator;}
+\DoxyCodeLine{00285\ \ \ \ \ std::pair<const\_iterator,\ const\_iterator>\ range\ =\ collection.equal\_range(key);}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{for}\ (const\_iterator\ it\ =\ range.first;\ it\ !=\ range.second;\ ++it)\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>second\ ==\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00292\ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{comment}{//}}
+\DoxyCodeLine{00295\ \textcolor{comment}{//\ Insert*()}}
+\DoxyCodeLine{00296\ \textcolor{comment}{//}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \textcolor{comment}{//\ Inserts\ the\ given\ key-\/value\ pair\ into\ the\ collection.\ Returns\ true\ if\ the}}
+\DoxyCodeLine{00299\ \textcolor{comment}{//\ given\ key\ didn't\ previously\ exist.\ If\ the\ given\ key\ already\ existed\ in\ the}}
+\DoxyCodeLine{00300\ \textcolor{comment}{//\ map,\ its\ value\ is\ changed\ to\ the\ given\ "{}value"{}\ and\ false\ is\ returned.}}
+\DoxyCodeLine{00301\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00302\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_af47ddfa55e076ac11e14a3ef5fbaac3f}{InsertOrUpdate}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ vt)\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ collection-\/>insert(vt);}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second\ =\ vt.second;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00308\ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00310\ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{comment}{//\ Same\ as\ above,\ except\ that\ the\ key\ and\ value\ are\ passed\ separately.}}
+\DoxyCodeLine{00313\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00314\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_af47ddfa55e076ac11e14a3ef5fbaac3f}{InsertOrUpdate}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_af47ddfa55e076ac11e14a3ef5fbaac3f}{InsertOrUpdate}}(collection,\ \textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00317\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ Inserts/updates\ all\ the\ key-\/value\ pairs\ from\ the\ range\ defined\ by\ the}}
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ iterators\ "{}first"{}\ and\ "{}last"{}\ into\ the\ given\ collection.}}
+\DoxyCodeLine{00321\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ InputIterator>}
+\DoxyCodeLine{00322\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_abadd1b3f972f4894ad22a303f5e1878c}{InsertOrUpdateMany}}(Collection*\ \textcolor{keyword}{const}\ collection,\ InputIterator\ first,\ InputIterator\ last)\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ first\ !=\ last;\ ++first)\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{map-util_8h_af47ddfa55e076ac11e14a3ef5fbaac3f}{InsertOrUpdate}}(collection,\ *first);}
+\DoxyCodeLine{00325\ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{comment}{//\ Change\ the\ value\ associated\ with\ a\ particular\ key\ in\ a\ map\ or\ hash\_map}}
+\DoxyCodeLine{00329\ \textcolor{comment}{//\ of\ the\ form\ map<Key,\ Value*>\ which\ owns\ the\ objects\ pointed\ to\ by\ the}}
+\DoxyCodeLine{00330\ \textcolor{comment}{//\ value\ pointers.\ \ If\ there\ was\ an\ existing\ value\ for\ the\ key,\ it\ is\ deleted.}}
+\DoxyCodeLine{00331\ \textcolor{comment}{//\ True\ indicates\ an\ insert\ took\ place,\ false\ indicates\ an\ update\ +\ delete.}}
+\DoxyCodeLine{00332\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00333\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a6d82a2ddd1dc04d4b580f968533f3417}{InsertAndDeleteExisting}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00341\ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00343\ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ Inserts\ the\ given\ key\ and\ value\ into\ the\ given\ collection\ iff\ the\ given\ key}}
+\DoxyCodeLine{00346\ \textcolor{comment}{//\ did\ NOT\ already\ exist\ in\ the\ collection.\ If\ the\ key\ previously\ existed\ in\ the}}
+\DoxyCodeLine{00347\ \textcolor{comment}{//\ collection,\ the\ value\ is\ not\ changed.\ Returns\ true\ if\ the\ key-\/value\ pair\ was}}
+\DoxyCodeLine{00348\ \textcolor{comment}{//\ inserted;\ returns\ false\ if\ the\ key\ was\ already\ present.}}
+\DoxyCodeLine{00349\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00350\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ vt)\ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordflow}{return}\ collection-\/>insert(vt).second;}
+\DoxyCodeLine{00352\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \textcolor{comment}{//\ Same\ as\ above\ except\ the\ key\ and\ value\ are\ passed\ separately.}}
+\DoxyCodeLine{00355\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00356\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(collection,\ \textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00359\ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \textcolor{comment}{//\ Same\ as\ above\ except\ dies\ if\ the\ key\ already\ exists\ in\ the\ collection.}}
+\DoxyCodeLine{00362\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00363\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a8b33a1b8adb0bc992eef5a231b0e059f}{InsertOrDie}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00364\ \ \ \ \ CHECK(\mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(collection,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}))\ <<\ \textcolor{stringliteral}{"{}duplicate\ value:\ "{}}\ <<\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00365\ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \textcolor{comment}{//\ Same\ as\ above\ except\ doesn't\ log\ the\ value\ on\ error.}}
+\DoxyCodeLine{00368\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00369\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a400015287111aaa6ac735ed33a3b96ca}{InsertOrDieNoPrint}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ CHECK(\mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(collection,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}))\ <<\ \textcolor{stringliteral}{"{}duplicate\ value."{}};}
+\DoxyCodeLine{00372\ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \textcolor{comment}{//\ Inserts\ the\ key-\/value\ pair\ into\ the\ collection.\ Dies\ if\ key\ was\ already}}
+\DoxyCodeLine{00375\ \textcolor{comment}{//\ present.}}
+\DoxyCodeLine{00376\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00377\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a8b33a1b8adb0bc992eef5a231b0e059f}{InsertOrDie}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00379\ \ \ \ \ CHECK(\mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(collection,\ key,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}))\ <<\ \textcolor{stringliteral}{"{}duplicate\ key:\ "{}}\ <<\ key;}
+\DoxyCodeLine{00380\ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ Same\ as\ above\ except\ deson't\ log\ the\ key\ on\ error.}}
+\DoxyCodeLine{00383\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00384\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a400015287111aaa6ac735ed33a3b96ca}{InsertOrDieNoPrint}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00386\ \ \ \ \ CHECK(\mbox{\hyperlink{map-util_8h_a5f8a24d84180a956ab0215dbbc26d473}{InsertIfNotPresent}}(collection,\ key,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}))\ <<\ \textcolor{stringliteral}{"{}duplicate\ key."{}};}
+\DoxyCodeLine{00387\ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \textcolor{comment}{//\ Inserts\ a\ new\ key\ and\ default-\/initialized\ value.\ Dies\ if\ the\ key\ was\ already}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ present.\ Returns\ a\ reference\ to\ the\ value.\ Example\ usage:}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//}}
+\DoxyCodeLine{00392\ \textcolor{comment}{//\ map<int,\ SomeProto>\ m;}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//\ SomeProto\&\ proto\ =\ InsertKeyOrDie(\&m,\ 3);}}
+\DoxyCodeLine{00394\ \textcolor{comment}{//\ proto.set\_field("{}foo"{});}}
+\DoxyCodeLine{00395\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00396\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a6b47d5547e3314cb93aebfed2afdfe7e}{InsertKeyOrDie}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::value\_type\ value\_type;}
+\DoxyCodeLine{00399\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ res\ =}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(value\_type(key,\ \textcolor{keyword}{typename}\ Collection::mapped\_type()));}
+\DoxyCodeLine{00401\ \ \ \ \ CHECK(res.second)\ <<\ \textcolor{stringliteral}{"{}duplicate\ key:\ "{}}\ <<\ key;}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{return}\ res.first-\/>second;}
+\DoxyCodeLine{00403\ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \textcolor{comment}{//}}
+\DoxyCodeLine{00406\ \textcolor{comment}{//\ Emplace*()}}
+\DoxyCodeLine{00407\ \textcolor{comment}{//}}
+\DoxyCodeLine{00408\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }Collection,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00409\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a95e35dc858e2735341c762fe2ab9c898}{EmplaceIfNotPresent}}(Collection*\ \textcolor{keyword}{const}\ collection,\ Args\&\&...\ \mbox{\hyperlink{structargs}{args}})\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{return}\ collection-\/>emplace(std::forward<Args>(\mbox{\hyperlink{structargs}{args}})...).second;}
+\DoxyCodeLine{00411\ \}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \textcolor{comment}{//\ Emplaces\ the\ given\ key-\/value\ pair\ into\ the\ collection.\ Returns\ true\ if\ the}}
+\DoxyCodeLine{00414\ \textcolor{comment}{//\ given\ key\ didn't\ previously\ exist.\ If\ the\ given\ key\ already\ existed\ in\ the}}
+\DoxyCodeLine{00415\ \textcolor{comment}{//\ map,\ its\ value\ is\ changed\ to\ the\ given\ "{}value"{}\ and\ false\ is\ returned.}}
+\DoxyCodeLine{00416\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00417\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_a47fcfc3bb756654a5c2fb527948ec5de}{EmplaceOrUpdate}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ mapped\_type;}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection-\/>find(key);}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection-\/>end())\ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ collection-\/>emplace(key,\ std::forward<mapped\_type>(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00424\ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \ it-\/>second\ =\ std::forward<mapped\_type>(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00427\ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }Collection,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00430\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_ae83688a41a2741ce473ccbd7f4399bab}{EmplaceOrDie}}(Collection*\ \textcolor{keyword}{const}\ collection,\ Args\&\&...\ \mbox{\hyperlink{structargs}{args}})\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ CHECK(\mbox{\hyperlink{map-util_8h_a95e35dc858e2735341c762fe2ab9c898}{EmplaceIfNotPresent}}(collection,\ std::forward<Args>(\mbox{\hyperlink{structargs}{args}})...))\ <<\ \textcolor{stringliteral}{"{}duplicate\ value"{}};}
+\DoxyCodeLine{00432\ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \textcolor{comment}{//}}
+\DoxyCodeLine{00435\ \textcolor{comment}{//\ Lookup*()}}
+\DoxyCodeLine{00436\ \textcolor{comment}{//}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \textcolor{comment}{//\ Looks\ up\ a\ given\ key\ and\ value\ pair\ in\ a\ collection\ and\ inserts\ the\ key-\/value}}
+\DoxyCodeLine{00439\ \textcolor{comment}{//\ pair\ if\ it's\ not\ already\ present.\ Returns\ a\ reference\ to\ the\ value\ associated}}
+\DoxyCodeLine{00440\ \textcolor{comment}{//\ with\ the\ key.}}
+\DoxyCodeLine{00441\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00442\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a575c455217533b2dc62e4030c1b339da}{LookupOrInsert}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ vt)\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordflow}{return}\ collection-\/>insert(vt).first-\/>second;}
+\DoxyCodeLine{00445\ \}}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \textcolor{comment}{//\ Same\ as\ above\ except\ the\ key-\/value\ are\ passed\ separately.}}
+\DoxyCodeLine{00448\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00449\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a575c455217533b2dc62e4030c1b339da}{LookupOrInsert}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}})\ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_a575c455217533b2dc62e4030c1b339da}{LookupOrInsert}}(collection,\ \textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00453\ \}}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \textcolor{comment}{//\ It's\ similar\ to\ LookupOrInsert()\ but\ uses\ the\ emplace\ and\ r-\/value\ mechanics}}
+\DoxyCodeLine{00456\ \textcolor{comment}{//\ to\ achieve\ the\ desired\ results.\ The\ constructor\ of\ the\ new\ element\ is\ called}}
+\DoxyCodeLine{00457\ \textcolor{comment}{//\ with\ exactly\ the\ same\ arguments\ as\ supplied\ to\ emplace,\ forwarded\ via}}
+\DoxyCodeLine{00458\ \textcolor{comment}{//\ std::forward<Args>(args).\ The\ element\ may\ be\ constructed\ even\ if\ there}}
+\DoxyCodeLine{00459\ \textcolor{comment}{//\ already\ is\ an\ element\ with\ the\ same\ key\ in\ the\ container,\ in\ which\ case\ the}}
+\DoxyCodeLine{00460\ \textcolor{comment}{//\ newly\ constructed\ element\ will\ be\ destroyed\ immediately.}}
+\DoxyCodeLine{00461\ \textcolor{comment}{//\ For\ details,\ see}}
+\DoxyCodeLine{00462\ \textcolor{comment}{//\ \ \ https://en.cppreference.com/w/cpp/container/map/emplace}}
+\DoxyCodeLine{00463\ \textcolor{comment}{//\ \ \ https://en.cppreference.com/w/cpp/container/unordered\_map/emplace}}
+\DoxyCodeLine{00464\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }Collection,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00465\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a5b80893bf88744a3245bd118b820b18f}{LookupOrEmplace}}(Collection*\ \textcolor{keyword}{const}\ collection,\ Args\&\&...\ \mbox{\hyperlink{structargs}{args}})\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordflow}{return}\ collection-\/>emplace(std::forward<Args>(\mbox{\hyperlink{structargs}{args}})...).first-\/>second;}
+\DoxyCodeLine{00467\ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \textcolor{comment}{//\ Counts\ the\ number\ of\ equivalent\ elements\ in\ the\ given\ "{}sequence"{},\ and\ stores}}
+\DoxyCodeLine{00470\ \textcolor{comment}{//\ the\ results\ in\ "{}count\_map"{}\ with\ element\ as\ the\ key\ and\ count\ as\ the\ value.}}
+\DoxyCodeLine{00471\ \textcolor{comment}{//}}
+\DoxyCodeLine{00472\ \textcolor{comment}{//\ Example:}}
+\DoxyCodeLine{00473\ \textcolor{comment}{//\ \ \ vector<string>\ v\ =\ \{"{}a"{},\ "{}b"{},\ "{}c"{},\ "{}a"{},\ "{}b"{}\};}}
+\DoxyCodeLine{00474\ \textcolor{comment}{//\ \ \ map<string,\ int>\ m;}}
+\DoxyCodeLine{00475\ \textcolor{comment}{//\ \ \ AddTokenCounts(v,\ 1,\ \&m);}}
+\DoxyCodeLine{00476\ \textcolor{comment}{//\ \ \ assert(m["{}a"{}]\ ==\ 2);}}
+\DoxyCodeLine{00477\ \textcolor{comment}{//\ \ \ assert(m["{}b"{}]\ ==\ 2);}}
+\DoxyCodeLine{00478\ \textcolor{comment}{//\ \ \ assert(m["{}c"{}]\ ==\ 1);}}
+\DoxyCodeLine{00479\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Sequence,\ \textcolor{keyword}{typename}\ Collection>}
+\DoxyCodeLine{00480\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a7f4e4b48b30d4a15c90beb8d1c620602}{AddTokenCounts}}(\textcolor{keyword}{const}\ Sequence\&\ sequence,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ increment,}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Collection*\ \textcolor{keyword}{const}\ count\_map)\ \{}
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ Sequence::const\_iterator\ it\ =\ sequence.begin();\ it\ !=\ sequence.end();\ ++it)\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ =}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{map-util_8h_a575c455217533b2dc62e4030c1b339da}{LookupOrInsert}}(count\_map,\ *it,\ \textcolor{keyword}{typename}\ Collection::mapped\_type());}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}\ +=\ increment;}
+\DoxyCodeLine{00486\ \ \ \ \ \}}
+\DoxyCodeLine{00487\ \}}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \textcolor{comment}{//\ Helpers\ for\ LookupOrInsertNew(),\ needed\ to\ create\ a\ new\ value\ type\ when\ the}}
+\DoxyCodeLine{00490\ \textcolor{comment}{//\ type\ itself\ is\ a\ pointer,\ i.e.,\ these\ extract\ the\ actual\ type\ from\ a\ pointer.}}
+\DoxyCodeLine{00491\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00492\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a4332cc67c895dc32884e15b441f0b517}{MapUtilAssignNewDefaultInstance}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}**\ location)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ *location\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}();}
+\DoxyCodeLine{00494\ \}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ Arg>}
+\DoxyCodeLine{00497\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_ab187cd09f5b421960c2cc3dab29181bb}{MapUtilAssignNewInstance}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}**\ location,\ \textcolor{keyword}{const}\ Arg\&\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}})\ \{}
+\DoxyCodeLine{00498\ \ \ \ \ *location\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}(\mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00499\ \}}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \textcolor{comment}{//\ Returns\ a\ reference\ to\ the\ value\ associated\ with\ key.\ If\ not\ found,\ a\ value}}
+\DoxyCodeLine{00502\ \textcolor{comment}{//\ is\ default\ constructed\ on\ the\ heap\ and\ added\ to\ the\ map.}}
+\DoxyCodeLine{00503\ \textcolor{comment}{//}}
+\DoxyCodeLine{00504\ \textcolor{comment}{//\ This\ function\ is\ useful\ for\ containers\ of\ the\ form\ map<Key,\ Value*>,\ where}}
+\DoxyCodeLine{00505\ \textcolor{comment}{//\ inserting\ a\ new\ key,\ value\ pair\ involves\ constructing\ a\ new\ heap-\/allocated}}
+\DoxyCodeLine{00506\ \textcolor{comment}{//\ Value,\ and\ storing\ a\ pointer\ to\ that\ in\ the\ collection.}}
+\DoxyCodeLine{00507\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00508\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_afc7aa2869e3950432fe569762fc4106c}{LookupOrInsertNew}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00510\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key,\ \textcolor{keyword}{static\_cast<}typename\ Collection::mapped\_type\textcolor{keyword}{>}(NULL)));}
+\DoxyCodeLine{00513\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ helper\ is\ needed\ to\ 'extract'\ the\ Value\ type\ from\ the\ type\ of\ the}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ container\ value,\ which\ is\ (Value*).}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{map-util_8h_a4332cc67c895dc32884e15b441f0b517}{MapUtilAssignNewDefaultInstance}}(\&(\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second));}
+\DoxyCodeLine{00517\ \ \ \ \ \}}
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00519\ \}}
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \textcolor{comment}{//\ Same\ as\ above\ but\ constructs\ the\ value\ using\ the\ single-\/argument\ constructor}}
+\DoxyCodeLine{00522\ \textcolor{comment}{//\ and\ the\ given\ "{}arg"{}.}}
+\DoxyCodeLine{00523\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ Arg>}
+\DoxyCodeLine{00524\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_afc7aa2869e3950432fe569762fc4106c}{LookupOrInsertNew}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Arg\&\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}})\ \{}
+\DoxyCodeLine{00527\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key,\ \textcolor{keyword}{static\_cast<}typename\ Collection::mapped\_type\textcolor{keyword}{>}(NULL)));}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ helper\ is\ needed\ to\ 'extract'\ the\ Value\ type\ from\ the\ type\ of\ the}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ container\ value,\ which\ is\ (Value*).}}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{map-util_8h_ab187cd09f5b421960c2cc3dab29181bb}{MapUtilAssignNewInstance}}(\&(\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second),\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}});}
+\DoxyCodeLine{00534\ \ \ \ \ \}}
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00536\ \}}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \textcolor{comment}{//\ Lookup\ of\ linked/shared\ pointers\ is\ used\ in\ two\ scenarios:}}
+\DoxyCodeLine{00539\ \textcolor{comment}{//}}
+\DoxyCodeLine{00540\ \textcolor{comment}{//\ Use\ LookupOrInsertSharedPtr\ if\ the\ container\ does\ not\ own\ the\ elements}}
+\DoxyCodeLine{00541\ \textcolor{comment}{//\ for\ their\ whole\ lifetime.\ This\ is\ typically\ the\ case\ when\ a\ reader\ allows}}
+\DoxyCodeLine{00542\ \textcolor{comment}{//\ parallel\ updates\ to\ the\ container.\ In\ this\ case\ a\ Mutex\ only\ needs\ to\ lock}}
+\DoxyCodeLine{00543\ \textcolor{comment}{//\ container\ operations,\ but\ all\ element\ operations\ must\ be\ performed\ on\ the}}
+\DoxyCodeLine{00544\ \textcolor{comment}{//\ shared\ pointer.\ Finding\ an\ element\ must\ be\ performed\ using\ FindPtr*()\ and}}
+\DoxyCodeLine{00545\ \textcolor{comment}{//\ cannot\ be\ done\ with\ FindLinkedPtr*()\ even\ though\ it\ compiles.}}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \textcolor{comment}{//\ Lookup\ a\ key\ in\ a\ map\ or\ hash\_map\ whose\ values\ are\ shared\_ptrs.\ \ If\ it\ is}}
+\DoxyCodeLine{00548\ \textcolor{comment}{//\ missing,\ set\ collection[key].reset(new\ Value::element\_type).\ Unlike}}
+\DoxyCodeLine{00549\ \textcolor{comment}{//\ LookupOrInsertNewLinkedPtr,\ this\ function\ returns\ the\ shared\_ptr\ instead\ of}}
+\DoxyCodeLine{00550\ \textcolor{comment}{//\ the\ raw\ pointer.\ Value::element\_type\ must\ be\ default\ constructable.}}
+\DoxyCodeLine{00551\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00552\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a30a95c93702af655cc9b27973bd2af81}{LookupOrInsertNewSharedPtr}}(}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ SharedPtr;}
+\DoxyCodeLine{00555\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::mapped\_type::element\_type\ Element;}
+\DoxyCodeLine{00556\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(key,\ SharedPtr()));}
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second.reset(\textcolor{keyword}{new}\ Element());}
+\DoxyCodeLine{00560\ \ \ \ \ \}}
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00562\ \}}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \textcolor{comment}{//\ A\ variant\ of\ LookupOrInsertNewSharedPtr\ where\ the\ value\ is\ constructed\ using}}
+\DoxyCodeLine{00565\ \textcolor{comment}{//\ a\ single-\/parameter\ constructor.\ \ Note:\ the\ constructor\ argument\ is\ computed}}
+\DoxyCodeLine{00566\ \textcolor{comment}{//\ even\ if\ it\ will\ not\ be\ used,\ so\ only\ values\ cheap\ to\ compute\ should\ be\ passed}}
+\DoxyCodeLine{00567\ \textcolor{comment}{//\ here.\ \ On\ the\ other\ hand\ it\ does\ not\ matter\ how\ expensive\ the\ construction\ of}}
+\DoxyCodeLine{00568\ \textcolor{comment}{//\ the\ actual\ stored\ value\ is,\ as\ that\ only\ occurs\ if\ necessary.}}
+\DoxyCodeLine{00569\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ Arg>}
+\DoxyCodeLine{00570\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{map-util_8h_a30a95c93702af655cc9b27973bd2af81}{LookupOrInsertNewSharedPtr}}(}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,\ \textcolor{keyword}{const}\ Arg\&\ \mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}})\ \{}
+\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ SharedPtr;}
+\DoxyCodeLine{00573\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Collection::mapped\_type::element\_type\ Element;}
+\DoxyCodeLine{00574\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(key,\ SharedPtr()));}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second.reset(\textcolor{keyword}{new}\ Element(\mbox{\hyperlink{threadlocal_8cc_a9ce2ec4812a92cb6ab39f6e81e9173a9}{arg}}));}
+\DoxyCodeLine{00578\ \ \ \ \ \}}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00580\ \}}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \textcolor{comment}{//}}
+\DoxyCodeLine{00583\ \textcolor{comment}{//\ Misc\ Utility\ Functions}}
+\DoxyCodeLine{00584\ \textcolor{comment}{//}}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \textcolor{comment}{//\ Updates\ the\ value\ associated\ with\ the\ given\ key.\ If\ the\ key\ was\ not\ already}}
+\DoxyCodeLine{00587\ \textcolor{comment}{//\ present,\ then\ the\ key-\/value\ pair\ are\ inserted\ and\ "{}previous"{}\ is\ unchanged.\ If}}
+\DoxyCodeLine{00588\ \textcolor{comment}{//\ the\ key\ was\ already\ present,\ the\ value\ is\ updated\ and\ "{}*previous"{}\ will}}
+\DoxyCodeLine{00589\ \textcolor{comment}{//\ contain\ a\ copy\ of\ the\ old\ value.}}
+\DoxyCodeLine{00590\ \textcolor{comment}{//}}
+\DoxyCodeLine{00591\ \textcolor{comment}{//\ InsertOrReturnExisting\ has\ complementary\ behavior\ that\ returns\ the}}
+\DoxyCodeLine{00592\ \textcolor{comment}{//\ address\ of\ an\ already\ existing\ value,\ rather\ than\ updating\ it.}}
+\DoxyCodeLine{00593\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00594\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_ae780e5281d0f2b578dc6345a86059621}{UpdateReturnCopy}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ previous)\ \{}
+\DoxyCodeLine{00597\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ collection-\/>insert(\textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update}}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous)\ \{}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ *previous\ =\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second\ =\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}};}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00606\ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00608\ \}}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \textcolor{comment}{//\ Same\ as\ above\ except\ that\ the\ key\ and\ value\ are\ passed\ as\ a\ pair.}}
+\DoxyCodeLine{00611\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00612\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{map-util_8h_ae780e5281d0f2b578dc6345a86059621}{UpdateReturnCopy}}(Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ vt,}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ previous)\ \{}
+\DoxyCodeLine{00614\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ collection-\/>insert(vt);}
+\DoxyCodeLine{00615\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update}}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous)\ \{}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ *previous\ =\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second\ =\ vt.second;}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00622\ \ \ \ \ \}}
+\DoxyCodeLine{00623\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00624\ \}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \textcolor{comment}{//\ Tries\ to\ insert\ the\ given\ key-\/value\ pair\ into\ the\ collection.\ Returns\ NULL\ if}}
+\DoxyCodeLine{00627\ \textcolor{comment}{//\ the\ insert\ succeeds.\ Otherwise,\ returns\ a\ pointer\ to\ the\ existing\ value.}}
+\DoxyCodeLine{00628\ \textcolor{comment}{//}}
+\DoxyCodeLine{00629\ \textcolor{comment}{//\ This\ complements\ UpdateReturnCopy\ in\ that\ it\ allows\ to\ update\ only\ after}}
+\DoxyCodeLine{00630\ \textcolor{comment}{//\ verifying\ the\ old\ value\ and\ still\ insert\ quickly\ without\ having\ to\ look\ up}}
+\DoxyCodeLine{00631\ \textcolor{comment}{//\ twice.\ Unlike\ UpdateReturnCopy\ this\ also\ does\ not\ come\ with\ the\ issue\ of\ an}}
+\DoxyCodeLine{00632\ \textcolor{comment}{//\ undefined\ previous*\ in\ case\ new\ data\ was\ inserted.}}
+\DoxyCodeLine{00633\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00634\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_aeb4bbec1bd9b827e165cc872d695ce89}{InsertOrReturnExisting}}(}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::value\_type\&\ vt)\ \{}
+\DoxyCodeLine{00636\ \ \ \ \ std::pair<typename\ Collection::iterator,\ bool>\ \mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}\ =\ collection-\/>insert(vt);}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.second)\ \{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;\ \textcolor{comment}{//\ Inserted,\ no\ existing\ previous\ value.}}
+\DoxyCodeLine{00639\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{doris__main_8cpp_ab07b31d4e8924e322ffed3f51d39e425}{ret}}.first-\/>second;\ \textcolor{comment}{//\ Return\ address\ of\ already\ existing\ value.}}
+\DoxyCodeLine{00641\ \ \ \ \ \}}
+\DoxyCodeLine{00642\ \}}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \textcolor{comment}{//\ Same\ as\ above,\ except\ for\ explicit\ key\ and\ data.}}
+\DoxyCodeLine{00645\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00646\ \textcolor{keyword}{typename}\ Collection::mapped\_type*\ \mbox{\hyperlink{map-util_8h_aeb4bbec1bd9b827e165cc872d695ce89}{InsertOrReturnExisting}}(}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ Collection*\ \textcolor{keyword}{const}\ collection,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key,}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::mapped\_type\&\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}})\ \{}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_aeb4bbec1bd9b827e165cc872d695ce89}{InsertOrReturnExisting}}(collection,\ \textcolor{keyword}{typename}\ Collection::value\_type(key,\ \mbox{\hyperlink{uint24_8h_aa99be7b8b4274b2256b394ea7bf80762}{data}}));}
+\DoxyCodeLine{00650\ \}}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \textcolor{comment}{//\ Saves\ the\ reverse\ mapping\ into\ reverse.\ Key/value\ pairs\ are\ inserted\ in\ the}}
+\DoxyCodeLine{00653\ \textcolor{comment}{//\ order\ the\ iterator\ returns\ them.}}
+\DoxyCodeLine{00654\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection,\ \textcolor{keyword}{class}\ ReverseCollection>}
+\DoxyCodeLine{00655\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_ab80fd9626f4dffa5491583fa1ffbd925}{ReverseMap}}(\textcolor{keyword}{const}\ Collection\&\ collection,\ ReverseCollection*\ \textcolor{keyword}{const}\ reverse)\ \{}
+\DoxyCodeLine{00656\ \ \ \ \ CHECK(reverse\ !=\ NULL);}
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ Collection::const\_iterator\ it\ =\ collection.begin();\ it\ !=\ collection.end();}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ ++it)\ \{}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{map-util_8h_af47ddfa55e076ac11e14a3ef5fbaac3f}{InsertOrUpdate}}(reverse,\ it-\/>second,\ it-\/>first);}
+\DoxyCodeLine{00660\ \ \ \ \ \}}
+\DoxyCodeLine{00661\ \}}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \textcolor{comment}{//\ Erases\ the\ collection\ item\ identified\ by\ the\ given\ key,\ and\ returns\ the\ value}}
+\DoxyCodeLine{00664\ \textcolor{comment}{//\ associated\ with\ that\ key.\ It\ is\ assumed\ that\ the\ value\ (i.e.,\ the}}
+\DoxyCodeLine{00665\ \textcolor{comment}{//\ mapped\_type)\ is\ a\ pointer.\ Returns\ NULL\ if\ the\ key\ was\ not\ found\ in\ the}}
+\DoxyCodeLine{00666\ \textcolor{comment}{//\ collection.}}
+\DoxyCodeLine{00667\ \textcolor{comment}{//}}
+\DoxyCodeLine{00668\ \textcolor{comment}{//\ Examples:}}
+\DoxyCodeLine{00669\ \textcolor{comment}{//\ \ \ map<string,\ MyType*>\ my\_map;}}
+\DoxyCodeLine{00670\ \textcolor{comment}{//}}
+\DoxyCodeLine{00671\ \textcolor{comment}{//\ One\ line\ cleanup:}}
+\DoxyCodeLine{00672\ \textcolor{comment}{//\ \ \ \ \ delete\ EraseKeyReturnValuePtr(\&my\_map,\ "{}abc"{});}}
+\DoxyCodeLine{00673\ \textcolor{comment}{//}}
+\DoxyCodeLine{00674\ \textcolor{comment}{//\ Use\ returned\ value:}}
+\DoxyCodeLine{00675\ \textcolor{comment}{//\ \ \ \ \ gscoped\_ptr<MyType>\ value\_ptr(EraseKeyReturnValuePtr(\&my\_map,\ "{}abc"{}));}}
+\DoxyCodeLine{00676\ \textcolor{comment}{//\ \ \ \ \ if\ (value\_ptr.get())}}
+\DoxyCodeLine{00677\ \textcolor{comment}{//\ \ \ \ \ \ \ value\_ptr-\/>DoSomething();}}
+\DoxyCodeLine{00678\ \textcolor{comment}{//}}
+\DoxyCodeLine{00679\ \textcolor{comment}{//\ Note:\ if\ 'collection'\ is\ a\ multimap,\ this\ will\ only\ erase\ and\ return\ the}}
+\DoxyCodeLine{00680\ \textcolor{comment}{//\ first\ value.}}
+\DoxyCodeLine{00681\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Collection>}
+\DoxyCodeLine{00682\ \textcolor{keyword}{typename}\ Collection::mapped\_type\ \mbox{\hyperlink{map-util_8h_a05f27603bb9613c5125a17d629c00203}{EraseKeyReturnValuePtr}}(Collection*\ \textcolor{keyword}{const}\ collection,}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Collection::key\_type\&\ key)\ \{}
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ collection-\/>find(key);}
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ collection-\/>end())\ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{typename}\ Collection::mapped\_type();}
+\DoxyCodeLine{00687\ \ \ \ \ \}}
+\DoxyCodeLine{00688\ \ \ \ \ \textcolor{keyword}{typename}\ Collection::mapped\_type\ v\ =\ std::move(it-\/>second);}
+\DoxyCodeLine{00689\ \ \ \ \ collection-\/>erase(it);}
+\DoxyCodeLine{00690\ \ \ \ \ \textcolor{keywordflow}{return}\ v;}
+\DoxyCodeLine{00691\ \}}
+\DoxyCodeLine{00692\ }
+\DoxyCodeLine{00693\ \textcolor{comment}{//\ Inserts\ all\ the\ keys\ from\ map\_container\ into\ key\_container,\ which\ must}}
+\DoxyCodeLine{00694\ \textcolor{comment}{//\ support\ insert(MapContainer::key\_type).}}
+\DoxyCodeLine{00695\ \textcolor{comment}{//}}
+\DoxyCodeLine{00696\ \textcolor{comment}{//\ Note:\ any\ initial\ contents\ of\ the\ key\_container\ are\ not\ cleared.}}
+\DoxyCodeLine{00697\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ KeyContainer>}
+\DoxyCodeLine{00698\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_a253c1330efb3046f31899253aa4bc25c}{InsertKeysFromMap}}(\textcolor{keyword}{const}\ MapContainer\&\ map\_container,\ KeyContainer*\ key\_container)\ \{}
+\DoxyCodeLine{00699\ \ \ \ \ CHECK(key\_container\ !=\ NULL);}
+\DoxyCodeLine{00700\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ MapContainer::const\_iterator\ it\ =\ map\_container.begin();}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ it\ !=\ map\_container.end();\ ++it)\ \{}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ key\_container-\/>insert(it-\/>first);}
+\DoxyCodeLine{00703\ \ \ \ \ \}}
+\DoxyCodeLine{00704\ \}}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \textcolor{comment}{//\ Appends\ all\ the\ keys\ from\ map\_container\ into\ key\_container,\ which\ must}}
+\DoxyCodeLine{00707\ \textcolor{comment}{//\ support\ push\_back(MapContainer::key\_type).}}
+\DoxyCodeLine{00708\ \textcolor{comment}{//}}
+\DoxyCodeLine{00709\ \textcolor{comment}{//\ Note:\ any\ initial\ contents\ of\ the\ key\_container\ are\ not\ cleared.}}
+\DoxyCodeLine{00710\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ KeyContainer>}
+\DoxyCodeLine{00711\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_af5065070b9d31deed8ee5071273c890e}{AppendKeysFromMap}}(\textcolor{keyword}{const}\ MapContainer\&\ map\_container,\ KeyContainer*\ key\_container)\ \{}
+\DoxyCodeLine{00712\ \ \ \ \ CHECK(key\_container\ !=\ NULL);}
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ MapContainer::const\_iterator\ it\ =\ map\_container.begin();}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \ it\ !=\ map\_container.end();\ ++it)\ \{}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ key\_container-\/>push\_back(it-\/>first);}
+\DoxyCodeLine{00716\ \ \ \ \ \}}
+\DoxyCodeLine{00717\ \}}
+\DoxyCodeLine{00718\ }
+\DoxyCodeLine{00719\ \textcolor{comment}{//\ A\ more\ specialized\ overload\ of\ AppendKeysFromMap\ to\ optimize\ reallocations}}
+\DoxyCodeLine{00720\ \textcolor{comment}{//\ for\ the\ common\ case\ in\ which\ we're\ appending\ keys\ to\ a\ vector\ and\ hence\ can}}
+\DoxyCodeLine{00721\ \textcolor{comment}{//\ (and\ sometimes\ should)\ call\ reserve()\ first.}}
+\DoxyCodeLine{00722\ \textcolor{comment}{//}}
+\DoxyCodeLine{00723\ \textcolor{comment}{//\ (It\ would\ be\ possible\ to\ play\ SFINAE\ games\ to\ call\ reserve()\ for\ any}}
+\DoxyCodeLine{00724\ \textcolor{comment}{//\ container\ that\ supports\ it,\ but\ this\ seems\ to\ get\ us\ 99\%\ of\ what\ we\ need}}
+\DoxyCodeLine{00725\ \textcolor{comment}{//\ without\ the\ complexity\ of\ a\ SFINAE-\/based\ solution.)}}
+\DoxyCodeLine{00726\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ KeyType>}
+\DoxyCodeLine{00727\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_af5065070b9d31deed8ee5071273c890e}{AppendKeysFromMap}}(\textcolor{keyword}{const}\ MapContainer\&\ map\_container,\ std::vector<KeyType>*\ key\_container)\ \{}
+\DoxyCodeLine{00728\ \ \ \ \ CHECK(key\_container\ !=\ NULL);}
+\DoxyCodeLine{00729\ \ \ \ \ \textcolor{comment}{//\ We\ now\ have\ the\ opportunity\ to\ call\ reserve().\ Calling\ reserve()\ every}}
+\DoxyCodeLine{00730\ \ \ \ \ \textcolor{comment}{//\ time\ is\ a\ bad\ idea\ for\ some\ use\ cases:\ libstdc++'s\ implementation\ of}}
+\DoxyCodeLine{00731\ \ \ \ \ \textcolor{comment}{//\ vector<>::reserve()\ resizes\ the\ vector's\ backing\ store\ to\ exactly\ the}}
+\DoxyCodeLine{00732\ \ \ \ \ \textcolor{comment}{//\ given\ size\ (unless\ it's\ already\ at\ least\ that\ big).\ Because\ of\ this,}}
+\DoxyCodeLine{00733\ \ \ \ \ \textcolor{comment}{//\ the\ use\ case\ that\ involves\ appending\ a\ lot\ of\ small\ maps\ (total\ size}}
+\DoxyCodeLine{00734\ \ \ \ \ \textcolor{comment}{//\ N)\ one\ by\ one\ to\ a\ vector\ would\ be\ O(N\string^2).\ But\ never\ calling\ reserve()}}
+\DoxyCodeLine{00735\ \ \ \ \ \textcolor{comment}{//\ loses\ the\ opportunity\ to\ improve\ the\ use\ case\ of\ adding\ from\ a\ large}}
+\DoxyCodeLine{00736\ \ \ \ \ \textcolor{comment}{//\ map\ to\ an\ empty\ vector\ (this\ improves\ performance\ by\ up\ to\ 33\%).\ A}}
+\DoxyCodeLine{00737\ \ \ \ \ \textcolor{comment}{//\ number\ of\ heuristics\ are\ possible;\ see\ the\ discussion\ in}}
+\DoxyCodeLine{00738\ \ \ \ \ \textcolor{comment}{//\ cl/34081696.\ Here\ we\ use\ the\ simplest\ one.}}
+\DoxyCodeLine{00739\ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_container-\/>empty())\ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ key\_container-\/>reserve(map\_container.size());}
+\DoxyCodeLine{00741\ \ \ \ \ \}}
+\DoxyCodeLine{00742\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ MapContainer::const\_iterator\ it\ =\ map\_container.begin();}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ it\ !=\ map\_container.end();\ ++it)\ \{}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ key\_container-\/>push\_back(it-\/>first);}
+\DoxyCodeLine{00745\ \ \ \ \ \}}
+\DoxyCodeLine{00746\ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \textcolor{comment}{//\ Inserts\ all\ the\ values\ from\ map\_container\ into\ value\_container,\ which\ must}}
+\DoxyCodeLine{00749\ \textcolor{comment}{//\ support\ push\_back(MapContainer::mapped\_type).}}
+\DoxyCodeLine{00750\ \textcolor{comment}{//}}
+\DoxyCodeLine{00751\ \textcolor{comment}{//\ Note:\ any\ initial\ contents\ of\ the\ value\_container\ are\ not\ cleared.}}
+\DoxyCodeLine{00752\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ ValueContainer>}
+\DoxyCodeLine{00753\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_aca214ce5168690a3080bbd88376fce8d}{AppendValuesFromMap}}(\textcolor{keyword}{const}\ MapContainer\&\ map\_container,\ ValueContainer*\ value\_container)\ \{}
+\DoxyCodeLine{00754\ \ \ \ \ CHECK(value\_container\ !=\ NULL);}
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ MapContainer::const\_iterator\ it\ =\ map\_container.begin();}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ it\ !=\ map\_container.end();\ ++it)\ \{}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ value\_container-\/>push\_back(it-\/>second);}
+\DoxyCodeLine{00758\ \ \ \ \ \}}
+\DoxyCodeLine{00759\ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ ValueContainer>}
+\DoxyCodeLine{00762\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_ae206902e68de3739807a4bdff074535a}{EmplaceValuesFromMap}}(MapContainer\&\&\ map\_container,\ ValueContainer*\ value\_container)\ \{}
+\DoxyCodeLine{00763\ \ \ \ \ CHECK(value\_container\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00764\ \ \ \ \ \textcolor{comment}{//\ See\ AppendKeysFromMap\ for\ why\ this\ is\ done.}}
+\DoxyCodeLine{00765\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\_container-\/>empty())\ \{}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ value\_container-\/>reserve(map\_container.size());}
+\DoxyCodeLine{00767\ \ \ \ \ \}}
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\&\ entry\ :\ map\_container)\ \{}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ value\_container-\/>emplace\_back(std::move(entry.second));}
+\DoxyCodeLine{00770\ \ \ \ \ \}}
+\DoxyCodeLine{00771\ \}}
+\DoxyCodeLine{00772\ }
+\DoxyCodeLine{00773\ \textcolor{comment}{//\ A\ more\ specialized\ overload\ of\ AppendValuesFromMap\ to\ optimize\ reallocations}}
+\DoxyCodeLine{00774\ \textcolor{comment}{//\ for\ the\ common\ case\ in\ which\ we're\ appending\ values\ to\ a\ vector\ and\ hence}}
+\DoxyCodeLine{00775\ \textcolor{comment}{//\ can\ (and\ sometimes\ should)\ call\ reserve()\ first.}}
+\DoxyCodeLine{00776\ \textcolor{comment}{//}}
+\DoxyCodeLine{00777\ \textcolor{comment}{//\ (It\ would\ be\ possible\ to\ play\ SFINAE\ games\ to\ call\ reserve()\ for\ any}}
+\DoxyCodeLine{00778\ \textcolor{comment}{//\ container\ that\ supports\ it,\ but\ this\ seems\ to\ get\ us\ 99\%\ of\ what\ we\ need}}
+\DoxyCodeLine{00779\ \textcolor{comment}{//\ without\ the\ complexity\ of\ a\ SFINAE-\/based\ solution.)}}
+\DoxyCodeLine{00780\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00781\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{map-util_8h_aca214ce5168690a3080bbd88376fce8d}{AppendValuesFromMap}}(\textcolor{keyword}{const}\ MapContainer\&\ map\_container,}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<ValueType>*\ value\_container)\ \{}
+\DoxyCodeLine{00783\ \ \ \ \ \mbox{\hyperlink{map-util_8h_ae206902e68de3739807a4bdff074535a}{EmplaceValuesFromMap}}(map\_container,\ value\_container);}
+\DoxyCodeLine{00784\ \}}
+\DoxyCodeLine{00785\ }
+\DoxyCodeLine{00786\ \textcolor{comment}{//\ Compute\ and\ insert\ new\ value\ if\ it's\ absent\ from\ the\ map.\ Return\ a\ pair\ with\ a\ reference\ to\ the}}
+\DoxyCodeLine{00787\ \textcolor{comment}{//\ value\ and\ a\ bool\ indicating\ whether\ it\ was\ absent\ at\ first.}}
+\DoxyCodeLine{00788\ \textcolor{comment}{//}}
+\DoxyCodeLine{00789\ \textcolor{comment}{//\ This\ inspired\ on\ a\ similar\ java\ construct\ (url\ split\ in\ two\ lines):}}
+\DoxyCodeLine{00790\ \textcolor{comment}{//\ https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html}}
+\DoxyCodeLine{00791\ \textcolor{comment}{//\ \#computeIfAbsent-\/K-\/java.util.function.Function}}
+\DoxyCodeLine{00792\ \textcolor{comment}{//}}
+\DoxyCodeLine{00793\ \textcolor{comment}{//\ It\ takes\ a\ reference\ to\ the\ key\ and\ a\ lambda\ function.\ If\ the\ key\ exists\ in\ the\ map,\ returns}}
+\DoxyCodeLine{00794\ \textcolor{comment}{//\ a\ pair\ with\ a\ pointer\ to\ the\ current\ value\ and\ 'false'.\ If\ the\ key\ does\ not\ exist\ in\ the\ map,}}
+\DoxyCodeLine{00795\ \textcolor{comment}{//\ it\ uses\ the\ lambda\ function\ to\ create\ a\ value,\ inserts\ it\ into\ the\ map,\ and\ returns\ a\ pair\ with}}
+\DoxyCodeLine{00796\ \textcolor{comment}{//\ a\ pointer\ to\ the\ new\ value\ and\ 'true'.}}
+\DoxyCodeLine{00797\ \textcolor{comment}{//}}
+\DoxyCodeLine{00798\ \textcolor{comment}{//\ Example\ usage:}}
+\DoxyCodeLine{00799\ \textcolor{comment}{//}}
+\DoxyCodeLine{00800\ \textcolor{comment}{//\ auto\ result\ =\ ComputeIfAbsentReturnAbsense(\&my\_collection,}}
+\DoxyCodeLine{00801\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_key,}}
+\DoxyCodeLine{00802\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ []\ \{\ return\ new\_value;\ \});}}
+\DoxyCodeLine{00803\ \textcolor{comment}{//\ MyValue*\ const\ value\ =\ result.first;}}
+\DoxyCodeLine{00804\ \textcolor{comment}{//\ if\ (result.second)\ ....}}
+\DoxyCodeLine{00805\ \textcolor{comment}{//}}
+\DoxyCodeLine{00806\ \textcolor{comment}{//\ The\ ComputePair*\ variants\ expect\ a\ lambda\ that\ creates\ a\ pair<k,\ v>.\ This}}
+\DoxyCodeLine{00807\ \textcolor{comment}{//\ can\ be\ useful\ if\ the\ key\ is\ a\ StringPiece\ pointing\ to\ external\ state\ to}}
+\DoxyCodeLine{00808\ \textcolor{comment}{//\ avoid\ excess\ memory\ for\ the\ keys,\ while\ being\ safer\ in\ multi-\/threaded}}
+\DoxyCodeLine{00809\ \textcolor{comment}{//\ contexts,\ e.g.\ in\ case\ the\ key\ goes\ out\ of\ scope\ before\ the\ container\ does.}}
+\DoxyCodeLine{00810\ \textcolor{comment}{//}}
+\DoxyCodeLine{00811\ \textcolor{comment}{//\ Example\ usage:}}
+\DoxyCodeLine{00812\ \textcolor{comment}{//}}
+\DoxyCodeLine{00813\ \textcolor{comment}{//\ map<StringPiece,\ int,\ GoodFastHash<StringPiece>>\ string\_to\_idx;}}
+\DoxyCodeLine{00814\ \textcolor{comment}{//\ vector<unique\_ptr<StringPB>>\ pbs;}}
+\DoxyCodeLine{00815\ \textcolor{comment}{//\ auto\ result\ =\ ComputePairIfAbsentReturnAbsense(\&string\_to\_idx,\ my\_key,}}
+\DoxyCodeLine{00816\ \textcolor{comment}{//\ \ \ \ \ [\&]()\ \{}}
+\DoxyCodeLine{00817\ \textcolor{comment}{//\ \ \ \ \ \ \ unique\_ptr<StringPB>\ s\ =\ new\ StringPB();}}
+\DoxyCodeLine{00818\ \textcolor{comment}{//\ \ \ \ \ \ \ s-\/>set\_string(my\_key);}}
+\DoxyCodeLine{00819\ \textcolor{comment}{//\ \ \ \ \ \ \ int\ idx\ =\ pbs.size();}}
+\DoxyCodeLine{00820\ \textcolor{comment}{//\ \ \ \ \ \ \ pbs.emplace\_back(s.release());}}
+\DoxyCodeLine{00821\ \textcolor{comment}{//\ \ \ \ \ \ \ return\ make\_pair(StringPiece(pbs.back()-\/>string()),\ idx);}}
+\DoxyCodeLine{00822\ \textcolor{comment}{//\ \ \ \ \ \});}}
+\DoxyCodeLine{00823\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{typename}\ Function>}
+\DoxyCodeLine{00824\ std::pair<typename\ MapContainer::mapped\_type*\ const,\ bool>\ \mbox{\hyperlink{map-util_8h_a142ad99d37b78bf1bf1548300f52fa51}{ComputePairIfAbsentReturnAbsense}}(}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ MapContainer*\ container,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ MapContainer::key\_type\&\ key,}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ Function\ compute\_pair\_func)\ \{}
+\DoxyCodeLine{00827\ \ \ \ \ \textcolor{keyword}{typename}\ MapContainer::iterator\ iter\ =\ container-\/>find(key);}
+\DoxyCodeLine{00828\ \ \ \ \ \textcolor{keywordtype}{bool}\ new\_value\ =\ iter\ ==\ container-\/>end();}
+\DoxyCodeLine{00829\ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_value)\ \{}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ p\ =\ compute\_pair\_func();}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ std::pair<typename\ MapContainer::iterator,\ bool>\ result\ =}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ container-\/>emplace(std::move(p.first),\ std::move(p.second));}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ DCHECK(result.second)\ <<\ \textcolor{stringliteral}{"{}duplicate\ key:\ "{}}\ <<\ key;}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ iter\ =\ result.first;}
+\DoxyCodeLine{00835\ \ \ \ \ \}}
+\DoxyCodeLine{00836\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\&iter-\/>second,\ new\_value);}
+\DoxyCodeLine{00837\ \}}
+\DoxyCodeLine{00838\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{typename}\ Function>}
+\DoxyCodeLine{00839\ std::pair<typename\ MapContainer::mapped\_type*\ const,\ bool>\ \mbox{\hyperlink{map-util_8h_ad32808a7335dbe4db8f388a6d7a79385}{ComputeIfAbsentReturnAbsense}}(}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ MapContainer*\ container,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ MapContainer::key\_type\&\ key,}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ Function\ compute\_func)\ \{}
+\DoxyCodeLine{00842\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_a142ad99d37b78bf1bf1548300f52fa51}{ComputePairIfAbsentReturnAbsense}}(}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ container,\ key,\ [\&key,\ \&compute\_func]\ \{\ \textcolor{keywordflow}{return}\ std::make\_pair(key,\ compute\_func());\ \});}
+\DoxyCodeLine{00844\ \};}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \textcolor{comment}{//\ Like\ the\ above\ but\ doesn't\ return\ a\ pair,\ just\ returns\ a\ pointer\ to\ the\ value.}}
+\DoxyCodeLine{00847\ \textcolor{comment}{//\ Example\ usage:}}
+\DoxyCodeLine{00848\ \textcolor{comment}{//}}
+\DoxyCodeLine{00849\ \textcolor{comment}{//\ MyValue*\ const\ value\ =\ ComputeIfAbsent(\&my\_collection,}}
+\DoxyCodeLine{00850\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_key,}}
+\DoxyCodeLine{00851\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ []\ \{\ return\ new\_value;\ \});}}
+\DoxyCodeLine{00852\ \textcolor{comment}{//}}
+\DoxyCodeLine{00853\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{typename}\ Function>}
+\DoxyCodeLine{00854\ \textcolor{keyword}{typename}\ MapContainer::mapped\_type*\ \mbox{\hyperlink{map-util_8h_a44bc8baa90e3c790add89ac867b345c3}{ComputeIfAbsent}}(MapContainer*\ container,}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ MapContainer::key\_type\&\ key,}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Function\ compute\_func)\ \{}
+\DoxyCodeLine{00857\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{map-util_8h_ad32808a7335dbe4db8f388a6d7a79385}{ComputeIfAbsentReturnAbsense}}(container,\ key,\ compute\_func).first;}
+\DoxyCodeLine{00858\ \};}
+\DoxyCodeLine{00859\ }
+\DoxyCodeLine{00860\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ MapContainer,\ \textcolor{keyword}{typename}\ Function>}
+\DoxyCodeLine{00861\ \textcolor{keyword}{typename}\ MapContainer::mapped\_type*\ \mbox{\hyperlink{map-util_8h_aca63712e0bdb5e054187c233e04ca696}{ComputePairIfAbsent}}(MapContainer*\ container,}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ MapContainer::key\_type\&\ key,}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Function\ compute\_pair\_func)\ \{}
+\DoxyCodeLine{00864\ \ \ \ \ \textcolor{keywordflow}{return}\ ComputePairIfAbsentReturnAbsense<MapContainer,\ Function>(container,\ key,}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ compute\_pair\_func)}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \ \ \ \ .first;}
+\DoxyCodeLine{00867\ \};}
+
+\end{DoxyCode}

@@ -1,0 +1,90 @@
+\hypertarget{block__compression_8h_source}{}\doxysection{block\+\_\+compression.\+h}
+\label{block__compression_8h_source}\index{/Users/dabowang/be\_all/util/block\_compression.h@{/Users/dabowang/be\_all/util/block\_compression.h}}
+\mbox{\hyperlink{block__compression_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ or\ more\ contributor\ license\ agreements.\ \ See\ the\ NOTICE\ file}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ distributed\ with\ this\ work\ for\ additional\ information}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ regarding\ copyright\ ownership.\ \ The\ ASF\ licenses\ this\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ to\ you\ under\ the\ Apache\ License,\ Version\ 2.0\ (the}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ "{}License"{});\ you\ may\ not\ use\ this\ file\ except\ in\ compliance}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ with\ the\ License.\ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ software\ distributed\ under\ the\ License\ is\ distributed\ on\ an}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ "{}AS\ IS"{}\ BASIS,\ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ KIND,\ either\ express\ or\ implied.\ \ See\ the\ License\ for\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ specific\ language\ governing\ permissions\ and\ limitations}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ under\ the\ License.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/parquet\_types.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/segment\_v2.pb.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ This\ class\ is\ used\ to\ encapsulate\ Compression/Decompression\ algorithm.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ This\ class\ only\ used\ to\ compress\ a\ block\ data,\ which\ means\ all\ data}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ should\ given\ when\ call\ compress\ or\ decompress.\ This\ class\ don't\ handle}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ stream\ compression.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ NOTICE!!\ BlockCompressionCodec\ is\ NOT\ thread\ safe,\ it\ should\ NOT\ be\ shared\ by\ threads}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ max\ compression\ reuse\ buffer\ size}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ if\ max\_compress\_len\ is\ bigger\ than\ this,\ don't\ use\ faststring\ in\ context}}
+\DoxyCodeLine{00040\ \textcolor{keyword}{const}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a2fecf9b7d78e722c5957934f5f09f0da}{MAX\_COMPRESSION\_BUFFER\_SIZE\_FOR\_REUSE}}\ =\ 1024\ *\ 1024\ *\ 8;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_block_compression_codec}{BlockCompressionCodec}}\ \{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a6684af56fa8737d8964cc3be6ce8415b}{\string~BlockCompressionCodec}}()\ \{\}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a3af5355f1599fdfced70447f8d2304a7}{init}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ This\ function\ will\ compress\ input\ data\ into\ output.}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ output\ should\ be\ preallocated,\ and\ its\ capacity\ must\ be\ large\ enough}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ for\ compressed\ input,\ which\ can\ be\ get\ through\ max\_compressed\_len\ function.}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ compressed\ data\ will\ be\ set\ in\ output's\ size.}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a6e86d6135f6a9b454b1df2cc7d3e24b7}{compress}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ input,\ \mbox{\hyperlink{classdoris_1_1faststring}{faststring}}*\ output)\ =\ 0;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ Default\ implementation\ will\ merge\ input\ list\ into\ a\ big\ buffer\ and\ call}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ compress(Slice)\ to\ finish\ compression.\ If\ compression\ type\ support\ digesting}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ slice\ one\ by\ one,\ it\ should\ reimplement\ this\ function.}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a6e86d6135f6a9b454b1df2cc7d3e24b7}{compress}}(\textcolor{keyword}{const}\ std::vector<Slice>\&\ input,\ \textcolor{keywordtype}{size\_t}\ uncompressed\_size,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1faststring}{faststring}}*\ output);}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ Decompress\ input\ data\ into\ output,\ output's\ capacity\ should\ be\ large\ enough}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ for\ decompressed\ data.}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ decompressed\ data\ will\ be\ set\ in\ output's\ size.}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a41b496a7bcaf46cd28261a4edf2f6a0a}{decompress}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\&\ input,\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\ output)\ =\ 0;}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Returns\ an\ upper\ bound\ on\ the\ max\ compressed\ length.}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a32504693cfa90c961888b570a07396f9}{max\_compressed\_len}}(\textcolor{keywordtype}{size\_t}\ len)\ =\ 0;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_block_compression_codec_a26e5a67d073c36820639ef02b2401c93}{exceed\_max\_compress\_len}}(\textcolor{keywordtype}{size\_t}\ uncompressed\_size);}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ Get\ a\ BlockCompressionCodec\ through\ type.}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Return\ Status::OK\ if\ a\ valid\ codec\ is\ found.\ If\ codec\ is\ null,\ it\ means\ it\ is}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ NO\_COMPRESSION.\ If\ codec\ is\ not\ null,\ user\ can\ use\ it\ to\ compress/decompress}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ data.}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ NOTICE!!\ BlockCompressionCodec\ is\ NOT\ thread\ safe,\ it\ should\ NOT\ be\ shared\ by\ threads}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ Return\ not\ OK,\ if\ error\ happens.}}
+\DoxyCodeLine{00078\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{namespacedoris_a9660dedd932bb9b8cb78cf0a3107b112}{get\_block\_compression\_codec}}(segment\_v2::CompressionTypePB\ type,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_compression_codec}{BlockCompressionCodec}}**\ codec);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{namespacedoris_a9660dedd932bb9b8cb78cf0a3107b112}{get\_block\_compression\_codec}}(tparquet::CompressionCodec::type\ parquet\_codec,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_block_compression_codec}{BlockCompressionCodec}}**\ codec);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+
+\end{DoxyCode}
