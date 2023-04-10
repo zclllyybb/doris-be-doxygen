@@ -1,5 +1,5 @@
-\hypertarget{function__bitmap__variadic_8cpp}{}\doxysection{/\+Users/dabowang/be\+\_\+all/vec/functions/function\+\_\+bitmap\+\_\+variadic.cpp 文件参考}
-\label{function__bitmap__variadic_8cpp}\index{/Users/dabowang/be\_all/vec/functions/function\_bitmap\_variadic.cpp@{/Users/dabowang/be\_all/vec/functions/function\_bitmap\_variadic.cpp}}
+\hypertarget{function__bitmap__variadic_8cpp}{}\doxysection{/\+Users/dabowang/doris/be/src/vec/functions/function\+\_\+bitmap\+\_\+variadic.cpp 文件参考}
+\label{function__bitmap__variadic_8cpp}\index{/Users/dabowang/doris/be/src/vec/functions/function\_bitmap\_variadic.cpp@{/Users/dabowang/doris/be/src/vec/functions/function\_bitmap\_variadic.cpp}}
 {\ttfamily \#include \char`\"{}vec/columns/column\+\_\+complex.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/data\+\_\+types/data\+\_\+type.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/data\+\_\+types/data\+\_\+type\+\_\+bitmap.\+h\char`\"{}}\newline
@@ -29,6 +29,8 @@ namespace \mbox{\hyperlink{namespacedoris_1_1vectorized}{doris\+::vectorized}}
 \begin{DoxyCompactList}\small\item\em Common helper methods for implementation of different columns. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{宏定义}
 \begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{function__bitmap__variadic_8cpp_a0bdcaf86b68a54f4b568a07587e5a3cb}{BITMAP\+\_\+\+OR\+\_\+\+NULLABLE}}(nullable,  input\+\_\+rows\+\_\+count,  res,  op)
 \item 
 \#define \mbox{\hyperlink{function__bitmap__variadic_8cpp_a0a8e87d0f7d7840bce875f7d19502f5b}{BITMAP\+\_\+\+FUNCTION\+\_\+\+VARIADIC}}(CLASS,  FUNCTION\+\_\+\+NAME,  OP)
 \item 
@@ -64,69 +66,40 @@ using \mbox{\hyperlink{namespacedoris_1_1vectorized_a24ada46187ef99cbe5f3c1c2808
 \item 
 \mbox{\hyperlink{namespacedoris_1_1vectorized_a762884047d62008624769819fb2165ca}{BITMAP\+\_\+\+FUNCTION\+\_\+\+COUNT\+\_\+\+VARIADIC}} (Bitmap\+Xor\+Count, bitmap\+\_\+xor\+\_\+count, $^\wedge$=)
 \item 
+Status \mbox{\hyperlink{namespacedoris_1_1vectorized_a8706f765c4e5c4e444ce74d59196fba2}{execute\+\_\+bitmap\+\_\+op\+\_\+count\+\_\+null\+\_\+to\+\_\+zero}} (Function\+Context $\ast$context, Block \&block, const Column\+Numbers \&arguments, size\+\_\+t result, size\+\_\+t input\+\_\+rows\+\_\+count, const std\+::function$<$ Status(Function\+Context $\ast$, Block \&, const Column\+Numbers \&, size\+\_\+t, size\+\_\+t)$>$ \&exec\+\_\+impl\+\_\+func)
+\item 
 void \mbox{\hyperlink{namespacedoris_1_1vectorized_a66bc2747fac378bfc1b0221ab8be1f09}{register\+\_\+function\+\_\+bitmap\+\_\+variadic}} (Simple\+Function\+Factory \&factory)
 \end{DoxyCompactItemize}
 
 
 \doxysubsection{宏定义说明}
+\mbox{\Hypertarget{function__bitmap__variadic_8cpp_a0bdcaf86b68a54f4b568a07587e5a3cb}\label{function__bitmap__variadic_8cpp_a0bdcaf86b68a54f4b568a07587e5a3cb}} 
+\index{function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}!BITMAP\_OR\_NULLABLE@{BITMAP\_OR\_NULLABLE}}
+\index{BITMAP\_OR\_NULLABLE@{BITMAP\_OR\_NULLABLE}!function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}}
+\doxysubsubsection{\texorpdfstring{BITMAP\_OR\_NULLABLE}{BITMAP\_OR\_NULLABLE}}
+{\footnotesize\ttfamily \#define BITMAP\+\_\+\+OR\+\_\+\+NULLABLE(\begin{DoxyParamCaption}\item[{}]{nullable,  }\item[{}]{input\+\_\+rows\+\_\+count,  }\item[{}]{res,  }\item[{}]{op }\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ nested\_col\_ptr\ =\ nullable-\/>get\_nested\_column\_ptr();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}*\ \_\_restrict\ null\_map\_data\ =\ nullable-\/>get\_null\_map\_data().data();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ mid\_data\ =\ assert\_cast<const\ ColumnBitmap*>(nested\_col\_ptr.get())-\/>get\_data();\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ row\ =\ 0;\ row\ <\ input\_rows\_count;\ ++row)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ if\ (!null\_map\_data[row])\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ res[row]\ op\ mid\_data[row];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \}}
+
+\end{DoxyCode}
 \mbox{\Hypertarget{function__bitmap__variadic_8cpp_a0a8e87d0f7d7840bce875f7d19502f5b}\label{function__bitmap__variadic_8cpp_a0a8e87d0f7d7840bce875f7d19502f5b}} 
 \index{function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}!BITMAP\_FUNCTION\_VARIADIC@{BITMAP\_FUNCTION\_VARIADIC}}
 \index{BITMAP\_FUNCTION\_VARIADIC@{BITMAP\_FUNCTION\_VARIADIC}!function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}}
 \doxysubsubsection{\texorpdfstring{BITMAP\_FUNCTION\_VARIADIC}{BITMAP\_FUNCTION\_VARIADIC}}
 {\footnotesize\ttfamily \#define BITMAP\+\_\+\+FUNCTION\+\_\+\+VARIADIC(\begin{DoxyParamCaption}\item[{}]{CLASS,  }\item[{}]{FUNCTION\+\_\+\+NAME,  }\item[{}]{OP }\end{DoxyParamCaption})}
 
-{\bfseries 值\+:}
-\begin{DoxyCode}{0}
-\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }CLASS\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{signal__handler_8h_a8f8f80d37794cde9472343e4487ba3eb}{name}}\ =\ \#FUNCTION\_NAME;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultDataType\ =\ DataTypeBitMap;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ Status\ vector\_vector(ColumnPtr\ argument\_columns[],\ \textcolor{keywordtype}{size\_t}\ col\_size,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ input\_rows\_count,\ std::vector<BitmapValue>\&\ res)\ \{\ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ mid\_data\ =\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<const\ ColumnBitmap*>(argument\_columns[0].get())-\/>get\_data();\ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ row\ =\ 0;\ row\ <\ input\_rows\_count;\ ++row)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res[row]\ =\ mid\_data[row];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ col\ =\ 1;\ col\ <\ col\_size;\ ++col)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ col\_data\ =\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<const\ ColumnBitmap*>(argument\_columns[col].get())-\/>get\_data();\ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ row\ =\ 0;\ row\ <\ input\_rows\_count;\ ++row)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res[row]\ OP\ col\_data[row];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::OK();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \}}
-
-\end{DoxyCode}
 \mbox{\Hypertarget{function__bitmap__variadic_8cpp_a84b2faf5605614380a984faa43f92920}\label{function__bitmap__variadic_8cpp_a84b2faf5605614380a984faa43f92920}} 
 \index{function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}!BITMAP\_FUNCTION\_COUNT\_VARIADIC@{BITMAP\_FUNCTION\_COUNT\_VARIADIC}}
 \index{BITMAP\_FUNCTION\_COUNT\_VARIADIC@{BITMAP\_FUNCTION\_COUNT\_VARIADIC}!function\_bitmap\_variadic.cpp@{function\_bitmap\_variadic.cpp}}
 \doxysubsubsection{\texorpdfstring{BITMAP\_FUNCTION\_COUNT\_VARIADIC}{BITMAP\_FUNCTION\_COUNT\_VARIADIC}}
 {\footnotesize\ttfamily \#define BITMAP\+\_\+\+FUNCTION\+\_\+\+COUNT\+\_\+\+VARIADIC(\begin{DoxyParamCaption}\item[{}]{CLASS,  }\item[{}]{FUNCTION\+\_\+\+NAME,  }\item[{}]{OP }\end{DoxyParamCaption})}
 
-{\bfseries 值\+:}
-\begin{DoxyCode}{0}
-\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }CLASS\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{signal__handler_8h_a8f8f80d37794cde9472343e4487ba3eb}{name}}\ =\ \#FUNCTION\_NAME;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultDataType\ =\ DataTypeInt64;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }TData\ =\ std::vector<BitmapValue>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResTData\ =\ \textcolor{keyword}{typename}\ ColumnVector<Int64>::Container;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ Status\ vector\_vector(ColumnPtr\ argument\_columns[],\ \textcolor{keywordtype}{size\_t}\ col\_size,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ input\_rows\_count,\ ResTData\&\ res)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ TData\ vals\ =\ assert\_cast<const\ ColumnBitmap*>(argument\_columns[0].get())-\/>get\_data();\ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ col\ =\ 1;\ col\ <\ col\_size;\ ++col)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ col\_data\ =\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_cast<const\ ColumnBitmap*>(argument\_columns[col].get())-\/>get\_data();\ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ row\ =\ 0;\ row\ <\ input\_rows\_count;\ ++row)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vals[row]\ OP\ col\_data[row];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ for\ (\textcolor{keywordtype}{size\_t}\ row\ =\ 0;\ row\ <\ input\_rows\_count;\ ++row)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res[row]\ =\ vals[row].cardinality();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::OK();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \}}
-
-\end{DoxyCode}

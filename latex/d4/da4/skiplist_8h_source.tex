@@ -1,5 +1,5 @@
 \hypertarget{skiplist_8h_source}{}\doxysection{skiplist.\+h}
-\label{skiplist_8h_source}\index{/Users/dabowang/be\_all/olap/skiplist.h@{/Users/dabowang/be\_all/olap/skiplist.h}}
+\label{skiplist_8h_source}\index{/Users/dabowang/doris/be/src/olap/skiplist.h@{/Users/dabowang/doris/be/src/olap/skiplist.h}}
 \mbox{\hyperlink{skiplist_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2011\ The\ LevelDB\ Authors.\ All\ rights\ reserved.}}
@@ -34,8 +34,8 @@
 \DoxyCodeLine{00030\ }
 \DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{logging_8h}{common/logging.h}}"{}}}
 \DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}gen\_cpp/olap\_file.pb.h"{}}}
-\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__pool_8h}{runtime/mem\_pool.h}}"{}}}
-\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{random_8h}{util/random.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{random_8h}{util/random.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arena_8h}{vec/common/arena.h}}"{}}}
 \DoxyCodeLine{00035\ }
 \DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
 \DoxyCodeLine{00037\ }
@@ -67,10 +67,10 @@
 \DoxyCodeLine{00063\ \ \ \ \ \};}
 \DoxyCodeLine{00064\ }
 \DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ new\ SkipList\ object\ that\ will\ use\ "{}cmp"{}\ for\ comparing\ keys,}}
-\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ and\ will\ allocate\ memory\ using\ "{}*mem\_pool"{}.}}
-\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ Objects\ allocated\ in\ the\ mem\_pool\ must\ remain\ allocated\ for}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ and\ will\ allocate\ memory\ using\ "{}*arena"{}.}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ Objects\ allocated\ in\ the\ arena\ must\ remain\ allocated\ for}}
 \DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ the\ lifetime\ of\ the\ skiplist\ object.}}
-\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_skip_list}{SkipList}}(Comparator*\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ mem\_pool,\ \textcolor{keywordtype}{bool}\ can\_dup);}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_skip_list}{SkipList}}(Comparator*\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena,\ \textcolor{keywordtype}{bool}\ can\_dup);}
 \DoxyCodeLine{00070\ }
 \DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Insert\ key\ into\ the\ list.}}
 \DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ac92017726e3dc67ca3c9229db40eab33}{Insert}}(\textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keywordtype}{bool}*\ overwritten);}
@@ -127,7 +127,7 @@
 \DoxyCodeLine{00123\ \ \ \ \ Comparator*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}};}
 \DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ When\ value\ is\ true,\ means\ indicates\ that\ duplicate\ values\ are\ allowed.}}
 \DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_abd8e169198e79b47c511dbb548e8cd46}{\_can\_dup}};}
-\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5341425ace9dc056d0bb0567227d7762}{\_mem\_pool}};\ \textcolor{comment}{//\ MemPool\ used\ for\ allocations\ of\ nodes}}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a08b4f66909d73add44bf4fed0a288ba3}{\_arena}};\ \textcolor{comment}{//\ Arena\ used\ for\ allocations\ of\ nodes}}
 \DoxyCodeLine{00127\ }
 \DoxyCodeLine{00128\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
 \DoxyCodeLine{00129\ }
@@ -207,262 +207,261 @@
 \DoxyCodeLine{00203\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
 \DoxyCodeLine{00204\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_a8050c6e712fa91a810285edfd6b2a915}{SkipList<Key,\ Comparator>::NewNode}}(\textcolor{keyword}{const}\ Key\&\ key,}
 \DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ height)\ \{}
-\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{char}*\ mem\ =}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{char}*)\_mem\_pool-\/>allocate(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}})\ +\ \textcolor{keyword}{sizeof}(std::atomic<Node*>)\ *\ (height\ -\/\ 1));}
-\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ (mem)\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}(key);}
-\DoxyCodeLine{00209\ \}}
-\DoxyCodeLine{00210\ }
-\DoxyCodeLine{00211\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00212\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_acea07904c2b7407f735c8a536f24b760}{SkipList<Key,\ Comparator>::Iterator::Iterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list}{SkipList}}*\ list)\ \{}
-\DoxyCodeLine{00213\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a1b55ed7a916cc29e7ece2d7c42f2070a}{list\_}}\ =\ list;}
-\DoxyCodeLine{00214\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_aba6993474022e5c735bf3b9326a3fbb2}{node\_}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00215\ \}}
-\DoxyCodeLine{00216\ }
-\DoxyCodeLine{00217\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00218\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a470438bf41ff0f2cc2fc41682c8f839e}{SkipList<Key,\ Comparator>::Iterator::Valid}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{return}\ node\_\ !=\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00220\ \}}
-\DoxyCodeLine{00221\ }
-\DoxyCodeLine{00222\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00223\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_ac08bec26397305de58d0d17659780606}{SkipList<Key,\ Comparator>::Iterator::key}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00224\ \ \ \ \ DCHECK(Valid());}
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{return}\ node\_-\/>key;}
-\DoxyCodeLine{00226\ \}}
-\DoxyCodeLine{00227\ }
-\DoxyCodeLine{00228\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00229\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a659a293dd51073a1b9560bb80f687705}{SkipList<Key,\ Comparator>::Iterator::Next}}()\ \{}
-\DoxyCodeLine{00230\ \ \ \ \ DCHECK(Valid());}
-\DoxyCodeLine{00231\ \ \ \ \ node\_\ =\ node\_-\/>Next(0);}
-\DoxyCodeLine{00232\ \}}
-\DoxyCodeLine{00233\ }
-\DoxyCodeLine{00234\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00235\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_aa5e6d1c9afab8f462aebc2ba76b91022}{SkipList<Key,\ Comparator>::Iterator::Prev}}()\ \{}
-\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ Instead\ of\ using\ explicit\ "{}prev"{}\ links,\ we\ just\ search\ for\ the}}
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ last\ node\ that\ falls\ before\ key.}}
-\DoxyCodeLine{00238\ \ \ \ \ DCHECK(Valid());}
-\DoxyCodeLine{00239\ \ \ \ \ node\_\ =\ list\_-\/>FindLessThan(node\_-\/>key);}
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\_\ ==\ list\_-\/>head\_)\ \{}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ node\_\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00242\ \ \ \ \ \}}
-\DoxyCodeLine{00243\ \}}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00246\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a75c636d6d456674bab0b337c3e3e9d62}{SkipList<Key,\ Comparator>::Iterator::Seek}}(\textcolor{keyword}{const}\ Key\&\ target)\ \{}
-\DoxyCodeLine{00247\ \ \ \ \ node\_\ =\ list\_-\/>FindGreaterOrEqual(target,\ \textcolor{keyword}{nullptr});}
-\DoxyCodeLine{00248\ \}}
-\DoxyCodeLine{00249\ }
-\DoxyCodeLine{00250\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00251\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_ad181387b43c0a057247ea5a63076820c}{SkipList<Key,\ Comparator>::Iterator::SeekToFirst}}()\ \{}
-\DoxyCodeLine{00252\ \ \ \ \ node\_\ =\ list\_-\/>head\_-\/>Next(0);}
-\DoxyCodeLine{00253\ \}}
-\DoxyCodeLine{00254\ }
-\DoxyCodeLine{00255\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00256\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a6eed1dcb2e14ab14ee749821b3f524a0}{SkipList<Key,\ Comparator>::Iterator::SeekToLast}}()\ \{}
-\DoxyCodeLine{00257\ \ \ \ \ node\_\ =\ list\_-\/>FindLast();}
-\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\_\ ==\ list\_-\/>head\_)\ \{}
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ node\_\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00260\ \ \ \ \ \}}
-\DoxyCodeLine{00261\ \}}
-\DoxyCodeLine{00262\ }
-\DoxyCodeLine{00263\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00264\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6d2a06f98a46b6e2df5193e68f568394}{SkipList<Key,\ Comparator>::RandomHeight}}()\ \{}
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ Increase\ height\ with\ probability\ 1\ in\ kBranching}}
-\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ kBranching\ =\ 4;}
-\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ 1;}
-\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{while}\ (height\ <\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}}\ \&\&\ ((\mbox{\hyperlink{classdoris_1_1_skip_list_a4a7f9c93f6051e1ccfa5882a018edef3}{rnd\_}}.\mbox{\hyperlink{classdoris_1_1_random_a0b40951f9303d18b54593aea505dea9d}{Next}}()\ \%\ kBranching)\ ==\ 0))\ \{}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ height++;}
-\DoxyCodeLine{00270\ \ \ \ \ \}}
-\DoxyCodeLine{00271\ \ \ \ \ DCHECK(height\ >\ 0);}
-\DoxyCodeLine{00272\ \ \ \ \ DCHECK(height\ <=\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}});}
-\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{return}\ height;}
-\DoxyCodeLine{00274\ \}}
-\DoxyCodeLine{00275\ }
-\DoxyCodeLine{00276\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00277\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_aef7c751a30212b676d37b7b422036097}{SkipList<Key,\ Comparator>::KeyIsAfterNode}}(\textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ n)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ nullptr\ n\ is\ considered\ infinite}}
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{return}\ (n\ !=\ \textcolor{keyword}{nullptr})\ \&\&\ ((*compare\_)(n-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}},\ key)\ <\ 0);}
-\DoxyCodeLine{00280\ \}}
-\DoxyCodeLine{00281\ }
-\DoxyCodeLine{00282\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00283\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_ad305e0b3d5251c83d895a572eb294c20}{SkipList<Key,\ Comparator>::FindGreaterOrEqual}}(}
-\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}**\ prev)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00285\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
-\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_skip_list_aef7c751a30212b676d37b7b422036097}{KeyIsAfterNode}}(key,\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}))\ \{}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ searching\ in\ this\ list}}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prev\ !=\ \textcolor{keyword}{nullptr})\ prev[level]\ =\ x;}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00301\ \ \ \ \ \}}
-\DoxyCodeLine{00302\ \}}
-\DoxyCodeLine{00303\ }
-\DoxyCodeLine{00304\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00305\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_ab0be9dd5a40540024e960aca68b9d93f}{SkipList<Key,\ Comparator>::FindLessThan}}(}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\&\ key)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00307\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
-\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
-\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ DCHECK(x\ ==\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}\ ||\ (*\mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}})(x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}},\ key)\ <\ 0);}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{nullptr}\ ||\ (*\mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}})(\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}-\/>key,\ key)\ >=\ 0)\ \{}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x;}
-\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00322\ \ \ \ \ \}}
-\DoxyCodeLine{00323\ \}}
-\DoxyCodeLine{00324\ }
-\DoxyCodeLine{00325\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00326\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6825f7e20544e7b51ebd3dfcf1fd46f2}{SkipList<Key,\ Comparator>::FindLast}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00327\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
-\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
-\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
-\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
-\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
-\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x;}
-\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
-\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
-\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
-\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00341\ \ \ \ \ \}}
-\DoxyCodeLine{00342\ \}}
-\DoxyCodeLine{00343\ }
-\DoxyCodeLine{00344\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00345\ \mbox{\hyperlink{classdoris_1_1_skip_list_a0385df65d8bfda445a20db104eedbc38}{SkipList<Key,\ Comparator>::SkipList}}(Comparator*\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ mem\_pool,\ \textcolor{keywordtype}{bool}\ can\_dup)}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}}(\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}),}
-\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_abd8e169198e79b47c511dbb548e8cd46}{\_can\_dup}}(can\_dup),}
-\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a5341425ace9dc056d0bb0567227d7762}{\_mem\_pool}}(mem\_pool),}
-\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}(\mbox{\hyperlink{classdoris_1_1_skip_list_a8050c6e712fa91a810285edfd6b2a915}{NewNode}}(0\ \textcolor{comment}{/*\ any\ key\ will\ do\ */},\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}})),}
-\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a76fa6d6f6e233f0aaa5578a99b8375c7}{max\_height\_}}(1),}
-\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a4a7f9c93f6051e1ccfa5882a018edef3}{rnd\_}}(0xdeadbeef)\ \{}
-\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}};\ i++)\ \{}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ \textcolor{keyword}{nullptr});}
-\DoxyCodeLine{00354\ \ \ \ \ \}}
-\DoxyCodeLine{00355\ \}}
-\DoxyCodeLine{00356\ }
-\DoxyCodeLine{00357\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00358\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ac92017726e3dc67ca3c9229db40eab33}{SkipList<Key,\ Comparator>::Insert}}(\textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keywordtype}{bool}*\ overwritten)\ \{}
-\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ TODO(opt):\ We\ can\ use\ a\ barrier-\/free\ variant\ of\ FindGreaterOrEqual()}}
-\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ here\ since\ Insert()\ is\ externally\ synchronized.}}
-\DoxyCodeLine{00361\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ prev[kMaxHeight];}
-\DoxyCodeLine{00362\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ prev);}
-\DoxyCodeLine{00363\ }
-\DoxyCodeLine{00364\ \textcolor{preprocessor}{\#ifndef\ BE\_TEST}}
-\DoxyCodeLine{00365\ \ \ \ \ \textcolor{comment}{//\ The\ key\ already\ exists\ and\ duplicate\ keys\ are\ not\ allowed,\ so\ we\ need\ to\ aggregate\ them}}
-\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\_can\_dup\ \&\&\ x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
-\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ *overwritten\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00369\ \ \ \ \ \}}
-\DoxyCodeLine{00370\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00371\ }
-\DoxyCodeLine{00372\ \ \ \ \ *overwritten\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ Our\ data\ structure\ does\ not\ allow\ duplicate\ insertion}}
-\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ RandomHeight();}
-\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordflow}{if}\ (height\ >\ GetMaxHeight())\ \{}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ GetMaxHeight();\ i\ <\ height;\ i++)\ \{}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ prev[i]\ =\ head\_;}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{comment}{//fprintf(stderr,\ "{}Change\ height\ from\ \%d\ to\ \%d\(\backslash\)n"{},\ max\_height\_,\ height);}}
-\DoxyCodeLine{00380\ }
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It\ is\ ok\ to\ mutate\ max\_height\_\ without\ any\ synchronization}}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ with\ concurrent\ readers.\ \ A\ concurrent\ reader\ that\ observes}}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ new\ value\ of\ max\_height\_\ will\ see\ either\ the\ old\ value\ of}}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ new\ level\ pointers\ from\ head\_\ (nullptr),\ or\ a\ new\ value\ set\ in}}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ loop\ below.\ \ In\ the\ former\ case\ the\ reader\ will}}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ immediately\ drop\ to\ the\ next\ level\ since\ nullptr\ sorts\ after\ all}}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keys.\ \ In\ the\ latter\ case\ the\ reader\ will\ use\ the\ new\ node.}}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ max\_height\_.store(height,\ std::memory\_order\_relaxed);}
-\DoxyCodeLine{00389\ \ \ \ \ \}}
-\DoxyCodeLine{00390\ }
-\DoxyCodeLine{00391\ \ \ \ \ x\ =\ NewNode(key,\ height);}
-\DoxyCodeLine{00392\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)\ \{}
-\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NoBarrier\_SetNext()\ suffices\ since\ we\ will\ add\ a\ barrier\ when}}
-\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ publish\ a\ pointer\ to\ "{}x"{}\ in\ prev[i].}}
-\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a18532351f3a906aeac0fefc315179e15}{NoBarrier\_SetNext}}(i,\ prev[i]-\/>NoBarrier\_Next(i));}
-\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ prev[i]-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ x);}
-\DoxyCodeLine{00397\ \ \ \ \ \}}
-\DoxyCodeLine{00398\ \}}
-\DoxyCodeLine{00399\ }
-\DoxyCodeLine{00400\ \textcolor{comment}{//\ NOTE:\ Already\ be\ checked,\ the\ row\ is\ exist.}}
-\DoxyCodeLine{00401\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00402\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ac70f089cd9f63367c0dbe7ba22ea5016}{SkipList<Key,\ Comparator>::InsertWithHint}}(\textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keywordtype}{bool}\ is\_exist,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint}{Hint}}*\ hint)\ \{}
-\DoxyCodeLine{00403\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_af421e37ed260a19b0a15f08260f95298}{curr}};}
-\DoxyCodeLine{00404\ \ \ \ \ DCHECK(!is\_exist\ ||\ x)\ <<\ \textcolor{stringliteral}{"{}curr\ pointer\ must\ not\ be\ null\ if\ row\ exists"{}};}
-\DoxyCodeLine{00405\ }
-\DoxyCodeLine{00406\ \textcolor{preprocessor}{\#ifndef\ BE\_TEST}}
-\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ The\ key\ already\ exists\ and\ duplicate\ keys\ are\ not\ allowed,\ so\ we\ need\ to\ aggregate\ them}}
-\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\_can\_dup\ \&\&\ is\_exist)\ \{}
-\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00410\ \ \ \ \ \}}
-\DoxyCodeLine{00411\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00412\ }
-\DoxyCodeLine{00413\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}**\ prev\ =\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_a28e2fbda37b1eb4e560bd57725627d91}{prev}};}
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ Our\ data\ structure\ does\ not\ allow\ duplicate\ insertion}}
-\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ RandomHeight();}
-\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordflow}{if}\ (height\ >\ GetMaxHeight())\ \{}
-\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ GetMaxHeight();\ i\ <\ height;\ i++)\ \{}
-\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ prev[i]\ =\ head\_;}
-\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{comment}{//fprintf(stderr,\ "{}Change\ height\ from\ \%d\ to\ \%d\(\backslash\)n"{},\ max\_height\_,\ height);}}
-\DoxyCodeLine{00421\ }
-\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It\ is\ ok\ to\ mutate\ max\_height\_\ without\ any\ synchronization}}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ with\ concurrent\ readers.\ \ A\ concurrent\ reader\ that\ observes}}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ new\ value\ of\ max\_height\_\ will\ see\ either\ the\ old\ value\ of}}
-\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ new\ level\ pointers\ from\ head\_\ (nullptr),\ or\ a\ new\ value\ set\ in}}
-\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ loop\ below.\ \ In\ the\ former\ case\ the\ reader\ will}}
-\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ immediately\ drop\ to\ the\ next\ level\ since\ nullptr\ sorts\ after\ all}}
-\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keys.\ \ In\ the\ latter\ case\ the\ reader\ will\ use\ the\ new\ node.}}
-\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ max\_height\_.store(height,\ std::memory\_order\_relaxed);}
-\DoxyCodeLine{00430\ \ \ \ \ \}}
-\DoxyCodeLine{00431\ }
-\DoxyCodeLine{00432\ \ \ \ \ x\ =\ NewNode(key,\ height);}
-\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)\ \{}
-\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NoBarrier\_SetNext()\ suffices\ since\ we\ will\ add\ a\ barrier\ when}}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ publish\ a\ pointer\ to\ "{}x"{}\ in\ prev[i].}}
-\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a18532351f3a906aeac0fefc315179e15}{NoBarrier\_SetNext}}(i,\ prev[i]-\/>NoBarrier\_Next(i));}
-\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ prev[i]-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ x);}
-\DoxyCodeLine{00438\ \ \ \ \ \}}
-\DoxyCodeLine{00439\ \}}
-\DoxyCodeLine{00440\ }
-\DoxyCodeLine{00441\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00442\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6487339d66afe86d0a74ae468f7cc514}{SkipList<Key,\ Comparator>::Contains}}(\textcolor{keyword}{const}\ Key\&\ key)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00443\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ \textcolor{keyword}{nullptr});}
-\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
-\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00446\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00448\ \ \ \ \ \}}
-\DoxyCodeLine{00449\ \}}
-\DoxyCodeLine{00450\ }
-\DoxyCodeLine{00451\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
-\DoxyCodeLine{00452\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a613310f53b08e7ba19dd3ec5ff5720bb}{SkipList<Key,\ Comparator>::Find}}(\textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint}{Hint}}*\ hint)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00453\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_a28e2fbda37b1eb4e560bd57725627d91}{prev}});}
-\DoxyCodeLine{00454\ \ \ \ \ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_af421e37ed260a19b0a15f08260f95298}{curr}}\ =\ x;}
-\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
-\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00457\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00459\ \ \ \ \ \}}
-\DoxyCodeLine{00460\ \}}
-\DoxyCodeLine{00461\ }
-\DoxyCodeLine{00462\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{char}*\ mem\ =\ \mbox{\hyperlink{bitmap__index__writer_8cpp_a5ce2827690b7bc49da6331de2172fe4d}{\_arena}}-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}})\ +\ \textcolor{keyword}{sizeof}(std::atomic<Node*>)\ *\ (height\ -\/\ 1));}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ (mem)\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}(key);}
+\DoxyCodeLine{00208\ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00211\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_acea07904c2b7407f735c8a536f24b760}{SkipList<Key,\ Comparator>::Iterator::Iterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_skip_list}{SkipList}}*\ list)\ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a1b55ed7a916cc29e7ece2d7c42f2070a}{list\_}}\ =\ list;}
+\DoxyCodeLine{00213\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_aba6993474022e5c735bf3b9326a3fbb2}{node\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00214\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00217\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a470438bf41ff0f2cc2fc41682c8f839e}{SkipList<Key,\ Comparator>::Iterator::Valid}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordflow}{return}\ node\_\ !=\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00219\ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00222\ \textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_ac08bec26397305de58d0d17659780606}{SkipList<Key,\ Comparator>::Iterator::key}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00223\ \ \ \ \ DCHECK(Valid());}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{return}\ node\_-\/>key;}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00228\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a659a293dd51073a1b9560bb80f687705}{SkipList<Key,\ Comparator>::Iterator::Next}}()\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ DCHECK(Valid());}
+\DoxyCodeLine{00230\ \ \ \ \ node\_\ =\ node\_-\/>Next(0);}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00234\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_aa5e6d1c9afab8f462aebc2ba76b91022}{SkipList<Key,\ Comparator>::Iterator::Prev}}()\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ Instead\ of\ using\ explicit\ "{}prev"{}\ links,\ we\ just\ search\ for\ the}}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ last\ node\ that\ falls\ before\ key.}}
+\DoxyCodeLine{00237\ \ \ \ \ DCHECK(Valid());}
+\DoxyCodeLine{00238\ \ \ \ \ node\_\ =\ list\_-\/>FindLessThan(node\_-\/>key);}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\_\ ==\ list\_-\/>head\_)\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ node\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00241\ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00245\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a75c636d6d456674bab0b337c3e3e9d62}{SkipList<Key,\ Comparator>::Iterator::Seek}}(\textcolor{keyword}{const}\ Key\&\ target)\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ node\_\ =\ list\_-\/>FindGreaterOrEqual(target,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00250\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_ad181387b43c0a057247ea5a63076820c}{SkipList<Key,\ Comparator>::Iterator::SeekToFirst}}()\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ node\_\ =\ list\_-\/>head\_-\/>Next(0);}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00255\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_1_1_iterator_a6eed1dcb2e14ab14ee749821b3f524a0}{SkipList<Key,\ Comparator>::Iterator::SeekToLast}}()\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ node\_\ =\ list\_-\/>FindLast();}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\_\ ==\ list\_-\/>head\_)\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ node\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00259\ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00263\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6d2a06f98a46b6e2df5193e68f568394}{SkipList<Key,\ Comparator>::RandomHeight}}()\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ Increase\ height\ with\ probability\ 1\ in\ kBranching}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ kBranching\ =\ 4;}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ 1;}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordflow}{while}\ (height\ <\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}}\ \&\&\ ((\mbox{\hyperlink{classdoris_1_1_skip_list_a4a7f9c93f6051e1ccfa5882a018edef3}{rnd\_}}.\mbox{\hyperlink{classdoris_1_1_random_a0b40951f9303d18b54593aea505dea9d}{Next}}()\ \%\ kBranching)\ ==\ 0))\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ height++;}
+\DoxyCodeLine{00269\ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ DCHECK(height\ >\ 0);}
+\DoxyCodeLine{00271\ \ \ \ \ DCHECK(height\ <=\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}});}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{return}\ height;}
+\DoxyCodeLine{00273\ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00276\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_aef7c751a30212b676d37b7b422036097}{SkipList<Key,\ Comparator>::KeyIsAfterNode}}(\textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ n)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ nullptr\ n\ is\ considered\ infinite}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordflow}{return}\ (n\ !=\ \textcolor{keyword}{nullptr})\ \&\&\ ((*compare\_)(n-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}},\ key)\ <\ 0);}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00282\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_ad305e0b3d5251c83d895a572eb294c20}{SkipList<Key,\ Comparator>::FindGreaterOrEqual}}(}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}**\ prev)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_skip_list_aef7c751a30212b676d37b7b422036097}{KeyIsAfterNode}}(key,\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}))\ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ searching\ in\ this\ list}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prev\ !=\ \textcolor{keyword}{nullptr})\ prev[level]\ =\ x;}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00300\ \ \ \ \ \}}
+\DoxyCodeLine{00301\ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00304\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_ab0be9dd5a40540024e960aca68b9d93f}{SkipList<Key,\ Comparator>::FindLessThan}}(}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\&\ key)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00306\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ DCHECK(x\ ==\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}\ ||\ (*\mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}})(x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}},\ key)\ <\ 0);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{nullptr}\ ||\ (*\mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}})(\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}-\/>key,\ key)\ >=\ 0)\ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \ \ \}}
+\DoxyCodeLine{00322\ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00325\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{SkipList<Key,\ Comparator>::Node}}*\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6825f7e20544e7b51ebd3dfcf1fd46f2}{SkipList<Key,\ Comparator>::FindLast}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00326\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}};}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordtype}{int}\ level\ =\ \mbox{\hyperlink{classdoris_1_1_skip_list_a234324812f502e1bbfe1b15d98424a2e}{GetMaxHeight}}()\ -\/\ 1;}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a055fea3af07837d172971466894abfd6}{Next}}(level);}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ 0)\ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ x;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Switch\ to\ next\ list}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level-\/-\/;}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}};}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00344\ \mbox{\hyperlink{classdoris_1_1_skip_list_ace0a6978e37830dc592025fad65d5548}{SkipList<Key,\ Comparator>::SkipList}}(Comparator*\ \mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}},\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena,\ \textcolor{keywordtype}{bool}\ can\_dup)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_skip_list_a28d891fcbd750484db50ca0394f06c0c}{compare\_}}(\mbox{\hyperlink{decimal12_8h_a6ba7ca120d12676a0e996afe452d7b44}{cmp}}),}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_abd8e169198e79b47c511dbb548e8cd46}{\_can\_dup}}(can\_dup),}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a08b4f66909d73add44bf4fed0a288ba3}{\_arena}}(arena),}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}(\mbox{\hyperlink{classdoris_1_1_skip_list_a8050c6e712fa91a810285edfd6b2a915}{NewNode}}(0\ \textcolor{comment}{/*\ any\ key\ will\ do\ */},\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}})),}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a76fa6d6f6e233f0aaa5578a99b8375c7}{max\_height\_}}(1),}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_a4a7f9c93f6051e1ccfa5882a018edef3}{rnd\_}}(0xdeadbeef)\ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classdoris_1_1_skip_list_a5d76b81b0ad4c19007a781d4edb8181fa654c604143c3a47662e408957d3ce449}{kMaxHeight}};\ i++)\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_skip_list_ae11332b0462de356107aae60c510c8bf}{head\_}}-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00353\ \ \ \ \ \}}
+\DoxyCodeLine{00354\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00357\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ac92017726e3dc67ca3c9229db40eab33}{SkipList<Key,\ Comparator>::Insert}}(\textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keywordtype}{bool}*\ overwritten)\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{comment}{//\ TODO(opt):\ We\ can\ use\ a\ barrier-\/free\ variant\ of\ FindGreaterOrEqual()}}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ here\ since\ Insert()\ is\ externally\ synchronized.}}
+\DoxyCodeLine{00360\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ prev[kMaxHeight];}
+\DoxyCodeLine{00361\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ prev);}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\#ifndef\ BE\_TEST}}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ The\ key\ already\ exists\ and\ duplicate\ keys\ are\ not\ allowed,\ so\ we\ need\ to\ aggregate\ them}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\_can\_dup\ \&\&\ x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ *overwritten\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00368\ \ \ \ \ \}}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ *overwritten\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ Our\ data\ structure\ does\ not\ allow\ duplicate\ insertion}}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ RandomHeight();}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{if}\ (height\ >\ GetMaxHeight())\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ GetMaxHeight();\ i\ <\ height;\ i++)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ prev[i]\ =\ head\_;}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{comment}{//fprintf(stderr,\ "{}Change\ height\ from\ \%d\ to\ \%d\(\backslash\)n"{},\ max\_height\_,\ height);}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It\ is\ ok\ to\ mutate\ max\_height\_\ without\ any\ synchronization}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ with\ concurrent\ readers.\ \ A\ concurrent\ reader\ that\ observes}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ new\ value\ of\ max\_height\_\ will\ see\ either\ the\ old\ value\ of}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ new\ level\ pointers\ from\ head\_\ (nullptr),\ or\ a\ new\ value\ set\ in}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ loop\ below.\ \ In\ the\ former\ case\ the\ reader\ will}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ immediately\ drop\ to\ the\ next\ level\ since\ nullptr\ sorts\ after\ all}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keys.\ \ In\ the\ latter\ case\ the\ reader\ will\ use\ the\ new\ node.}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ max\_height\_.store(height,\ std::memory\_order\_relaxed);}
+\DoxyCodeLine{00388\ \ \ \ \ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ x\ =\ NewNode(key,\ height);}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)\ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NoBarrier\_SetNext()\ suffices\ since\ we\ will\ add\ a\ barrier\ when}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ publish\ a\ pointer\ to\ "{}x"{}\ in\ prev[i].}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a18532351f3a906aeac0fefc315179e15}{NoBarrier\_SetNext}}(i,\ prev[i]-\/>NoBarrier\_Next(i));}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ prev[i]-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ x);}
+\DoxyCodeLine{00396\ \ \ \ \ \}}
+\DoxyCodeLine{00397\ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \textcolor{comment}{//\ NOTE:\ Already\ be\ checked,\ the\ row\ is\ exist.}}
+\DoxyCodeLine{00400\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00401\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_skip_list_ac70f089cd9f63367c0dbe7ba22ea5016}{SkipList<Key,\ Comparator>::InsertWithHint}}(\textcolor{keyword}{const}\ Key\&\ key,\ \textcolor{keywordtype}{bool}\ is\_exist,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint}{Hint}}*\ hint)\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_af421e37ed260a19b0a15f08260f95298}{curr}};}
+\DoxyCodeLine{00403\ \ \ \ \ DCHECK(!is\_exist\ ||\ x)\ <<\ \textcolor{stringliteral}{"{}curr\ pointer\ must\ not\ be\ null\ if\ row\ exists"{}};}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#ifndef\ BE\_TEST}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//\ The\ key\ already\ exists\ and\ duplicate\ keys\ are\ not\ allowed,\ so\ we\ need\ to\ aggregate\ them}}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\_can\_dup\ \&\&\ is\_exist)\ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00409\ \ \ \ \ \}}
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}**\ prev\ =\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_a28e2fbda37b1eb4e560bd57725627d91}{prev}};}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{comment}{//\ Our\ data\ structure\ does\ not\ allow\ duplicate\ insertion}}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ RandomHeight();}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{if}\ (height\ >\ GetMaxHeight())\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ GetMaxHeight();\ i\ <\ height;\ i++)\ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ prev[i]\ =\ head\_;}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{comment}{//fprintf(stderr,\ "{}Change\ height\ from\ \%d\ to\ \%d\(\backslash\)n"{},\ max\_height\_,\ height);}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ It\ is\ ok\ to\ mutate\ max\_height\_\ without\ any\ synchronization}}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ with\ concurrent\ readers.\ \ A\ concurrent\ reader\ that\ observes}}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ new\ value\ of\ max\_height\_\ will\ see\ either\ the\ old\ value\ of}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ new\ level\ pointers\ from\ head\_\ (nullptr),\ or\ a\ new\ value\ set\ in}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ loop\ below.\ \ In\ the\ former\ case\ the\ reader\ will}}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ immediately\ drop\ to\ the\ next\ level\ since\ nullptr\ sorts\ after\ all}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keys.\ \ In\ the\ latter\ case\ the\ reader\ will\ use\ the\ new\ node.}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ max\_height\_.store(height,\ std::memory\_order\_relaxed);}
+\DoxyCodeLine{00429\ \ \ \ \ \}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \ \ \ \ x\ =\ NewNode(key,\ height);}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NoBarrier\_SetNext()\ suffices\ since\ we\ will\ add\ a\ barrier\ when}}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ publish\ a\ pointer\ to\ "{}x"{}\ in\ prev[i].}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a18532351f3a906aeac0fefc315179e15}{NoBarrier\_SetNext}}(i,\ prev[i]-\/>NoBarrier\_Next(i));}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ prev[i]-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_a71c84b1e4b77d3b2c44dc9689c5f4f5f}{SetNext}}(i,\ x);}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00441\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a6487339d66afe86d0a74ae468f7cc514}{SkipList<Key,\ Comparator>::Contains}}(\textcolor{keyword}{const}\ Key\&\ key)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00442\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00445\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00447\ \ \ \ \ \}}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{class}\ Comparator>}
+\DoxyCodeLine{00451\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_skip_list_a613310f53b08e7ba19dd3ec5ff5720bb}{SkipList<Key,\ Comparator>::Find}}(\textcolor{keyword}{const}\ Key\&\ key,\ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint}{Hint}}*\ hint)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00452\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node}{Node}}*\ x\ =\ FindGreaterOrEqual(key,\ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_a28e2fbda37b1eb4e560bd57725627d91}{prev}});}
+\DoxyCodeLine{00453\ \ \ \ \ hint-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_hint_af421e37ed260a19b0a15f08260f95298}{curr}}\ =\ x;}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ Equal(key,\ x-\/>\mbox{\hyperlink{structdoris_1_1_skip_list_1_1_node_afc8aa3523bb7489c6bacf9d29cc38ac1}{key}}))\ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00456\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00458\ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

@@ -1,5 +1,5 @@
 \hypertarget{threadpool_8h_source}{}\doxysection{threadpool.\+h}
-\label{threadpool_8h_source}\index{/Users/dabowang/be\_all/util/threadpool.h@{/Users/dabowang/be\_all/util/threadpool.h}}
+\label{threadpool_8h_source}\index{/Users/dabowang/doris/be/src/util/threadpool.h@{/Users/dabowang/doris/be/src/util/threadpool.h}}
 \mbox{\hyperlink{threadpool_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -31,467 +31,483 @@
 \DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <functional>}}
 \DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <memory>}}
 \DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <string>}}
-\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
-\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <utility>}}
-\DoxyCodeLine{00032\ }
-\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
-\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
-\DoxyCodeLine{00035\ }
-\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ref__counted_8h}{gutil/ref\_counted.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{priority__thread__pool_8hpp}{util/priority\_thread\_pool.hpp}}"{}}}
 \DoxyCodeLine{00037\ }
-\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }Thread;}
-\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }ThreadPool;}
-\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }ThreadPoolToken;}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runnable}{Runnable}}\ \{}
-\DoxyCodeLine{00043\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runnable_a18954417d3124a8095783ea13dc6d00b}{run}}()\ =\ 0;}
-\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_runnable_a93a94435fb3d643aacf328fcc497d9ab}{\string~Runnable}}()\ \{\}}
-\DoxyCodeLine{00046\ \};}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{comment}{//\ ThreadPool\ takes\ a\ lot\ of\ arguments.\ We\ provide\ sane\ defaults\ with\ a\ builder.}}
-\DoxyCodeLine{00049\ \textcolor{comment}{//}}
-\DoxyCodeLine{00050\ \textcolor{comment}{//\ name:\ Used\ for\ debugging\ output\ and\ default\ names\ of\ the\ worker\ threads.}}
-\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \ Since\ thread\ names\ are\ limited\ to\ 16\ characters\ on\ Linux,\ it's\ good\ to}}
-\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \ \ choose\ a\ short\ name\ here.}}
-\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ Required.}}
-\DoxyCodeLine{00054\ \textcolor{comment}{//}}
-\DoxyCodeLine{00055\ \textcolor{comment}{//\ trace\_metric\_prefix:\ used\ to\ prefix\ the\ names\ of\ TraceMetric\ counters.}}
-\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ \ When\ a\ task\ on\ a\ thread\ pool\ has\ an\ associated\ trace,\ the\ thread\ pool}}
-\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \ \ implementation\ will\ increment\ TraceMetric\ counters\ to\ indicate\ the}}
-\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ \ amount\ of\ time\ spent\ waiting\ in\ the\ queue\ as\ well\ as\ the\ amount\ of\ wall}}
-\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ and\ CPU\ time\ spent\ executing.\ By\ default,\ these\ counters\ are\ prefixed}}
-\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ with\ the\ name\ of\ the\ thread\ pool.\ For\ example,\ if\ the\ pool\ is\ named}}
-\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ 'apply',\ then\ counters\ such\ as\ 'apply.queue\_time\_us'\ will\ be}}
-\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ incremented.}}
-\DoxyCodeLine{00063\ \textcolor{comment}{//}}
-\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ The\ TraceMetrics\ implementation\ relies\ on\ the\ number\ of\ distinct\ counter}}
-\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ \ \ names\ being\ small.\ Thus,\ if\ the\ thread\ pool\ name\ itself\ is\ dynamically}}
-\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ \ generated,\ the\ default\ behavior\ described\ above\ would\ result\ in\ an}}
-\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ \ unbounded\ number\ of\ distinct\ counter\ names.\ The\ 'trace\_metric\_prefix'}}
-\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ \ setting\ can\ be\ used\ to\ override\ the\ prefix\ used\ in\ generating\ the\ trace}}
-\DoxyCodeLine{00069\ \textcolor{comment}{//\ \ \ \ metric\ names.}}
-\DoxyCodeLine{00070\ \textcolor{comment}{//}}
-\DoxyCodeLine{00071\ \textcolor{comment}{//\ \ \ \ For\ example,\ the\ Raft\ thread\ pools\ are\ named\ "{}<tablet\ id>-\/raft"{}\ which}}
-\DoxyCodeLine{00072\ \textcolor{comment}{//\ \ \ \ has\ unbounded\ cardinality\ (a\ server\ may\ have\ thousands\ of\ different}}
-\DoxyCodeLine{00073\ \textcolor{comment}{//\ \ \ \ tablet\ IDs\ over\ its\ lifetime).\ In\ that\ case,\ setting\ the\ prefix\ to}}
-\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ \ "{}raft"{}\ will\ avoid\ any\ issues.}}
-\DoxyCodeLine{00075\ \textcolor{comment}{//}}
-\DoxyCodeLine{00076\ \textcolor{comment}{//\ min\_threads:\ Minimum\ number\ of\ threads\ we'll\ have\ at\ any\ time.}}
-\DoxyCodeLine{00077\ \textcolor{comment}{//\ \ \ \ Default:\ 0.}}
-\DoxyCodeLine{00078\ \textcolor{comment}{//}}
-\DoxyCodeLine{00079\ \textcolor{comment}{//\ max\_threads:\ Maximum\ number\ of\ threads\ we'll\ have\ at\ any\ time.}}
-\DoxyCodeLine{00080\ \textcolor{comment}{//\ \ \ \ Default:\ Number\ of\ CPUs\ detected\ on\ the\ system.}}
-\DoxyCodeLine{00081\ \textcolor{comment}{//}}
-\DoxyCodeLine{00082\ \textcolor{comment}{//\ max\_queue\_size:\ Maximum\ number\ of\ items\ to\ enqueue\ before\ returning\ a}}
-\DoxyCodeLine{00083\ \textcolor{comment}{//\ \ \ \ Status::ServiceUnavailable\ message\ from\ Submit().}}
-\DoxyCodeLine{00084\ \textcolor{comment}{//\ \ \ \ Default:\ INT\_MAX.}}
-\DoxyCodeLine{00085\ \textcolor{comment}{//}}
-\DoxyCodeLine{00086\ \textcolor{comment}{//\ idle\_timeout:\ How\ long\ we'll\ keep\ around\ an\ idle\ thread\ before\ timing\ it\ out.}}
-\DoxyCodeLine{00087\ \textcolor{comment}{//\ \ \ \ We\ always\ keep\ at\ least\ min\_threads.}}
-\DoxyCodeLine{00088\ \textcolor{comment}{//\ \ \ \ Default:\ 500\ milliseconds.}}
-\DoxyCodeLine{00089\ \textcolor{comment}{//}}
-\DoxyCodeLine{00090\ \textcolor{comment}{//\ metrics:\ Histograms,\ counters,\ etc.\ to\ update\ on\ various\ threadpool\ events.}}
-\DoxyCodeLine{00091\ \textcolor{comment}{//\ \ \ \ Default:\ not\ set.}}
-\DoxyCodeLine{00092\ \textcolor{comment}{//}}
-\DoxyCodeLine{00093\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\ \{}
-\DoxyCodeLine{00094\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a5132fda756f3b3eb44f459afa96e82e7}{ThreadPoolBuilder}}(std::string\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
-\DoxyCodeLine{00096\ }
-\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ Note:\ We\ violate\ the\ style\ guide\ by\ returning\ mutable\ references\ here}}
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ in\ order\ to\ provide\ traditional\ Builder\ pattern\ conveniences.}}
-\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a4417b39393dd26c0f2ba31139a39e1dd}{set\_min\_threads}}(\textcolor{keywordtype}{int}\ min\_threads);}
-\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a0cdca646d08857d3bc241382a23f9ae6}{set\_max\_threads}}(\textcolor{keywordtype}{int}\ max\_threads);}
-\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a1fb29ec47d149c15a46ecdf3080f45f7}{set\_max\_queue\_size}}(\textcolor{keywordtype}{int}\ max\_queue\_size);}
-\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
-\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_acb30110ac4c255a1ff00580a602d012d}{set\_idle\_timeout}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ idle\_timeout)\ \{}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a77c4c0ea0b8185b7086d6e603b89adc4}{\_idle\_timeout}}\ =\ std::chrono::duration\_cast<std::chrono::milliseconds>(idle\_timeout);}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
-\DoxyCodeLine{00106\ \ \ \ \ \}}
-\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ Instantiate\ a\ new\ ThreadPool\ with\ the\ existing\ builder\ arguments.}}
-\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a37133d33b83775d0ea8e67a96c32757f}{build}}(std::unique\_ptr<ThreadPool>*\ pool)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}};}
-\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
-\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
-\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
-\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a19a3429ac9e09072c10ee6de3f916a61}{\_max\_queue\_size}};}
-\DoxyCodeLine{00116\ \ \ \ \ std::chrono::milliseconds\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a77c4c0ea0b8185b7086d6e603b89adc4}{\_idle\_timeout}};}
-\DoxyCodeLine{00117\ }
-\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_aba77f52074209870465369161f074cb4}{ThreadPoolBuilder}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_ac83884c55e15c56861aa62446f63f63e}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00120\ \};}
-\DoxyCodeLine{00121\ }
-\DoxyCodeLine{00122\ \textcolor{comment}{//\ Thread\ pool\ with\ a\ variable\ number\ of\ threads.}}
-\DoxyCodeLine{00123\ \textcolor{comment}{//}}
-\DoxyCodeLine{00124\ \textcolor{comment}{//\ Tasks\ submitted\ directly\ to\ the\ thread\ pool\ enter\ a\ FIFO\ queue\ and\ are}}
-\DoxyCodeLine{00125\ \textcolor{comment}{//\ dispatched\ to\ a\ worker\ thread\ when\ one\ becomes\ free.\ Tasks\ may\ also\ be}}
-\DoxyCodeLine{00126\ \textcolor{comment}{//\ submitted\ via\ ThreadPoolTokens.\ The\ token\ Wait()\ and\ Shutdown()\ functions}}
-\DoxyCodeLine{00127\ \textcolor{comment}{//\ can\ then\ be\ used\ to\ block\ on\ logical\ groups\ of\ tasks.}}
-\DoxyCodeLine{00128\ \textcolor{comment}{//}}
-\DoxyCodeLine{00129\ \textcolor{comment}{//\ A\ token\ operates\ in\ one\ of\ two\ ExecutionModes,\ determined\ at\ token}}
-\DoxyCodeLine{00130\ \textcolor{comment}{//\ construction\ time:}}
-\DoxyCodeLine{00131\ \textcolor{comment}{//\ 1.\ SERIAL:\ submitted\ tasks\ are\ run\ one\ at\ a\ time.}}
-\DoxyCodeLine{00132\ \textcolor{comment}{//\ 2.\ CONCURRENT:\ submitted\ tasks\ may\ be\ run\ in\ parallel.\ This\ isn't\ unlike}}
-\DoxyCodeLine{00133\ \textcolor{comment}{//\ \ \ \ tasks\ submitted\ without\ a\ token,\ but\ the\ logical\ grouping\ that\ tokens}}
-\DoxyCodeLine{00134\ \textcolor{comment}{//\ \ \ \ impart\ can\ be\ useful\ when\ a\ pool\ is\ shared\ by\ many\ contexts\ (e.g.\ to}}
-\DoxyCodeLine{00135\ \textcolor{comment}{//\ \ \ \ safely\ shut\ down\ one\ context,\ to\ derive\ context-\/specific\ metrics,\ etc.).}}
-\DoxyCodeLine{00136\ \textcolor{comment}{//}}
-\DoxyCodeLine{00137\ \textcolor{comment}{//\ Tasks\ submitted\ without\ a\ token\ or\ via\ ExecutionMode::CONCURRENT\ tokens\ are}}
-\DoxyCodeLine{00138\ \textcolor{comment}{//\ processed\ in\ FIFO\ order.\ On\ the\ other\ hand,\ ExecutionMode::SERIAL\ tokens\ are}}
-\DoxyCodeLine{00139\ \textcolor{comment}{//\ processed\ in\ a\ round-\/robin\ fashion,\ one\ task\ at\ a\ time.\ This\ prevents\ them}}
-\DoxyCodeLine{00140\ \textcolor{comment}{//\ from\ starving\ one\ another.\ However,\ tokenless\ (and\ CONCURRENT\ token-\/based)}}
-\DoxyCodeLine{00141\ \textcolor{comment}{//\ tasks\ can\ starve\ SERIAL\ token-\/based\ tasks.}}
-\DoxyCodeLine{00142\ \textcolor{comment}{//}}
-\DoxyCodeLine{00143\ \textcolor{comment}{//\ Usage\ Example:}}
-\DoxyCodeLine{00144\ \textcolor{comment}{//\ \ \ \ static\ void\ Func(int\ n)\ \{\ ...\ \}}}
-\DoxyCodeLine{00145\ \textcolor{comment}{//\ \ \ \ class\ Task\ :\ public\ Runnable\ \{\ ...\ \}}}
-\DoxyCodeLine{00146\ \textcolor{comment}{//}}
-\DoxyCodeLine{00147\ \textcolor{comment}{//\ \ \ \ std::unique\_ptr<ThreadPool>\ thread\_pool;}}
-\DoxyCodeLine{00148\ \textcolor{comment}{//\ \ \ \ CHECK\_OK(}}
-\DoxyCodeLine{00149\ \textcolor{comment}{//\ \ \ \ \ \ \ \ ThreadPoolBuilder("{}my\_pool"{})}}
-\DoxyCodeLine{00150\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_min\_threads(0)}}
-\DoxyCodeLine{00151\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_max\_threads(5)}}
-\DoxyCodeLine{00152\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_max\_queue\_size(10)}}
-\DoxyCodeLine{00153\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_idle\_timeout(2000ms))}}
-\DoxyCodeLine{00154\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .Build(\&thread\_pool));}}
-\DoxyCodeLine{00155\ \textcolor{comment}{//\ \ \ \ thread\_pool-\/>Submit(shared\_ptr<Runnable>(new\ Task()));}}
-\DoxyCodeLine{00156\ \textcolor{comment}{//\ \ \ \ thread\_pool-\/>SubmitFunc(std::bind(\&Func,\ 10));}}
-\DoxyCodeLine{00157\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\ \{}
-\DoxyCodeLine{00158\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad41a30b11a0c9d8566ca1a53b4cf43f6}{\string~ThreadPool}}();}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ the\ running\ tasks\ to\ complete\ and\ then\ shutdown\ the\ threads.}}
-\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ All\ the\ other\ pending\ tasks\ in\ the\ queue\ will\ be\ removed.}}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ That\ the\ user\ may\ implement\ an\ external\ abort\ logic\ for\ the}}
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ runnables,\ that\ must\ be\ called\ before\ Shutdown(),\ if\ the\ system}}
-\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ should\ know\ about\ the\ non-\/execution\ of\ these\ tasks,\ or\ the\ runnable}}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ require\ an\ explicit\ "{}abort"{}\ notification\ to\ exit\ from\ the\ run\ loop.}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a7861ee1569802186a619778efc85af13}{shutdown}}();}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ Runnable\ class.}}
-\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a28d617ad33ce3700bedf9722d95fefa2}{submit}}(std::shared\_ptr<Runnable>\ r);}
-\DoxyCodeLine{00171\ }
-\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ function\ bound\ using\ std::bind(\&FuncName,\ args...).}}
-\DoxyCodeLine{00173\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_af8439c9480a0a16ed0313df4c998da70}{submit\_func}}(std::function<\textcolor{keywordtype}{void}()>\ f);}
-\DoxyCodeLine{00174\ }
-\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ Waits\ until\ all\ the\ tasks\ are\ completed.}}
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa3b21853f890838c88d047d6c2786917}{wait}}();}
-\DoxyCodeLine{00177\ }
-\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ Waits\ for\ the\ pool\ to\ reach\ the\ idle\ state,\ or\ until\ 'delta'\ time\ elapses.}}
-\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ the\ pool\ reached\ the\ idle\ state,\ false\ otherwise.}}
-\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa22292be5b5e6a85a3349afa662de850}{wait\_for}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ delta)\ \{}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a23dbfb94878716bf0a13a95925aac1b0}{\_idle\_cond}}.wait\_for(}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l,\ delta,\ [\&]()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}}\ <=\ 0\ \&\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}}\ <=\ 0;\ \});}
-\DoxyCodeLine{00186\ \ \ \ \ \}}
-\DoxyCodeLine{00187\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a5b040fdecb86b41f0e090b752df33ef2}{set\_min\_threads}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ac362217d08c143b1e4779412d2f853ae}{min\_threads}});}
-\DoxyCodeLine{00188\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a65a973ebdb6625f9f75f012cf16ac33c}{set\_max\_threads}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9a9d4c410f63a7ee92d1c66f69cbe2c8}{max\_threads}});}
-\DoxyCodeLine{00189\ }
-\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ Allocates\ a\ new\ token\ for\ use\ in\ token-\/based\ task\ submission.\ All\ tokens}}
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ must\ be\ destroyed\ before\ their\ ThreadPool\ is\ destroyed.}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ There\ is\ no\ limit\ on\ the\ number\ of\ tokens\ that\ may\ be\ allocated.}}
-\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ExecutionMode}}\ \{}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Tasks\ submitted\ via\ this\ token\ will\ be\ executed\ serially.}}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda7b804a28d6154ab8007287532037f1d0}{SERIAL}},}
-\DoxyCodeLine{00197\ }
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Tasks\ submitted\ via\ this\ token\ may\ be\ executed\ concurrently.}}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda4e986bdbe67d653acb5f1d864f32ce21}{CONCURRENT}}}
-\DoxyCodeLine{00200\ \ \ \ \ \};}
-\DoxyCodeLine{00201\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a494e0b4f5f600df10ce2fb8a35a43cb6}{new\_token}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ExecutionMode}}\ mode,\ \textcolor{keywordtype}{int}\ max\_concurrency\ =\ INT\_MAX);}
-\DoxyCodeLine{00202\ }
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ number\ of\ threads\ currently\ running\ (or\ in\ the\ process\ of\ starting\ up)}}
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ for\ this\ thread\ pool.}}
-\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ab3c45da58cb1363920de72ba6209652f}{num\_threads}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a570735311bdb9778b1737e111927612e}{\_num\_threads}}\ +\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
-\DoxyCodeLine{00208\ \ \ \ \ \}}
-\DoxyCodeLine{00209\ }
-\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9a9d4c410f63a7ee92d1c66f69cbe2c8}{max\_threads}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
-\DoxyCodeLine{00213\ \ \ \ \ \}}
-\DoxyCodeLine{00214\ }
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ac362217d08c143b1e4779412d2f853ae}{min\_threads}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
-\DoxyCodeLine{00218\ \ \ \ \ \}}
-\DoxyCodeLine{00219\ }
-\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad5d6177f256798a478c9eb5ae4d5460d}{num\_threads\_pending\_start}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
-\DoxyCodeLine{00223\ \ \ \ \ \}}
-\DoxyCodeLine{00224\ }
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ae69c4135d30ca86e4658c70d38a6ce7b}{num\_active\_threads}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
-\DoxyCodeLine{00228\ \ \ \ \ \}}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad1ac044029a5dba82876ff7c4f7cbb2e}{get\_queue\_size}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}};}
-\DoxyCodeLine{00233\ \ \ \ \ \}}
-\DoxyCodeLine{00234\ }
-\DoxyCodeLine{00235\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}};}
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}};}
-\DoxyCodeLine{00238\ }
-\DoxyCodeLine{00239\ \ \ \ \ \textcolor{comment}{//\ Client-\/provided\ task\ to\ be\ executed\ by\ this\ pool.}}
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task}{Task}}\ \{}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ std::shared\_ptr<Runnable>\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task_a02114f924ad85704744e79aeef6ff1d1}{runnable}};}
-\DoxyCodeLine{00242\ }
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Time\ at\ which\ the\ entry\ was\ submitted\ to\ the\ pool.}}
-\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ std::chrono::time\_point<std::chrono::system\_clock>\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task_a782b78b8fe7e9acc2dfc02794a8aba4e}{submit\_time}};}
-\DoxyCodeLine{00245\ \ \ \ \ \};}
-\DoxyCodeLine{00246\ }
-\DoxyCodeLine{00247\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ new\ thread\ pool\ using\ a\ builder.}}
-\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ builder);}
-\DoxyCodeLine{00249\ }
-\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{//\ Initializes\ the\ thread\ pool\ by\ starting\ the\ minimum\ number\ of\ threads.}}
-\DoxyCodeLine{00251\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a223508714f7b7c2a338265d09a23a25f}{init}}();}
-\DoxyCodeLine{00252\ }
-\DoxyCodeLine{00253\ \ \ \ \ \textcolor{comment}{//\ Dispatcher\ responsible\ for\ dequeueing\ and\ executing\ the\ tasks}}
-\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa7776712933a4a31108277140b76866e}{dispatch\_thread}}();}
-\DoxyCodeLine{00255\ }
-\DoxyCodeLine{00256\ \ \ \ \ \textcolor{comment}{//\ Create\ new\ thread.}}
-\DoxyCodeLine{00257\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00258\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ caller\ has\ incremented\ '\_num\_threads\_pending\_start'\ ahead\ of\ this\ call.}}
-\DoxyCodeLine{00259\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ For\ performance\ reasons,\ \_lock\ should\ not\ be\ held.}}
-\DoxyCodeLine{00260\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_abbedbf8a108f00f6795c42c7780428e0}{create\_thread}}();}
-\DoxyCodeLine{00261\ }
-\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ Aborts\ if\ the\ current\ thread\ is\ a\ member\ of\ this\ thread\ pool.}}
-\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
-\DoxyCodeLine{00264\ }
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ task\ to\ be\ run\ via\ token.}}
-\DoxyCodeLine{00266\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_abbbf8c4af767b413467d49c200c20a61}{do\_submit}}(std::shared\_ptr<Runnable>\ r,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ token);}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \ \ \ \ \textcolor{comment}{//\ Releases\ token\ 't'\ and\ invalidates\ it.}}
-\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ab3036089ef07eb68e3ba2aa9653cca9e}{release\_token}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ t);}
-\DoxyCodeLine{00270\ }
-\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
-\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
-\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
-\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a2724ad5cb0f3fbb8460b5e497e41deb8}{\_max\_queue\_size}};}
-\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keyword}{const}\ std::chrono::milliseconds\ \mbox{\hyperlink{classdoris_1_1_thread_pool_af6f600540c617a7208ebe6ff473949d0}{\_idle\_timeout}};}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ Overall\ status\ of\ the\ pool.\ Set\ to\ an\ error\ when\ the\ pool\ is\ shut\ down.}}
-\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ '\_lock'.}}
-\DoxyCodeLine{00280\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a299b0d799a1fd55fc35c618a1514b157}{\_pool\_status}};}
-\DoxyCodeLine{00281\ }
-\DoxyCodeLine{00282\ \ \ \ \ \textcolor{comment}{//\ Synchronizes\ many\ of\ the\ members\ of\ the\ pool\ and\ all\ of\ its}}
-\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ condition\ variables.}}
-\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
-\DoxyCodeLine{00285\ }
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}pool\ is\ idling"{}.\ Waiters\ wake\ up\ when}}
-\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ \_active\_threads\ reaches\ zero.}}
-\DoxyCodeLine{00288\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a23dbfb94878716bf0a13a95925aac1b0}{\_idle\_cond}};}
-\DoxyCodeLine{00289\ }
-\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}pool\ has\ no\ threads"{}.\ Waiters\ wake\ up\ when}}
-\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ \_num\_threads\ and\ num\_pending\_threads\_\ are\ both\ 0.}}
-\DoxyCodeLine{00292\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a50c303a49069555e6aafe224edb1a75d}{\_no\_threads\_cond}};}
-\DoxyCodeLine{00293\ }
-\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ currently\ running.}}
-\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a570735311bdb9778b1737e111927612e}{\_num\_threads}};}
-\DoxyCodeLine{00298\ }
-\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ which\ are\ in\ the\ process\ of\ starting.}}
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{comment}{//\ When\ these\ threads\ start,\ they\ will\ decrement\ this\ counter\ and}}
-\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ accordingly\ increment\ '\_num\_threads'.}}
-\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }ThreadPool;}
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }ThreadPoolToken;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_runnable}{Runnable}}\ \{}
+\DoxyCodeLine{00045\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_runnable_a18954417d3124a8095783ea13dc6d00b}{run}}()\ =\ 0;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_runnable_a93a94435fb3d643aacf328fcc497d9ab}{\string~Runnable}}()\ \{\}}
+\DoxyCodeLine{00048\ \};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ ThreadPool\ takes\ a\ lot\ of\ arguments.\ We\ provide\ sane\ defaults\ with\ a\ builder.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ name:\ Used\ for\ debugging\ output\ and\ default\ names\ of\ the\ worker\ threads.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ Since\ thread\ names\ are\ limited\ to\ 16\ characters\ on\ Linux,\ it's\ good\ to}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ choose\ a\ short\ name\ here.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \ Required.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ trace\_metric\_prefix:\ used\ to\ prefix\ the\ names\ of\ TraceMetric\ counters.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ \ \ \ When\ a\ task\ on\ a\ thread\ pool\ has\ an\ associated\ trace,\ the\ thread\ pool}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ implementation\ will\ increment\ TraceMetric\ counters\ to\ indicate\ the}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ amount\ of\ time\ spent\ waiting\ in\ the\ queue\ as\ well\ as\ the\ amount\ of\ wall}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ and\ CPU\ time\ spent\ executing.\ By\ default,\ these\ counters\ are\ prefixed}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ with\ the\ name\ of\ the\ thread\ pool.\ For\ example,\ if\ the\ pool\ is\ named}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \ \ 'apply',\ then\ counters\ such\ as\ 'apply.queue\_time\_us'\ will\ be}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ incremented.}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ \ The\ TraceMetrics\ implementation\ relies\ on\ the\ number\ of\ distinct\ counter}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ \ names\ being\ small.\ Thus,\ if\ the\ thread\ pool\ name\ itself\ is\ dynamically}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \ \ generated,\ the\ default\ behavior\ described\ above\ would\ result\ in\ an}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ \ \ \ unbounded\ number\ of\ distinct\ counter\ names.\ The\ 'trace\_metric\_prefix'}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \ \ \ setting\ can\ be\ used\ to\ override\ the\ prefix\ used\ in\ generating\ the\ trace}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ \ \ \ metric\ names.}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ \ \ \ For\ example,\ the\ Raft\ thread\ pools\ are\ named\ "{}<tablet\ id>-\/raft"{}\ which}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ \ \ \ has\ unbounded\ cardinality\ (a\ server\ may\ have\ thousands\ of\ different}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ \ \ \ tablet\ IDs\ over\ its\ lifetime).\ In\ that\ case,\ setting\ the\ prefix\ to}}
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ \ \ \ "{}raft"{}\ will\ avoid\ any\ issues.}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ min\_threads:\ Minimum\ number\ of\ threads\ we'll\ have\ at\ any\ time.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ \ \ \ Default:\ 0.}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ max\_threads:\ Maximum\ number\ of\ threads\ we'll\ have\ at\ any\ time.}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ \ \ \ Default:\ Number\ of\ CPUs\ detected\ on\ the\ system.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ max\_queue\_size:\ Maximum\ number\ of\ items\ to\ enqueue\ before\ returning\ a}}
+\DoxyCodeLine{00085\ \textcolor{comment}{//\ \ \ \ Status::ServiceUnavailable\ message\ from\ Submit().}}
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ \ \ \ Default:\ INT\_MAX.}}
+\DoxyCodeLine{00087\ \textcolor{comment}{//}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ idle\_timeout:\ How\ long\ we'll\ keep\ around\ an\ idle\ thread\ before\ timing\ it\ out.}}
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ \ \ \ We\ always\ keep\ at\ least\ min\_threads.}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ \ \ \ Default:\ 500\ milliseconds.}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ metrics:\ Histograms,\ counters,\ etc.\ to\ update\ on\ various\ threadpool\ events.}}
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ \ \ \ Default:\ not\ set.}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//}}
+\DoxyCodeLine{00095\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\ \{}
+\DoxyCodeLine{00096\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a5132fda756f3b3eb44f459afa96e82e7}{ThreadPoolBuilder}}(std::string\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}});}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ Note:\ We\ violate\ the\ style\ guide\ by\ returning\ mutable\ references\ here}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ in\ order\ to\ provide\ traditional\ Builder\ pattern\ conveniences.}}
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a4417b39393dd26c0f2ba31139a39e1dd}{set\_min\_threads}}(\textcolor{keywordtype}{int}\ min\_threads);}
+\DoxyCodeLine{00102\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a0cdca646d08857d3bc241382a23f9ae6}{set\_max\_threads}}(\textcolor{keywordtype}{int}\ max\_threads);}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a1fb29ec47d149c15a46ecdf3080f45f7}{set\_max\_queue\_size}}(\textcolor{keywordtype}{int}\ max\_queue\_size);}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_acb30110ac4c255a1ff00580a602d012d}{set\_idle\_timeout}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ idle\_timeout)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a77c4c0ea0b8185b7086d6e603b89adc4}{\_idle\_timeout}}\ =\ std::chrono::duration\_cast<std::chrono::milliseconds>(idle\_timeout);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00108\ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Instantiate\ a\ new\ ThreadPool\ with\ the\ existing\ builder\ arguments.}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ThreadPoolType>}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a2208f4401a4ec415617e54500887d934}{build}}(std::unique\_ptr<ThreadPoolType>*\ pool)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<ThreadPoolType,\ ThreadPool>)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ pool-\/>reset(\textcolor{keyword}{new}\ ThreadPoolType(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{status_8h_a85f7d0e774e15eb35b74f53264305e16}{RETURN\_IF\_ERROR}}((*pool)-\/>init());}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<ThreadPoolType,\ PriorityThreadPool>)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ pool-\/>reset(\textcolor{keyword}{new}\ ThreadPoolType(\mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}},\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a19a3429ac9e09072c10ee6de3f916a61}{\_max\_queue\_size}},\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}}));}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(always\_false\_v<ThreadPoolType>,\ \textcolor{stringliteral}{"{}Unsupported\ ThreadPoolType"{}});}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_status_a6ec1a217f203269ab53d2290d602db24}{Status::OK}}();}
+\DoxyCodeLine{00121\ \ \ \ \ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}};}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a19a3429ac9e09072c10ee6de3f916a61}{\_max\_queue\_size}};}
+\DoxyCodeLine{00129\ \ \ \ \ std::chrono::milliseconds\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_a77c4c0ea0b8185b7086d6e603b89adc4}{\_idle\_timeout}};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_aba77f52074209870465369161f074cb4}{ThreadPoolBuilder}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_ac83884c55e15c56861aa62446f63f63e}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder_ae696a34b97be9b139f09aa17cf854eb9}{always\_false\_v}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ Thread\ pool\ with\ a\ variable\ number\ of\ threads.}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ Tasks\ submitted\ directly\ to\ the\ thread\ pool\ enter\ a\ FIFO\ queue\ and\ are}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ dispatched\ to\ a\ worker\ thread\ when\ one\ becomes\ free.\ Tasks\ may\ also\ be}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ submitted\ via\ ThreadPoolTokens.\ The\ token\ Wait()\ and\ Shutdown()\ functions}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ can\ then\ be\ used\ to\ block\ on\ logical\ groups\ of\ tasks.}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ A\ token\ operates\ in\ one\ of\ two\ ExecutionModes,\ determined\ at\ token}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ construction\ time:}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ 1.\ SERIAL:\ submitted\ tasks\ are\ run\ one\ at\ a\ time.}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ 2.\ CONCURRENT:\ submitted\ tasks\ may\ be\ run\ in\ parallel.\ This\ isn't\ unlike}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ \ \ \ tasks\ submitted\ without\ a\ token,\ but\ the\ logical\ grouping\ that\ tokens}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ \ \ \ impart\ can\ be\ useful\ when\ a\ pool\ is\ shared\ by\ many\ contexts\ (e.g.\ to}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ \ \ \ safely\ shut\ down\ one\ context,\ to\ derive\ context-\/specific\ metrics,\ etc.).}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ Tasks\ submitted\ without\ a\ token\ or\ via\ ExecutionMode::CONCURRENT\ tokens\ are}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ processed\ in\ FIFO\ order.\ On\ the\ other\ hand,\ ExecutionMode::SERIAL\ tokens\ are}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ processed\ in\ a\ round-\/robin\ fashion,\ one\ task\ at\ a\ time.\ This\ prevents\ them}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ from\ starving\ one\ another.\ However,\ tokenless\ (and\ CONCURRENT\ token-\/based)}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//\ tasks\ can\ starve\ SERIAL\ token-\/based\ tasks.}}
+\DoxyCodeLine{00158\ \textcolor{comment}{//}}
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ Usage\ Example:}}
+\DoxyCodeLine{00160\ \textcolor{comment}{//\ \ \ \ static\ void\ Func(int\ n)\ \{\ ...\ \}}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ \ \ \ class\ Task\ :\ public\ Runnable\ \{\ ...\ \}}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//\ \ \ \ std::unique\_ptr<ThreadPool>\ thread\_pool;}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ \ \ \ CHECK\_OK(}}
+\DoxyCodeLine{00165\ \textcolor{comment}{//\ \ \ \ \ \ \ \ ThreadPoolBuilder("{}my\_pool"{})}}
+\DoxyCodeLine{00166\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_min\_threads(0)}}
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_max\_threads(5)}}
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_max\_queue\_size(10)}}
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .set\_idle\_timeout(2000ms))}}
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ .Build(\&thread\_pool));}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//\ \ \ \ thread\_pool-\/>Submit(shared\_ptr<Runnable>(new\ Task()));}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ \ \ \ thread\_pool-\/>SubmitFunc(std::bind(\&Func,\ 10));}}
+\DoxyCodeLine{00173\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\ \{}
+\DoxyCodeLine{00174\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad41a30b11a0c9d8566ca1a53b4cf43f6}{\string~ThreadPool}}();}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ the\ running\ tasks\ to\ complete\ and\ then\ shutdown\ the\ threads.}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//\ All\ the\ other\ pending\ tasks\ in\ the\ queue\ will\ be\ removed.}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ That\ the\ user\ may\ implement\ an\ external\ abort\ logic\ for\ the}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ runnables,\ that\ must\ be\ called\ before\ Shutdown(),\ if\ the\ system}}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ should\ know\ about\ the\ non-\/execution\ of\ these\ tasks,\ or\ the\ runnable}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ require\ an\ explicit\ "{}abort"{}\ notification\ to\ exit\ from\ the\ run\ loop.}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a7861ee1569802186a619778efc85af13}{shutdown}}();}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ Runnable\ class.}}
+\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a28d617ad33ce3700bedf9722d95fefa2}{submit}}(std::shared\_ptr<Runnable>\ r);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ function\ bound\ using\ std::bind(\&FuncName,\ args...).}}
+\DoxyCodeLine{00189\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_af8439c9480a0a16ed0313df4c998da70}{submit\_func}}(std::function<\textcolor{keywordtype}{void}()>\ f);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Waits\ until\ all\ the\ tasks\ are\ completed.}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa3b21853f890838c88d047d6c2786917}{wait}}();}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ Waits\ for\ the\ pool\ to\ reach\ the\ idle\ state,\ or\ until\ 'delta'\ time\ elapses.}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ the\ pool\ reached\ the\ idle\ state,\ false\ otherwise.}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa22292be5b5e6a85a3349afa662de850}{wait\_for}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ delta)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a23dbfb94878716bf0a13a95925aac1b0}{\_idle\_cond}}.wait\_for(}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l,\ delta,\ [\&]()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}}\ <=\ 0\ \&\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}}\ <=\ 0;\ \});}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a5b040fdecb86b41f0e090b752df33ef2}{set\_min\_threads}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ac362217d08c143b1e4779412d2f853ae}{min\_threads}});}
+\DoxyCodeLine{00204\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a65a973ebdb6625f9f75f012cf16ac33c}{set\_max\_threads}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9a9d4c410f63a7ee92d1c66f69cbe2c8}{max\_threads}});}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Allocates\ a\ new\ token\ for\ use\ in\ token-\/based\ task\ submission.\ All\ tokens}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ must\ be\ destroyed\ before\ their\ ThreadPool\ is\ destroyed.}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ There\ is\ no\ limit\ on\ the\ number\ of\ tokens\ that\ may\ be\ allocated.}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ExecutionMode}}\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Tasks\ submitted\ via\ this\ token\ will\ be\ executed\ serially.}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda7b804a28d6154ab8007287532037f1d0}{SERIAL}},}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Tasks\ submitted\ via\ this\ token\ may\ be\ executed\ concurrently.}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda4e986bdbe67d653acb5f1d864f32ce21}{CONCURRENT}}}
+\DoxyCodeLine{00216\ \ \ \ \ \};}
+\DoxyCodeLine{00217\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a494e0b4f5f600df10ce2fb8a35a43cb6}{new\_token}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ExecutionMode}}\ mode,\ \textcolor{keywordtype}{int}\ max\_concurrency\ =\ INT\_MAX);}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ number\ of\ threads\ currently\ running\ (or\ in\ the\ process\ of\ starting\ up)}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ for\ this\ thread\ pool.}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ab3c45da58cb1363920de72ba6209652f}{num\_threads}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a570735311bdb9778b1737e111927612e}{\_num\_threads}}\ +\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
+\DoxyCodeLine{00224\ \ \ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9a9d4c410f63a7ee92d1c66f69cbe2c8}{max\_threads}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
+\DoxyCodeLine{00229\ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ac362217d08c143b1e4779412d2f853ae}{min\_threads}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
+\DoxyCodeLine{00234\ \ \ \ \ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad5d6177f256798a478c9eb5ae4d5460d}{num\_threads\_pending\_start}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
+\DoxyCodeLine{00239\ \ \ \ \ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ae69c4135d30ca86e4658c70d38a6ce7b}{num\_active\_threads}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad1ac044029a5dba82876ff7c4f7cbb2e}{get\_queue\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}};}
+\DoxyCodeLine{00249\ \ \ \ \ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}};}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}};}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{comment}{//\ Client-\/provided\ task\ to\ be\ executed\ by\ this\ pool.}}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task}{Task}}\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ std::shared\_ptr<Runnable>\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task_a02114f924ad85704744e79aeef6ff1d1}{runnable}};}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Time\ at\ which\ the\ entry\ was\ submitted\ to\ the\ pool.}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ std::chrono::time\_point<std::chrono::system\_clock>\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_task_a782b78b8fe7e9acc2dfc02794a8aba4e}{submit\_time}};}
+\DoxyCodeLine{00261\ \ \ \ \ \};}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ new\ thread\ pool\ using\ a\ builder.}}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_builder}{ThreadPoolBuilder}}\&\ builder);}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{comment}{//\ Initializes\ the\ thread\ pool\ by\ starting\ the\ minimum\ number\ of\ threads.}}
+\DoxyCodeLine{00267\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a223508714f7b7c2a338265d09a23a25f}{init}}();}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{comment}{//\ Dispatcher\ responsible\ for\ dequeueing\ and\ executing\ the\ tasks}}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa7776712933a4a31108277140b76866e}{dispatch\_thread}}();}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{//\ Create\ new\ thread.}}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ caller\ has\ incremented\ '\_num\_threads\_pending\_start'\ ahead\ of\ this\ call.}}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ For\ performance\ reasons,\ \_lock\ should\ not\ be\ held.}}
+\DoxyCodeLine{00276\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_abbedbf8a108f00f6795c42c7780428e0}{create\_thread}}();}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ Aborts\ if\ the\ current\ thread\ is\ a\ member\ of\ this\ thread\ pool.}}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ task\ to\ be\ run\ via\ token.}}
+\DoxyCodeLine{00282\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_abbbf8c4af767b413467d49c200c20a61}{do\_submit}}(std::shared\_ptr<Runnable>\ r,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ token);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{comment}{//\ Releases\ token\ 't'\ and\ invalidates\ it.}}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ab3036089ef07eb68e3ba2aa9653cca9e}{release\_token}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ t);}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a1b003dc5cfce1a4d8f9a0c4b9b589045}{\_name}};}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a3d175c1b9f38e07bbf9bf2520557b41a}{\_min\_threads}};}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a93be2857a609258e3c68099efe170d2c}{\_max\_threads}};}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a2724ad5cb0f3fbb8460b5e497e41deb8}{\_max\_queue\_size}};}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keyword}{const}\ std::chrono::milliseconds\ \mbox{\hyperlink{classdoris_1_1_thread_pool_af6f600540c617a7208ebe6ff473949d0}{\_idle\_timeout}};}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{comment}{//\ Overall\ status\ of\ the\ pool.\ Set\ to\ an\ error\ when\ the\ pool\ is\ shut\ down.}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ '\_lock'.}}
+\DoxyCodeLine{00296\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a299b0d799a1fd55fc35c618a1514b157}{\_pool\_status}};}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{comment}{//\ Synchronizes\ many\ of\ the\ members\ of\ the\ pool\ and\ all\ of\ its}}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ condition\ variables.}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}pool\ is\ idling"{}.\ Waiters\ wake\ up\ when}}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//\ \_active\_threads\ reaches\ zero.}}
+\DoxyCodeLine{00304\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a23dbfb94878716bf0a13a95925aac1b0}{\_idle\_cond}};}
 \DoxyCodeLine{00305\ }
-\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ currently\ running\ and\ executing\ client\ tasks.}}
-\DoxyCodeLine{00307\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00308\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
-\DoxyCodeLine{00310\ }
-\DoxyCodeLine{00311\ \ \ \ \ \textcolor{comment}{//\ Total\ number\ of\ client\ tasks\ queued,\ either\ directly\ (\_queue)\ or}}
-\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ indirectly\ (\_tokens).}}
-\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}};}
-\DoxyCodeLine{00316\ }
-\DoxyCodeLine{00317\ \ \ \ \ \textcolor{comment}{//\ All\ allocated\ tokens.}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}pool\ has\ no\ threads"{}.\ Waiters\ wake\ up\ when}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{comment}{//\ \_num\_threads\ and\ num\_pending\_threads\_\ are\ both\ 0.}}
+\DoxyCodeLine{00308\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a50c303a49069555e6aafe224edb1a75d}{\_no\_threads\_cond}};}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ currently\ running.}}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a570735311bdb9778b1737e111927612e}{\_num\_threads}};}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ which\ are\ in\ the\ process\ of\ starting.}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ When\ these\ threads\ start,\ they\ will\ decrement\ this\ counter\ and}}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{comment}{//\ accordingly\ increment\ '\_num\_threads'.}}
 \DoxyCodeLine{00318\ \ \ \ \ \textcolor{comment}{//}}
 \DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00320\ \ \ \ \ std::unordered\_set<ThreadPoolToken*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a5b7be4a59af42daacbe990bf028037a1}{\_tokens}};}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a9cec1cde02ea076da5770f6420eb818d}{\_num\_threads\_pending\_start}};}
 \DoxyCodeLine{00321\ }
-\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{//\ FIFO\ of\ tokens\ from\ which\ tasks\ should\ be\ executed.\ Does\ not\ own\ the}}
-\DoxyCodeLine{00323\ \ \ \ \ \textcolor{comment}{//\ tokens;\ they\ are\ owned\ by\ clients\ and\ are\ removed\ from\ the\ FIFO\ on\ shutdown.}}
-\DoxyCodeLine{00324\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00326\ \ \ \ \ std::deque<ThreadPoolToken*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aebb6ddc64657044d18c19fdacf08a5a6}{\_queue}};}
-\DoxyCodeLine{00327\ }
-\DoxyCodeLine{00328\ \ \ \ \ \textcolor{comment}{//\ Pointers\ to\ all\ running\ threads.\ Raw\ pointers\ are\ safe\ because\ a\ Thread}}
-\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//\ may\ only\ go\ out\ of\ scope\ after\ being\ removed\ from\ \_threads.}}
-\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00331\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00332\ \ \ \ \ std::unordered\_set<Thread*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a34aaf6c6aaa5382303c738a73e55d2e2}{\_threads}};}
-\DoxyCodeLine{00333\ }
-\DoxyCodeLine{00334\ \ \ \ \ \textcolor{comment}{//\ List\ of\ all\ threads\ currently\ waiting\ for\ work.}}
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ A\ thread\ is\ added\ to\ the\ front\ of\ the\ list\ when\ it\ goes\ idle\ and\ is}}
-\DoxyCodeLine{00337\ \ \ \ \ \textcolor{comment}{//\ removed\ from\ the\ front\ and\ signaled\ when\ new\ work\ arrives.\ This\ produces\ a}}
-\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ LIFO\ usage\ pattern\ that\ is\ more\ efficient\ than\ idling\ on\ a\ single}}
-\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
-\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\ :\ \textcolor{keyword}{public}\ boost::intrusive::list\_base\_hook<>\ \{}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_a7c048f9ebc80bb4ec9004ed865a2a87a}{IdleThread}}()\ \{\}}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ threads\ currently\ running\ and\ executing\ client\ tasks.}}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{comment}{//\ Total\ number\ of\ client\ tasks\ queued,\ either\ directly\ (\_queue)\ or}}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{comment}{//\ indirectly\ (\_tokens).}}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a12817598a12ca6a330912668b8b96c64}{\_total\_queued\_tasks}};}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{//\ All\ allocated\ tokens.}}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00336\ \ \ \ \ std::unordered\_set<ThreadPoolToken*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a5b7be4a59af42daacbe990bf028037a1}{\_tokens}};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ FIFO\ of\ tokens\ from\ which\ tasks\ should\ be\ executed.\ Does\ not\ own\ the}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ tokens;\ they\ are\ owned\ by\ clients\ and\ are\ removed\ from\ the\ FIFO\ on\ shutdown.}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00342\ \ \ \ \ std::deque<ThreadPoolToken*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_aebb6ddc64657044d18c19fdacf08a5a6}{\_queue}};}
 \DoxyCodeLine{00343\ }
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}queue\ is\ not\ empty"{}.\ Waiters\ wake\ up\ when\ a\ new}}
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ task\ is\ queued.}}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_a6045455cc98dcb4a0f2f0444013661e1}{not\_empty}};}
-\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_afde8746c109b9b854f1c102ced91248f}{IdleThread}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_af1b5f1c4691b4ee51e29336627f7e5b5}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00349\ \ \ \ \ \};}
-\DoxyCodeLine{00350\ \ \ \ \ boost::intrusive::list<IdleThread>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_afd3dde896ba458f8f0612a7da70e24a5}{\_idle\_threads}};\ \textcolor{comment}{//\ NOLINT(build/include\_what\_you\_use)}}
-\DoxyCodeLine{00351\ }
-\DoxyCodeLine{00352\ \ \ \ \ \textcolor{comment}{//\ ExecutionMode::CONCURRENT\ token\ used\ by\ the\ pool\ for\ tokenless\ submission.}}
-\DoxyCodeLine{00353\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a425311b423136c5f128ac72670546a2a}{\_tokenless}};}
-\DoxyCodeLine{00354\ }
-\DoxyCodeLine{00355\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad6610d680083314d3125628cd00c0348}{ThreadPool}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ae1d2df3b425dd91d36557c864dd82bb6}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00357\ \};}
-\DoxyCodeLine{00358\ }
-\DoxyCodeLine{00359\ \textcolor{comment}{//\ Entry\ point\ for\ token-\/based\ task\ submission\ and\ blocking\ for\ a\ particular}}
-\DoxyCodeLine{00360\ \textcolor{comment}{//\ thread\ pool.\ Tokens\ can\ only\ be\ created\ via\ ThreadPool::new\_token().}}
-\DoxyCodeLine{00361\ \textcolor{comment}{//}}
-\DoxyCodeLine{00362\ \textcolor{comment}{//\ All\ functions\ are\ thread-\/safe.\ Mutable\ members\ are\ protected\ via\ the}}
-\DoxyCodeLine{00363\ \textcolor{comment}{//\ ThreadPool's\ lock.}}
-\DoxyCodeLine{00364\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\ \{}
-\DoxyCodeLine{00365\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ Destroys\ the\ token.}}
-\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00368\ \ \ \ \ \textcolor{comment}{//\ May\ be\ called\ on\ a\ token\ with\ outstanding\ tasks,\ as\ Shutdown()\ will\ be}}
-\DoxyCodeLine{00369\ \ \ \ \ \textcolor{comment}{//\ called\ first\ to\ take\ care\ of\ them.}}
-\DoxyCodeLine{00370\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ac7f38832f5d3d13f181dade5c3cbf07d}{\string~ThreadPoolToken}}();}
-\DoxyCodeLine{00371\ }
-\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ Runnable\ class.}}
-\DoxyCodeLine{00373\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a28d617ad33ce3700bedf9722d95fefa2}{submit}}(std::shared\_ptr<Runnable>\ r);}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ Pointers\ to\ all\ running\ threads.\ Raw\ pointers\ are\ safe\ because\ a\ Thread}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{//\ may\ only\ go\ out\ of\ scope\ after\ being\ removed\ from\ \_threads.}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00348\ \ \ \ \ std::unordered\_set<Thread*>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a34aaf6c6aaa5382303c738a73e55d2e2}{\_threads}};}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{comment}{//\ List\ of\ all\ threads\ currently\ waiting\ for\ work.}}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{comment}{//\ A\ thread\ is\ added\ to\ the\ front\ of\ the\ list\ when\ it\ goes\ idle\ and\ is}}
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{comment}{//\ removed\ from\ the\ front\ and\ signaled\ when\ new\ work\ arrives.\ This\ produces\ a}}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{comment}{//\ LIFO\ usage\ pattern\ that\ is\ more\ efficient\ than\ idling\ on\ a\ single}}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{comment}{//\ Protected\ by\ \_lock.}}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\ :\ \textcolor{keyword}{public}\ boost::intrusive::list\_base\_hook<>\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_a7c048f9ebc80bb4ec9004ed865a2a87a}{IdleThread}}()\ \{\}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}queue\ is\ not\ empty"{}.\ Waiters\ wake\ up\ when\ a\ new}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ task\ is\ queued.}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_a6045455cc98dcb4a0f2f0444013661e1}{not\_empty}};}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_afde8746c109b9b854f1c102ced91248f}{IdleThread}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread_af1b5f1c4691b4ee51e29336627f7e5b5}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_thread_pool_1_1_idle_thread}{IdleThread}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00365\ \ \ \ \ \};}
+\DoxyCodeLine{00366\ \ \ \ \ boost::intrusive::list<IdleThread>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_afd3dde896ba458f8f0612a7da70e24a5}{\_idle\_threads}};\ \textcolor{comment}{//\ NOLINT(build/include\_what\_you\_use)}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{comment}{//\ ExecutionMode::CONCURRENT\ token\ used\ by\ the\ pool\ for\ tokenless\ submission.}}
+\DoxyCodeLine{00369\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_a425311b423136c5f128ac72670546a2a}{\_tokenless}};}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad6610d680083314d3125628cd00c0348}{ThreadPool}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ae1d2df3b425dd91d36557c864dd82bb6}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00373\ \};}
 \DoxyCodeLine{00374\ }
-\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ function\ bound\ using\ std::bind(\&FuncName,\ args...).}}
-\DoxyCodeLine{00376\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_af8439c9480a0a16ed0313df4c998da70}{submit\_func}}(std::function<\textcolor{keywordtype}{void}()>\ f);}
-\DoxyCodeLine{00377\ }
-\DoxyCodeLine{00378\ \ \ \ \ \textcolor{comment}{//\ Marks\ the\ token\ as\ unusable\ for\ future\ submissions.\ Any\ queued\ tasks\ not}}
-\DoxyCodeLine{00379\ \ \ \ \ \textcolor{comment}{//\ yet\ running\ are\ destroyed.\ If\ tasks\ are\ in\ flight,\ Shutdown()\ will\ wait}}
-\DoxyCodeLine{00380\ \ \ \ \ \textcolor{comment}{//\ on\ their\ completion\ before\ returning.}}
-\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a7861ee1569802186a619778efc85af13}{shutdown}}();}
-\DoxyCodeLine{00382\ }
-\DoxyCodeLine{00383\ \ \ \ \ \textcolor{comment}{//\ Waits\ until\ all\ the\ tasks\ submitted\ via\ this\ token\ are\ completed.}}
-\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa3b21853f890838c88d047d6c2786917}{wait}}();}
-\DoxyCodeLine{00385\ }
-\DoxyCodeLine{00386\ \ \ \ \ \textcolor{comment}{//\ Waits\ for\ all\ submissions\ using\ this\ token\ are\ complete,\ or\ until\ 'delta'}}
-\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ time\ elapses.}}
-\DoxyCodeLine{00388\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00389\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ all\ submissions\ are\ complete,\ false\ otherwise.}}
-\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
-\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa22292be5b5e6a85a3349afa662de850}{wait\_for}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ delta)\ \{}
-\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
-\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a0e9aa584bf54ba09a199d00f67c97c62}{\_not\_running\_cond}}.wait\_for(l,\ delta,\ [\&]()\ \{\ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{classdoris_1_1_thread_pool_token_aee71b01d2e4d055b188db7ce81f1a8b8}{is\_active}}();\ \});}
-\DoxyCodeLine{00395\ \ \ \ \ \}}
-\DoxyCodeLine{00396\ }
-\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa4a2bffe6983994bb2cbb472fab80530}{need\_dispatch}}();}
+\DoxyCodeLine{00375\ \textcolor{comment}{//\ Entry\ point\ for\ token-\/based\ task\ submission\ and\ blocking\ for\ a\ particular}}
+\DoxyCodeLine{00376\ \textcolor{comment}{//\ thread\ pool.\ Tokens\ can\ only\ be\ created\ via\ ThreadPool::new\_token().}}
+\DoxyCodeLine{00377\ \textcolor{comment}{//}}
+\DoxyCodeLine{00378\ \textcolor{comment}{//\ All\ functions\ are\ thread-\/safe.\ Mutable\ members\ are\ protected\ via\ the}}
+\DoxyCodeLine{00379\ \textcolor{comment}{//\ ThreadPool's\ lock.}}
+\DoxyCodeLine{00380\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\ \{}
+\DoxyCodeLine{00381\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{comment}{//\ Destroys\ the\ token.}}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{comment}{//\ May\ be\ called\ on\ a\ token\ with\ outstanding\ tasks,\ as\ Shutdown()\ will\ be}}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{comment}{//\ called\ first\ to\ take\ care\ of\ them.}}
+\DoxyCodeLine{00386\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ac7f38832f5d3d13f181dade5c3cbf07d}{\string~ThreadPoolToken}}();}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ Runnable\ class.}}
+\DoxyCodeLine{00389\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a28d617ad33ce3700bedf9722d95fefa2}{submit}}(std::shared\_ptr<Runnable>\ r);}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{comment}{//\ Submits\ a\ function\ bound\ using\ std::bind(\&FuncName,\ args...).}}
+\DoxyCodeLine{00392\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_af8439c9480a0a16ed0313df4c998da70}{submit\_func}}(std::function<\textcolor{keywordtype}{void}()>\ f);}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{comment}{//\ Marks\ the\ token\ as\ unusable\ for\ future\ submissions.\ Any\ queued\ tasks\ not}}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{comment}{//\ yet\ running\ are\ destroyed.\ If\ tasks\ are\ in\ flight,\ Shutdown()\ will\ wait}}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{comment}{//\ on\ their\ completion\ before\ returning.}}
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a7861ee1569802186a619778efc85af13}{shutdown}}();}
 \DoxyCodeLine{00398\ }
-\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_acbeaaf52ecff5f83229611ffd0687d44}{num\_tasks}}()\ \{}
-\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a71ee5b959f2c3e90e9eacc254c923650}{\_entries}}.size();}
-\DoxyCodeLine{00402\ \ \ \ \ \}}
-\DoxyCodeLine{00403\ }
-\DoxyCodeLine{00404\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ All\ possible\ token\ states.\ Legal\ state\ transitions:}}
-\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//\ \ \ IDLE\ \ \ \ \ \ -\/>\ RUNNING:\ task\ is\ submitted\ via\ token}}
-\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ \ \ IDLE\ \ \ \ \ \ -\/>\ QUIESCED:\ token\ or\ pool\ is\ shut\ down}}
-\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ IDLE:\ worker\ thread\ finishes\ executing\ a\ task\ and}}
-\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ there\ are\ no\ more\ tasks\ queued\ to\ the\ token}}
-\DoxyCodeLine{00410\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ QUIESCING:\ token\ or\ pool\ is\ shut\ down\ while\ worker\ thread}}
-\DoxyCodeLine{00411\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\ executing\ a\ task}}
-\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ QUIESCED:\ token\ or\ pool\ is\ shut\ down}}
-\DoxyCodeLine{00413\ \ \ \ \ \textcolor{comment}{//\ \ \ QUIESCING\ -\/>\ QUIESCED:\ \ worker\ thread\ finishes\ executing\ a\ task}}
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ belonging\ to\ a\ shut\ down\ token\ or\ pool}}
-\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \{}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Token\ has\ no\ queued\ tasks.}}
-\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8aa5daf7f2ebbba4975d61dab1c40188c7}{IDLE}},}
-\DoxyCodeLine{00418\ }
-\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ worker\ thread\ is\ running\ one\ of\ the\ token's\ previously\ queued\ tasks.}}
-\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a43491564ebcfd38568918efbd6e840fd}{RUNNING}},}
-\DoxyCodeLine{00421\ }
-\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ new\ tasks\ may\ be\ submitted\ to\ the\ token.\ A\ worker\ thread\ is\ still}}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ running\ a\ previously\ queued\ task.}}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{QUIESCING}},}
-\DoxyCodeLine{00425\ }
-\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ new\ tasks\ may\ be\ submitted\ to\ the\ token.\ There\ are\ no\ active\ tasks}}
-\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ either.\ At\ this\ state,\ the\ token\ may\ only\ be\ destroyed.}}
-\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a40a75d8a61812820783e83068ea331b7}{QUIESCED}},}
-\DoxyCodeLine{00429\ \ \ \ \ \};}
-\DoxyCodeLine{00430\ }
-\DoxyCodeLine{00431\ \ \ \ \ \textcolor{comment}{//\ Writes\ a\ textual\ representation\ of\ the\ token\ state\ in\ 's'\ to\ 'o'.}}
-\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keyword}{friend}\ std::ostream\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a9892ced20eb6ee35848832e83e79a8f5}{operator<<}}(std::ostream\&\ o,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{ThreadPoolToken::State}}\ s);}
-\DoxyCodeLine{00433\ }
-\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}};}
-\DoxyCodeLine{00435\ }
-\DoxyCodeLine{00436\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ textual\ representation\ of\ 's'\ suitable\ for\ debugging.}}
-\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a9051190a75f3203a3ff1b74c353806d4}{state\_to\_string}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ s);}
-\DoxyCodeLine{00438\ }
-\DoxyCodeLine{00439\ \ \ \ \ \textcolor{comment}{//\ Constructs\ a\ new\ token.}}
-\DoxyCodeLine{00440\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00441\ \ \ \ \ \textcolor{comment}{//\ The\ token\ may\ not\ outlive\ its\ thread\ pool\ ('pool').}}
-\DoxyCodeLine{00442\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}(\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}*\ pool,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ae0978398ab932b444b983770832f7fec}{mode}},}
-\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ max\_concurrency\ =\ INT\_MAX);}
-\DoxyCodeLine{00444\ }
-\DoxyCodeLine{00445\ \ \ \ \ \textcolor{comment}{//\ Changes\ this\ token's\ state\ to\ 'new\_state'\ taking\ actions\ as\ needed.}}
-\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a3311fdef1311cb6e5bb9284713d35ccc}{transition}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ new\_state);}
-\DoxyCodeLine{00447\ }
-\DoxyCodeLine{00448\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ this\ token\ has\ a\ task\ queued\ and\ ready\ to\ run,\ or\ if\ a}}
-\DoxyCodeLine{00449\ \ \ \ \ \textcolor{comment}{//\ task\ belonging\ to\ this\ token\ is\ already\ running.}}
-\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aee71b01d2e4d055b188db7ce81f1a8b8}{is\_active}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ ==\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a43491564ebcfd38568918efbd6e840fd}{State::RUNNING}}\ ||\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ ==\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{State::QUIESCING}};\ \}}
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{//\ Waits\ until\ all\ the\ tasks\ submitted\ via\ this\ token\ are\ completed.}}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa3b21853f890838c88d047d6c2786917}{wait}}();}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{comment}{//\ Waits\ for\ all\ submissions\ using\ this\ token\ are\ complete,\ or\ until\ 'delta'}}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{comment}{//\ time\ elapses.}}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ all\ submissions\ are\ complete,\ false\ otherwise.}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Rep,\ \textcolor{keyword}{class}\ Period>}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa22292be5b5e6a85a3349afa662de850}{wait\_for}}(\textcolor{keyword}{const}\ std::chrono::duration<Rep,\ Period>\&\ delta)\ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_afe773f486721747f7949c6a8a83e7fe2}{check\_not\_pool\_thread\_unlocked}}();}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a0e9aa584bf54ba09a199d00f67c97c62}{\_not\_running\_cond}}.wait\_for(l,\ delta,\ [\&]()\ \{\ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{classdoris_1_1_thread_pool_token_aee71b01d2e4d055b188db7ce81f1a8b8}{is\_active}}();\ \});}
+\DoxyCodeLine{00411\ \ \ \ \ \}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa4a2bffe6983994bb2cbb472fab80530}{need\_dispatch}}();}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_acbeaaf52ecff5f83229611ffd0687d44}{num\_tasks}}()\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}}-\/>\mbox{\hyperlink{classdoris_1_1_thread_pool_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a71ee5b959f2c3e90e9eacc254c923650}{\_entries}}.size();}
+\DoxyCodeLine{00418\ \ \ \ \ \}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{comment}{//\ All\ possible\ token\ states.\ Legal\ state\ transitions:}}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{comment}{//\ \ \ IDLE\ \ \ \ \ \ -\/>\ RUNNING:\ task\ is\ submitted\ via\ token}}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{comment}{//\ \ \ IDLE\ \ \ \ \ \ -\/>\ QUIESCED:\ token\ or\ pool\ is\ shut\ down}}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ IDLE:\ worker\ thread\ finishes\ executing\ a\ task\ and}}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ there\ are\ no\ more\ tasks\ queued\ to\ the\ token}}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ QUIESCING:\ token\ or\ pool\ is\ shut\ down\ while\ worker\ thread}}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\ executing\ a\ task}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{comment}{//\ \ \ RUNNING\ \ \ -\/>\ QUIESCED:\ token\ or\ pool\ is\ shut\ down}}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{comment}{//\ \ \ QUIESCING\ -\/>\ QUIESCED:\ \ worker\ thread\ finishes\ executing\ a\ task}}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ belonging\ to\ a\ shut\ down\ token\ or\ pool}}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Token\ has\ no\ queued\ tasks.}}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8aa5daf7f2ebbba4975d61dab1c40188c7}{IDLE}},}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ worker\ thread\ is\ running\ one\ of\ the\ token's\ previously\ queued\ tasks.}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a43491564ebcfd38568918efbd6e840fd}{RUNNING}},}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ new\ tasks\ may\ be\ submitted\ to\ the\ token.\ A\ worker\ thread\ is\ still}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ running\ a\ previously\ queued\ task.}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{QUIESCING}},}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ new\ tasks\ may\ be\ submitted\ to\ the\ token.\ There\ are\ no\ active\ tasks}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ either.\ At\ this\ state,\ the\ token\ may\ only\ be\ destroyed.}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a40a75d8a61812820783e83068ea331b7}{QUIESCED}},}
+\DoxyCodeLine{00445\ \ \ \ \ \};}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ Writes\ a\ textual\ representation\ of\ the\ token\ state\ in\ 's'\ to\ 'o'.}}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{friend}\ std::ostream\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a9892ced20eb6ee35848832e83e79a8f5}{operator<<}}(std::ostream\&\ o,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{ThreadPoolToken::State}}\ s);}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}};}
 \DoxyCodeLine{00451\ }
-\DoxyCodeLine{00452\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ new\ tasks\ may\ be\ submitted\ to\ this\ token.}}
-\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aac0c1d2fcbf3a762acc8e1bc191e5177}{may\_submit\_new\_tasks}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ !=\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{State::QUIESCING}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ !=\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a40a75d8a61812820783e83068ea331b7}{State::QUIESCED}};}
-\DoxyCodeLine{00455\ \ \ \ \ \}}
-\DoxyCodeLine{00456\ }
-\DoxyCodeLine{00457\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_acf42de6572f1e3e6aca988477c3662cf}{state}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}};\ \}}
-\DoxyCodeLine{00458\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ae0978398ab932b444b983770832f7fec}{mode}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a78d9cad3931c4b24c2ae1915f677c119}{\_mode}};\ \}}
-\DoxyCodeLine{00459\ }
-\DoxyCodeLine{00460\ \ \ \ \ \textcolor{comment}{//\ Token's\ configured\ execution\ mode.}}
-\DoxyCodeLine{00461\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a78d9cad3931c4b24c2ae1915f677c119}{\_mode}};}
-\DoxyCodeLine{00462\ }
-\DoxyCodeLine{00463\ \ \ \ \ \textcolor{comment}{//\ Pointer\ to\ the\ token's\ thread\ pool.}}
-\DoxyCodeLine{00464\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}*\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}};}
-\DoxyCodeLine{00465\ }
-\DoxyCodeLine{00466\ \ \ \ \ \textcolor{comment}{//\ Token\ state\ machine.}}
-\DoxyCodeLine{00467\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}};}
-\DoxyCodeLine{00468\ }
-\DoxyCodeLine{00469\ \ \ \ \ \textcolor{comment}{//\ Queued\ client\ tasks.}}
-\DoxyCodeLine{00470\ \ \ \ \ std::deque<ThreadPool::Task>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a71ee5b959f2c3e90e9eacc254c923650}{\_entries}};}
-\DoxyCodeLine{00471\ }
-\DoxyCodeLine{00472\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}token\ is\ idle"{}.\ Waiters\ wake\ up\ when\ the\ token}}
-\DoxyCodeLine{00473\ \ \ \ \ \textcolor{comment}{//\ transitions\ to\ IDLE\ or\ QUIESCED.}}
-\DoxyCodeLine{00474\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a0e9aa584bf54ba09a199d00f67c97c62}{\_not\_running\_cond}};}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ textual\ representation\ of\ 's'\ suitable\ for\ debugging.}}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a9051190a75f3203a3ff1b74c353806d4}{state\_to\_string}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ s);}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//\ Constructs\ a\ new\ token.}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{comment}{//\ The\ token\ may\ not\ outlive\ its\ thread\ pool\ ('pool').}}
+\DoxyCodeLine{00458\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}(\mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}*\ pool,\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ae0978398ab932b444b983770832f7fec}{mode}},}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ max\_concurrency\ =\ INT\_MAX);}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{comment}{//\ Changes\ this\ token's\ state\ to\ 'new\_state'\ taking\ actions\ as\ needed.}}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a3311fdef1311cb6e5bb9284713d35ccc}{transition}}(\mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ new\_state);}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ this\ token\ has\ a\ task\ queued\ and\ ready\ to\ run,\ or\ if\ a}}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{comment}{//\ task\ belonging\ to\ this\ token\ is\ already\ running.}}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aee71b01d2e4d055b188db7ce81f1a8b8}{is\_active}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ ==\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a43491564ebcfd38568918efbd6e840fd}{State::RUNNING}}\ ||\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ ==\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{State::QUIESCING}};\ \}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ new\ tasks\ may\ be\ submitted\ to\ this\ token.}}
+\DoxyCodeLine{00469\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aac0c1d2fcbf3a762acc8e1bc191e5177}{may\_submit\_new\_tasks}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ !=\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a163ee0214a68799a98d20784308d4a04}{State::QUIESCING}}\ \&\&\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}}\ !=\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8a40a75d8a61812820783e83068ea331b7}{State::QUIESCED}};}
+\DoxyCodeLine{00471\ \ \ \ \ \}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_acf42de6572f1e3e6aca988477c3662cf}{state}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}};\ \}}
+\DoxyCodeLine{00474\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_ae0978398ab932b444b983770832f7fec}{mode}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a78d9cad3931c4b24c2ae1915f677c119}{\_mode}};\ \}}
 \DoxyCodeLine{00475\ }
-\DoxyCodeLine{00476\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ worker\ threads\ currently\ executing\ tasks\ belonging\ to\ this}}
-\DoxyCodeLine{00477\ \ \ \ \ \textcolor{comment}{//\ token.}}
-\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
-\DoxyCodeLine{00479\ \ \ \ \ \textcolor{comment}{//\ The\ max\ number\ of\ tasks\ that\ can\ be\ ran\ concurrenlty.\ This\ is\ to\ limit}}
-\DoxyCodeLine{00480\ \ \ \ \ \textcolor{comment}{//\ the\ concurrency\ of\ a\ thread\ pool\ token,\ and\ default\ is\ INT\_MAX(no\ limited)}}
-\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_afc5909ac961bfdb866b9443d7f3b50c2}{\_max\_concurrency}};}
-\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ tasks\ which\ has\ been\ submitted\ to\ the\ thread\ pool's\ queue.}}
-\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa0430bd87b23fe42cb13d95818de0099}{\_num\_submitted\_tasks}};}
-\DoxyCodeLine{00484\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ tasks\ which\ has\ not\ been\ submitted\ to\ the\ thread\ pool's\ queue.}}
-\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a4e01bd5a7ca575f0f3cbf07a9855aa1b}{\_num\_unsubmitted\_tasks}};}
-\DoxyCodeLine{00486\ }
-\DoxyCodeLine{00487\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a12df82f5ecbda2a955146e37ee1d30e0}{ThreadPoolToken}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00488\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_af951821a69763d0b91f90b6cf94d2115}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00489\ \};}
-\DoxyCodeLine{00490\ }
-\DoxyCodeLine{00491\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{comment}{//\ Token's\ configured\ execution\ mode.}}
+\DoxyCodeLine{00477\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fd}{ThreadPool::ExecutionMode}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a78d9cad3931c4b24c2ae1915f677c119}{\_mode}};}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{comment}{//\ Pointer\ to\ the\ token's\ thread\ pool.}}
+\DoxyCodeLine{00480\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool}{ThreadPool}}*\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_adab6cdf62f5a4c7ee213d598d4fe22d4}{\_pool}};}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ Token\ state\ machine.}}
+\DoxyCodeLine{00483\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a17816079e65513d7293a826311d3afdf}{\_state}};}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ Queued\ client\ tasks.}}
+\DoxyCodeLine{00486\ \ \ \ \ std::deque<ThreadPool::Task>\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a71ee5b959f2c3e90e9eacc254c923650}{\_entries}};}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{comment}{//\ Condition\ variable\ for\ "{}token\ is\ idle"{}.\ Waiters\ wake\ up\ when\ the\ token}}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{comment}{//\ transitions\ to\ IDLE\ or\ QUIESCED.}}
+\DoxyCodeLine{00490\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a0e9aa584bf54ba09a199d00f67c97c62}{\_not\_running\_cond}};}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ worker\ threads\ currently\ executing\ tasks\ belonging\ to\ this}}
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{comment}{//\ token.}}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa36f7aea228e888dce064c0381c0ac27}{\_active\_threads}};}
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{comment}{//\ The\ max\ number\ of\ tasks\ that\ can\ be\ ran\ concurrenlty.\ This\ is\ to\ limit}}
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{comment}{//\ the\ concurrency\ of\ a\ thread\ pool\ token,\ and\ default\ is\ INT\_MAX(no\ limited)}}
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_afc5909ac961bfdb866b9443d7f3b50c2}{\_max\_concurrency}};}
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ tasks\ which\ has\ been\ submitted\ to\ the\ thread\ pool's\ queue.}}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_aa0430bd87b23fe42cb13d95818de0099}{\_num\_submitted\_tasks}};}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{comment}{//\ Number\ of\ tasks\ which\ has\ not\ been\ submitted\ to\ the\ thread\ pool's\ queue.}}
+\DoxyCodeLine{00501\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a4e01bd5a7ca575f0f3cbf07a9855aa1b}{\_num\_unsubmitted\_tasks}};}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_a12df82f5ecbda2a955146e37ee1d30e0}{ThreadPoolToken}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token_af951821a69763d0b91f90b6cf94d2115}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00505\ \};}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

@@ -1,5 +1,5 @@
 \hypertarget{reader_8h_source}{}\doxysection{reader.\+h}
-\label{reader_8h_source}\index{/Users/dabowang/be\_all/olap/reader.h@{/Users/dabowang/be\_all/olap/reader.h}}
+\label{reader_8h_source}\index{/Users/dabowang/doris/be/src/olap/reader.h@{/Users/dabowang/doris/be/src/olap/reader.h}}
 \mbox{\hyperlink{reader_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -26,230 +26,244 @@
 \DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{bitmapfilter__predicate_8h}{exprs/bitmapfilter\_predicate.h}}"{}}}
 \DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{function__filter_8h}{exprs/function\_filter.h}}"{}}}
 \DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hybrid__set_8h}{exprs/hybrid\_set.h}}"{}}}
-\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{delete__handler_8h}{olap/delete\_handler.h}}"{}}}
-\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{row__cursor_8h}{olap/row\_cursor.h}}"{}}}
-\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__reader_8h}{olap/rowset/rowset\_reader.h}}"{}}}
-\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
-\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
-\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
-\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vexpr__context_8h}{vec/exprs/vexpr\_context.h}}"{}}}
-\DoxyCodeLine{00032\ }
-\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{io__common_8h}{io/io\_common.h}}"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{delete__handler_8h}{olap/delete\_handler.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{row__cursor_8h}{olap/row\_cursor.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{rowset__reader_8h}{olap/rowset/rowset\_reader.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet_8h}{olap/tablet.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tablet__schema_8h}{olap/tablet\_schema.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__profile_8h}{util/runtime\_profile.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arena_8h}{vec/common/arena.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vexpr__context_8h}{vec/exprs/vexpr\_context.h}}"{}}}
 \DoxyCodeLine{00034\ }
-\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }Tablet;}
-\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }RowCursor;}
-\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }RuntimeState;}
-\DoxyCodeLine{00038\ }
-\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }vectorized\ \{}
-\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }VCollectIterator;}
-\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }Block;}
-\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }VExpr;}
-\DoxyCodeLine{00043\ \}\ \textcolor{comment}{//\ namespace\ vectorized}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{comment}{//\ Used\ to\ compare\ row\ with\ input\ scan\ key.\ Scan\ key\ only\ contains\ key\ columns,}}
-\DoxyCodeLine{00046\ \textcolor{comment}{//\ row\ contains\ all\ key\ columns,\ which\ is\ superset\ of\ key\ columns.}}
-\DoxyCodeLine{00047\ \textcolor{comment}{//\ So\ we\ should\ compare\ the\ common\ prefix\ columns\ of\ lhs\ and\ rhs.}}
-\DoxyCodeLine{00048\ \textcolor{comment}{//}}
-\DoxyCodeLine{00049\ \textcolor{comment}{//\ NOTE:\ if\ you\ are\ not\ sure\ if\ you\ can\ use\ it,\ please\ don't\ use\ this\ function.}}
-\DoxyCodeLine{00050\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsRowType,\ \textcolor{keyword}{typename}\ RhsRowType>}
-\DoxyCodeLine{00051\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a8ccf8ee13fd2a11c8994a83e10805433}{compare\_row\_key}}(\textcolor{keyword}{const}\ LhsRowType\&\ lhs,\ \textcolor{keyword}{const}\ RhsRowType\&\ rhs)\ \{}
-\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{auto}\ cmp\_cids\ =\ std::min(lhs.schema()-\/>num\_column\_ids(),\ rhs.schema()-\/>num\_column\_ids());}
-\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ cid\ =\ 0;\ cid\ <\ cmp\_cids;\ ++cid)\ \{}
-\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ res\ =\ lhs.schema()-\/>column(cid)-\/>compare\_cell(lhs.cell(cid),\ rhs.cell(cid));}
-\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (res\ !=\ 0)\ \{}
-\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
-\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00058\ \ \ \ \ \}}
-\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00060\ \}}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\ \{}
-\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param}{KeysParam}}\ \{}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00065\ }
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ std::vector<RowCursor>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_ad2f31726bec06e68d5bf1e2a1720707d}{start\_keys}};}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ std::vector<RowCursor>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_adc02657e03fecb53a7b19a4cac9be078}{end\_keys}};}
-\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_a770c671dbf36d3b57162253cb07479f8}{start\_key\_include}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_ad4b5c467929ae540b2d4bc61aa8186b3}{end\_key\_include}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00070\ \ \ \ \ \};}
-\DoxyCodeLine{00071\ }
-\DoxyCodeLine{00072\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ Params\ for\ Reader,}}
-\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ mainly\ include\ tablet,\ data\ version\ and\ fetch\ range.}}
-\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\ \{}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af0e19c64acd45263e66cdb30133e9bec}{tablet}};}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_afc972715162ec29cfef3b12bf9075407}{tablet\_schema}};}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a4205671a6b4a930c32164ea5d3b245db}{reader\_type}}\ =\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15ad8bc86f2e525e6cc87c499123000b1e5}{READER\_QUERY}};}
-\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a0b8f14584a6dcdbbbf56f1e88f532123}{direct\_mode}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a7a00aa72312e0e1f7a5ff026ca7d000a}{aggregation}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_abaf8f63e0cab7114ab6bf419819908ed}{need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ compaction,\ schema\_change,\ check\_sum:\ we\ don't\ use\ page\ cache}}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ query\ and\ config::disable\_storage\_page\_cache\ is\ false,\ we\ use\ page\ cache}}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac6da75faea521a74cec8c389bab29b40}{use\_page\_cache}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac620c19e22394db7bca83528aab69634}{version}}\ =\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}(-\/1,\ 0);}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ std::vector<OlapTuple>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a691beeed2b64a4348db5c1ef2115603c}{start\_key}};}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ std::vector<OlapTuple>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_add1b828e621ec1dd68a2d52f88aff628}{end\_key}};}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a770c671dbf36d3b57162253cb07479f8}{start\_key\_include}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad4b5c467929ae540b2d4bc61aa8186b3}{end\_key\_include}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ std::vector<TCondition>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a0419c32ff72e5510baeffbc4a3ca2969}{conditions}};}
-\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<BloomFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a9645b313cf5d99320a7d463e2de34105}{bloom\_filters}};}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<BitmapFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a468c6821439bc6cd5234001adaf935b3}{bitmap\_filters}};}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<HybridSetBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_acb668c8aedaf9f7f94e2300dbb4dfab0}{in\_filters}};}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ std::vector<TCondition>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af41c4c5a3ed8b7f812574a9fd2ac4e9e}{conditions\_except\_leafnode\_of\_andnode}};}
-\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ std::vector<FunctionFilter>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a964151520eefc620f0a46131391ae0be}{function\_filters}};}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ std::vector<RowsetMetaSharedPtr>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af0294db759c1d5d8d74615896e6e6fe7}{delete\_predicates}};}
-\DoxyCodeLine{00099\ }
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ unique\ key\ table\ with\ merge-\/on-\/write}}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a1e32ca74880996aa3433d6edcc7353eb}{delete\_bitmap}}\ \{\textcolor{keyword}{nullptr}\};}
-\DoxyCodeLine{00102\ }
-\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ std::vector<RowsetReaderSharedPtr>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac3f6487d67715981089dae0aa6507a6a}{rs\_readers}};}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_afb975cf43442ec976f0cab55e20d6f2c}{return\_columns}};}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ab36e4f9b0ddc34e1f9123ddc3b4d76fd}{profile}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac24d49a91bc75be25fff1791f1826595}{runtime\_state}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ use\ only\ in\ vec\ exec\ engine}}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ std::vector<uint32\_t>*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a25d76f6f5523db9dc95aaa4bd17cb0f7}{origin\_return\_columns}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ std::unordered\_set<uint32\_t>*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac4f5045de16e857bd8d79e919893cf5b}{tablet\_columns\_convert\_to\_null\_set}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ TPushAggOp::type\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af10749b0a0a64301bd67a070146bb5d5}{push\_down\_agg\_type\_opt}}\ =\ TPushAggOp::NONE;}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a9c35852e2f9f5d0e1de5c83af394801e}{remaining\_vconjunct\_root}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00113\ }
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ compaction\ to\ record\ row\ ids}}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a757055bebdbaf57cb8ae35b9580c0ccf}{record\_rowids}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flag\ for\ enable\ topn\ opt}}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aeb44b6a5d68c8b553373be46bb4c119f}{use\_topn\_opt}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ LIMIT\ n}}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aa31c20a02b3ad1ba0876d1ec090e3d4a}{read\_orderby\_key}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ DESC\ LIMIT\ n}}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad5f943e3d8e5a6e0f2f8572d77d8cb16}{read\_orderby\_key\_reverse}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ num\ of\ columns\ for\ orderby\ key}}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad267c128cca67e7630b56bd4763b0f21}{read\_orderby\_key\_num\_prefix\_columns}}\ =\ 0;}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ limit\ of\ rows\ for\ read\_orderby\_key}}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad80d10c8f032b8d7dbbf82e8d011ea0e}{read\_orderby\_key\_limit}}\ =\ 0;}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ filter\_block\ arguments}}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{vectorized::VExprContext}}**\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af3dd46c71f2322984354011299465b4c}{filter\_block\_vconjunct\_ctx\_ptr}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00128\ }
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ vertical\ compaction}}
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_abb43c7e27079a7b7747f4cfa01713e94}{is\_key\_column\_group}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00131\ }
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a088fba3827e631cf075a021b9403ed49}{check\_validation}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00133\ }
-\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00135\ \ \ \ \ \};}
-\DoxyCodeLine{00136\ }
-\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a293d702614a253c293f3282a1722e419}{TabletReader}}()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00138\ }
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a6d548f97ea6aeaef7af430622c07f33d}{\string~TabletReader}}();}
-\DoxyCodeLine{00140\ }
-\DoxyCodeLine{00141\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ac991e2342d853dd5380059d7b6addbab}{TabletReader}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aefe755d85cee03a785f9f9d2abc21431}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00143\ }
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ Initialize\ TabletReader\ with\ tablet,\ data\ version\ and\ fetch\ range.}}
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7556d7b54092e0fdad7ef965947600b7}{init}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00035\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }Tablet;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }RowCursor;}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }RuntimeState;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }vectorized\ \{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }VCollectIterator;}
+\DoxyCodeLine{00043\ \textcolor{keyword}{class\ }Block;}
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }VExpr;}
+\DoxyCodeLine{00045\ \}\ \textcolor{comment}{//\ namespace\ vectorized}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ Used\ to\ compare\ row\ with\ input\ scan\ key.\ Scan\ key\ only\ contains\ key\ columns,}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ row\ contains\ all\ key\ columns,\ which\ is\ superset\ of\ key\ columns.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ So\ we\ should\ compare\ the\ common\ prefix\ columns\ of\ lhs\ and\ rhs.}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ NOTE:\ if\ you\ are\ not\ sure\ if\ you\ can\ use\ it,\ please\ don't\ use\ this\ function.}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsRowType,\ \textcolor{keyword}{typename}\ RhsRowType>}
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacedoris_a8ccf8ee13fd2a11c8994a83e10805433}{compare\_row\_key}}(\textcolor{keyword}{const}\ LhsRowType\&\ lhs,\ \textcolor{keyword}{const}\ RhsRowType\&\ rhs)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{auto}\ cmp\_cids\ =\ std::min(lhs.schema()-\/>num\_column\_ids(),\ rhs.schema()-\/>num\_column\_ids());}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ cid\ =\ 0;\ cid\ <\ cmp\_cids;\ ++cid)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ res\ =\ lhs.schema()-\/>column(cid)-\/>compare\_cell(lhs.cell(cid),\ rhs.cell(cid));}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (res\ !=\ 0)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00062\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param}{KeysParam}}\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ std::vector<RowCursor>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_ad2f31726bec06e68d5bf1e2a1720707d}{start\_keys}};}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ std::vector<RowCursor>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_adc02657e03fecb53a7b19a4cac9be078}{end\_keys}};}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_a770c671dbf36d3b57162253cb07479f8}{start\_key\_include}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param_ad4b5c467929ae540b2d4bc61aa8186b3}{end\_key\_include}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00072\ \ \ \ \ \};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Params\ for\ Reader,}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ mainly\ include\ tablet,\ data\ version\ and\ fetch\ range.}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af0e19c64acd45263e66cdb30133e9bec}{tablet}};}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_afc972715162ec29cfef3b12bf9075407}{tablet\_schema}};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a4205671a6b4a930c32164ea5d3b245db}{reader\_type}}\ =\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15ad8bc86f2e525e6cc87c499123000b1e5}{READER\_QUERY}};}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a0b8f14584a6dcdbbbf56f1e88f532123}{direct\_mode}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a7a00aa72312e0e1f7a5ff026ca7d000a}{aggregation}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_abaf8f63e0cab7114ab6bf419819908ed}{need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ compaction,\ schema\_change,\ check\_sum:\ we\ don't\ use\ page\ cache}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ query\ and\ config::disable\_storage\_page\_cache\ is\ false,\ we\ use\ page\ cache}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac6da75faea521a74cec8c389bab29b40}{use\_page\_cache}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_version}{Version}}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac620c19e22394db7bca83528aab69634}{version}}\ =\ \mbox{\hyperlink{structdoris_1_1_version}{Version}}(-\/1,\ 0);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ std::vector<OlapTuple>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a691beeed2b64a4348db5c1ef2115603c}{start\_key}};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ std::vector<OlapTuple>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_add1b828e621ec1dd68a2d52f88aff628}{end\_key}};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a770c671dbf36d3b57162253cb07479f8}{start\_key\_include}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad4b5c467929ae540b2d4bc61aa8186b3}{end\_key\_include}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ std::vector<TCondition>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a0419c32ff72e5510baeffbc4a3ca2969}{conditions}};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<BloomFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a9645b313cf5d99320a7d463e2de34105}{bloom\_filters}};}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<BitmapFilterFuncBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a468c6821439bc6cd5234001adaf935b3}{bitmap\_filters}};}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ std::vector<std::pair<string,\ std::shared\_ptr<HybridSetBase>>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_acb668c8aedaf9f7f94e2300dbb4dfab0}{in\_filters}};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ std::vector<TCondition>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af41c4c5a3ed8b7f812574a9fd2ac4e9e}{conditions\_except\_leafnode\_of\_andnode}};}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ std::vector<FunctionFilter>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a964151520eefc620f0a46131391ae0be}{function\_filters}};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ std::vector<RowsetMetaSharedPtr>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af0294db759c1d5d8d74615896e6e6fe7}{delete\_predicates}};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ unique\ key\ table\ with\ merge-\/on-\/write}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_bitmap}{DeleteBitmap}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a1e32ca74880996aa3433d6edcc7353eb}{delete\_bitmap}}\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ std::vector<RowsetReaderSharedPtr>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac3f6487d67715981089dae0aa6507a6a}{rs\_readers}};}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ rs\_readers\_segment\_offsets\ is\ not\ empty,\ means\ we\ only\ scan}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ [pair.first,\ pair.second)\ segment\ in\ rs\_reader,\ only\ effective\ in\ dup\ key}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ pipeline}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ std::vector<std::pair<int,\ int>>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_adde129743815be074886168441ec5bf8}{rs\_readers\_segment\_offsets}};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\_columns\ is\ init\ from\ query\ schema}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_afb975cf43442ec976f0cab55e20d6f2c}{return\_columns}};}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ output\_columns\ only\ contain\ columns\ in\ OrderByExprs\ and\ outputExprs}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ std::set<int32\_t>\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a3ba8e8b7842786d1c7ab3ab3fc10dd15}{output\_columns}};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ab36e4f9b0ddc34e1f9123ddc3b4d76fd}{profile}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac24d49a91bc75be25fff1791f1826595}{runtime\_state}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ use\ only\ in\ vec\ exec\ engine}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ std::vector<uint32\_t>*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a25d76f6f5523db9dc95aaa4bd17cb0f7}{origin\_return\_columns}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ std::unordered\_set<uint32\_t>*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac4f5045de16e857bd8d79e919893cf5b}{tablet\_columns\_convert\_to\_null\_set}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ TPushAggOp::type\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af10749b0a0a64301bd67a070146bb5d5}{push\_down\_agg\_type\_opt}}\ =\ TPushAggOp::NONE;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr}{vectorized::VExpr}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a9c35852e2f9f5d0e1de5c83af394801e}{remaining\_vconjunct\_root}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{vectorized::VExprContext}}*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a3bd883277c30cef49c4ed550f9bff5dd}{common\_vexpr\_ctxs\_pushdown}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ compaction\ to\ record\ row\ ids}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a757055bebdbaf57cb8ae35b9580c0ccf}{record\_rowids}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flag\ for\ enable\ topn\ opt}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aeb44b6a5d68c8b553373be46bb4c119f}{use\_topn\_opt}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ LIMIT\ n}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aa31c20a02b3ad1ba0876d1ec090e3d4a}{read\_orderby\_key}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ DESC\ LIMIT\ n}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad5f943e3d8e5a6e0f2f8572d77d8cb16}{read\_orderby\_key\_reverse}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ num\ of\ columns\ for\ orderby\ key}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad267c128cca67e7630b56bd4763b0f21}{read\_orderby\_key\_num\_prefix\_columns}}\ =\ 0;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ limit\ of\ rows\ for\ read\_orderby\_key}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ad80d10c8f032b8d7dbbf82e8d011ea0e}{read\_orderby\_key\_limit}}\ =\ 0;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ filter\_block\ arguments}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_expr_context}{vectorized::VExprContext}}**\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_af3dd46c71f2322984354011299465b4c}{filter\_block\_vconjunct\_ctx\_ptr}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ vertical\ compaction}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_abb43c7e27079a7b7747f4cfa01713e94}{is\_key\_column\_group}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a80f0167c1ced375e38f8cd6234ca0e1b}{is\_segcompaction}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ std::vector<RowwiseIteratorUPtr>*\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_ac1e58301a0437e962cbf051b52bcac23}{segment\_iters\_ptr}}\ =\ \textcolor{keyword}{nullptr};}
 \DoxyCodeLine{00146\ }
-\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ Read\ next\ block\ with\ aggregation.}}
-\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//\ Return\ OK\ and\ set\ `*eof`\ to\ false\ when\ next\ block\ is\ read}}
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Return\ OK\ and\ set\ `*eof`\ to\ true\ when\ no\ more\ rows\ can\ be\ read.}}
-\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Return\ others\ when\ unexpected\ error\ happens.}}
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Rethink\ here\ we\ still\ need\ mem\_pool\ and\ agg\_pool?}}
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a96520cd9d04a973cf1dc66ea95e250af}{next\_block\_with\_aggregation}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \textcolor{keywordtype}{bool}*\ eof)\ \{}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::Error<ErrorCode::READER\_INITIALIZE\_ERROR>();}
-\DoxyCodeLine{00154\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_a088fba3827e631cf075a021b9403ed49}{check\_validation}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00150\ \ \ \ \ \};}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a293d702614a253c293f3282a1722e419}{TabletReader}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a6d548f97ea6aeaef7af430622c07f33d}{\string~TabletReader}}();}
 \DoxyCodeLine{00155\ }
-\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0c95b8f24b0fe7c170a7adbddb49e9f7}{merged\_rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a06b84d8f115f05c5d05aaa332fb6cf83}{\_merged\_rows}};\ \}}
-\DoxyCodeLine{00157\ }
-\DoxyCodeLine{00158\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a116c9cd3bf664580b3591c1561907801}{filtered\_rows}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a75739f26b3e7994ad5283a02533b2bac}{rows\_del\_filtered}}\ +\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_ab9f5696864aa78369984e36ed6a22ec2}{rows\_del\_by\_bitmap}}\ +}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a5777dc1aad42ffc6ff62bb141b426033}{rows\_conditions\_filtered}}\ +\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a212cc16054257e7ee7fc9b2a67cf9cb1}{rows\_vec\_del\_cond\_filtered}}\ +}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a743c94c430e70242db898e9dca614469}{rows\_vec\_cond\_filtered}};}
-\DoxyCodeLine{00162\ \ \ \ \ \}}
-\DoxyCodeLine{00163\ }
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a866e3ad3ea680a86c05902fee668a400}{set\_batch\_size}}(\textcolor{keywordtype}{int}\ batch\_size)\ \{\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aecf50290bc1f9bfa666a389de9ba117f}{\_batch\_size}}\ =\ batch\_size;\ \}}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0a9655ac7f784b2ba8cb9e4c4bb032ef}{stats}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};\ \}}
-\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a62e17b36945b799614bc7c03ce0637da}{mutable\_stats}}()\ \{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};\ \}}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a1b562f72bb28ac03ecbcb549153ae3ad}{update\_profile}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ profile)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_adbdc0bce75cdc63085a4127206cf9cde}{init\_reader\_params\_and\_create\_block}}(}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a31109a48f2fd9f439d91cef8e4354c3f}{tablet}},\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ reader\_type,}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetSharedPtr>\&\ input\_rowsets,}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{TabletReader::ReaderParams}}*\ reader\_params,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block);}
-\DoxyCodeLine{00174\ }
-\DoxyCodeLine{00175\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_collect_iterator}{vectorized::VCollectIterator}};}
-\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}};}
-\DoxyCodeLine{00178\ }
-\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a8483086a15066f54b0984992c2261151}{\_init\_params}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aaff7f1ee6521f517eac87c6ff8850586}{\_capture\_rs\_readers}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params,}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<RowsetReaderSharedPtr>*\ valid\_rs\_readers);}
-\DoxyCodeLine{00183\ }
-\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_afe2adc2ed536c33825a08325df45fbd2}{\_optimize\_for\_single\_rowset}}(\textcolor{keyword}{const}\ std::vector<RowsetReaderSharedPtr>\&\ rs\_readers);}
-\DoxyCodeLine{00185\ }
-\DoxyCodeLine{00186\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0e49050f0372b8dfdaf84bfe0b74327a}{\_init\_keys\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
-\DoxyCodeLine{00187\ }
-\DoxyCodeLine{00188\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7714e537815b4821f2034e6ec126efae}{\_init\_orderby\_keys\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
-\DoxyCodeLine{00189\ }
-\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a6d2e03b5820fcd0464a0088be46316d9}{\_init\_conditions\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
-\DoxyCodeLine{00191\ }
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_af52a03252e87a80feca8bf91d1ac74f5}{\_init\_conditions\_param\_except\_leafnode\_of\_andnode}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
-\DoxyCodeLine{00193\ }
-\DoxyCodeLine{00194\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<BloomFilterFuncBase>>\&\ bloom\_filter);}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ac991e2342d853dd5380059d7b6addbab}{TabletReader}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aefe755d85cee03a785f9f9d2abc21431}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader}{TabletReader}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Initialize\ TabletReader\ with\ tablet,\ data\ version\ and\ fetch\ range.}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7556d7b54092e0fdad7ef965947600b7}{init}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ Read\ next\ block\ with\ aggregation.}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ Return\ OK\ and\ set\ `*eof`\ to\ false\ when\ next\ block\ is\ read}}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ Return\ OK\ and\ set\ `*eof`\ to\ true\ when\ no\ more\ rows\ can\ be\ read.}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Return\ others\ when\ unexpected\ error\ happens.}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a96520cd9d04a973cf1dc66ea95e250af}{next\_block\_with\_aggregation}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block,\ \textcolor{keywordtype}{bool}*\ eof)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::Error<ErrorCode::READER\_INITIALIZE\_ERROR>();}
+\DoxyCodeLine{00168\ \ \ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0c95b8f24b0fe7c170a7adbddb49e9f7}{merged\_rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a06b84d8f115f05c5d05aaa332fb6cf83}{\_merged\_rows}};\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a116c9cd3bf664580b3591c1561907801}{filtered\_rows}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a75739f26b3e7994ad5283a02533b2bac}{rows\_del\_filtered}}\ +\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_ab9f5696864aa78369984e36ed6a22ec2}{rows\_del\_by\_bitmap}}\ +}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a5777dc1aad42ffc6ff62bb141b426033}{rows\_conditions\_filtered}}\ +\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a212cc16054257e7ee7fc9b2a67cf9cb1}{rows\_vec\_del\_cond\_filtered}}\ +}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_a743c94c430e70242db898e9dca614469}{rows\_vec\_cond\_filtered}}\ +\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}}.\mbox{\hyperlink{structdoris_1_1_olap_reader_statistics_ad0d96b56984fb1b42024ad403c9cf612}{rows\_short\_circuit\_cond\_filtered}};}
+\DoxyCodeLine{00176\ \ \ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a866e3ad3ea680a86c05902fee668a400}{set\_batch\_size}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aa0f6f2d34b787cb38b2f02c8673d6377}{batch\_size}})\ \{\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab3de965e48d636cfa43609a5ac70eda1}{\_reader\_context}}.\mbox{\hyperlink{structdoris_1_1_rowset_reader_context_a3d5912a32a741893d6b2cf6d0c59da50}{batch\_size}}\ =\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aa0f6f2d34b787cb38b2f02c8673d6377}{batch\_size}};\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aa0f6f2d34b787cb38b2f02c8673d6377}{batch\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab3de965e48d636cfa43609a5ac70eda1}{\_reader\_context}}.\mbox{\hyperlink{structdoris_1_1_rowset_reader_context_a3d5912a32a741893d6b2cf6d0c59da50}{batch\_size}};\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0a9655ac7f784b2ba8cb9e4c4bb032ef}{stats}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};\ \}}
+\DoxyCodeLine{00183\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a62e17b36945b799614bc7c03ce0637da}{mutable\_stats}}()\ \{\ \textcolor{keywordflow}{return}\ \&\mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a1b562f72bb28ac03ecbcb549153ae3ad}{update\_profile}}(\mbox{\hyperlink{classdoris_1_1_runtime_profile}{RuntimeProfile}}*\ profile)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_adbdc0bce75cdc63085a4127206cf9cde}{init\_reader\_params\_and\_create\_block}}(}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a31109a48f2fd9f439d91cef8e4354c3f}{tablet}},\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ reader\_type,}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<RowsetSharedPtr>\&\ input\_rowsets,}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{TabletReader::ReaderParams}}*\ reader\_params,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_block}{vectorized::Block}}*\ block);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1vectorized_1_1_v_collect_iterator}{vectorized::VCollectIterator}};}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}};}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a8483086a15066f54b0984992c2261151}{\_init\_params}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
 \DoxyCodeLine{00196\ }
-\DoxyCodeLine{00197\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<BitmapFilterFuncBase>>\&\ bitmap\_filter);}
-\DoxyCodeLine{00199\ }
-\DoxyCodeLine{00200\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<HybridSetBase>>\&\ in\_filter);}
+\DoxyCodeLine{00197\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a1949e29fa63b14756422811288d3b6b6}{\_capture\_rs\_readers}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_afe2adc2ed536c33825a08325df45fbd2}{\_optimize\_for\_single\_rowset}}(\textcolor{keyword}{const}\ std::vector<RowsetReaderSharedPtr>\&\ rs\_readers);}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0e49050f0372b8dfdaf84bfe0b74327a}{\_init\_keys\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
 \DoxyCodeLine{00202\ }
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_function_filter}{FunctionFilter}}\&\ function\_filter);}
+\DoxyCodeLine{00203\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7714e537815b4821f2034e6ec126efae}{\_init\_orderby\_keys\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
 \DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a3940be1942ead6dce800bf7afe5d5d28}{\_init\_delete\_condition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00205\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a9337ea7dc94087548adea6d2de46fb21}{\_init\_conditions\_param}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
 \DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a36fe6e715d3fdb3385e92ddb1f5d8532}{\_init\_return\_columns}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_af52a03252e87a80feca8bf91d1ac74f5}{\_init\_conditions\_param\_except\_leafnode\_of\_andnode}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
 \DoxyCodeLine{00208\ }
-\DoxyCodeLine{00209\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a31109a48f2fd9f439d91cef8e4354c3f}{tablet}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a98f28be525261e7ac6cde67ff645ab91}{\_tablet}};\ \}}
-\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0fedff19daf96669507f8d92c849705f}{tablet\_schema}}()\ \{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1_tablet_reader_a5f256212214e141eee2fe15b9b042e18}{\_tablet\_schema}};\ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<BloomFilterFuncBase>>\&\ bloom\_filter);}
 \DoxyCodeLine{00211\ }
-\DoxyCodeLine{00212\ \ \ \ \ std::unique\_ptr<MemPool>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab9e7f13ce94cbbf6f2f922368fd67cec}{\_predicate\_mem\_pool}};}
-\DoxyCodeLine{00213\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2cfe5d7865dbe800e61d9f249e504bef}{\_return\_columns}};}
-\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ [ASC|DESC]\ LIMIT\ n}}
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ columns\ for\ orderby\ keys}}
-\DoxyCodeLine{00216\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_abea7ae057a9447127c4eec2668dbafeb}{\_orderby\_key\_columns}};}
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ only\ use\ in\ outer\ join\ which\ change\ the\ column\ nullable\ which\ must\ keep\ same\ in}}
-\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ vec\ query\ engine}}
-\DoxyCodeLine{00219\ \ \ \ \ std::unordered\_set<uint32\_t>*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7238772b4c7bd26aa423ebc7c9b2883c}{\_tablet\_columns\_convert\_to\_null\_set}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00220\ }
-\DoxyCodeLine{00221\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a98f28be525261e7ac6cde67ff645ab91}{\_tablet}};}
-\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_rowset_reader_context}{RowsetReaderContext}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab3de965e48d636cfa43609a5ac70eda1}{\_reader\_context}};}
-\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5f256212214e141eee2fe15b9b042e18}{\_tablet\_schema}};}
-\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param}{KeysParam}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a4828291f4fa00cabe068f234b7b6108c}{\_keys\_param}};}
-\DoxyCodeLine{00225\ \ \ \ \ std::vector<bool>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ada667c5cee6f248348934fde33d03993}{\_is\_lower\_keys\_included}};}
-\DoxyCodeLine{00226\ \ \ \ \ std::vector<bool>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7881ea2638a9d44461172c135181411c}{\_is\_upper\_keys\_included}};}
-\DoxyCodeLine{00227\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7a7e090137c46ce95ade26ec641851c1}{\_col\_predicates}};}
-\DoxyCodeLine{00228\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a673c6be05840bb6488a8182d5acbb74e}{\_col\_preds\_except\_leafnode\_of\_andnode}};}
-\DoxyCodeLine{00229\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_abb4996d214e8d5a779f170d18440d8ee}{\_value\_col\_predicates}};}
-\DoxyCodeLine{00230\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a8d5a7457cd3272fc09cd9a1d0f8fd055}{\_delete\_handler}};}
-\DoxyCodeLine{00231\ }
-\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5788a6f60b6f5b0a92d715586c0a192b}{\_aggregation}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00233\ \ \ \ \ \textcolor{comment}{//\ for\ agg\ query,\ we\ don't\ need\ to\ finalize\ when\ scan\ agg\ object\ data}}
-\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00235\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5529491da89e0b6a41eff66f1026c36f}{\_reader\_type}}\ =\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15ad8bc86f2e525e6cc87c499123000b1e5}{READER\_QUERY}};}
-\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_af169cbdbb56996fde729045ccfbd17b7}{\_next\_delete\_flag}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a1ebaa0fec15523bad03d1e92b5a1bc9f}{\_filter\_delete}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00238\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ad441c645cf2448261db5817af73e968d}{\_sequence\_col\_idx}}\ =\ -\/1;}
-\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a4de3372c89846d1dd26768e223f9c16b}{\_direct\_mode}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_aecf50290bc1f9bfa666a389de9ba117f}{\_batch\_size}}\ =\ 1024;}
-\DoxyCodeLine{00241\ }
-\DoxyCodeLine{00242\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a9661a1aa5692f3631fa9fd741ce3f1cd}{\_key\_cids}};}
-\DoxyCodeLine{00243\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ac46c8c0f14a12cab1778aae221240463}{\_value\_cids}};}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a06b84d8f115f05c5d05aaa332fb6cf83}{\_merged\_rows}}\ =\ 0;}
-\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};}
-\DoxyCodeLine{00247\ \};}
-\DoxyCodeLine{00248\ }
-\DoxyCodeLine{00249\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00212\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<BitmapFilterFuncBase>>\&\ bitmap\_filter);}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::pair<std::string,\ std::shared\_ptr<HybridSetBase>>\&\ in\_filter);}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_column_predicate}{ColumnPredicate}}*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2be9e304444b2c7862c0b60cc81adad7}{\_parse\_to\_predicate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_function_filter}{FunctionFilter}}\&\ function\_filter);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a3940be1942ead6dce800bf7afe5d5d28}{\_init\_delete\_condition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a36fe6e715d3fdb3385e92ddb1f5d8532}{\_init\_return\_columns}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_reader_params}{ReaderParams}}\&\ read\_params);}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a31109a48f2fd9f439d91cef8e4354c3f}{tablet}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a98f28be525261e7ac6cde67ff645ab91}{\_tablet}};\ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_schema}{TabletSchema}}\&\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a0fedff19daf96669507f8d92c849705f}{tablet\_schema}}()\ \{\ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{classdoris_1_1_tablet_reader_a5f256212214e141eee2fe15b9b042e18}{\_tablet\_schema}};\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ std::unique\_ptr<vectorized::Arena>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab68bb2d4bcc70a53e5cedb20177a21c2}{\_predicate\_arena}};}
+\DoxyCodeLine{00228\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a2cfe5d7865dbe800e61d9f249e504bef}{\_return\_columns}};}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ used\ for\ special\ optimization\ for\ query\ :\ ORDER\ BY\ key\ [ASC|DESC]\ LIMIT\ n}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ columns\ for\ orderby\ keys}}
+\DoxyCodeLine{00231\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_abea7ae057a9447127c4eec2668dbafeb}{\_orderby\_key\_columns}};}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ only\ use\ in\ outer\ join\ which\ change\ the\ column\ nullable\ which\ must\ keep\ same\ in}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{comment}{//\ vec\ query\ engine}}
+\DoxyCodeLine{00234\ \ \ \ \ std::unordered\_set<uint32\_t>*\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7238772b4c7bd26aa423ebc7c9b2883c}{\_tablet\_columns\_convert\_to\_null\_set}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ad3e800b72ff04da97e09ccc723b2f8cf}{TabletSharedPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a98f28be525261e7ac6cde67ff645ab91}{\_tablet}};}
+\DoxyCodeLine{00237\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_rowset_reader_context}{RowsetReaderContext}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ab3de965e48d636cfa43609a5ac70eda1}{\_reader\_context}};}
+\DoxyCodeLine{00238\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a9216ba4fd9b418b8808bfb91a407ea20}{TabletSchemaSPtr}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5f256212214e141eee2fe15b9b042e18}{\_tablet\_schema}};}
+\DoxyCodeLine{00239\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_tablet_reader_1_1_keys_param}{KeysParam}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a4828291f4fa00cabe068f234b7b6108c}{\_keys\_param}};}
+\DoxyCodeLine{00240\ \ \ \ \ std::vector<bool>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ada667c5cee6f248348934fde33d03993}{\_is\_lower\_keys\_included}};}
+\DoxyCodeLine{00241\ \ \ \ \ std::vector<bool>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7881ea2638a9d44461172c135181411c}{\_is\_upper\_keys\_included}};}
+\DoxyCodeLine{00242\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a7a7e090137c46ce95ade26ec641851c1}{\_col\_predicates}};}
+\DoxyCodeLine{00243\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a673c6be05840bb6488a8182d5acbb74e}{\_col\_preds\_except\_leafnode\_of\_andnode}};}
+\DoxyCodeLine{00244\ \ \ \ \ std::vector<ColumnPredicate*>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_abb4996d214e8d5a779f170d18440d8ee}{\_value\_col\_predicates}};}
+\DoxyCodeLine{00245\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_delete_handler}{DeleteHandler}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a8d5a7457cd3272fc09cd9a1d0f8fd055}{\_delete\_handler}};}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5788a6f60b6f5b0a92d715586c0a192b}{\_aggregation}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ for\ agg\ query,\ we\ don't\ need\ to\ finalize\ when\ scan\ agg\ object\ data}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ad8836921936f746e4b994b80b207897c}{\_need\_agg\_finalize}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00250\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15}{ReaderType}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a5529491da89e0b6a41eff66f1026c36f}{\_reader\_type}}\ =\ \mbox{\hyperlink{namespacedoris_a678aadae72e7347a5756e370a2978a15ad8bc86f2e525e6cc87c499123000b1e5}{READER\_QUERY}};}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_af169cbdbb56996fde729045ccfbd17b7}{\_next\_delete\_flag}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a1ebaa0fec15523bad03d1e92b5a1bc9f}{\_filter\_delete}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00253\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ad441c645cf2448261db5817af73e968d}{\_sequence\_col\_idx}}\ =\ -\/1;}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a4de3372c89846d1dd26768e223f9c16b}{\_direct\_mode}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a9661a1aa5692f3631fa9fd741ce3f1cd}{\_key\_cids}};}
+\DoxyCodeLine{00257\ \ \ \ \ std::vector<uint32\_t>\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ac46c8c0f14a12cab1778aae221240463}{\_value\_cids}};}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_a06b84d8f115f05c5d05aaa332fb6cf83}{\_merged\_rows}}\ =\ 0;}
+\DoxyCodeLine{00260\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_olap_reader_statistics}{OlapReaderStatistics}}\ \mbox{\hyperlink{classdoris_1_1_tablet_reader_ace61f7e1149a7db1dc9e098c0c0a886d}{\_stats}};}
+\DoxyCodeLine{00261\ \};}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

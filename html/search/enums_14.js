@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vg_5fclientrequest_0',['Vg_ClientRequest',['../d6/d85/valgrind_8h.html#a5d7c55a8826dffa95ee2cd85333073f6',1,'valgrind.h']]]
+  ['urlpart_0',['UrlPart',['../d0/db9/classdoris_1_1_url_parser.html#a1b1058dd28ef566c3b0b47793ce673d1',1,'doris::UrlParser']]]
 ];

@@ -1,5 +1,5 @@
-\hypertarget{segment__iterator_8cpp}{}\doxysection{/\+Users/dabowang/be\+\_\+all/olap/rowset/segment\+\_\+v2/segment\+\_\+iterator.cpp 文件参考}
-\label{segment__iterator_8cpp}\index{/Users/dabowang/be\_all/olap/rowset/segment\_v2/segment\_iterator.cpp@{/Users/dabowang/be\_all/olap/rowset/segment\_v2/segment\_iterator.cpp}}
+\hypertarget{segment__iterator_8cpp}{}\doxysection{/\+Users/dabowang/doris/be/src/olap/rowset/segment\+\_\+v2/segment\+\_\+iterator.cpp 文件参考}
+\label{segment__iterator_8cpp}\index{/Users/dabowang/doris/be/src/olap/rowset/segment\_v2/segment\_iterator.cpp@{/Users/dabowang/doris/be/src/olap/rowset/segment\_v2/segment\_iterator.cpp}}
 {\ttfamily \#include \char`\"{}olap/rowset/segment\+\_\+v2/segment\+\_\+iterator.\+h\char`\"{}}\newline
 {\ttfamily \#include $<$memory$>$}\newline
 {\ttfamily \#include $<$set$>$}\newline
@@ -7,6 +7,7 @@
 {\ttfamily \#include \char`\"{}common/consts.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}common/status.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/column\+\_\+predicate.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}olap/like\+\_\+column\+\_\+predicate.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/olap\+\_\+common.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/rowset/segment\+\_\+v2/column\+\_\+reader.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/rowset/segment\+\_\+v2/segment.\+h\char`\"{}}\newline
@@ -14,9 +15,12 @@
 {\ttfamily \#include \char`\"{}util/doris\+\_\+metrics.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}util/key\+\_\+util.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}util/simd/bits.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}vec/columns/column.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}vec/columns/column\+\_\+const.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/data\+\_\+types/data\+\_\+type\+\_\+factory.\+hpp\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/data\+\_\+types/data\+\_\+type\+\_\+number.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/exprs/vliteral.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}vec/exprs/vslot\+\_\+ref.\+h\char`\"{}}\newline
 segment\+\_\+iterator.\+cpp 的引用(Include)关系图\+:
 \nopagebreak
 \begin{figure}[H]
@@ -39,3 +43,38 @@ namespace \mbox{\hyperlink{namespacedoris}{doris}}
 \begin{DoxyCompactList}\small\item\em Utilities for collecting timings. \end{DoxyCompactList}\item 
 namespace \mbox{\hyperlink{namespacedoris_1_1segment__v2}{doris\+::segment\+\_\+v2}}
 \end{DoxyCompactItemize}
+\doxysubsection*{宏定义}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{segment__iterator_8cpp_aee9676753408b52fdcf0779e73edf10a}{all\+\_\+predicates\+\_\+are\+\_\+range\+\_\+predicate}}(predicate\+\_\+set)
+\item 
+\#define \mbox{\hyperlink{segment__iterator_8cpp_a37870eec8a006554385e56d2d7aa9ec7}{all\+\_\+predicates\+\_\+are\+\_\+marked\+\_\+by\+\_\+runtime\+\_\+filter}}(predicate\+\_\+set)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{宏定义说明}
+\mbox{\Hypertarget{segment__iterator_8cpp_aee9676753408b52fdcf0779e73edf10a}\label{segment__iterator_8cpp_aee9676753408b52fdcf0779e73edf10a}} 
+\index{segment\_iterator.cpp@{segment\_iterator.cpp}!all\_predicates\_are\_range\_predicate@{all\_predicates\_are\_range\_predicate}}
+\index{all\_predicates\_are\_range\_predicate@{all\_predicates\_are\_range\_predicate}!segment\_iterator.cpp@{segment\_iterator.cpp}}
+\doxysubsubsection{\texorpdfstring{all\_predicates\_are\_range\_predicate}{all\_predicates\_are\_range\_predicate}}
+{\footnotesize\ttfamily \#define all\+\_\+predicates\+\_\+are\+\_\+range\+\_\+predicate(\begin{DoxyParamCaption}\item[{}]{predicate\+\_\+set }\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ std::all\_of(predicate\_set.begin(),\ predicate\_set.end(),\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keyword}{const}\ ColumnPredicate*\ p)\ \{\ return\ PredicateTypeTraits::is\_range(p-\/>type());\ \})}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{segment__iterator_8cpp_a37870eec8a006554385e56d2d7aa9ec7}\label{segment__iterator_8cpp_a37870eec8a006554385e56d2d7aa9ec7}} 
+\index{segment\_iterator.cpp@{segment\_iterator.cpp}!all\_predicates\_are\_marked\_by\_runtime\_filter@{all\_predicates\_are\_marked\_by\_runtime\_filter}}
+\index{all\_predicates\_are\_marked\_by\_runtime\_filter@{all\_predicates\_are\_marked\_by\_runtime\_filter}!segment\_iterator.cpp@{segment\_iterator.cpp}}
+\doxysubsubsection{\texorpdfstring{all\_predicates\_are\_marked\_by\_runtime\_filter}{all\_predicates\_are\_marked\_by\_runtime\_filter}}
+{\footnotesize\ttfamily \#define all\+\_\+predicates\+\_\+are\+\_\+marked\+\_\+by\+\_\+runtime\+\_\+filter(\begin{DoxyParamCaption}\item[{}]{predicate\+\_\+set }\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ std::all\_of(predicate\_set.begin(),\ predicate\_set.end(),\ [](\textcolor{keyword}{const}\ ColumnPredicate*\ p)\ \{\ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ return\ const\_cast<ColumnPredicate*>(p)-\/>predicate\_params()-\/>marked\_by\_runtime\_filter;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \})}
+
+\end{DoxyCode}

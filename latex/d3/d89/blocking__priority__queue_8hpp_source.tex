@@ -1,5 +1,5 @@
 \hypertarget{blocking__priority__queue_8hpp_source}{}\doxysection{blocking\+\_\+priority\+\_\+queue.\+hpp}
-\label{blocking__priority__queue_8hpp_source}\index{/Users/dabowang/be\_all/util/blocking\_priority\_queue.hpp@{/Users/dabowang/be\_all/util/blocking\_priority\_queue.hpp}}
+\label{blocking__priority__queue_8hpp_source}\index{/Users/dabowang/doris/be/src/util/blocking\_priority\_queue.hpp@{/Users/dabowang/doris/be/src/util/blocking\_priority\_queue.hpp}}
 \mbox{\hyperlink{blocking__priority__queue_8hpp}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -31,150 +31,183 @@
 \DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <queue>}}
 \DoxyCodeLine{00028\ }
 \DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{common_2config_8h}{common/config.h}}"{}}}
-\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stopwatch_8hpp}{util/stopwatch.hpp}}"{}}}
-\DoxyCodeLine{00031\ }
-\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
-\DoxyCodeLine{00033\ }
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Fixed\ capacity\ FIFO\ queue,\ where\ both\ blocking\_get\ and\ blocking\_put\ operations\ block}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ if\ the\ queue\ is\ empty\ or\ full,\ respectively.}}
-\DoxyCodeLine{00036\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
-\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue}{BlockingPriorityQueue}}\ \{}
-\DoxyCodeLine{00038\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a484d635028df26a327c6c1caf7fc52a5}{BlockingPriorityQueue}}(\textcolor{keywordtype}{size\_t}\ max\_elements)}
-\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}(false),}
-\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}}(max\_elements),}
-\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}(0),}
-\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}(0),}
-\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}(0)\ \{\}}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ Get\ an\ element\ from\ the\ queue,\ waiting\ indefinitely\ (or\ until\ timeout)\ for\ one\ to\ become\ available.}}
-\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ Returns\ false\ if\ we\ were\ shut\ down\ prior\ to\ getting\ the\ element,\ and\ there}}
-\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ are\ no\ more\ elements\ available.}}
-\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ timeout\_ms:\ 0\ means\ wait\ indefinitely}}
-\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a1b8287a0cd75ca01cf88e0887f9185a4}{blocking\_get}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ out,\ uint32\_t\ timeout\_ms\ =\ 0)\ \{}
-\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
-\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
-\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ wait\_successful\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (timeout\_ms\ >\ 0)\ \{}
-\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.wait\_for(unique\_lock,\ std::chrono::milliseconds(timeout\_ms),}
-\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty();\ \});}
-\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.wait(unique\_lock,\ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty();\ \});}
-\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
-\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (wait\_successful)\ \{}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ >\ config::priority\_queue\_remaining\_tasks\_increased\_frequency)\ \{}
-\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::priority\_queue<T>\ tmp\_queue;}
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ v\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
-\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++v;}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp\_queue.push(v);}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}},\ tmp\_queue);}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ =\ 0;}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *out\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
-\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.notify\_one();}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}});}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//time\ out}}
-\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}});}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00090\ \ \ \ \ \}}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_adb4e428383d78c8a79663a2d3cdd3871}{non\_blocking\_get}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ out)\ \{}
-\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00096\ }
-\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 定期提高队列中残留的任务优先级}}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 保证优先级较低的大查询不至于完全饿死}}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ >\ config::priority\_queue\_remaining\_tasks\_increased\_frequency)\ \{}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::priority\_queue<T>\ tmp\_queue;}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
-\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ v\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++v;}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp\_queue.push(v);}
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}},\ tmp\_queue);}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ =\ 0;}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ *out\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.notify\_one();}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00118\ }
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00120\ \ \ \ \ \}}
-\DoxyCodeLine{00121\ }
-\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ Puts\ an\ element\ into\ the\ queue,\ waiting\ indefinitely\ until\ there\ is\ space.}}
-\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ If\ the\ queue\ is\ shut\ down,\ returns\ false.}}
-\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c7ce249cc6bed50aca2d1d0d000bf38}{blocking\_put}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ val)\ \{}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.wait(unique\_lock,\ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.size()\ <\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}};\ \});}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
-\DoxyCodeLine{00130\ }
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}})\ \{}
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00134\ }
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.push(val);}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_one();}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00138\ \ \ \ \ \}}
-\DoxyCodeLine{00139\ }
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ Shut\ down\ the\ queue.\ Wakes\ up\ all\ threads\ waiting\ on\ blocking\_get\ or\ blocking\_put.}}
-\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a7861ee1569802186a619778efc85af13}{shutdown}}()\ \{}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_all();}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.notify\_all();}
-\DoxyCodeLine{00148\ \ \ \ \ \}}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5ae899c3f4c388530dbd0494fb0362b5}{get\_size}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.size();}
-\DoxyCodeLine{00153\ \ \ \ \ \}}
-\DoxyCodeLine{00154\ }
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ blocking\_get.}}
-\DoxyCodeLine{00156\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a38459a0cdd378aef319b111b681b9b37}{total\_get\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};\ \}}
-\DoxyCodeLine{00157\ }
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ blocking\_put.}}
-\DoxyCodeLine{00159\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a1962b8baabcf5eaff533ec4d9b64f23d}{total\_put\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};\ \}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{lock_8h}{util/lock.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{stopwatch_8hpp}{util/stopwatch.hpp}}"{}}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Fixed\ capacity\ FIFO\ queue,\ where\ both\ blocking\_get\ and\ blocking\_put\ operations\ block}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ if\ the\ queue\ is\ empty\ or\ full,\ respectively.}}
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue}{BlockingPriorityQueue}}\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a484d635028df26a327c6c1caf7fc52a5}{BlockingPriorityQueue}}(\textcolor{keywordtype}{size\_t}\ max\_elements)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}(false),}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}}(max\_elements),}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}(0),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}(0),}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}(0)\ \{\}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ Get\ an\ element\ from\ the\ queue,\ waiting\ indefinitely\ (or\ until\ timeout)\ for\ one\ to\ become\ available.}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ Returns\ false\ if\ we\ were\ shut\ down\ prior\ to\ getting\ the\ element,\ and\ there}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ are\ no\ more\ elements\ available.}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ timeout\_ms:\ 0\ means\ wait\ indefinitely}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a1b8287a0cd75ca01cf88e0887f9185a4}{blocking\_get}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ out,\ uint32\_t\ timeout\_ms\ =\ 0)\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ std::unique\_lock\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ wait\_successful\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#if\ !defined(USE\_BTHREAD\_SCANNER)}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (timeout\_ms\ >\ 0)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.wait\_for(unique\_lock,\ std::chrono::milliseconds(timeout\_ms),}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty();\ \});}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.wait(unique\_lock,\ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty();\ \});}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (timeout\_ms\ >\ 0)\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty()))\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.wait\_for(unique\_lock,\ timeout\_ms\ *\ 1000)\ !=\ 0)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ timeout}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty();}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty()))\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.wait(unique\_lock);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_successful\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (wait\_successful)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ >\ config::priority\_queue\_remaining\_tasks\_increased\_frequency)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::priority\_queue<T>\ tmp\_queue;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ v\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++v;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp\_queue.push(v);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}},\ tmp\_queue);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ =\ 0;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *out\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acf4b29cc71a9f7d2d12b7d0a965dc5be}{\_put\_cv}}.notify\_one();}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}});}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//time\ out}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ assert(!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}});}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_adb4e428383d78c8a79663a2d3cdd3871}{non\_blocking\_get}}(\mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ out)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ std::unique\_lock\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 定期提高队列中残留的任务优先级}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 保证优先级较低的大查询不至于完全饿死}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ >\ config::priority\_queue\_remaining\_tasks\_increased\_frequency)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::priority\_queue<T>\ tmp\_queue;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.empty())\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\ v\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++v;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp\_queue.push(v);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gscoped__ptr_8h_a2710f11baa9974a50d0bf6adbfe0cb2f}{swap}}(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}},\ tmp\_queue);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}}\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ *out\ =\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.top();}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.pop();}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acf4b29cc71a9f7d2d12b7d0a965dc5be}{\_put\_cv}}.notify\_one();}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Puts\ an\ element\ into\ the\ queue,\ waiting\ indefinitely\ until\ there\ is\ space.}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ If\ the\ queue\ is\ shut\ down,\ returns\ false.}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c7ce249cc6bed50aca2d1d0d000bf38}{blocking\_put}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ val)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ std::unique\_lock\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.size()\ <\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}}))\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acf4b29cc71a9f7d2d12b7d0a965dc5be}{\_put\_cv}}.wait(unique\_lock);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}})\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.push(val);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.notify\_one();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00159\ \ \ \ \ \}}
 \DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}};}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}};}
-\DoxyCodeLine{00164\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}};\ \textcolor{comment}{//\ 'get'\ callers\ wait\ on\ this}}
-\DoxyCodeLine{00165\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}};\ \textcolor{comment}{//\ 'put'\ callers\ wait\ on\ this}}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ \_lock\ guards\ access\ to\ \_queue,\ total\_get\_wait\_time,\ and\ total\_put\_wait\_time}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
-\DoxyCodeLine{00168\ \ \ \ \ std::priority\_queue<T>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}};}
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
-\DoxyCodeLine{00170\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};}
-\DoxyCodeLine{00171\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};}
-\DoxyCodeLine{00172\ \};}
-\DoxyCodeLine{00173\ }
-\DoxyCodeLine{00174\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ Return\ false\ if\ queue\ full\ or\ has\ been\ shutdown.}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aafbd2772b118f34b0a6848251f5ffd6f}{try\_put}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ val)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.size()\ <\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}}\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}})\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.push(val);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ unique\_lock.unlock();}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.notify\_one();}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ Shut\ down\ the\ queue.\ Wakes\ up\ all\ threads\ waiting\ on\ blocking\_get\ or\ blocking\_put.}}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a7861ee1569802186a619778efc85af13}{shutdown}}()\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard\ l(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}}.notify\_all();}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acf4b29cc71a9f7d2d12b7d0a965dc5be}{\_put\_cv}}.notify\_all();}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5ae899c3f4c388530dbd0494fb0362b5}{get\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ std::lock\_guard\ l(\mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}});}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}}.size();}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ blocking\_get.}}
+\DoxyCodeLine{00189\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a38459a0cdd378aef319b111b681b9b37}{total\_get\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ blocking\_put.}}
+\DoxyCodeLine{00192\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a1962b8baabcf5eaff533ec4d9b64f23d}{total\_put\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};\ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}};}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ca945f91544bd4d8e853947db2a50e9}{\_max\_element}};}
+\DoxyCodeLine{00197\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab21d2d81d5c3bd3333c6ccf0eafdac8d}{doris::ConditionVariable}}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a5c36a2edafcc7970335137ac4153f731}{\_get\_cv}};\ \textcolor{comment}{//\ 'get'\ callers\ wait\ on\ this}}
+\DoxyCodeLine{00198\ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab21d2d81d5c3bd3333c6ccf0eafdac8d}{doris::ConditionVariable}}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_acf4b29cc71a9f7d2d12b7d0a965dc5be}{\_put\_cv}};\ \textcolor{comment}{//\ 'put'\ callers\ wait\ on\ this}}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ \_lock\ guards\ access\ to\ \_queue,\ total\_get\_wait\_time,\ and\ total\_put\_wait\_time}}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{namespacedoris_acded863dbfdd730829d4188d67eefcf0}{doris::Mutex}}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aa1aa21da41f373e6be8c75030a48c0a6}{\_lock}};}
+\DoxyCodeLine{00201\ \ \ \ \ std::priority\_queue<T>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a9ac3f0e54cef888593b7705dcf2fe41d}{\_queue}};}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_aaab6d874b53ef7eb4eecf18eea20b6c2}{\_upgrade\_counter}};}
+\DoxyCodeLine{00203\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};}
+\DoxyCodeLine{00204\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_priority_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};}
+\DoxyCodeLine{00205\ \};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

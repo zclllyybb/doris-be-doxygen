@@ -1,5 +1,5 @@
 \hypertarget{query__fragments__ctx_8h_source}{}\doxysection{query\+\_\+fragments\+\_\+ctx.\+h}
-\label{query__fragments__ctx_8h_source}\index{/Users/dabowang/be\_all/runtime/query\_fragments\_ctx.h@{/Users/dabowang/be\_all/runtime/query\_fragments\_ctx.h}}
+\label{query__fragments__ctx_8h_source}\index{/Users/dabowang/doris/be/src/runtime/query\_fragments\_ctx.h@{/Users/dabowang/doris/be/src/runtime/query\_fragments\_ctx.h}}
 \mbox{\hyperlink{query__fragments__ctx_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -33,138 +33,154 @@
 \DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exec__env_8h}{runtime/exec\_env.h}}"{}}}
 \DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__tracker__limiter_8h}{runtime/memory/mem\_tracker\_limiter.h}}"{}}}
 \DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime__predicate_8h}{runtime/runtime\_predicate.h}}"{}}}
-\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pretty__printer_8h}{util/pretty\_printer.h}}"{}}}
-\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{threadpool_8h}{util/threadpool.h}}"{}}}
-\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{scanner__scheduler_8h}{vec/exec/scan/scanner\_scheduler.h}}"{}}}
-\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{shared__hash__table__controller_8h}{vec/runtime/shared\_hash\_table\_controller.h}}"{}}}
-\DoxyCodeLine{00036\ }
-\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{task__group_8h}{task\_group/task\_group.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pretty__printer_8h}{util/pretty\_printer.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{threadpool_8h}{util/threadpool.h}}"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{scanner__scheduler_8h}{vec/exec/scan/scanner\_scheduler.h}}"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{shared__hash__table__controller_8h}{vec/runtime/shared\_hash\_table\_controller.h}}"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{shared__scanner__controller_8h}{vec/runtime/shared\_scanner\_controller.h}}"{}}}
 \DoxyCodeLine{00038\ }
-\DoxyCodeLine{00039\ \textcolor{comment}{//\ Save\ the\ common\ components\ of\ fragments\ in\ a\ query.}}
-\DoxyCodeLine{00040\ \textcolor{comment}{//\ Some\ components\ like\ DescriptorTbl\ may\ be\ very\ large}}
-\DoxyCodeLine{00041\ \textcolor{comment}{//\ that\ will\ slow\ down\ each\ execution\ of\ fragments\ when\ DeSer\ them\ every\ time.}}
-\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }DescriptorTbl;}
-\DoxyCodeLine{00043\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx}{QueryFragmentsCtx}}\ \{}
-\DoxyCodeLine{00044\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_adf644c434c00960309d5132d2d5b8fc4}{QueryFragmentsCtx}}(\textcolor{keywordtype}{int}\ total\_fragment\_num,\ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ exec\_env)}
-\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}}(total\_fragment\_num),\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}}(-\/1),\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}}(exec\_env)\ \{}
-\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab580ab65335acf9c3c2788b25a8754a7}{\_start\_time}}\ =\ \mbox{\hyperlink{classdoris_1_1_date_time_value_a6406d88a2706d878ddcb5920556873a8}{DateTimeValue::local\_time}}();}
-\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_shared_hash_table_controller}{vectorized::SharedHashTableController}}());}
-\DoxyCodeLine{00049\ \ \ \ \ \}}
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a340eaebb71476039d002b60a83e8fbdf}{\string~QueryFragmentsCtx}}()\ \{}
-\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ query\ mem\ tracker\ consumption\ is\ equal\ to\ 0,\ it\ means\ that\ after\ QueryFragmentsCtx\ is\ created,}}
-\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ it\ is\ found\ that\ query\ already\ exists\ in\ \_fragments\_ctx\_map,\ and\ query\ mem\ tracker\ is\ not\ used.}}
-\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ query\ mem\ tracker\ consumption\ is\ not\ equal\ to\ 0\ after\ use,\ because\ there\ is\ memory\ consumed}}
-\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ on\ query\ mem\ tracker,\ released\ on\ other\ trackers.}}
-\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>consumption()\ !=\ 0)\ \{}
-\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(INFO)\ <<\ fmt::format(}
-\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Deregister\ query/load\ memory\ tracker,\ queryId=\{\},\ Limit=\{\},\ CurrUsed=\{\},\ "{}}}
-\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}PeakUsed=\{\}"{}},}
-\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab0606cb3935fd04241aef36f19b050fa}{print\_id}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_aa9b125370a0be04c3c4b8022fff163a9}{query\_id}}),\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>limit()),}
-\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>consumption()),}
-\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>peak\_consumption()));}
-\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00064\ \ \ \ \ \}}
-\DoxyCodeLine{00065\ }
-\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ Notice.\ For\ load\ fragments,\ the\ fragment\_num\ sent\ by\ FE\ has\ a\ small\ probability\ of\ 0.}}
-\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ this\ may\ be\ a\ bug,\ bug\ <=\ 1\ in\ theory\ it\ shouldn't\ cause\ any\ problems\ at\ this\ stage.}}
-\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af80aadca0481a07cc7437a8004110d98}{countdown}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}}.fetch\_sub(1)\ <=\ 1;\ \}}
-\DoxyCodeLine{00069\ }
-\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_afd446d0fe3ec176b2d59286af1652a32}{is\_timeout}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_date_time_value}{DateTimeValue}}\&\ now)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}}\ <=\ 0)\ \{}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (now.\mbox{\hyperlink{classdoris_1_1_date_time_value_a66201b22a0c507c92514035011cd6dde}{second\_diff}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab580ab65335acf9c3c2788b25a8754a7}{\_start\_time}})\ >\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}})\ \{}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00078\ \ \ \ \ \}}
-\DoxyCodeLine{00079\ }
-\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3bc90a9d6d5b90a9512791be56067eca}{set\_thread\_token}}(\textcolor{keywordtype}{int}\ concurrency,\ \textcolor{keywordtype}{bool}\ is\_serial)\ \{}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}}\ =\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}}-\/>\mbox{\hyperlink{classdoris_1_1_exec_env_a25489449eb2418925d943d0343aed275}{scanner\_scheduler}}()-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_scanner_scheduler_a3bb4a662baef9448aabdac506a0e1554}{new\_limited\_scan\_pool\_token}}(}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\_serial\ ?\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda7b804a28d6154ab8007287532037f1d0}{ThreadPool::ExecutionMode::SERIAL}}}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda4e986bdbe67d653acb5f1d864f32ce21}{ThreadPool::ExecutionMode::CONCURRENT}},}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ concurrency);}
-\DoxyCodeLine{00085\ \ \ \ \ \}}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a53a753c92e3b298f07c0f380087c1f90}{get\_token}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}}.get();\ \}}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af281d2e6c24e4cfaa8c8b3e57f38061b}{set\_ready\_to\_execute}}(\textcolor{keywordtype}{bool}\ is\_cancelled)\ \{}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
-\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}\ =\ is\_cancelled;}
-\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.notify\_all();}
-\DoxyCodeLine{00096\ \ \ \ \ \}}
-\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ade51f23a8b4fc25ad3a768c103d39bb4}{set\_ready\_to\_execute\_only}}()\ \{}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.notify\_all();}
-\DoxyCodeLine{00103\ \ \ \ \ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab7395a463ea9fad5ec71e16ba454d487}{is\_ready\_to\_execute}}()\ \{}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}};}
+\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Save\ the\ common\ components\ of\ fragments\ in\ a\ query.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ Some\ components\ like\ DescriptorTbl\ may\ be\ very\ large}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ that\ will\ slow\ down\ each\ execution\ of\ fragments\ when\ DeSer\ them\ every\ time.}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }DescriptorTbl;}
+\DoxyCodeLine{00045\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx}{QueryFragmentsCtx}}\ \{}
+\DoxyCodeLine{00046\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_adf644c434c00960309d5132d2d5b8fc4}{QueryFragmentsCtx}}(\textcolor{keywordtype}{int}\ total\_fragment\_num,\ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a7e0d0163a03ace13113f67bc696d5194}{exec\_env}})}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}}(total\_fragment\_num),\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}}(-\/1),\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a7e0d0163a03ace13113f67bc696d5194}{exec\_env}})\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af71ffd6cf48c60f43c051e79bc87740f}{\_start\_time}}\ =\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_vec_date_time_value_a1555a154239933ffe06cdf52356491e8}{vectorized::VecDateTimeValue::local\_time}}();}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_shared_hash_table_controller}{vectorized::SharedHashTableController}}());}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a5ffcc83acf93a883103ec186b42bff14}{\_shared\_scanner\_controller}}.reset(\textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_shared_scanner_controller}{vectorized::SharedScannerController}}());}
+\DoxyCodeLine{00052\ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a340eaebb71476039d002b60a83e8fbdf}{\string~QueryFragmentsCtx}}()\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ query\ mem\ tracker\ consumption\ is\ equal\ to\ 0,\ it\ means\ that\ after\ QueryFragmentsCtx\ is\ created,}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ it\ is\ found\ that\ query\ already\ exists\ in\ \_fragments\_ctx\_map,\ and\ query\ mem\ tracker\ is\ not\ used.}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ query\ mem\ tracker\ consumption\ is\ not\ equal\ to\ 0\ after\ use,\ because\ there\ is\ memory\ consumed}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ on\ query\ mem\ tracker,\ released\ on\ other\ trackers.}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>consumption()\ !=\ 0)\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(INFO)\ <<\ fmt::format(}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Deregister\ query/load\ memory\ tracker,\ queryId=\{\},\ Limit=\{\},\ CurrUsed=\{\},\ "{}}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}PeakUsed=\{\}"{}},}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_ab0606cb3935fd04241aef36f19b050fa}{print\_id}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_aa9b125370a0be04c3c4b8022fff163a9}{query\_id}}),\ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>limit()),}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>consumption()),}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_afddbd1c6484c2068e82258ab23478339}{MemTracker::print\_bytes}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}}-\/>peak\_consumption()));}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ Notice.\ For\ load\ fragments,\ the\ fragment\_num\ sent\ by\ FE\ has\ a\ small\ probability\ of\ 0.}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ this\ may\ be\ a\ bug,\ bug\ <=\ 1\ in\ theory\ it\ shouldn't\ cause\ any\ problems\ at\ this\ stage.}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af80aadca0481a07cc7437a8004110d98}{countdown}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}}.fetch\_sub(1)\ <=\ 1;\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a7e0d0163a03ace13113f67bc696d5194}{exec\_env}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}};\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a0642ba9f7d564f1f4aa5ab88ee5dc0ad}{is\_timeout}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_vec_date_time_value}{vectorized::VecDateTimeValue}}\&\ now)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}}\ <=\ 0)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (now.\mbox{\hyperlink{classdoris_1_1vectorized_1_1_vec_date_time_value_aba249f33c93d836b1ab45ae1b3fdd184}{second\_diff}}(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af71ffd6cf48c60f43c051e79bc87740f}{\_start\_time}})\ >\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}})\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00083\ \ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3bc90a9d6d5b90a9512791be56067eca}{set\_thread\_token}}(\textcolor{keywordtype}{int}\ concurrency,\ \textcolor{keywordtype}{bool}\ is\_serial)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}}\ =\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}}-\/>\mbox{\hyperlink{classdoris_1_1_exec_env_a25489449eb2418925d943d0343aed275}{scanner\_scheduler}}()-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_scanner_scheduler_a3bb4a662baef9448aabdac506a0e1554}{new\_limited\_scan\_pool\_token}}(}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\_serial\ ?\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda7b804a28d6154ab8007287532037f1d0}{ThreadPool::ExecutionMode::SERIAL}}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classdoris_1_1_thread_pool_ad14b0c6d4ed8fcadff6dcf39c5cf17fda4e986bdbe67d653acb5f1d864f32ce21}{ThreadPool::ExecutionMode::CONCURRENT}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ concurrency);}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_thread_pool_token}{ThreadPoolToken}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a53a753c92e3b298f07c0f380087c1f90}{get\_token}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}}.get();\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af281d2e6c24e4cfaa8c8b3e57f38061b}{set\_ready\_to\_execute}}(\textcolor{keywordtype}{bool}\ is\_cancelled)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}\ =\ is\_cancelled;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.notify\_all();}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ade51f23a8b4fc25ad3a768c103d39bb4}{set\_ready\_to\_execute\_only}}()\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.notify\_all();}
 \DoxyCodeLine{00108\ \ \ \ \ \}}
 \DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3d830e073891f04159daa8031ac00d10}{wait\_for\_start}}()\ \{}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ wait\_time\ =\ config::max\_fragment\_start\_wait\_time\_seconds;}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}.load()\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}.load()\ \&\&\ -\/-\/wait\_time\ >\ 0)\ \{}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.wait\_for(l,\ std::chrono::seconds(1));}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}.load()\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}.load();}
-\DoxyCodeLine{00117\ \ \ \ \ \}}
-\DoxyCodeLine{00118\ }
-\DoxyCodeLine{00119\ \ \ \ \ std::shared\_ptr<vectorized::SharedHashTableController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab300a2faef2f8e89436c4e809b68f1ab}{get\_shared\_hash\_table\_controller}}()\ \{}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}};}
-\DoxyCodeLine{00121\ \ \ \ \ \}}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_runtime_predicate}{vectorized::RuntimePredicate}}\&\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a8054689bc717e1399397e4563ebd322e}{get\_runtime\_predicate}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a588110fd4855c1cafe1c23d27da0fedf}{\_runtime\_predicate}};\ \}}
-\DoxyCodeLine{00124\ }
-\DoxyCodeLine{00125\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00126\ \ \ \ \ TUniqueId\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_aa9b125370a0be04c3c4b8022fff163a9}{query\_id}};}
-\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a04df63d24aa09eed9d11065c314630d9}{desc\_tbl}};}
-\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab73e431cf55a839719c0e73fefe67654}{set\_rsc\_info}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00129\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a6dfa0071362986f2680867cd51fa2ea8}{user}};}
-\DoxyCodeLine{00130\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a5ee53031ad7d76a5fa778ed3f3905e6b}{group}};}
-\DoxyCodeLine{00131\ \ \ \ \ TNetworkAddress\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a74ae2bbdcc89cc3ab619bbb014be05a4}{coord\_addr}};}
-\DoxyCodeLine{00132\ \ \ \ \ TQueryGlobals\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a86d246bdfa631c600798bcea01a79636}{query\_globals}};}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab7395a463ea9fad5ec71e16ba454d487}{is\_ready\_to\_execute}}()\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}};}
+\DoxyCodeLine{00113\ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3d830e073891f04159daa8031ac00d10}{wait\_for\_start}}()\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ wait\_time\ =\ config::max\_fragment\_start\_wait\_time\_seconds;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}});}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}.load()\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}.load()\ \&\&\ -\/-\/wait\_time\ >\ 0)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}}.wait\_for(l,\ std::chrono::seconds(1));}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}.load()\ \&\&\ !\mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}.load();}
+\DoxyCodeLine{00122\ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ std::shared\_ptr<vectorized::SharedHashTableController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab300a2faef2f8e89436c4e809b68f1ab}{get\_shared\_hash\_table\_controller}}()\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}};}
+\DoxyCodeLine{00126\ \ \ \ \ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ std::shared\_ptr<vectorized::SharedScannerController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af52d6964221958fcd417c8bf1cccd2c4}{get\_shared\_scanner\_controller}}()\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a5ffcc83acf93a883103ec186b42bff14}{\_shared\_scanner\_controller}};}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_runtime_predicate}{vectorized::RuntimePredicate}}\&\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a8054689bc717e1399397e4563ebd322e}{get\_runtime\_predicate}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a588110fd4855c1cafe1c23d27da0fedf}{\_runtime\_predicate}};\ \}}
 \DoxyCodeLine{00133\ }
-\DoxyCodeLine{00141\ \ \ \ \ std::atomic<int>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}};}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}};}
-\DoxyCodeLine{00143\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_adde3edac85e46e3665f384459ed7564a}{obj\_pool}};}
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ MemTracker\ that\ is\ shared\ by\ all\ fragment\ instances\ running\ on\ this\ host.}}
-\DoxyCodeLine{00145\ \ \ \ \ std::shared\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}};}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1534f3255988b62bd0b9f43b985ec6ed}{set\_task\_group}}(\mbox{\hyperlink{namespacedoris_1_1taskgroup_a1b5a6edc9b0f51b6bf2ca5586d961328}{taskgroup::TaskGroupPtr}}\&\ tg)\ \{\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a415a347882f71829c195c13356cf3c63}{\_task\_group}}\ =\ tg;\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1taskgroup_1_1_task_group}{taskgroup::TaskGroup}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a7d553479e8ea00e28f5d33a1f254d622}{get\_task\_group}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a415a347882f71829c195c13356cf3c63}{\_task\_group}}.get();\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00139\ \ \ \ \ TUniqueId\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_aa9b125370a0be04c3c4b8022fff163a9}{query\_id}};}
+\DoxyCodeLine{00140\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_descriptor_tbl}{DescriptorTbl}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a04df63d24aa09eed9d11065c314630d9}{desc\_tbl}};}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab73e431cf55a839719c0e73fefe67654}{set\_rsc\_info}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00142\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a6dfa0071362986f2680867cd51fa2ea8}{user}};}
+\DoxyCodeLine{00143\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a5ee53031ad7d76a5fa778ed3f3905e6b}{group}};}
+\DoxyCodeLine{00144\ \ \ \ \ TNetworkAddress\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a74ae2bbdcc89cc3ab619bbb014be05a4}{coord\_addr}};}
+\DoxyCodeLine{00145\ \ \ \ \ TQueryGlobals\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a86d246bdfa631c600798bcea01a79636}{query\_globals}};}
 \DoxyCodeLine{00146\ }
-\DoxyCodeLine{00147\ \ \ \ \ std::vector<TUniqueId>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a86774bde2c5160564c78d5ced10ebc03}{fragment\_ids}};}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00150\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}};}
-\DoxyCodeLine{00151\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_date_time_value}{DateTimeValue}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab580ab65335acf9c3c2788b25a8754a7}{\_start\_time}};}
-\DoxyCodeLine{00152\ }
-\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ A\ token\ used\ to\ submit\ olap\ scanner\ to\ the\ "{}\_limited\_scan\_thread\_pool"{},}}
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ This\ thread\ pool\ token\ is\ created\ from\ "{}\_limited\_scan\_thread\_pool"{}\ from\ exec\ env.}}
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ And\ will\ be\ shared\ by\ all\ instances\ of\ this\ query.}}
-\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ So\ that\ we\ can\ control\ the\ max\ thread\ that\ a\ query\ can\ be\ used\ to\ execute.}}
-\DoxyCodeLine{00157\ \ \ \ \ \textcolor{comment}{//\ If\ this\ token\ is\ not\ set,\ the\ scanner\ will\ be\ executed\ in\ "{}\_scan\_thread\_pool"{}\ in\ exec\ env.}}
-\DoxyCodeLine{00158\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}};}
+\DoxyCodeLine{00154\ \ \ \ \ std::atomic<int>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a01dbedbd2bb84bd5d7bfce1d33fbd0ad}{fragment\_num}};}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ac08aaff4e782973960d957ab04550312}{timeout\_second}};}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_object_pool}{ObjectPool}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_adde3edac85e46e3665f384459ed7564a}{obj\_pool}};}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{comment}{//\ MemTracker\ that\ is\ shared\ by\ all\ fragment\ instances\ running\ on\ this\ host.}}
+\DoxyCodeLine{00158\ \ \ \ \ std::shared\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3dd17fe9a62cf30d6c9a5b6c9b23e420}{query\_mem\_tracker}};}
 \DoxyCodeLine{00159\ }
-\DoxyCodeLine{00160\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}};}
-\DoxyCodeLine{00161\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}};}
-\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ Only\ valid\ when\ \_need\_wait\_execution\_trigger\ is\ set\ to\ true\ in\ FragmentExecState.}}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ And\ all\ fragments\ of\ this\ query\ will\ start\ execution\ when\ this\ is\ set\ to\ true.}}
-\DoxyCodeLine{00164\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ \{\textcolor{keyword}{false}\};}
-\DoxyCodeLine{00165\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}\ \{\textcolor{keyword}{false}\};}
-\DoxyCodeLine{00166\ }
-\DoxyCodeLine{00167\ \ \ \ \ std::shared\_ptr<vectorized::SharedHashTableController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}};}
-\DoxyCodeLine{00168\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_runtime_predicate}{vectorized::RuntimePredicate}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a588110fd4855c1cafe1c23d27da0fedf}{\_runtime\_predicate}};}
-\DoxyCodeLine{00169\ \};}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00160\ \ \ \ \ std::vector<TUniqueId>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a86774bde2c5160564c78d5ced10ebc03}{fragment\_ids}};}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00163\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_exec_env}{ExecEnv}}*\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a1597f639b99219fa0b93e8ca8c9e5f3a}{\_exec\_env}};}
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_vec_date_time_value}{vectorized::VecDateTimeValue}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_af71ffd6cf48c60f43c051e79bc87740f}{\_start\_time}};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ A\ token\ used\ to\ submit\ olap\ scanner\ to\ the\ "{}\_limited\_scan\_thread\_pool"{},}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ This\ thread\ pool\ token\ is\ created\ from\ "{}\_limited\_scan\_thread\_pool"{}\ from\ exec\ env.}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ And\ will\ be\ shared\ by\ all\ instances\ of\ this\ query.}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ So\ that\ we\ can\ control\ the\ max\ thread\ that\ a\ query\ can\ be\ used\ to\ execute.}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ If\ this\ token\ is\ not\ set,\ the\ scanner\ will\ be\ executed\ in\ "{}\_scan\_thread\_pool"{}\ in\ exec\ env.}}
+\DoxyCodeLine{00171\ \ \ \ \ std::unique\_ptr<ThreadPoolToken>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a3310380c56850cbee4ff3bfa54982d7a}{\_thread\_token}};}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a490232a0cf2bdf8439c6848a08b77dfa}{\_start\_lock}};}
+\DoxyCodeLine{00174\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a28a39bb9b5c66cb1513cee88d3d6ebbe}{\_start\_cond}};}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ Only\ valid\ when\ \_need\_wait\_execution\_trigger\ is\ set\ to\ true\ in\ FragmentExecState.}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ And\ all\ fragments\ of\ this\ query\ will\ start\ execution\ when\ this\ is\ set\ to\ true.}}
+\DoxyCodeLine{00177\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a57cf9d35c80883c572eeabfff76af651}{\_ready\_to\_execute}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00178\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a9e4311a334293619a8a67f7c90f8c589}{\_is\_cancelled}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ std::shared\_ptr<vectorized::SharedHashTableController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_ab12c2cdce8690e6db1f07656f08f8cd4}{\_shared\_hash\_table\_controller}};}
+\DoxyCodeLine{00181\ \ \ \ \ std::shared\_ptr<vectorized::SharedScannerController>\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a5ffcc83acf93a883103ec186b42bff14}{\_shared\_scanner\_controller}};}
+\DoxyCodeLine{00182\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_runtime_predicate}{vectorized::RuntimePredicate}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a588110fd4855c1cafe1c23d27da0fedf}{\_runtime\_predicate}};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1taskgroup_a1b5a6edc9b0f51b6bf2ca5586d961328}{taskgroup::TaskGroupPtr}}\ \mbox{\hyperlink{classdoris_1_1_query_fragments_ctx_a415a347882f71829c195c13356cf3c63}{\_task\_group}};}
+\DoxyCodeLine{00185\ \};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['kafkaconsumerpipe_0',['KafkaConsumerPipe',['../d1/daf/classdoris_1_1io_1_1_kafka_consumer_pipe.html',1,'KafkaConsumerPipe'],['../db/da7/classdoris_1_1_kafka_consumer_pipe.html',1,'KafkaConsumerPipe']]],
+  ['kafkaconsumerpipe_0',['KafkaConsumerPipe',['../d1/daf/classdoris_1_1io_1_1_kafka_consumer_pipe.html',1,'doris::io']]],
   ['kafkadataconsumer_1',['KafkaDataConsumer',['../d2/db4/classdoris_1_1_kafka_data_consumer.html',1,'doris']]],
   ['kafkadataconsumergroup_2',['KafkaDataConsumerGroup',['../d5/d76/classdoris_1_1_kafka_data_consumer_group.html',1,'doris']]],
   ['kafkaeventcb_3',['KafkaEventCb',['../d4/dcd/classdoris_1_1_kafka_event_cb.html',1,'doris']]],

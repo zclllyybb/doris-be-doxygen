@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['reader_0',['Reader',['../da/dae/class_hash_table.html#a35cb182752752c74a30050705acc3c06',1,'HashTable::Reader()'],['../df/dc5/class_join_hash_table.html#a35cb182752752c74a30050705acc3c06',1,'JoinHashTable::Reader()']]],
+  ['reader_0',['Reader',['../da/dae/class_hash_table.html#a35cb182752752c74a30050705acc3c06',1,'HashTable']]],
   ['refcounted_3c_20easyjsonallocator_20_3e_1',['RefCounted&lt; EasyJsonAllocator &gt;',['../d4/d11/classdoris_1_1_easy_json_1_1_easy_json_allocator.html#a16fd4b13478ede8d1d313638e54736a3',1,'doris::EasyJson::EasyJsonAllocator']]],
   ['refcountedthreadsafe_3c_20trace_20_3e_2',['RefCountedThreadSafe&lt; Trace &gt;',['../d2/dbd/classdoris_1_1_trace.html#a4528b36ec753d647202ffa68727f26f1',1,'doris::Trace']]],
   ['roaring64mapsetbitbidirectionaliterator_3',['Roaring64MapSetBitBiDirectionalIterator',['../d7/d45/classdoris_1_1detail_1_1_roaring64_map.html#a057e121febcb1bc8abce8e221f994f72',1,'doris::detail::Roaring64Map']]],

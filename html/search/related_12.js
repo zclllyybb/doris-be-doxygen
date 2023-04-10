@@ -9,8 +9,6 @@ var searchData=
   ['threadpooltoken_6',['ThreadPoolToken',['../df/db5/classdoris_1_1_thread_pool.html#ad25b2414cb13aa5f7b8caa439bfbb9a1',1,'doris::ThreadPool']]],
   ['thriftservereventprocessor_7',['ThriftServerEventProcessor',['../d4/d98/classdoris_1_1_thrift_server.html#a63417733ec163dd3e74fba6108fe3b59',1,'doris::ThriftServer']]],
   ['timelut_8',['TimeLUT',['../dd/d60/classdoris_1_1_time_l_u_t_impl.html#a89fc544effb1495e34731967f35e4fe9',1,'doris::TimeLUTImpl']]],
-  ['tmpfilemgr_9',['TmpFileMgr',['../d3/d34/classdoris_1_1_tmp_file_mgr_1_1_file.html#add4b305ac76fae112c5f1fe9bcb36e1e',1,'doris::TmpFileMgr::File::TmpFileMgr()'],['../dc/dc3/classdoris_1_1_tmp_file_mgr_1_1_dir.html#add4b305ac76fae112c5f1fe9bcb36e1e',1,'doris::TmpFileMgr::Dir::TmpFileMgr()']]],
-  ['tupledescriptor_10',['TupleDescriptor',['../da/da1/classdoris_1_1_slot_descriptor.html#a3b3fb7bea565366eefa341944977ab13',1,'doris::SlotDescriptor']]],
-  ['twolevelhashtable_11',['TwoLevelHashTable',['../df/dc5/class_join_hash_table.html#a7eac2357ee69a39e0848022bf6c43f0e',1,'JoinHashTable']]],
-  ['twolevelstringhashtable_12',['TwoLevelStringHashTable',['../dc/d5e/class_string_hash_table.html#a21c4457fa4e736f94018080bcd302e78',1,'StringHashTable']]]
+  ['tupledescriptor_9',['TupleDescriptor',['../da/da1/classdoris_1_1_slot_descriptor.html#a3b3fb7bea565366eefa341944977ab13',1,'doris::SlotDescriptor']]],
+  ['twolevelstringhashtable_10',['TwoLevelStringHashTable',['../dc/d5e/class_string_hash_table.html#a21c4457fa4e736f94018080bcd302e78',1,'StringHashTable']]]
 ];

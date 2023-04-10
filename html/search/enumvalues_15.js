@@ -9,7 +9,7 @@ var searchData=
   ['unauthorized_6',['UNAUTHORIZED',['../d6/d94/namespacedoris.html#a70d2d802a61ea92a685c471e0ccc63daaca808e0004f9d8808506cf69bd4a224c',1,'doris']]],
   ['uncompressed_7',['UNCOMPRESSED',['../d6/d94/namespacedoris.html#a7beee662f7aa2feef6f37f7686e0105da268875f90c27aa5b5b3b0b89798f35e8',1,'doris']]],
   ['union_8',['UNION',['../d3/d1e/namespacedoris_1_1vectorized.html#a29d933d0f4ff963ca56745a8da93526baea931da33de8ba05c3635a51c2b25d75',1,'doris::vectorized']]],
-  ['unknown_9',['UNKNOWN',['../d6/d94/namespacedoris.html#a4353a75834bb35c4acd80b51434eef59a6ce26a62afab55d7606ad4e92428b30c',1,'doris::UNKNOWN()'],['../d6/d94/namespacedoris.html#a747637046be33d7273262104aad8069da696b031073e74bf2cb98e5ef201d4aa3',1,'doris::UNKNOWN()'],['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667a696b031073e74bf2cb98e5ef201d4aa3',1,'doris::UNKNOWN()'],['../d3/d11/namespacedoris_1_1segment__v2.html#a4120719a7032e7dea5404c57b6d45b3fa696b031073e74bf2cb98e5ef201d4aa3',1,'doris::segment_v2::UNKNOWN()']]],
+  ['unknown_9',['UNKNOWN',['../df/dcd/classdoris_1_1vectorized_1_1_function_array_apply.html#ae2a8204babdb89ce4d029e000228f123a696b031073e74bf2cb98e5ef201d4aa3',1,'doris::vectorized::FunctionArrayApply::UNKNOWN()'],['../d6/d94/namespacedoris.html#a4353a75834bb35c4acd80b51434eef59a6ce26a62afab55d7606ad4e92428b30c',1,'doris::UNKNOWN()'],['../d6/d94/namespacedoris.html#a747637046be33d7273262104aad8069da696b031073e74bf2cb98e5ef201d4aa3',1,'doris::UNKNOWN()'],['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667a696b031073e74bf2cb98e5ef201d4aa3',1,'doris::UNKNOWN()'],['../d3/d11/namespacedoris_1_1segment__v2.html#a4120719a7032e7dea5404c57b6d45b3fa696b031073e74bf2cb98e5ef201d4aa3',1,'doris::segment_v2::UNKNOWN()']]],
   ['unknown_5fdict_5fencoding_10',['UNKNOWN_DICT_ENCODING',['../d3/d99/classdoris_1_1segment__v2_1_1_column_reader.html#a8deab88513698487f0e2ceb99ff4225ca13edd27c0367cb9cc511fe66c3f996b6',1,'doris::segment_v2::ColumnReader']]],
   ['unknown_5ffilter_11',['UNKNOWN_FILTER',['../d6/d94/namespacedoris.html#a80c9e61f43cc9208e4a85397032190b2ac8512f2e2ce35bc0dc0090552cd60556',1,'doris']]],
   ['unknown_5fquery_12',['UNKNOWN_QUERY',['../d3/d11/namespacedoris_1_1segment__v2.html#ad827beb66e5d73461b95818af3e25a97a4f7cb91a7e042feb4537b10eac08cb7e',1,'doris::segment_v2']]],
@@ -20,6 +20,6 @@ var searchData=
   ['upload_17',['UPLOAD',['../d0/db3/classdoris_1_1_task_worker_pool.html#adbcb0ac042956354ecc8cce28991be4aaea81994cd8ebea76c3c4fc8d5fb486d4',1,'doris::TaskWorkerPool']]],
   ['use_5fproxy_18',['USE_PROXY',['../d6/d94/namespacedoris.html#a70d2d802a61ea92a685c471e0ccc63daa1a38242498dc00f404f4bfb520f788e4',1,'doris']]],
   ['userinfo_19',['USERINFO',['../d0/db9/classdoris_1_1_url_parser.html#a1b1058dd28ef566c3b0b47793ce673d1a0a1df180f845815e294a1f3c2c38c6a6',1,'doris::UrlParser']]],
-  ['utfmax_20',['UTFmax',['../de/db7/utf_8h.html#a6b7b47dd702d9e331586d485013fd1eaadc769873b28a6f4d3c8040e1f25e6fde',1,'utf.h']]],
+  ['utfmax_20',['UTFmax',['../de/db7/utf_8h.html#a16af7b253440dadd46a80a4b9fddba4dadc769873b28a6f4d3c8040e1f25e6fde',1,'utf.h']]],
   ['uuid_21',['UUID',['../d3/d1e/namespacedoris_1_1vectorized.html#a927ff84d34a7989fb159d63d6b4eaf04a5a54d9ad87f7c4c1c70c8f05b9515d5a',1,'doris::vectorized']]]
 ];

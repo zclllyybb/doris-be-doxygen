@@ -1,5 +1,5 @@
 \hypertarget{blocking__queue_8hpp_source}{}\doxysection{blocking\+\_\+queue.\+hpp}
-\label{blocking__queue_8hpp_source}\index{/Users/dabowang/be\_all/util/blocking\_queue.hpp@{/Users/dabowang/be\_all/util/blocking\_queue.hpp}}
+\label{blocking__queue_8hpp_source}\index{/Users/dabowang/doris/be/src/util/blocking\_queue.hpp@{/Users/dabowang/doris/be/src/util/blocking\_queue.hpp}}
 \mbox{\hyperlink{blocking__queue_8hpp}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -68,92 +68,64 @@
 \DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{00065\ \ \ \ \ \}}
 \DoxyCodeLine{00066\ }
-\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{/*}}
-\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ bool\ blocking\_put\_with\_timeout(const\ T\&\ val,\ int64\_t\ timeout\_micros)\ \{}}
-\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ \ \ \ \ MonotonicStopWatch\ timer;}}
-\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ write\_lock(\_lock);}}
-\DoxyCodeLine{00074\ \textcolor{comment}{\ \ \ \ \ \ \ \ std::system\_time\ wtime\ =\ std::get\_system\_time()\ +}}
-\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ std::posix\_time::microseconds(timeout\_micros);}}
-\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ \ \ \ const\ struct\ timespec\ timeout\ =\ std::detail::to\_timespec(wtime);}}
-\DoxyCodeLine{00077\ \textcolor{comment}{\ \ \ \ \ \ \ \ bool\ notified\ =\ true;}}
-\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ \ \ \ \ while\ (SizeLocked(write\_lock)\ >=\ \_max\_elements\ \&\&\ !\_shutdown\ \&\&\ notified)\ \{}}
-\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ timer.Start();}}
-\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ //\ Wait\ until\ we're\ notified\ or\ until\ the\ timeout\ expires.}}
-\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ notified\ =\ \_put\_cv.TimedWait(write\_lock,\ \&timeout);}}
-\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ timer.Stop();}}
-\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
-\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ \ \ \ \_total\_put\_wait\_time\ +=\ timer.ElapsedTime();}}
-\DoxyCodeLine{00085\ \textcolor{comment}{\ \ \ \ \ \ \ \ //\ If\ the\ list\ is\ still\ full\ or\ if\ the\ the\ queue\ has\ been\ shut\ down,\ return\ false.}}
-\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ \ \ \ \ //\ NOTE:\ We\ don't\ check\ 'notified'\ here\ as\ it\ appears\ that\ pthread\ condition\ variables}}
-\DoxyCodeLine{00087\ \textcolor{comment}{\ \ \ \ \ \ \ \ //\ have\ a\ weird\ behavior\ in\ which\ they\ can\ return\ ETIMEDOUT\ from\ timed\_wait\ even\ if}}
-\DoxyCodeLine{00088\ \textcolor{comment}{\ \ \ \ \ \ \ \ //\ another\ thread\ did\ in\ fact\ signal}}
-\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (SizeLocked(write\_lock)\ >=\ \_max\_elements\ ||\ \_shutdown)\ return\ false;}}
-\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ \ \ \ \ DCHECK\_LT(put\_list\_.size(),\ \_max\_elements);}}
-\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ \ \ \ \ \_list.push\_back(val);}}
-\DoxyCodeLine{00092\ \textcolor{comment}{\ \ \ \ \ \ \ \ write\_lock.unlock();}}
-\DoxyCodeLine{00093\ \textcolor{comment}{\ \ \ \ \ \ \ \ \_get\_cv.NotifyOne();}}
-\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ \ \ \ return\ true;}}
-\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \}}}
-\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ */}}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Puts\ an\ element\ into\ the\ queue,\ waiting\ indefinitely\ until\ there\ is\ space.}}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ If\ the\ queue\ is\ shut\ down,\ returns\ false.}}
-\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a5c7ce249cc6bed50aca2d1d0d000bf38}{blocking\_put}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ val)\ \{}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
-\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.wait(unique\_lock,\ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size()\ <\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aae240629367a8ce8ae8a3935888cb8dd}{\_max\_elements}};\ \});}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Puts\ an\ element\ into\ the\ queue,\ waiting\ indefinitely\ until\ there\ is\ space.}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ If\ the\ queue\ is\ shut\ down,\ returns\ false.}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a5c7ce249cc6bed50aca2d1d0d000bf38}{blocking\_put}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{exp_8c_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ val)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_custom_stop_watch}{MonotonicStopWatch}}\ timer;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_a60de64d75454385b23995437f1d72669}{start}}();}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ unique\_lock(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.wait(unique\_lock,\ [\textcolor{keyword}{this}]\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ ||\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size()\ <\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aae240629367a8ce8ae8a3935888cb8dd}{\_max\_elements}};\ \});}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}}\ +=\ timer.\mbox{\hyperlink{classdoris_1_1_custom_stop_watch_adcda5684f125d03f01912ee2b400fd89}{elapsed\_time}}();}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}})\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.push\_back(val);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_one();}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00083\ \ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ Shut\ down\ the\ queue.\ Wakes\ up\ all\ threads\ waiting\ on\ BlockingGet\ or\ BlockingPut.}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a7861ee1569802186a619778efc85af13}{shutdown}}()\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ guard(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_all();}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.notify\_all();}
+\DoxyCodeLine{00094\ \ \ \ \ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a5ae899c3f4c388530dbd0494fb0362b5}{get\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size();}
+\DoxyCodeLine{00099\ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ BlockingGet.}}
+\DoxyCodeLine{00102\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a38459a0cdd378aef319b111b681b9b37}{total\_get\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ BlockingPut.}}
+\DoxyCodeLine{00105\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a1962b8baabcf5eaff533ec4d9b64f23d}{total\_put\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};\ \}}
 \DoxyCodeLine{00106\ }
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}})\ \{}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00110\ }
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.push\_back(val);}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_one();}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00114\ \ \ \ \ \}}
-\DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ Shut\ down\ the\ queue.\ Wakes\ up\ all\ threads\ waiting\ on\ BlockingGet\ or\ BlockingPut.}}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a7861ee1569802186a619778efc85af13}{shutdown}}()\ \{}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ guard(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}}.notify\_all();}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}}.notify\_all();}
-\DoxyCodeLine{00125\ \ \ \ \ \}}
-\DoxyCodeLine{00126\ }
-\DoxyCodeLine{00127\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a5ae899c3f4c388530dbd0494fb0362b5}{get\_size}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ std::lock\_guard<std::mutex>\ l(\mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}});}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size();}
-\DoxyCodeLine{00130\ \ \ \ \ \}}
-\DoxyCodeLine{00131\ }
-\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ BlockingGet.}}
-\DoxyCodeLine{00133\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a38459a0cdd378aef319b111b681b9b37}{total\_get\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};\ \}}
-\DoxyCodeLine{00134\ }
-\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ total\ amount\ of\ time\ threads\ have\ blocked\ in\ BlockingPut.}}
-\DoxyCodeLine{00136\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a1962b8baabcf5eaff533ec4d9b64f23d}{total\_put\_wait\_time}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};\ \}}
-\DoxyCodeLine{00137\ }
-\DoxyCodeLine{00138\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00139\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a32f18518937fa1249e29b5bb5af9c234}{SizeLocked}}(\textcolor{keyword}{const}\ std::unique\_lock<std::mutex>\&\ lock)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ 'get\_list\_'\ is\ read\ racily\ to\ avoid\ getting\ 'get\_lock\_'\ in\ write\ path.}}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ DCHECK(lock.owns\_lock());}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size();}
-\DoxyCodeLine{00143\ \ \ \ \ \}}
-\DoxyCodeLine{00144\ }
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}};}
-\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aae240629367a8ce8ae8a3935888cb8dd}{\_max\_elements}};}
-\DoxyCodeLine{00147\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}};\ \textcolor{comment}{//\ 'get'\ callers\ wait\ on\ this}}
-\DoxyCodeLine{00148\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}};\ \textcolor{comment}{//\ 'put'\ callers\ wait\ on\ this}}
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ \_lock\ guards\ access\ to\ \_list,\ total\_get\_wait\_time,\ and\ total\_put\_wait\_time}}
-\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
-\DoxyCodeLine{00151\ \ \ \ \ std::list<T>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}};}
-\DoxyCodeLine{00152\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};}
-\DoxyCodeLine{00153\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};}
-\DoxyCodeLine{00154\ \};}
-\DoxyCodeLine{00155\ }
-\DoxyCodeLine{00156\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00107\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00108\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a32f18518937fa1249e29b5bb5af9c234}{SizeLocked}}(\textcolor{keyword}{const}\ std::unique\_lock<std::mutex>\&\ lock)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ 'get\_list\_'\ is\ read\ racily\ to\ avoid\ getting\ 'get\_lock\_'\ in\ write\ path.}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ DCHECK(lock.owns\_lock());}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}}.size();}
+\DoxyCodeLine{00112\ \ \ \ \ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6cf45091a93862b943d7aed2c42ef8bf}{\_shutdown}};}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aae240629367a8ce8ae8a3935888cb8dd}{\_max\_elements}};}
+\DoxyCodeLine{00116\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_aa9df657510d187662ba748f773fd48ac}{\_get\_cv}};\ \textcolor{comment}{//\ 'get'\ callers\ wait\ on\ this}}
+\DoxyCodeLine{00117\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_acc37d2b95181a1617ccf2ee8ddc73555}{\_put\_cv}};\ \textcolor{comment}{//\ 'put'\ callers\ wait\ on\ this}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ \_lock\ guards\ access\ to\ \_list,\ total\_get\_wait\_time,\ and\ total\_put\_wait\_time}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a888111eeda289ae698cf8e8b92ab9d30}{\_lock}};}
+\DoxyCodeLine{00120\ \ \ \ \ std::list<T>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a66f2dd5395a8a76ca02ecc80b831c71b}{\_list}};}
+\DoxyCodeLine{00121\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a42f078afc4c2d2fa5703860d58825fdf}{\_total\_get\_wait\_time}};}
+\DoxyCodeLine{00122\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_blocking_queue_a6ec4efe36b78fa49da4e5fa814e09002}{\_total\_put\_wait\_time}};}
+\DoxyCodeLine{00123\ \};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

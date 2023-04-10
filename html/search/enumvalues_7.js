@@ -2,7 +2,7 @@ var searchData=
 [
   ['gateway_5ftimeout_0',['GATEWAY_TIMEOUT',['../d6/d94/namespacedoris.html#a70d2d802a61ea92a685c471e0ccc63daaedbcebdb3f839ce33b8daba216c2c46d',1,'doris']]],
   ['gauge_1',['GAUGE',['../d6/d94/namespacedoris.html#a5a73aada416b5b8e3f549fb0caf28219a6a91e159ac40f39402ef860163318744',1,'doris']]],
-  ['ge_2',['GE',['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9',1,'doris']]],
+  ['ge_2',['GE',['../df/dcd/classdoris_1_1vectorized_1_1_function_array_apply.html#ae2a8204babdb89ce4d029e000228f123af803729628adf4199f224c2a225038e9',1,'doris::vectorized::FunctionArrayApply::GE()'],['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667af803729628adf4199f224c2a225038e9',1,'doris::GE()']]],
   ['geo_5fparse_5fcircle_5finvalid_3',['GEO_PARSE_CIRCLE_INVALID',['../d6/d94/namespacedoris.html#a60f102a389c14822212bb0b9934a14b4a997beec9e9e4c11aa0a27be982a82b99',1,'doris']]],
   ['geo_5fparse_5fcoord_5finvalid_4',['GEO_PARSE_COORD_INVALID',['../d6/d94/namespacedoris.html#a60f102a389c14822212bb0b9934a14b4a9dcf2c94497843358c5b0393a5bb79f8',1,'doris']]],
   ['geo_5fparse_5floop_5finvalid_5',['GEO_PARSE_LOOP_INVALID',['../d6/d94/namespacedoris.html#a60f102a389c14822212bb0b9934a14b4aa9bbd7a075577517763bb8c9567f1a6d',1,'doris']]],
@@ -26,6 +26,6 @@ var searchData=
   ['gone_23',['GONE',['../d6/d94/namespacedoris.html#a70d2d802a61ea92a685c471e0ccc63daa974c0ca5c29e97e4de842d92e93c75f8',1,'doris']]],
   ['greater_5fequal_5fquery_24',['GREATER_EQUAL_QUERY',['../d3/d11/namespacedoris_1_1segment__v2.html#ad827beb66e5d73461b95818af3e25a97a5e7ffb7f97a3242135395ed13ea108f5',1,'doris::segment_v2']]],
   ['greater_5fthan_5fquery_25',['GREATER_THAN_QUERY',['../d3/d11/namespacedoris_1_1segment__v2.html#ad827beb66e5d73461b95818af3e25a97a9f95541b4ae21373a9fd0207f65a53d8',1,'doris::segment_v2']]],
-  ['gt_26',['GT',['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020',1,'doris']]],
+  ['gt_26',['GT',['../df/dcd/classdoris_1_1vectorized_1_1_function_array_apply.html#ae2a8204babdb89ce4d029e000228f123acd6a9bd2a175104eed40f0d33a8b4020',1,'doris::vectorized::FunctionArrayApply::GT()'],['../d6/d94/namespacedoris.html#a74200fe7b3fc40cf1385f05359608667acd6a9bd2a175104eed40f0d33a8b4020',1,'doris::GT()']]],
   ['gzip_27',['GZIP',['../d6/d94/namespacedoris.html#a7beee662f7aa2feef6f37f7686e0105da388483cd14bd349b3e0f2a7511bbec0e',1,'doris']]]
 ];

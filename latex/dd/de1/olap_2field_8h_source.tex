@@ -1,5 +1,5 @@
 \hypertarget{olap_2field_8h_source}{}\doxysection{field.\+h}
-\label{olap_2field_8h_source}\index{/Users/dabowang/be\_all/olap/field.h@{/Users/dabowang/be\_all/olap/field.h}}
+\label{olap_2field_8h_source}\index{/Users/dabowang/doris/be/src/olap/field.h@{/Users/dabowang/doris/be/src/olap/field.h}}
 \mbox{\hyperlink{olap_2field_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -32,10 +32,10 @@
 \DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2types_8h}{olap/types.h}}"{}}}
 \DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2utils_8h}{olap/utils.h}}"{}}}
 \DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{collection__value_8h}{runtime/collection\_value.h}}"{}}}
-\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__pool_8h}{runtime/mem\_pool.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{map__value_8h}{runtime/map\_value.h}}"{}}}
 \DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{hash__util_8hpp}{util/hash\_util.hpp}}"{}}}
-\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__util_8hpp}{util/mem\_util.hpp}}"{}}}
-\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arena_8h}{vec/common/arena.h}}"{}}}
 \DoxyCodeLine{00035\ }
 \DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
 \DoxyCodeLine{00037\ }
@@ -70,532 +70,602 @@
 \DoxyCodeLine{00066\ }
 \DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a977bd8025550f9d40a08d499f6e39e79}{set\_long\_text\_buf}}(\textcolor{keywordtype}{char}**\ buf)\ \{\ \mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ buf;\ \}}
 \DoxyCodeLine{00068\ }
-\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ This\ function\ allocate\ memory\ from\ pool,\ other\ than\ allocate\_memory}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ This\ function\ allocate\ memory\ from\ arena,\ other\ than\ allocate\_memory}}
 \DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ reserve\ memory\ from\ continuous\ memory.}}
-\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_ac6b689d05bea60cbdb13920d92322e29}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>size());}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_aede8fe59992d6c94f3e313c0e635cbfa}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>size());}
 \DoxyCodeLine{00073\ \ \ \ \ \}}
 \DoxyCodeLine{00074\ }
-\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a979748b172da6df8bf40b7bc18fc88ab}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_ac6b689d05bea60cbdb13920d92322e29}{allocate\_value}}(pool);\ \}}
-\DoxyCodeLine{00076\ }
-\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a3747f6aa2dcc2f377c5035177cdc997f}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ variable\_ptr;\ \}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a58b53faa51c361ff3e9dd09d006988de}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_aede8fe59992d6c94f3e313c0e635cbfa}{allocate\_value}}(arena);}
+\DoxyCodeLine{00077\ \ \ \ \ \}}
 \DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_field_a8d9fee2ea2bb9942631198d20815f238}{get\_variable\_len}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a3747f6aa2dcc2f377c5035177cdc997f}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ variable\_ptr;\ \}}
 \DoxyCodeLine{00080\ }
-\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a63a3dfb2dd938fd380f93ed0098ea723}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*)\textcolor{keyword}{\ const\ }\{\}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_field_a8d9fee2ea2bb9942631198d20815f238}{get\_variable\_len}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
 \DoxyCodeLine{00082\ }
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field_a37d975a33e390747a97a453bc0455107}{Field}}();}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}(local);}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00087\ \ \ \ \ \}}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ Only\ compare\ column\ content,\ without\ considering\ nullptr\ condition.}}
-\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ RETURNS:}}
-\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 0\ means\ equal,}}
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ -\/1\ means\ left\ less\ than\ right,}}
-\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 1\ means\ left\ bigger\ than\ right}}
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a27d929d466c0ec2c171e5e9b5eb894eb}{compare}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ left,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ right)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>cmp(left,\ right);\ \}}
-\DoxyCodeLine{00095\ }
-\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ Compare\ two\ types\ of\ cell.}}
-\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ This\ function\ differs\ compare\ in\ that\ this\ function\ compare\ cell\ which}}
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ will\ consider\ the\ condition\ which\ cell\ may\ be\ nullptr.\ While\ compare\ only}}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ compare\ column\ content\ without\ considering\ nullptr\ condition.}}
-\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ Only\ compare\ column\ content,\ without\ considering\ nullptr\ condition.}}
-\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ RETURNS:}}
-\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 0\ means\ equal,}}
-\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ -\/1\ means\ left\ less\ than\ right,}}
-\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 1\ means\ left\ bigger\ than\ right}}
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsCellType,\ \textcolor{keyword}{typename}\ RhsCellType>}
-\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a224839083e470a076ced826c19c4e0e0}{compare\_cell}}(\textcolor{keyword}{const}\ LhsCellType\&\ lhs,\ \textcolor{keyword}{const}\ RhsCellType\&\ rhs)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ l\_null\ =\ lhs.is\_null();}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ r\_null\ =\ rhs.is\_null();}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\_null\ !=\ r\_null)\ \{}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l\_null\ ?\ -\/1\ :\ 1;}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l\_null\ ?\ 0\ :\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>cmp(lhs.cell\_ptr(),\ rhs.cell\_ptr());}
-\DoxyCodeLine{00113\ \ \ \ \ \}}
-\DoxyCodeLine{00114\ }
-\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ Copy\ source\ cell's\ content\ to\ destination\ cell\ directly.}}
-\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ For\ string\ type,\ this\ function\ assume\ that\ destination\ has}}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ enough\ space\ and\ copy\ source\ content\ into\ destination\ without}}
-\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ memory\ allocation.}}
-\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DstCellType,\ \textcolor{keyword}{typename}\ SrcCellType>}
-\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a47ff28b7abaaf1218585950fb3259ffc}{direct\_copy}}(DstCellType*\ dst,\ \textcolor{keyword}{const}\ SrcCellType\&\ src)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_null\ =\ src.is\_null();}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ dst-\/>set\_is\_null(is\_null);}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_null)\ \{}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\ ==\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}})\ \{}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dst\_slice\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(dst-\/>mutable\_cell\_ptr());}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ src\_slice\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src.cell\_ptr());}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dst\_slice-\/>size\ <\ src\_slice-\/>size)\ \{}
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\mbox{\hyperlink{jemalloc__hook_8cpp_aea1fdd641ebfcade0541ee5becfd3c06}{realloc}}(*\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}},\ src\_slice-\/>size));}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst\_slice-\/>data\ =\ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}};}
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst\_slice-\/>size\ =\ src\_slice-\/>size;}
-\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>direct\_copy(dst-\/>mutable\_cell\_ptr(),\ src.cell\_ptr());}
-\DoxyCodeLine{00136\ \ \ \ \ \}}
-\DoxyCodeLine{00137\ }
-\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ deep\ copy\ source\ cell'\ content\ to\ destination\ cell.}}
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ For\ string\ type,\ this\ will\ allocate\ data\ form\ pool,}}
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ and\ copy\ source's\ content.}}
-\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DstCellType,\ \textcolor{keyword}{typename}\ SrcCellType>}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_af0de6772aa03fefb8cc26f4a17aa32ae}{deep\_copy}}(DstCellType*\ dst,\ \textcolor{keyword}{const}\ SrcCellType\&\ src,\ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_null\ =\ src.is\_null();}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ dst-\/>set\_is\_null(is\_null);}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_null)\ \{}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>deep\_copy(dst-\/>mutable\_cell\_ptr(),\ src.cell\_ptr(),\ pool);}
-\DoxyCodeLine{00149\ \ \ \ \ \}}
-\DoxyCodeLine{00150\ }
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ used\ by\ init\ scan\ key\ stored\ in\ string\ format}}
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ value\_string\ should\ end\ with\ '\(\backslash\)0'}}
-\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_field_af7480e2bc9bcc5bc2febee25054732f2}{from\_string}}(\textcolor{keywordtype}{char}*\ buf,\ \textcolor{keyword}{const}\ std::string\&\ value\_string,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ precision\ =\ 0,}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale\ =\ 0)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\ ==\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}\ \&\&\ !value\_string.empty())\ \{}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(buf);}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ <\ value\_string.size())\ \{}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\mbox{\hyperlink{jemalloc__hook_8cpp_aea1fdd641ebfcade0541ee5becfd3c06}{realloc}}(*\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}},\ value\_string.size()));}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}};}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ value\_string.size();}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>from\_string(buf,\ value\_string,\ precision,\ scale);}
-\DoxyCodeLine{00164\ \ \ \ \ \}}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ \ convert\ inner\ value\ to\ string}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ \ performance\ is\ not\ considered,\ only\ for\ debug\ use}}
-\DoxyCodeLine{00168\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_a87a7f6c010dac8d30c897d22b7597b8d}{to\_string}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>to\_string(src);\ \}}
-\DoxyCodeLine{00169\ }
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ CellType>}
-\DoxyCodeLine{00171\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_a7d30ef0d87877bc526a791704613c461}{debug\_string}}(\textcolor{keyword}{const}\ CellType\&\ cell)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ std::stringstream\ ss;}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cell.is\_null())\ \{}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ ss\ <<\ \textcolor{stringliteral}{"{}(null)"{}};}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ ss\ <<\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>to\_string(cell.cell\_ptr());}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ss.str();}
-\DoxyCodeLine{00179\ \ \ \ \ \}}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\ \mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>type();\ \}}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_type_info}{TypeInfo}}*\ \mbox{\hyperlink{classdoris_1_1_field_a568a34e6334bb56b8c8830fc652ca12c}{type\_info}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}.get();\ \}}
-\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_field_a383b4bf9fa5747435372f741fd1747f3}{is\_nullable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};\ \}}
-\DoxyCodeLine{00184\ }
-\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ similar\ to\ `full\_encode\_ascending`,\ but\ only\ encode\ part\ (the\ first\ `index\_size`\ bytes)\ of\ the\ value.}}
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{//\ only\ applicable\ to\ string\ type}}
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ac2082a3ad6c53a43346e38a37f43d855}{encode\_ascending}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ std::string*\ buf)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}-\/>\mbox{\hyperlink{classdoris_1_1_key_coder_ab21d47d0b02bad457c30c34a712dacf0}{encode\_ascending}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}},\ buf);}
-\DoxyCodeLine{00189\ \ \ \ \ \}}
-\DoxyCodeLine{00190\ }
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ encode\ the\ provided\ `value`\ into\ `buf`.}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ab5519d5e985f0feb9917c688e3dc893b}{full\_encode\_ascending}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ std::string*\ buf)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}-\/>\mbox{\hyperlink{classdoris_1_1_key_coder_ab5519d5e985f0feb9917c688e3dc893b}{full\_encode\_ascending}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ buf);}
-\DoxyCodeLine{00194\ \ \ \ \ \}}
-\DoxyCodeLine{00195\ }
-\DoxyCodeLine{00196\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_field_ac9ad5c0f804c42dd37d28b800214b73b}{decode\_ascending}}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\ encoded\_key,\ uint8\_t*\ cell\_ptr,\ \mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}-\/>\mbox{\hyperlink{classdoris_1_1_key_coder_acc94b364b25139f8919d86e3a5072482}{decode\_ascending}}(encoded\_key,\ \mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}},\ cell\_ptr,\ pool);}
-\DoxyCodeLine{00198\ \ \ \ \ \}}
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a1813ad4257b467ebff2c26dbbd46bd67}{add\_sub\_field}}(std::unique\_ptr<Field>\ sub\_field)\ \{}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.emplace\_back(std::move(sub\_field));}
-\DoxyCodeLine{00201\ \ \ \ \ \}}
-\DoxyCodeLine{00202\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_aa9b02d35d659c49def0daa4a86588c55}{get\_sub\_field}}(\textcolor{keywordtype}{int}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}[i].get();\ \}}
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_field_a89bf92362f0ae09fdfc7cf066a4a10d4}{get\_sub\_field\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.size();\ \}}
-\DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(int32\_t\ precision)\ \{\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}}\ =\ precision;\ \}}
-\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(int32\_t\ scale)\ \{\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}}\ =\ scale;\ \}}
-\DoxyCodeLine{00207\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_ad2d792ad3f54c0b895ea43c42883813f}{get\_precision}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};\ \}}
-\DoxyCodeLine{00208\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_aeebcd0d06704bd0962fb1651e4fe8df7}{get\_scale}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};\ \}}
-\DoxyCodeLine{00209\ }
-\DoxyCodeLine{00210\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{00211\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a886bec29cbd4c0fe90c72ef920f23e16}{TypeInfoPtr}}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}};}
-\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ unit\ :\ byte}}
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ except\ for\ strings,\ other\ types\ have\ fixed\ lengths}}
-\DoxyCodeLine{00214\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ Since\ the\ length\ of\ the\ STRING\ type\ cannot\ be\ determined,}}
-\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ only\ dynamic\ memory\ can\ be\ used.\ Mempool\ cannot\ realize\ realloc.}}
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ The\ schema\ information\ is\ shared\ globally.\ Therefore,}}
-\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ dynamic\ memory\ can\ only\ be\ managed\ in\ thread\ local\ mode.}}
-\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ The\ memory\ will\ be\ created\ and\ released\ in\ rowcursor.}}
-\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{char}**\ \mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00221\ }
-\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a91f21dff66a8a944f1a30f55859af4a8}{allocate\_string\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
-\DoxyCodeLine{00228\ \ \ \ \ \}}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a77430b7600d6bf3978db8709ae8ed95f}{clone}}(\mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}\ =\ \mbox{\hyperlink{namespacedoris_a6a4c0b9931193f04775a78d921b8a8cd}{clone\_type\_info}}(this-\/>\_type\_info.get());}
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}};}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}};}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.clear();}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}};}
-\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ f\ :\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}})\ \{}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ item\ =\ f-\/>\mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}();}
-\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a1813ad4257b467ebff2c26dbbd46bd67}{add\_sub\_field}}(std::unique\_ptr<Field>(item));}
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00244\ \ \ \ \ \}}
-\DoxyCodeLine{00245\ }
-\DoxyCodeLine{00246\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00247\ \ \ \ \ \textcolor{comment}{//\ maximum\ length\ of\ Field,\ unit\ :\ bytes}}
-\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ usually\ equal\ to\ length,\ except\ for\ variable-\/length\ strings}}
-\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_key_coder}{KeyCoder}}*\ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}};}
-\DoxyCodeLine{00250\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
-\DoxyCodeLine{00251\ \ \ \ \ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}};}
-\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};}
-\DoxyCodeLine{00253\ \ \ \ \ std::vector<std::unique\_ptr<Field>>\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}};}
-\DoxyCodeLine{00254\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};}
-\DoxyCodeLine{00255\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};}
-\DoxyCodeLine{00256\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}};}
-\DoxyCodeLine{00257\ \};}
-\DoxyCodeLine{00258\ }
-\DoxyCodeLine{00259\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00260\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_array_field_a5d39226a16fe9e066f44eda3b24d5211}{ArrayField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00262\ }
-\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_array_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ array\_v\ =\ (\mbox{\hyperlink{classdoris_1_1_collection_value}{CollectionValue}}*)cell\_ptr;}
-\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ array\_v-\/>set\_null\_signs(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{bool}*\textcolor{keyword}{>}(variable\_ptr));}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a63a3dfb2dd938fd380f93ed0098ea723}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*)\textcolor{keyword}{\ const\ }\{\}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field_a37d975a33e390747a97a453bc0455107}{Field}}();}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}(local);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Only\ compare\ column\ content,\ without\ considering\ nullptr\ condition.}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ RETURNS:}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 0\ means\ equal,}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ -\/1\ means\ left\ less\ than\ right,}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 1\ means\ left\ bigger\ than\ right}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a27d929d466c0ec2c171e5e9b5eb894eb}{compare}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ left,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ right)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>cmp(left,\ right);\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Compare\ two\ types\ of\ cell.}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ This\ function\ differs\ compare\ in\ that\ this\ function\ compare\ cell\ which}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ will\ consider\ the\ condition\ which\ cell\ may\ be\ nullptr.\ While\ compare\ only}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ compare\ column\ content\ without\ considering\ nullptr\ condition.}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ Only\ compare\ column\ content,\ without\ considering\ nullptr\ condition.}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ RETURNS:}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 0\ means\ equal,}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ -\/1\ means\ left\ less\ than\ right,}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ 1\ means\ left\ bigger\ than\ right}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsCellType,\ \textcolor{keyword}{typename}\ RhsCellType>}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a224839083e470a076ced826c19c4e0e0}{compare\_cell}}(\textcolor{keyword}{const}\ LhsCellType\&\ lhs,\ \textcolor{keyword}{const}\ RhsCellType\&\ rhs)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ l\_null\ =\ lhs.is\_null();}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ r\_null\ =\ rhs.is\_null();}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\_null\ !=\ r\_null)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l\_null\ ?\ -\/1\ :\ 1;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l\_null\ ?\ 0\ :\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>cmp(lhs.cell\_ptr(),\ rhs.cell\_ptr());}
+\DoxyCodeLine{00115\ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ Copy\ source\ cell's\ content\ to\ destination\ cell\ directly.}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ For\ string\ type,\ this\ function\ assume\ that\ destination\ has}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ enough\ space\ and\ copy\ source\ content\ into\ destination\ without}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ memory\ allocation.}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DstCellType,\ \textcolor{keyword}{typename}\ SrcCellType>}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a47ff28b7abaaf1218585950fb3259ffc}{direct\_copy}}(DstCellType*\ dst,\ \textcolor{keyword}{const}\ SrcCellType\&\ src)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_null\ =\ src.is\_null();}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ dst-\/>set\_is\_null(is\_null);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_null)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\ ==\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}})\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dst\_slice\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(dst-\/>mutable\_cell\_ptr());}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ src\_slice\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src.cell\_ptr());}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dst\_slice-\/>size\ <\ src\_slice-\/>size)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\mbox{\hyperlink{jemalloc__hook_8cpp_aea1fdd641ebfcade0541ee5becfd3c06}{realloc}}(*\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}},\ src\_slice-\/>size));}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst\_slice-\/>data\ =\ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}};}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst\_slice-\/>size\ =\ src\_slice-\/>size;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>direct\_copy(dst-\/>mutable\_cell\_ptr(),\ src.cell\_ptr());}
+\DoxyCodeLine{00138\ \ \ \ \ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ deep\ copy\ source\ cell'\ content\ to\ destination\ cell.}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ For\ string\ type,\ this\ will\ allocate\ data\ form\ arena,}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ and\ copy\ source's\ content.}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DstCellType,\ \textcolor{keyword}{typename}\ SrcCellType>}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a8051001f8694e331b4f23de358b7a13f}{deep\_copy}}(DstCellType*\ dst,\ \textcolor{keyword}{const}\ SrcCellType\&\ src,\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_null\ =\ src.is\_null();}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ dst-\/>set\_is\_null(is\_null);}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_null)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>deep\_copy(dst-\/>mutable\_cell\_ptr(),\ src.cell\_ptr(),\ arena);}
+\DoxyCodeLine{00151\ \ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ used\ by\ init\ scan\ key\ stored\ in\ string\ format}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ value\_string\ should\ end\ with\ '\(\backslash\)0'}}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1_field_af7480e2bc9bcc5bc2febee25054732f2}{from\_string}}(\textcolor{keywordtype}{char}*\ buf,\ \textcolor{keyword}{const}\ std::string\&\ value\_string,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ precision\ =\ 0,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale\ =\ 0)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\ ==\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}\ \&\&\ !value\_string.empty())\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(buf);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ <\ value\_string.size())\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\mbox{\hyperlink{jemalloc__hook_8cpp_aea1fdd641ebfcade0541ee5becfd3c06}{realloc}}(*\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}},\ value\_string.size()));}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ *\mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}};}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ value\_string.size();}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>from\_string(buf,\ value\_string,\ precision,\ scale);}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ \ convert\ inner\ value\ to\ string}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ \ performance\ is\ not\ considered,\ only\ for\ debug\ use}}
+\DoxyCodeLine{00170\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_a87a7f6c010dac8d30c897d22b7597b8d}{to\_string}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>to\_string(src);\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ CellType>}
+\DoxyCodeLine{00173\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_a7d30ef0d87877bc526a791704613c461}{debug\_string}}(\textcolor{keyword}{const}\ CellType\&\ cell)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ std::stringstream\ ss;}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cell.is\_null())\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ ss\ <<\ \textcolor{stringliteral}{"{}(null)"{}};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ ss\ <<\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>to\_string(cell.cell\_ptr());}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ss.str();}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\ \mbox{\hyperlink{classdoris_1_1_field_a29dc1ff17f4954924eab0c091400af77}{type}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}-\/>type();\ \}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_type_info}{TypeInfo}}*\ \mbox{\hyperlink{classdoris_1_1_field_a568a34e6334bb56b8c8830fc652ca12c}{type\_info}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}.get();\ \}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_field_a383b4bf9fa5747435372f741fd1747f3}{is\_nullable}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ similar\ to\ `full\_encode\_ascending`,\ but\ only\ encode\ part\ (the\ first\ `index\_size`\ bytes)\ of\ the\ value.}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ only\ applicable\ to\ string\ type}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ac2082a3ad6c53a43346e38a37f43d855}{encode\_ascending}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ std::string*\ buf)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}-\/>\mbox{\hyperlink{classdoris_1_1_key_coder_ab21d47d0b02bad457c30c34a712dacf0}{encode\_ascending}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}},\ buf);}
+\DoxyCodeLine{00191\ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ encode\ the\ provided\ `value`\ into\ `buf`.}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ab5519d5e985f0feb9917c688e3dc893b}{full\_encode\_ascending}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ std::string*\ buf)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}-\/>\mbox{\hyperlink{classdoris_1_1_key_coder_ab5519d5e985f0feb9917c688e3dc893b}{full\_encode\_ascending}}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ buf);}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a1813ad4257b467ebff2c26dbbd46bd67}{add\_sub\_field}}(std::unique\_ptr<Field>\ sub\_field)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.emplace\_back(std::move(sub\_field));}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_aa9b02d35d659c49def0daa4a86588c55}{get\_sub\_field}}(\textcolor{keywordtype}{int}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}[i].get();\ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_field_a89bf92362f0ae09fdfc7cf066a4a10d4}{get\_sub\_field\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.size();\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(int32\_t\ precision)\ \{\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}}\ =\ precision;\ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(int32\_t\ scale)\ \{\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}}\ =\ scale;\ \}}
+\DoxyCodeLine{00205\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_ad2d792ad3f54c0b895ea43c42883813f}{get\_precision}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};\ \}}
+\DoxyCodeLine{00206\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_aeebcd0d06704bd0962fb1651e4fe8df7}{get\_scale}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00209\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a886bec29cbd4c0fe90c72ef920f23e16}{TypeInfoPtr}}\ \mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}};}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ unit\ :\ byte}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ except\ for\ strings,\ other\ types\ have\ fixed\ lengths}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ Note\ that,\ the\ struct\ type\ itself\ has\ fixed\ length,\ but\ due\ to}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ its\ number\ of\ subfields\ is\ a\ variable,\ so\ the\ actual\ length\ of}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ a\ struct\ field\ is\ not\ fixed.}}
+\DoxyCodeLine{00215\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Since\ the\ length\ of\ the\ STRING\ type\ cannot\ be\ determined,}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ only\ dynamic\ memory\ can\ be\ used.\ Arena\ cannot\ realize\ realloc.}}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ The\ schema\ information\ is\ shared\ globally.\ Therefore,}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ dynamic\ memory\ can\ only\ be\ managed\ in\ thread\ local\ mode.}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ The\ memory\ will\ be\ created\ and\ released\ in\ rowcursor.}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{char}**\ \mbox{\hyperlink{classdoris_1_1_field_a26a4408303ee63f21e9f6e4d6c4e958d}{\_long\_text\_buf}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_field_a2c4f6aae7d57b4e32ebdbbf2dc485a64}{allocate\_string\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
+\DoxyCodeLine{00229\ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_field_a77430b7600d6bf3978db8709ae8ed95f}{clone}}(\mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a7960357500a4834b76a0c0ec51374e4c}{\_type\_info}}\ =\ \mbox{\hyperlink{namespacedoris_a6a4c0b9931193f04775a78d921b8a8cd}{clone\_type\_info}}(this-\/>\_type\_info.get());}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}};}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}};}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}}.clear();}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}}\ =\ this-\/>\mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}};}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ f\ :\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}})\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ item\ =\ f-\/>\mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{clone}}();}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ other-\/>\mbox{\hyperlink{classdoris_1_1_field_a1813ad4257b467ebff2c26dbbd46bd67}{add\_sub\_field}}(std::unique\_ptr<Field>(item));}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \ \ \ \ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ maximum\ length\ of\ Field,\ unit\ :\ bytes}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{comment}{//\ usually\ equal\ to\ length,\ except\ for\ variable-\/length\ strings}}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_key_coder}{KeyCoder}}*\ \mbox{\hyperlink{classdoris_1_1_field_a267253421b77a5ac15e581a378c85ada}{\_key\_coder}};}
+\DoxyCodeLine{00251\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_field_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00252\ \ \ \ \ uint16\_t\ \mbox{\hyperlink{classdoris_1_1_field_acd7a76ee86e1a3bc98f4d8d7fbf8d180}{\_index\_size}};}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_field_a1a279717e7cbd0fd2f8ef16a2c82ce98}{\_is\_nullable}};}
+\DoxyCodeLine{00254\ \ \ \ \ std::vector<std::unique\_ptr<Field>>\ \mbox{\hyperlink{classdoris_1_1_field_a3f1d99fce81050702e472aaa80482967}{\_sub\_fields}};}
+\DoxyCodeLine{00255\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a27f26911ea985c9457794f127989664b}{\_precision}};}
+\DoxyCodeLine{00256\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_ae840a6b4af045a5871924f93feae1eb3}{\_scale}};}
+\DoxyCodeLine{00257\ \ \ \ \ int32\_t\ \mbox{\hyperlink{classdoris_1_1_field_a491f7adaba8a36d2c65504d1081837fa}{\_unique\_id}};}
+\DoxyCodeLine{00258\ \};}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_map_field}{MapField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00261\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_map_field_abbfa1465e47678582e81cb0749cfa498}{MapField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ make\ variable\_ptr\ memory\ allocate\ to\ cell\_ptr\ as\ MapValue}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_map_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
 \DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr\ +\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
 \DoxyCodeLine{00267\ \ \ \ \ \}}
 \DoxyCodeLine{00268\ }
-\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_array_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};\ \}}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_map_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};\ \}}
 \DoxyCodeLine{00270\ \};}
 \DoxyCodeLine{00271\ }
-\DoxyCodeLine{00272\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00272\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_struct_field}{StructField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
 \DoxyCodeLine{00273\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_char_field_ae0507c655e943f056af306740c887495}{CharField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_char_field_a9afca830d7a59fdbbcef390c4f43d4cf}{CharField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_char_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};\ \}}
-\DoxyCodeLine{00278\ }
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
-\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ variable\_ptr;}
-\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size;}
-\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
-\DoxyCodeLine{00285\ \ \ \ \ \}}
-\DoxyCodeLine{00286\ }
-\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}*\ \mbox{\hyperlink{classdoris_1_1_char_field_ad33252054a6549747f52aabe6ed835f3}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field_ae0507c655e943f056af306740c887495}{CharField}}();}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_struct_field_a91e39586c156e4557000dce3781875d0}{StructField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_struct_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ struct\_v\ =\ (\mbox{\hyperlink{classdoris_1_1_struct_value}{StructValue}}*)cell\_ptr;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ struct\_v-\/>set\_values(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(variable\_ptr));}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classdoris_1_1_field_a89bf92362f0ae09fdfc7cf066a4a10d4}{get\_sub\_field\_count}}();\ i++)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{classdoris_1_1_field_aa9b02d35d659c49def0daa4a86588c55}{get\_sub\_field}}(i)-\/>\mbox{\hyperlink{classdoris_1_1_field_a8d9fee2ea2bb9942631198d20815f238}{get\_variable\_len}}();}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00283\ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_struct_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ variable\_len\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{classdoris_1_1_field_a89bf92362f0ae09fdfc7cf066a4a10d4}{get\_sub\_field\_count}}();\ i++)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ variable\_len\ +=\ \mbox{\hyperlink{classdoris_1_1_field_aa9b02d35d659c49def0daa4a86588c55}{get\_sub\_field}}(i)-\/>\mbox{\hyperlink{classdoris_1_1_field_a8d9fee2ea2bb9942631198d20815f238}{get\_variable\_len}}();}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_len;}
 \DoxyCodeLine{00291\ \ \ \ \ \}}
-\DoxyCodeLine{00292\ }
-\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_a7dd4fa8240552c5cf1ca90b23f0afd6b}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a91f21dff66a8a944f1a30f55859af4a8}{Field::allocate\_string\_value}}(pool);}
-\DoxyCodeLine{00295\ \ \ \ \ \}}
-\DoxyCodeLine{00296\ }
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00301\ \ \ \ \ \}}
-\DoxyCodeLine{00302\ }
-\DoxyCodeLine{00303\ \ \ \ \ \textcolor{comment}{//\ To\ prevent\ zone\ map\ cost\ too\ many\ memory,\ if\ varchar\ length}}
-\DoxyCodeLine{00304\ \ \ \ \ \textcolor{comment}{//\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ we\ just\ allocate}}
-\DoxyCodeLine{00305\ \ \ \ \ \textcolor{comment}{//\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`\ of\ memory}}
-\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_aa72ec6ae25ab9cbacfec2cf5f91a88ee}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
-\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ >\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
-\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00292\ \};}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00295\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_array_field_a5d39226a16fe9e066f44eda3b24d5211}{ArrayField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_array_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ array\_v\ =\ (\mbox{\hyperlink{classdoris_1_1_collection_value}{CollectionValue}}*)cell\_ptr;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ array\_v-\/>set\_null\_signs(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{bool}*\textcolor{keyword}{>}(variable\_ptr));}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr\ +\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00302\ \ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_array_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};\ \}}
+\DoxyCodeLine{00305\ \};}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00308\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_char_field_ae0507c655e943f056af306740c887495}{CharField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_char_field_a9afca830d7a59fdbbcef390c4f43d4cf}{CharField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_char_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};\ \}}
 \DoxyCodeLine{00313\ }
-\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ only\ varchar\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
-\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
-\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
-\DoxyCodeLine{00317\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
-\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00323\ \ \ \ \ \}}
-\DoxyCodeLine{00324\ }
-\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ <\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}};}
-\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ variable\_ptr;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00320\ \ \ \ \ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}*\ \mbox{\hyperlink{classdoris_1_1_char_field_ad33252054a6549747f52aabe6ed835f3}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field_ae0507c655e943f056af306740c887495}{CharField}}();}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00326\ \ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_a1e06cde2ab0cfa5d239d85b1feeb77a5}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a2c4f6aae7d57b4e32ebdbbf2dc485a64}{Field::allocate\_string\_value}}(arena);}
 \DoxyCodeLine{00330\ \ \ \ \ \}}
-\DoxyCodeLine{00331\ \};}
-\DoxyCodeLine{00332\ }
-\DoxyCodeLine{00333\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00334\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_acb8b46a6b9f951be871cc4cf8be5cd4c}{VarcharField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a13b0dd02e22d2545986b32b98737dd65}{VarcharField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00336\ \ \ \ \ \}}
 \DoxyCodeLine{00337\ }
-\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};\ \}}
-\DoxyCodeLine{00339\ }
-\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//\ minus\ OLAP\_VARCHAR\_MAX\_BYTES\ here\ just\ for\ being\ compatible\ with\ old\ storage\ format}}
-\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ variable\_ptr;}
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size;}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ To\ prevent\ zone\ map\ cost\ too\ many\ memory,\ if\ varchar\ length}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ we\ just\ allocate}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{//\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`\ of\ memory}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_char_field_a97d6b716ade1878c1cabff7c47b6e6b4}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ >\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
 \DoxyCodeLine{00347\ \ \ \ \ \}}
 \DoxyCodeLine{00348\ }
-\DoxyCodeLine{00349\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a1180e3501f757a247a6ee4c85d77fbc9}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_acb8b46a6b9f951be871cc4cf8be5cd4c}{VarcharField}}();}
-\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00353\ \ \ \ \ \}}
-\DoxyCodeLine{00354\ }
-\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a7dd4fa8240552c5cf1ca90b23f0afd6b}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a91f21dff66a8a944f1a30f55859af4a8}{Field::allocate\_string\_value}}(pool);}
-\DoxyCodeLine{00357\ \ \ \ \ \}}
-\DoxyCodeLine{00358\ }
-\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ To\ prevent\ zone\ map\ cost\ too\ many\ memory,\ if\ varchar\ length}}
-\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ we\ just\ allocate}}
-\DoxyCodeLine{00361\ \ \ \ \ \textcolor{comment}{//\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`\ of\ memory}}
-\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_aa72ec6ae25ab9cbacfec2cf5f91a88ee}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ >\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
-\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
-\DoxyCodeLine{00368\ \ \ \ \ \}}
-\DoxyCodeLine{00369\ }
-\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ only\ varchar/string\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
-\DoxyCodeLine{00371\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
-\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
-\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
-\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00379\ \ \ \ \ \}}
-\DoxyCodeLine{00380\ }
-\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00385\ \ \ \ \ \}}
-\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ <\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{comment}{//\ only\ varchar\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_char_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ <\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}};}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00365\ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \};}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00369\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_acb8b46a6b9f951be871cc4cf8be5cd4c}{VarcharField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a13b0dd02e22d2545986b32b98737dd65}{VarcharField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a1741c67ccefc5b1167f99039a69b08cf}{get\_variable\_len}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};\ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ minus\ OLAP\_VARCHAR\_MAX\_BYTES\ here\ just\ for\ being\ compatible\ with\ old\ storage\ format}}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ variable\_ptr;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ variable\_ptr\ +=\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size;}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00382\ \ \ \ \ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a1180e3501f757a247a6ee4c85d77fbc9}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_acb8b46a6b9f951be871cc4cf8be5cd4c}{VarcharField}}();}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00388\ \ \ \ \ \}}
 \DoxyCodeLine{00389\ }
-\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
-\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a1e06cde2ab0cfa5d239d85b1feeb77a5}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a2c4f6aae7d57b4e32ebdbbf2dc485a64}{Field::allocate\_string\_value}}(arena);}
 \DoxyCodeLine{00392\ \ \ \ \ \}}
-\DoxyCodeLine{00393\ \};}
-\DoxyCodeLine{00394\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00395\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_string_field_a1357a1c7ee2976735a69035ddcddd6c6}{StringField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_string_field_adb6414043cb4912d4176be42053d0468}{StringField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00398\ }
-\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{//\ minus\ OLAP\_VARCHAR\_MAX\_BYTES\ here\ just\ for\ being\ compatible\ with\ old\ storage\ format}}
-\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
-\DoxyCodeLine{00402\ \ \ \ \ \}}
-\DoxyCodeLine{00403\ }
-\DoxyCodeLine{00404\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a3f81bcd6e88dba52e115a0ee62c5854b}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field_a1357a1c7ee2976735a69035ddcddd6c6}{StringField}}();}
-\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00408\ \ \ \ \ \}}
-\DoxyCodeLine{00409\ }
-\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a7dd4fa8240552c5cf1ca90b23f0afd6b}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a91f21dff66a8a944f1a30f55859af4a8}{Field::allocate\_string\_value}}(pool);}
-\DoxyCodeLine{00412\ \ \ \ \ \}}
-\DoxyCodeLine{00413\ }
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_aa72ec6ae25ab9cbacfec2cf5f91a88ee}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1_mem_pool}{MemPool}}*\ pool)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
-\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
-\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ (\textcolor{keywordtype}{char}*)pool-\/>\mbox{\hyperlink{classdoris_1_1_mem_pool_a6bbe6a57173c878bdb87ee90c87022a9}{allocate}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{comment}{//\ To\ prevent\ zone\ map\ cost\ too\ many\ memory,\ if\ varchar\ length}}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{comment}{//\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ we\ just\ allocate}}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{comment}{//\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`\ of\ memory}}
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a97d6b716ade1878c1cabff7c47b6e6b4}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ >\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
+\DoxyCodeLine{00403\ \ \ \ \ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ only\ varchar/string\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \ \ \}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
 \DoxyCodeLine{00420\ \ \ \ \ \}}
-\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_varchar_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
 \DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00424\ \ \ \ \ \}}
-\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//\ only\ varchar/string\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
-\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
-\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
-\DoxyCodeLine{00428\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
-\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
-\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00434\ \ \ \ \ \}}
-\DoxyCodeLine{00435\ }
-\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
-\DoxyCodeLine{00439\ \ \ \ \ \}}
-\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a6ddc52241f37fdc020138783c46925fb}{set\_to\_zone\_map\_min}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
-\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0x00,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ =\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ <\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}}\ ?\ \mbox{\hyperlink{classdoris_1_1_field_a018617c847f6bf1cb1081457cc2f4579}{\_length}}\ :\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{classdoris_1_1_field_a723b6f8151b6601a12eea2c0eee0545a}{length}}\ -\/\ \mbox{\hyperlink{namespacedoris_ae9fde61c5db886170b196b3babc4aafe}{OLAP\_VARCHAR\_MAX\_BYTES}};}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00427\ \ \ \ \ \}}
+\DoxyCodeLine{00428\ \};}
+\DoxyCodeLine{00429\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00430\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_string_field_a1357a1c7ee2976735a69035ddcddd6c6}{StringField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_string_field_adb6414043cb4912d4176be42053d0468}{StringField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ minus\ OLAP\_VARCHAR\_MAX\_BYTES\ here\ just\ for\ being\ compatible\ with\ old\ storage\ format}}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a3f81bcd6e88dba52e115a0ee62c5854b}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field_a1357a1c7ee2976735a69035ddcddd6c6}{StringField}}();}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
 \DoxyCodeLine{00443\ \ \ \ \ \}}
-\DoxyCodeLine{00444\ \};}
-\DoxyCodeLine{00445\ }
-\DoxyCodeLine{00446\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00447\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_ac731b6ad1d08ff449d51f8ad99ef42f9}{BitmapAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_a179a7003dbd08aa8901be9a9b6dc1501}{BitmapAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00450\ }
-\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
-\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a1e06cde2ab0cfa5d239d85b1feeb77a5}{allocate\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_a2c4f6aae7d57b4e32ebdbbf2dc485a64}{Field::allocate\_string\_value}}(arena);}
+\DoxyCodeLine{00447\ \ \ \ \ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_string_field_a97d6b716ade1878c1cabff7c47b6e6b4}{allocate\_zone\_map\_value}}(\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena}{vectorized::Arena}}*\ arena)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ type\_value\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}));}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(type\_value);}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ =\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}};}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ arena-\/>\mbox{\hyperlink{classdoris_1_1vectorized_1_1_arena_aeb27080055c9e3a4b7844ccabbd6b823}{alloc}}(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ type\_value;}
 \DoxyCodeLine{00455\ \ \ \ \ \}}
-\DoxyCodeLine{00456\ }
-\DoxyCodeLine{00457\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}*\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_af067446ec20ecfd45f3ba2ebd262d336}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_ac731b6ad1d08ff449d51f8ad99ef42f9}{BitmapAggField}}();}
-\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00461\ \ \ \ \ \}}
-\DoxyCodeLine{00462\ \};}
-\DoxyCodeLine{00463\ }
-\DoxyCodeLine{00464\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00465\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_af5cfc57f3021c50a442c15b7e766593b}{QuantileStateAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a0a4ce64a7e7666c1914e34980c1de68e}{QuantileStateAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00468\ }
-\DoxyCodeLine{00469\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
-\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
-\DoxyCodeLine{00473\ \ \ \ \ \}}
-\DoxyCodeLine{00474\ }
-\DoxyCodeLine{00475\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}*\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a4612ed879ab12c0820413227134dc0ae}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_af5cfc57f3021c50a442c15b7e766593b}{QuantileStateAggField}}();}
-\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00479\ \ \ \ \ \}}
-\DoxyCodeLine{00480\ \};}
-\DoxyCodeLine{00481\ }
-\DoxyCodeLine{00482\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
-\DoxyCodeLine{00483\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_ad553abc6e0c3ab18cadda47131df80c2}{HllAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
-\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_aa6315fc52d4feba7edc463a7ccc06204}{HllAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
-\DoxyCodeLine{00486\ }
-\DoxyCodeLine{00487\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
-\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
-\DoxyCodeLine{00491\ \ \ \ \ \}}
-\DoxyCodeLine{00492\ }
-\DoxyCodeLine{00493\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}*\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_a4edd5c6cb4b875e8983fb7a84ac5730b}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_ad553abc6e0c3ab18cadda47131df80c2}{HllAggField}}();}
-\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
-\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00497\ \ \ \ \ \}}
-\DoxyCodeLine{00498\ \};}
-\DoxyCodeLine{00499\ }
-\DoxyCodeLine{00500\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_field_factory}{FieldFactory}}\ \{}
-\DoxyCodeLine{00501\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ \{}
-\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ key\ column}}
-\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_ad35228f8108d669591b071a8ba4f254f}{is\_key}}())\ \{}
-\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a29dc1ff17f4954924eab0c091400af77}{type}}())\ \{}
-\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa9617b640db17fdbfdd8fb871e30dd3bd}{OLAP\_FIELD\_TYPE\_CHAR}}:}
-\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}(column);}
-\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daae6974dbd443985ccd653599ed8101e25}{OLAP\_FIELD\_TYPE\_VARCHAR}}:}
-\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}(column);}
-\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}:}
-\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}(column);}
-\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daad9fc0555ceaf91bfc1814426a02b696b}{OLAP\_FIELD\_TYPE\_ARRAY}}:\ \{}
-\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ item\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
-\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}(column);}
-\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(item\_field));}
-\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaa6aaf7cc33de8410cdfb0568a163a429}{OLAP\_FIELD\_TYPE\_DECIMAL}}:}
-\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa2e0d1fce4ab754ade63ecba603fac18f}{OLAP\_FIELD\_TYPE\_DECIMAL32}}:}
-\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf060d0b24d7ed3c95cc8a74d388008bc}{OLAP\_FIELD\_TYPE\_DECIMAL64}}:}
-\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa85bd756f3b208bdddcf388f42194b5d3}{OLAP\_FIELD\_TYPE\_DECIMAL128I}}:}
-\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf77e056c074df2e92c9aecd97651dff0}{OLAP\_FIELD\_TYPE\_DATETIMEV2}}:\ \{}
-\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ field\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
-\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a74bc37758ffb63d86025a0ca596e9039}{precision}}());}
-\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a581f30b54f3ef6173c023f469d7ff225}{frac}}());}
-\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ field;}
-\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
-\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00536\ }
-\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ value\ column}}
-\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a6d71c7a4cda55f7fef5ca07603afa3d7}{aggregation}}())\ \{}
-\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda0985f84a9bee4da098bffd818d9e777e}{OLAP\_FIELD\_AGGREGATION\_NONE}}:}
-\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdaccc3179c6c77c4fdc429c92bb8baf71c}{OLAP\_FIELD\_AGGREGATION\_SUM}}:}
-\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda6bd9a4ec0e201b1f39c9bf282d35d54d}{OLAP\_FIELD\_AGGREGATION\_MIN}}:}
-\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdad9afd40001e4cfe19efca321c09e98ad}{OLAP\_FIELD\_AGGREGATION\_MAX}}:}
-\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdab5a676d8e874b488e1f98d076484fd23}{OLAP\_FIELD\_AGGREGATION\_REPLACE}}:}
-\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdae043c6eda6cf6036ec77f2ef0a9df923}{OLAP\_FIELD\_AGGREGATION\_REPLACE\_IF\_NOT\_NULL}}:}
-\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a29dc1ff17f4954924eab0c091400af77}{type}}())\ \{}
-\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa9617b640db17fdbfdd8fb871e30dd3bd}{OLAP\_FIELD\_TYPE\_CHAR}}:}
-\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}(column);}
-\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daae6974dbd443985ccd653599ed8101e25}{OLAP\_FIELD\_TYPE\_VARCHAR}}:}
-\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}(column);}
-\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}:}
-\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}(column);}
-\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daad9fc0555ceaf91bfc1814426a02b696b}{OLAP\_FIELD\_TYPE\_ARRAY}}:\ \{}
-\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ item\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
-\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}(column);}
-\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(item\_field));}
-\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
-\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaa6aaf7cc33de8410cdfb0568a163a429}{OLAP\_FIELD\_TYPE\_DECIMAL}}:}
-\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa2e0d1fce4ab754ade63ecba603fac18f}{OLAP\_FIELD\_TYPE\_DECIMAL32}}:}
-\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf060d0b24d7ed3c95cc8a74d388008bc}{OLAP\_FIELD\_TYPE\_DECIMAL64}}:}
-\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa85bd756f3b208bdddcf388f42194b5d3}{OLAP\_FIELD\_TYPE\_DECIMAL128I}}:}
-\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
-\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf77e056c074df2e92c9aecd97651dff0}{OLAP\_FIELD\_TYPE\_DATETIMEV2}}:\ \{}
-\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ field\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
-\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a74bc37758ffb63d86025a0ca596e9039}{precision}}());}
-\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a581f30b54f3ef6173c023f469d7ff225}{frac}}());}
-\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ field;}
-\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
-\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda8defb577579d9f1976b77922c8db0b62}{OLAP\_FIELD\_AGGREGATION\_HLL\_UNION}}:}
-\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}(column);}
-\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda58dee833d7eac361f9b9e10e216d95dd}{OLAP\_FIELD\_AGGREGATION\_BITMAP\_UNION}}:}
-\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}(column);}
-\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda9018b902483e33826598b48da1497606}{OLAP\_FIELD\_AGGREGATION\_QUANTILE\_UNION}}:}
-\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}(column);}
-\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda1dd31faa5c74552a303c20cbc323c4b3}{OLAP\_FIELD\_AGGREGATION\_UNKNOWN}}:}
-\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}WOW!\ value\ column\ agg\ type\ is\ unknown"{}};}
-\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}WOW!\ value\ column\ no\ agg\ type"{}};}
-\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00587\ \ \ \ \ \}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a4e935f31908e1307776aa5bd8f7f4f0b}{set\_to\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00459\ \ \ \ \ \}}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{comment}{//\ only\ varchar/string\ filed\ need\ modify\ zone\ map\ index\ when\ zone\ map\ max\_value}}
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{comment}{//\ index\ longer\ than\ `MAX\_ZONE\_MAP\_INDEX\_SIZE`.\ so\ here\ we\ add\ one}}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{comment}{//\ for\ the\ last\ byte}}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{comment}{//\ In\ UTF8\ encoding,\ here\ do\ not\ appear\ 0xff\ in\ last\ byte}}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a76a15db3ade9a28d0b269f57976c0620}{modify\_zone\_map\_index}}(\textcolor{keywordtype}{char}*\ src)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(src);}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ ==\ \mbox{\hyperlink{namespacedoris_a8d07b8836d61ff958fa61f3c8a6f19ab}{MAX\_ZONE\_MAP\_INDEX\_SIZE}})\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>mutable\_data()[\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size\ -\/\ 1]\ +=\ 1;}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a082f146c85f97b169823d5a73f6efc1f}{set\_to\_zone\_map\_max}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0xFF,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00474\ \ \ \ \ \}}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_string_field_a6ddc52241f37fdc020138783c46925fb}{set\_to\_zone\_map\_min}}(\textcolor{keywordtype}{char}*\ ch)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*\textcolor{keyword}{>}(ch);}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ memset(\mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data,\ 0x00,\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>size);}
+\DoxyCodeLine{00478\ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \};}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00482\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_ac731b6ad1d08ff449d51f8ad99ef42f9}{BitmapAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_a179a7003dbd08aa8901be9a9b6dc1501}{BitmapAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00490\ \ \ \ \ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}*\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_af067446ec20ecfd45f3ba2ebd262d336}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field_ac731b6ad1d08ff449d51f8ad99ef42f9}{BitmapAggField}}();}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00496\ \ \ \ \ \}}
+\DoxyCodeLine{00497\ \};}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00500\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00501\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_af5cfc57f3021c50a442c15b7e766593b}{QuantileStateAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a0a4ce64a7e7666c1914e34980c1de68e}{QuantileStateAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00508\ \ \ \ \ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}*\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_a4612ed879ab12c0820413227134dc0ae}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field_af5cfc57f3021c50a442c15b7e766593b}{QuantileStateAggField}}();}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00514\ \ \ \ \ \}}
+\DoxyCodeLine{00515\ \};}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}\ \{}
+\DoxyCodeLine{00518\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_ad553abc6e0c3ab18cadda47131df80c2}{HllAggField}}()\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}()\ \{\}}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_aa6315fc52d4feba7edc463a7ccc06204}{HllAggField}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ :\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column)\ \{\}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_a8cd8a5219b88653253c873ea90734631}{allocate\_memory}}(\textcolor{keywordtype}{char}*\ cell\_ptr,\ \textcolor{keywordtype}{char}*\ variable\_ptr)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}\ =\ (\mbox{\hyperlink{structdoris_1_1_slice}{Slice}}*)cell\_ptr;}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{rowset__tree_8cpp_adfb801ca1a73fc9fd701cbb7297497f1}{slice}}-\/>data\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ variable\_ptr;}
+\DoxyCodeLine{00526\ \ \ \ \ \}}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}*\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_a4edd5c6cb4b875e8983fb7a84ac5730b}{clone}}()\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field_ad553abc6e0c3ab18cadda47131df80c2}{HllAggField}}();}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_a5d40ccfedda34f92595fb776d18cf19e}{Field::clone}}(local);}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00532\ \ \ \ \ \}}
+\DoxyCodeLine{00533\ \};}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_field_factory}{FieldFactory}}\ \{}
+\DoxyCodeLine{00536\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\&\ column)\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ key\ column}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_ad35228f8108d669591b071a8ba4f254f}{is\_key}}())\ \{}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a29dc1ff17f4954924eab0c091400af77}{type}}())\ \{}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa9617b640db17fdbfdd8fb871e30dd3bd}{OLAP\_FIELD\_TYPE\_CHAR}}:}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}(column);}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daae6974dbd443985ccd653599ed8101e25}{OLAP\_FIELD\_TYPE\_VARCHAR}}:}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}(column);}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}:}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}(column);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaaaf699d71e805bb4bf1b8b4137eb8d26}{OLAP\_FIELD\_TYPE\_STRUCT}}:\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_struct_field}{StructField}}(column);}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ column.\mbox{\hyperlink{classdoris_1_1_tablet_column_afd362cd7f66cfbeb9ad46209ece55d08}{get\_subtype\_count}}();\ i++)\ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ sub\_field(}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(i)));}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(sub\_field));}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daad9fc0555ceaf91bfc1814426a02b696b}{OLAP\_FIELD\_TYPE\_ARRAY}}:\ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ item\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}(column);}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(item\_field));}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa8fce738efefcaccb3792e9da8200dc71}{OLAP\_FIELD\_TYPE\_MAP}}:\ \{}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ key\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ val\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(1)));}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_map_field}{MapField}}(column);}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(key\_field));}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(val\_field));}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaa6aaf7cc33de8410cdfb0568a163a429}{OLAP\_FIELD\_TYPE\_DECIMAL}}:}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa2e0d1fce4ab754ade63ecba603fac18f}{OLAP\_FIELD\_TYPE\_DECIMAL32}}:}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf060d0b24d7ed3c95cc8a74d388008bc}{OLAP\_FIELD\_TYPE\_DECIMAL64}}:}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa85bd756f3b208bdddcf388f42194b5d3}{OLAP\_FIELD\_TYPE\_DECIMAL128I}}:}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf77e056c074df2e92c9aecd97651dff0}{OLAP\_FIELD\_TYPE\_DATETIMEV2}}:\ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ field\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a74bc37758ffb63d86025a0ca596e9039}{precision}}());}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a581f30b54f3ef6173c023f469d7ff225}{frac}}());}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ field;}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{00588\ }
-\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_factory_aeece6778c22be076313a2c96ef6ef377}{create\_by\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\&\ type)\ \{}
-\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\ column(\mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda0985f84a9bee4da098bffd818d9e777e}{OLAP\_FIELD\_AGGREGATION\_NONE}},\ type);}
-\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{create}}(column);}
-\DoxyCodeLine{00592\ \ \ \ \ \}}
-\DoxyCodeLine{00593\ \};}
-\DoxyCodeLine{00594\ }
-\DoxyCodeLine{00595\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ value\ column}}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a6d71c7a4cda55f7fef5ca07603afa3d7}{aggregation}}())\ \{}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda0985f84a9bee4da098bffd818d9e777e}{OLAP\_FIELD\_AGGREGATION\_NONE}}:}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdaccc3179c6c77c4fdc429c92bb8baf71c}{OLAP\_FIELD\_AGGREGATION\_SUM}}:}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda6bd9a4ec0e201b1f39c9bf282d35d54d}{OLAP\_FIELD\_AGGREGATION\_MIN}}:}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdad9afd40001e4cfe19efca321c09e98ad}{OLAP\_FIELD\_AGGREGATION\_MAX}}:}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdab5a676d8e874b488e1f98d076484fd23}{OLAP\_FIELD\_AGGREGATION\_REPLACE}}:}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babdae043c6eda6cf6036ec77f2ef0a9df923}{OLAP\_FIELD\_AGGREGATION\_REPLACE\_IF\_NOT\_NULL}}:}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a29dc1ff17f4954924eab0c091400af77}{type}}())\ \{}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa9617b640db17fdbfdd8fb871e30dd3bd}{OLAP\_FIELD\_TYPE\_CHAR}}:}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_char_field}{CharField}}(column);}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daae6974dbd443985ccd653599ed8101e25}{OLAP\_FIELD\_TYPE\_VARCHAR}}:}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_varchar_field}{VarcharField}}(column);}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa81695ed4681aa3d0f2e70b2634f9f134}{OLAP\_FIELD\_TYPE\_STRING}}:}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_string_field}{StringField}}(column);}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaaaf699d71e805bb4bf1b8b4137eb8d26}{OLAP\_FIELD\_TYPE\_STRUCT}}:\ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_struct_field}{StructField}}(column);}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ column.\mbox{\hyperlink{classdoris_1_1_tablet_column_afd362cd7f66cfbeb9ad46209ece55d08}{get\_subtype\_count}}();\ i++)\ \{}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ sub\_field(}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(i)));}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(sub\_field));}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daad9fc0555ceaf91bfc1814426a02b696b}{OLAP\_FIELD\_TYPE\_ARRAY}}:\ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ item\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_array_field}{ArrayField}}(column);}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(item\_field));}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa8fce738efefcaccb3792e9da8200dc71}{OLAP\_FIELD\_TYPE\_MAP}}:\ \{}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DCHECK(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_afd362cd7f66cfbeb9ad46209ece55d08}{get\_subtype\_count}}()\ ==\ 2);}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ local\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_map_field}{MapField}}(column);}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ key\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(0)));}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_ptr<Field>\ value\_field(\mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{FieldFactory::create}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_acdbfbd631f7e4a9eef2d78a72f77c7b6}{get\_sub\_column}}(1)));}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(key\_field));}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ local-\/>add\_sub\_field(std::move(value\_field));}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ local;}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaa6aaf7cc33de8410cdfb0568a163a429}{OLAP\_FIELD\_TYPE\_DECIMAL}}:}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa2e0d1fce4ab754ade63ecba603fac18f}{OLAP\_FIELD\_TYPE\_DECIMAL32}}:}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf060d0b24d7ed3c95cc8a74d388008bc}{OLAP\_FIELD\_TYPE\_DECIMAL64}}:}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daa85bd756f3b208bdddcf388f42194b5d3}{OLAP\_FIELD\_TYPE\_DECIMAL128I}}:}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[fallthrough]];}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1daaf77e056c074df2e92c9aecd97651dff0}{OLAP\_FIELD\_TYPE\_DATETIMEV2}}:\ \{}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ field\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_ae79b0d60f27963d06f8b452ae04b0286}{set\_precision}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a74bc37758ffb63d86025a0ca596e9039}{precision}}());}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ field-\/>\mbox{\hyperlink{classdoris_1_1_field_aa9b105910d8ebe44fd303a3b3b2356bd}{set\_scale}}(column.\mbox{\hyperlink{classdoris_1_1_tablet_column_a581f30b54f3ef6173c023f469d7ff225}{frac}}());}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ field;}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}(column);}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda8defb577579d9f1976b77922c8db0b62}{OLAP\_FIELD\_AGGREGATION\_HLL\_UNION}}:}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_hll_agg_field}{HllAggField}}(column);}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda58dee833d7eac361f9b9e10e216d95dd}{OLAP\_FIELD\_AGGREGATION\_BITMAP\_UNION}}:}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_bitmap_agg_field}{BitmapAggField}}(column);}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda9018b902483e33826598b48da1497606}{OLAP\_FIELD\_AGGREGATION\_QUANTILE\_UNION}}:}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classdoris_1_1_quantile_state_agg_field}{QuantileStateAggField}}(column);}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda1dd31faa5c74552a303c20cbc323c4b3}{OLAP\_FIELD\_AGGREGATION\_UNKNOWN}}:}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}WOW!\ value\ column\ agg\ type\ is\ unknown"{}};}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ \textcolor{stringliteral}{"{}WOW!\ value\ column\ no\ agg\ type"{}};}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00657\ \ \ \ \ \}}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_field}{Field}}*\ \mbox{\hyperlink{classdoris_1_1_field_factory_aeece6778c22be076313a2c96ef6ef377}{create\_by\_type}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_aa01498a3ceb2fa74dc9536c16caef1da}{FieldType}}\&\ type)\ \{}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_tablet_column}{TabletColumn}}\ column(\mbox{\hyperlink{namespacedoris_aecc8ed602aa2086ab58fae12e354babda0985f84a9bee4da098bffd818d9e777e}{OLAP\_FIELD\_AGGREGATION\_NONE}},\ type);}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_field_factory_a1e2af113b32961ac6eaef4bf29f2b2af}{create}}(column);}
+\DoxyCodeLine{00662\ \ \ \ \ \}}
+\DoxyCodeLine{00663\ \};}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

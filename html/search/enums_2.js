@@ -11,6 +11,5 @@ var searchData=
   ['compresstype_8',['CompressType',['../d6/d94/namespacedoris.html#a7beee662f7aa2feef6f37f7686e0105d',1,'doris']]],
   ['configactiontype_9',['ConfigActionType',['../d6/d94/namespacedoris.html#a4cdf3924b6d57e1826ff537bcc437b9e',1,'doris']]],
   ['counter_10',['Counter',['../d6/d2f/classdoris_1_1_perf_counters.html#a21825f37e76fb1b4cf8d02dd17f0cba8',1,'doris::PerfCounters']]],
-  ['createflags_11',['CreateFlags',['../d6/d7f/classdoris_1_1_thread.html#a0a414920fb12316586d248c1ad2415ea',1,'doris::Thread']]],
-  ['createfrompocotag_12',['CreateFromPocoTag',['../d1/d49/classdoris_1_1vectorized_1_1_exception.html#ab8307e85c4d750d399f11b4d0f469175',1,'doris::vectorized::Exception']]]
+  ['createflags_11',['CreateFlags',['../d6/d7f/classdoris_1_1_thread.html#a0a414920fb12316586d248c1ad2415ea',1,'doris::Thread']]]
 ];

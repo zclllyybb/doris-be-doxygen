@@ -1,5 +1,5 @@
 \hypertarget{allocator_8h_source}{}\doxysection{allocator.\+h}
-\label{allocator_8h_source}\index{/Users/dabowang/be\_all/vec/common/allocator.h@{/Users/dabowang/be\_all/vec/common/allocator.h}}
+\label{allocator_8h_source}\index{/Users/dabowang/doris/be/src/vec/common/allocator.h@{/Users/dabowang/doris/be/src/vec/common/allocator.h}}
 \mbox{\hyperlink{allocator_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -29,266 +29,303 @@
 \DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <fmt/format.h>}}
 \DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <string.h>}}
 \DoxyCodeLine{00027\ }
-\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <exception>}}
-\DoxyCodeLine{00029\ }
-\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{common_2config_8h}{common/config.h}}"{}}}
-\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
-\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{chunk_8h}{runtime/memory/chunk.h}}"{}}}
-\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{chunk__allocator_8h}{runtime/memory/chunk\_allocator.h}}"{}}}
-\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__context_8h}{runtime/thread\_context.h}}"{}}}
-\DoxyCodeLine{00035\ }
-\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#ifdef\ NDEBUG}}
-\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ ALLOCATOR\_ASLR\ 0}}
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ ALLOCATOR\_ASLR\ 1}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#if\ !defined(\_\_APPLE\_\_)\ \&\&\ !defined(\_\_FreeBSD\_\_)}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <malloc.h>}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#define\ \_DARWIN\_C\_SOURCE}}
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{common_2config_8h}{common/config.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{status_8h}{common/status.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{chunk_8h}{runtime/memory/chunk.h}}"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{chunk__allocator_8h}{runtime/memory/chunk\_allocator.h}}"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__context_8h}{runtime/thread\_context.h}}"{}}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#ifdef\ NDEBUG}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#define\ ALLOCATOR\_ASLR\ 0}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ ALLOCATOR\_ASLR\ 1}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#if\ !defined(\_\_APPLE\_\_)\ \&\&\ !defined(\_\_FreeBSD\_\_)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <malloc.h>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ \_DARWIN\_C\_SOURCE}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <sys/mman.h>}}
 \DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <sys/mman.h>}}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
-\DoxyCodeLine{00052\ }
-\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler__util_8h}{common/compiler\_util.h}}"{}}}
-\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#ifdef\ THREAD\_SANITIZER}}
-\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#define\ DISABLE\_MREMAP\ 1}}
-\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{allocator__fwd_8h}{vec/common/allocator\_fwd.h}}"{}}}
-\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{vec_2common_2exception_8h}{vec/common/exception.h}}"{}}}
-\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mremap_8h}{vec/common/mremap.h}}"{}}}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#ifndef\ MAP\_ANONYMOUS}}
-\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#define\ MAP\_ANONYMOUS\ MAP\_ANON}}
-\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#ifdef\ NDEBUG}}
-\DoxyCodeLine{00081\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ =\ 64\ *\ (1ULL\ <<\ 20);}
-\DoxyCodeLine{00091\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ =\ 4096;}
-\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00098\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ =\ 4096;}
-\DoxyCodeLine{00099\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ =\ 1024;}
-\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00101\ }
-\DoxyCodeLine{00102\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_ad24280b750e61c20dc60d3a7bfc65e80}{MMAP\_MIN\_ALIGNMENT}}\ =\ 4096;}
-\DoxyCodeLine{00103\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}}\ =\ 8;}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#define\ RETURN\_BAD\_ALLOC(err)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ err;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (!doris::enable\_thread\_catch\_bad\_alloc)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00109\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::MemTrackerLimiter::print\_log\_process\_usage(err);\ \(\backslash\)}}
-\DoxyCodeLine{00110\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ throw\ std::bad\_alloc\ \{\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00111\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#define\ RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH(err)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ err;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00116\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (!doris::enable\_thread\_catch\_bad\_alloc)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00117\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::MemTrackerLimiter::print\_log\_process\_usage(err);\ \(\backslash\)}}
-\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ throw\ std::bad\_alloc\ \{\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00121\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00133\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ clear\_memory\_,\ \textcolor{keywordtype}{bool}\ mmap\_populate>}
-\DoxyCodeLine{00134\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_allocator}{Allocator}}\ \{}
-\DoxyCodeLine{00135\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a35677db523083f8c3a508d75cd9bb77b}{alloc}}(\textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ alignment\ =\ 0)\ \{}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ buf;}
-\DoxyCodeLine{00139\ }
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (alignment\ >\ \mbox{\hyperlink{allocator_8h_ad24280b750e61c20dc60d3a7bfc65e80}{MMAP\_MIN\_ALIGNMENT}})}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ \mbox{\hyperlink{classdoris_1_1vectorized_1_1_exception}{doris::vectorized::Exception}}(}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt::format(}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Too\ large\ alignment\ \{\}:\ more\ than\ page\ size\ when\ allocating\ \{\}."{}},}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ alignment,\ size),}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::TStatusCode::VEC\_BAD\_ARGUMENTS);}
-\DoxyCodeLine{00147\ }
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{thread__context_8h_a553de69356cf3392128a14ec0f8a51f9}{TRY\_CONSUME\_THREAD\_MEM\_TRACKER}}(size))\ \{}
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_ad4a9a2b0e747054f4c561af9d2726a04}{RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH}}(}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt::format(\textcolor{stringliteral}{"{}Allocator\ Pre\ Catch:\ Cannot\ mmap\ \{\}."{}},\ size));}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ memory\ exceeds\ the\ limit,\ consume\ mem\ tracker\ fails,\ but\ there\ is\ no\ external\ catch\ bad\_alloc,}}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ alloc\ will\ continue\ to\ execute,\ so\ the\ consume\ memtracker\ is\ forced.}}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a0cd132682c29b6fc970527e159bbb661}{CONSUME\_THREAD\_MEM\_TRACKER}}(size);}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ mmap(\mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}(),\ size,\ PROT\_READ\ |\ PROT\_WRITE,\ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}},\ -\/1,\ 0);}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MAP\_FAILED\ ==\ buf)\ \{}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(size);}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ mmap\ \{\}."{}},\ size));}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!doris::config::disable\_chunk\_allocator\_in\_vec\ \&\&\ size\ >=\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}})\ \{}
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_chunk}{doris::Chunk}}\ chunk;}
-\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{doris::ChunkAllocator::instance}}()-\/>allocate\_align(size,\ \&chunk))\ \{}
-\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ allocate\ chunk\ \{\}."{}},\ size));}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler__util_8h}{common/compiler\_util.h}}"{}}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#ifdef\ THREAD\_SANITIZER}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#define\ DISABLE\_MREMAP\ 1}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exception_8h}{common/exception.h}}"{}}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{allocator__fwd_8h}{vec/common/allocator\_fwd.h}}"{}}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mremap_8h}{vec/common/mremap.h}}"{}}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#ifndef\ MAP\_ANONYMOUS}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#define\ MAP\_ANONYMOUS\ MAP\_ANON}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#ifdef\ NDEBUG}}
+\DoxyCodeLine{00079\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ =\ 64\ *\ (1ULL\ <<\ 20);}
+\DoxyCodeLine{00089\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ =\ 4096;}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00096\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ =\ 4096;}
+\DoxyCodeLine{00097\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ =\ 1024;}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_ad24280b750e61c20dc60d3a7bfc65e80}{MMAP\_MIN\_ALIGNMENT}}\ =\ 4096;}
+\DoxyCodeLine{00101\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}}\ =\ 8;}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#define\ RETURN\_BAD\_ALLOC(err)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ err;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (!doris::enable\_thread\_catch\_bad\_alloc)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::MemTrackerLimiter::print\_log\_process\_usage(err);\ \(\backslash\)}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ throw\ std::bad\_alloc\ \{\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#define\ RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH(err)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ err;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (!doris::enable\_thread\_catch\_bad\_alloc)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ doris::MemTrackerLimiter::print\_log\_process\_usage(err);\ \(\backslash\)}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ throw\ std::bad\_alloc\ \{\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \ \ \}\ while\ (0)}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ clear\_memory\_,\ \textcolor{keywordtype}{bool}\ mmap\_populate>}
+\DoxyCodeLine{00132\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_allocator}{Allocator}}\ \{}
+\DoxyCodeLine{00133\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_allocator_a8e08404b2e8bf6a8e9720622eec19e64}{sys\_memory\_check}}(\textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_a200fbcfa5718b35dcb5c42834653cfcb}{doris::MemTrackerLimiter::sys\_mem\_exceed\_limit\_check}}(size))\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{doris::thread\_context}}()-\/>thread\_mem\_tracker\_mgr-\/>is\_attach\_query()\ \&\&}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{doris::thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>wait\_gc())\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ wait\_milliseconds\ =\ doris::config::thread\_wait\_gc\_max\_milliseconds;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (wait\_milliseconds\ >\ 0)\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::this\_thread::sleep\_for(std::chrono::milliseconds(100));}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_a200fbcfa5718b35dcb5c42834653cfcb}{doris::MemTrackerLimiter::sys\_mem\_exceed\_limit\_check}}(size))\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_info_a50f706199da2f430815619f5fbab41b1}{doris::MemInfo::refresh\_interval\_memory\_growth}}\ +=\ size;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wait\_milliseconds\ -\/=\ 100;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (wait\_milliseconds\ <=\ 0)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ err\_msg\ =\ fmt::format(}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Allocator\ Sys\ Memory\ Check\ Failed\ In\ Query/Load:\ Cannot\ alloc\ \{\},\ "{}}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\{\}."{}},}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_aa01fe0798862ed910892f328d56d0b83}{doris::MemTrackerLimiter::process\_limit\_exceeded\_errmsg\_str}}(size));}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{doris::thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>disable\_wait\_gc();}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespacedoris_a21a47b46c497d4e73372a36a77b712e3}{doris::enable\_thread\_catch\_bad\_alloc}})\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_aac6d54871694470911d08aaf876eccf3}{doris::thread\_context}}()-\/>\mbox{\hyperlink{classdoris_1_1_thread_context_a6af9b4dbb39c51c1c34464af34231b6c}{thread\_mem\_tracker\_mgr}}-\/>cancel\_fragment(err\_msg);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ err\_msg;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_alloc\ \{\};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacedoris_a21a47b46c497d4e73372a36a77b712e3}{doris::enable\_thread\_catch\_bad\_alloc}})\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ fmt::format(}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Allocator\ Sys\ Memory\ Check\ Failed:\ Cannot\ alloc\ \{\},\ \{\}."{}},\ size,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_aa01fe0798862ed910892f328d56d0b83}{doris::MemTrackerLimiter::process\_limit\_exceeded\_errmsg\_str}}(size));}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_alloc\ \{\};}
 \DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ chunk.\mbox{\hyperlink{structdoris_1_1_chunk_abe222f6d3581e7920dcad5306cc906a8}{data}};}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})\ memset(buf,\ 0,\ chunk.\mbox{\hyperlink{structdoris_1_1_chunk_a854352f53b148adc24983a58a1866d66}{size}});}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (alignment\ <=\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}})\ \{}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_a3eac804d3f29b9a9531ff17544ffe3a6}{::calloc}}(size,\ 1);}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{::malloc}}(size);}
-\DoxyCodeLine{00175\ }
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{nullptr}\ ==\ buf)\ \{}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ malloc\ \{\}."{}},\ size));}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_ad58e19194f27b04ec472424be6304197}{posix\_memalign}}(\&buf,\ alignment,\ size);}
-\DoxyCodeLine{00182\ }
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ res)\ \{}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt::format(\textcolor{stringliteral}{"{}Cannot\ allocate\ memory\ (posix\_memalign)\ \{\}."{}},\ size));}
-\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00187\ }
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})\ memset(buf,\ 0,\ size);}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ buf;}
-\DoxyCodeLine{00192\ \ \ \ \ \}}
-\DoxyCodeLine{00193\ }
-\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{free}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ munmap(buf,\ size))\ \{}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ err\ =\ fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ munmap\ \{\}."{}},\ size);}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err;}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespacedoris_a21a47b46c497d4e73372a36a77b712e3}{doris::enable\_thread\_catch\_bad\_alloc}})}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_a5cdf8645265cb95dd8d7263a3a75959a}{doris::MemTrackerLimiter::print\_log\_process\_usage}}(err);}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_alloc\ \{\};}
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(size);}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!doris::config::disable\_chunk\_allocator\_in\_vec\ \&\&\ size\ >=\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((size\ \&\ (size\ -\/\ 1))\ ==\ 0))\ \{}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ power-\/of-\/two\ length\ are\ added\ to\ ChunkAllocator}}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{doris::ChunkAllocator::instance}}()-\/>\mbox{\hyperlink{classdoris_1_1_chunk_allocator_afdab6f09e1609ccfba66a6ff77a73301}{free}}((uint8\_t*)buf,\ size);}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{::free}}(buf);}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00213\ \ \ \ \ \}}
-\DoxyCodeLine{00214\ }
-\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_af48b30af68c846da954ef85a876ac5a9}{realloc}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ old\_size,\ \textcolor{keywordtype}{size\_t}\ new\_size,\ \textcolor{keywordtype}{size\_t}\ alignment\ =\ 0)\ \{}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_size\ ==\ new\_size)\ \{}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (old\_size\ <\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&\ new\_size\ <\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ alignment\ <=\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}})\ \{}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ \mbox{\hyperlink{class_allocator_af48b30af68c846da954ef85a876ac5a9}{::realloc}}(buf,\ new\_size);}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{nullptr}\ ==\ new\_buf)\ \{}
-\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ realloc\ from\ \{\}\ to\ \{\}."{}},\ old\_size,}
-\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_size));}
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00231\ }
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ new\_buf;}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ >\ old\_size)}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memset(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(buf)\ +\ old\_size,\ 0,\ new\_size\ -\/\ old\_size);}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (old\_size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ \&\&\ new\_size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{thread__context_8h_a553de69356cf3392128a14ec0f8a51f9}{TRY\_CONSUME\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size))\ \{}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_ad4a9a2b0e747054f4c561af9d2726a04}{RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH}}(fmt::format(}
-\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Allocator\ Pre\ Catch:\ Cannot\ mremap\ memory\ chunk\ from\ \{\}\ to\ \{\}."{}},\ old\_size,}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_size));}
-\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a0cd132682c29b6fc970527e159bbb661}{CONSUME\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size);}
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ apple\ and\ freebsd\ self-\/implemented\ mremap\ used\ (common/mremap.h)}}
-\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{mremap_8h_a72e6c839c29dad530191299576e07a2e}{clickhouse\_mremap}}(buf,\ old\_size,\ new\_size,\ \mbox{\hyperlink{mremap_8h_a979a9c42ee569172c2017c522c17a0b1}{MREMAP\_MAYMOVE}},\ PROT\_READ\ |\ PROT\_WRITE,}
-\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}},\ -\/1,\ 0);}
-\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MAP\_FAILED\ ==\ buf)\ \{}
-\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size);}
-\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ mremap\ memory\ chunk\ from\ \{\}\ to\ \{\}."{}},}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_size,\ new\_size));}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00255\ }
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (mmap\_populate)\ \{}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MAP\_POPULATE\ seems\ have\ no\ effect\ for\ mremap\ as\ for\ mmap,}}
-\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Clear\ enlarged\ memory\ range\ explicitly\ to\ pre-\/fault\ the\ pages}}
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ >\ old\_size)}
-\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memset(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(buf)\ +\ old\_size,\ 0,\ new\_size\ -\/\ old\_size);}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CHUNK\_THRESHOLD\ <=\ old\_size\ <=\ MMAP\_THRESHOLD\ use\ system\ realloc\ is\ slow,\ use\ ChunkAllocator.}}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Big\ allocs\ that\ requires\ a\ copy.}}
-\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ \mbox{\hyperlink{class_allocator_a35677db523083f8c3a508d75cd9bb77b}{alloc}}(new\_size,\ alignment);}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_buf,\ buf,\ std::min(old\_size,\ new\_size));}
-\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{free}}(buf,\ old\_size);}
-\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ new\_buf;}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00270\ }
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ buf;}
-\DoxyCodeLine{00272\ \ \ \ \ \}}
-\DoxyCodeLine{00273\ }
-\DoxyCodeLine{00274\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_allocator_a60b3b47bca967c70d89d5bda6d5c50c0}{get\_stack\_threshold}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}}\ =\ clear\_memory\_;}
-\DoxyCodeLine{00278\ }
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{comment}{//\ Freshly\ mmapped\ pages\ are\ copy-\/on-\/write\ references\ to\ a\ global\ zero\ page.}}
-\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ On\ the\ first\ write,\ a\ page\ fault\ occurs,\ and\ an\ actual\ writable\ page\ is}}
-\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ allocated.\ If\ we\ are\ going\ to\ use\ this\ memory\ soon,\ such\ as\ when\ resizing}}
-\DoxyCodeLine{00282\ \ \ \ \ \textcolor{comment}{//\ hash\ tables,\ it\ makes\ sense\ to\ pre-\/fault\ the\ pages\ by\ passing}}
-\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ MAP\_POPULATE\ to\ mmap().\ This\ takes\ some\ time,\ but\ should\ be\ faster}}
-\DoxyCodeLine{00284\ \ \ \ \ \textcolor{comment}{//\ overall\ than\ having\ a\ hot\ loop\ interrupted\ by\ page\ faults.}}
-\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ It\ is\ only\ supported\ on\ Linux.}}
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}}\ =\ MAP\_PRIVATE\ |\ \mbox{\hyperlink{allocator_8h_ae4f86bff73414c5fc08c058f957212f0}{MAP\_ANONYMOUS}}}
-\DoxyCodeLine{00287\ \textcolor{preprocessor}{\#if\ defined(OS\_LINUX)}}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ (mmap\_populate\ ?\ MAP\_POPULATE\ :\ 0)}
-\DoxyCodeLine{00289\ \#endif}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a35677db523083f8c3a508d75cd9bb77b}{alloc}}(\textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{size\_t}\ alignment\ =\ 0)\ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a8e08404b2e8bf6a8e9720622eec19e64}{sys\_memory\_check}}(size);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ buf;}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (alignment\ >\ \mbox{\hyperlink{allocator_8h_ad24280b750e61c20dc60d3a7bfc65e80}{MMAP\_MIN\_ALIGNMENT}})}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ \mbox{\hyperlink{classdoris_1_1_exception}{doris::Exception}}(}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ doris::ErrorCode::INVALID\_ARGUMENT,}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Too\ large\ alignment\ \{\}:\ more\ than\ page\ size\ when\ allocating\ \{\}."{}},}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ alignment,\ size);}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{thread__context_8h_a553de69356cf3392128a14ec0f8a51f9}{TRY\_CONSUME\_THREAD\_MEM\_TRACKER}}(size))\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_ad4a9a2b0e747054f4c561af9d2726a04}{RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH}}(}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt::format(\textcolor{stringliteral}{"{}Allocator\ Pre\ Catch:\ Cannot\ mmap\ \{\}."{}},\ size));}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ memory\ exceeds\ the\ limit,\ consume\ mem\ tracker\ fails,\ but\ there\ is\ no\ external\ catch\ bad\_alloc,}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ alloc\ will\ continue\ to\ execute,\ so\ the\ consume\ memtracker\ is\ forced.}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a0cd132682c29b6fc970527e159bbb661}{CONSUME\_THREAD\_MEM\_TRACKER}}(size);}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ mmap(\mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}(),\ size,\ PROT\_READ\ |\ PROT\_WRITE,\ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}},\ -\/1,\ 0);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MAP\_FAILED\ ==\ buf)\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(size);}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ mmap\ \{\}."{}},\ size));}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!doris::config::disable\_chunk\_allocator\_in\_vec\ \&\&\ size\ >=\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}})\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_chunk}{doris::Chunk}}\ chunk;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{doris::ChunkAllocator::instance}}()-\/>allocate\_align(size,\ \&chunk))\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ allocate\ chunk\ \{\}."{}},\ size));}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ chunk.\mbox{\hyperlink{structdoris_1_1_chunk_abe222f6d3581e7920dcad5306cc906a8}{data}};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})\ memset(buf,\ 0,\ chunk.\mbox{\hyperlink{structdoris_1_1_chunk_a854352f53b148adc24983a58a1866d66}{size}});}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (alignment\ <=\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}})\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_a3eac804d3f29b9a9531ff17544ffe3a6}{::calloc}}(size,\ 1);}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_a2e6ceaa596afe51437d06b577da8d4f4}{::malloc}}(size);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{nullptr}\ ==\ buf)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ malloc\ \{\}."{}},\ size));}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ \mbox{\hyperlink{jemalloc__hook_8cpp_ad58e19194f27b04ec472424be6304197}{posix\_memalign}}(\&buf,\ alignment,\ size);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ res)\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt::format(\textcolor{stringliteral}{"{}Cannot\ allocate\ memory\ (posix\_memalign)\ \{\}."{}},\ size));}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})\ memset(buf,\ 0,\ size);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ buf;}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{free}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ munmap(buf,\ size))\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ err\ =\ fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ munmap\ \{\}."{}},\ size);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG(ERROR)\ <<\ err;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespacedoris_a21a47b46c497d4e73372a36a77b712e3}{doris::enable\_thread\_catch\_bad\_alloc}})}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter_a5cdf8645265cb95dd8d7263a3a75959a}{doris::MemTrackerLimiter::print\_log\_process\_usage}}(err);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_alloc\ \{\};}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(size);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!doris::config::disable\_chunk\_allocator\_in\_vec\ \&\&\ size\ >=\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((size\ \&\ (size\ -\/\ 1))\ ==\ 0))\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ power-\/of-\/two\ length\ are\ added\ to\ ChunkAllocator}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_chunk_allocator_a9a9dc08dc3ea9ce6c54cec1361ea7f7c}{doris::ChunkAllocator::instance}}()-\/>\mbox{\hyperlink{classdoris_1_1_chunk_allocator_afdab6f09e1609ccfba66a6ff77a73301}{free}}((uint8\_t*)buf,\ size);}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{::free}}(buf);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_af48b30af68c846da954ef85a876ac5a9}{realloc}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ old\_size,\ \textcolor{keywordtype}{size\_t}\ new\_size,\ \textcolor{keywordtype}{size\_t}\ alignment\ =\ 0)\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_size\ ==\ new\_size)\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (old\_size\ <\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&\ new\_size\ <\ \mbox{\hyperlink{allocator_8h_a6963abeb0ed8cc9e5b71a64d84c61a29}{CHUNK\_THRESHOLD}}\ \&\&}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ alignment\ <=\ \mbox{\hyperlink{allocator_8h_ae60f6e1fe30d304fcc3db0663d50d61d}{MALLOC\_MIN\_ALIGNMENT}})\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a8e08404b2e8bf6a8e9720622eec19e64}{sys\_memory\_check}}(new\_size);}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ \mbox{\hyperlink{class_allocator_af48b30af68c846da954ef85a876ac5a9}{::realloc}}(buf,\ new\_size);}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{nullptr}\ ==\ new\_buf)\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ realloc\ from\ \{\}\ to\ \{\}."{}},\ old\_size,}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_size));}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ new\_buf;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}})}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ >\ old\_size)}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memset(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(buf)\ +\ old\_size,\ 0,\ new\_size\ -\/\ old\_size);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (old\_size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}}\ \&\&\ new\_size\ >=\ \mbox{\hyperlink{allocator_8h_a8f9ff85e04c2b66a9ae72381531a1d3d}{MMAP\_THRESHOLD}})\ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a8e08404b2e8bf6a8e9720622eec19e64}{sys\_memory\_check}}(new\_size);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{thread__context_8h_a553de69356cf3392128a14ec0f8a51f9}{TRY\_CONSUME\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size))\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_ad4a9a2b0e747054f4c561af9d2726a04}{RETURN\_BAD\_ALLOC\_IF\_PRE\_CATCH}}(fmt::format(}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Allocator\ Pre\ Catch:\ Cannot\ mremap\ memory\ chunk\ from\ \{\}\ to\ \{\}."{}},\ old\_size,}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_size));}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_a0cd132682c29b6fc970527e159bbb661}{CONSUME\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ apple\ and\ freebsd\ self-\/implemented\ mremap\ used\ (common/mremap.h)}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ \mbox{\hyperlink{mremap_8h_a72e6c839c29dad530191299576e07a2e}{clickhouse\_mremap}}(buf,\ old\_size,\ new\_size,\ \mbox{\hyperlink{mremap_8h_a979a9c42ee569172c2017c522c17a0b1}{MREMAP\_MAYMOVE}},\ PROT\_READ\ |\ PROT\_WRITE,}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}},\ -\/1,\ 0);}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MAP\_FAILED\ ==\ buf)\ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_aa35459ee502c7520ac13ca43a4a072e8}{RELEASE\_THREAD\_MEM\_TRACKER}}(new\_size\ -\/\ old\_size);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{allocator_8h_a6720c44816a7aac128eded15e6729ceb}{RETURN\_BAD\_ALLOC}}(fmt::format(\textcolor{stringliteral}{"{}Allocator:\ Cannot\ mremap\ memory\ chunk\ from\ \{\}\ to\ \{\}."{}},}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ old\_size,\ new\_size));}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00289\ }
 \DoxyCodeLine{00291\ }
-\DoxyCodeLine{00292\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00293\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}()\ \{}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ reinterpret\_cast<void\ *>(std::uniform\_int\_distribution<intptr\_t>(0x100000000000UL,\ 0x700000000000UL)(thread\_local\_rng));}}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00300\ \ \ \ \ \}}
-\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
-\DoxyCodeLine{00303\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00304\ \};}
-\DoxyCodeLine{00305\ }
-\DoxyCodeLine{00308\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Base,\ \textcolor{keywordtype}{size\_t}\ N,\ \textcolor{keywordtype}{size\_t}\ Alignment>}
-\DoxyCodeLine{00309\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\ :\ \textcolor{keyword}{private}\ Base\ \{}
-\DoxyCodeLine{00310\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keyword}{alignas}(Alignment)\ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}}[\mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}}];}
-\DoxyCodeLine{00312\ }
-\DoxyCodeLine{00313\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00317\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_ae1822af8c87c095c93be0bb9ef8e9c2f}{AllocatorWithStackMemory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00318\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&\ \mbox{\hyperlink{class_allocator_with_stack_memory_af46e0aa11d7e89dcf009280bcb2900e2}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&)\ =\ \textcolor{keyword}{delete};}
-\DoxyCodeLine{00319\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_a2bbc19291e48947d679679145d4421c7}{AllocatorWithStackMemory}}()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00320\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_ac8fc1bae7c79a91a88b9a106e61da9eb}{\string~AllocatorWithStackMemory}}()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00321\ }
-\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_with_stack_memory_a0997a6135a02d99f2efb706b1f654586}{alloc}}(\textcolor{keywordtype}{size\_t}\ size)\ \{}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ <=\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
-\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (Base::clear\_memory)\ memset(\mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}},\ 0,\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
-\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}};}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00327\ }
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Base::alloc(size,\ Alignment);}
-\DoxyCodeLine{00329\ \ \ \ \ \}}
-\DoxyCodeLine{00330\ }
-\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a82e090801fb5ae0c014e85fc401bca47}{free}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ Base::free(buf,\ size);}
-\DoxyCodeLine{00333\ \ \ \ \ \}}
-\DoxyCodeLine{00334\ }
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_with_stack_memory_ae6410ea7c6f87ec7b52bc2cff84d0192}{realloc}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ old\_size,\ \textcolor{keywordtype}{size\_t}\ new\_size)\ \{}
-\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ <=\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \textcolor{keywordflow}{return}\ buf;}
-\DoxyCodeLine{00338\ }
-\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_size\ >\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \textcolor{keywordflow}{return}\ Base::realloc(buf,\ old\_size,\ new\_size,\ Alignment);}
-\DoxyCodeLine{00341\ }
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ Base::alloc(new\_size,\ Alignment);}
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_buf,\ buf,\ old\_size);}
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_buf;}
-\DoxyCodeLine{00346\ \ \ \ \ \}}
-\DoxyCodeLine{00347\ }
-\DoxyCodeLine{00348\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a60b3b47bca967c70d89d5bda6d5c50c0}{get\_stack\_threshold}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \}}
-\DoxyCodeLine{00350\ \};}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (mmap\_populate)\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MAP\_POPULATE\ seems\ have\ no\ effect\ for\ mremap\ as\ for\ mmap,}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Clear\ enlarged\ memory\ range\ explicitly\ to\ pre-\/fault\ the\ pages}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ >\ old\_size)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memset(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(buf)\ +\ old\_size,\ 0,\ new\_size\ -\/\ old\_size);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a8e08404b2e8bf6a8e9720622eec19e64}{sys\_memory\_check}}(new\_size);}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CHUNK\_THRESHOLD\ <=\ old\_size\ <=\ MMAP\_THRESHOLD\ use\ system\ realloc\ is\ slow,\ use\ ChunkAllocator.}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Big\ allocs\ that\ requires\ a\ copy.}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ \mbox{\hyperlink{class_allocator_a35677db523083f8c3a508d75cd9bb77b}{alloc}}(new\_size,\ alignment);}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_buf,\ buf,\ std::min(old\_size,\ new\_size));}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_allocator_a82e090801fb5ae0c014e85fc401bca47}{free}}(buf,\ old\_size);}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ buf\ =\ new\_buf;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ buf;}
+\DoxyCodeLine{00309\ \ \ \ \ \}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_allocator_a60b3b47bca967c70d89d5bda6d5c50c0}{get\_stack\_threshold}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_allocator_aef026d27e574609185dcf1d047e241d6}{clear\_memory}}\ =\ clear\_memory\_;}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ Freshly\ mmapped\ pages\ are\ copy-\/on-\/write\ references\ to\ a\ global\ zero\ page.}}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{comment}{//\ On\ the\ first\ write,\ a\ page\ fault\ occurs,\ and\ an\ actual\ writable\ page\ is}}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{comment}{//\ allocated.\ If\ we\ are\ going\ to\ use\ this\ memory\ soon,\ such\ as\ when\ resizing}}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{//\ hash\ tables,\ it\ makes\ sense\ to\ pre-\/fault\ the\ pages\ by\ passing}}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{comment}{//\ MAP\_POPULATE\ to\ mmap().\ This\ takes\ some\ time,\ but\ should\ be\ faster}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{comment}{//\ overall\ than\ having\ a\ hot\ loop\ interrupted\ by\ page\ faults.}}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{//\ It\ is\ only\ supported\ on\ Linux.}}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_allocator_a4823c06be87da26bc7f8fd6573d7efb8}{mmap\_flags}}\ =\ MAP\_PRIVATE\ |\ \mbox{\hyperlink{allocator_8h_ae4f86bff73414c5fc08c058f957212f0}{MAP\_ANONYMOUS}}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\#if\ defined(OS\_LINUX)}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ (mmap\_populate\ ?\ MAP\_POPULATE\ :\ 0)}
+\DoxyCodeLine{00326\ \#endif}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}()\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ reinterpret\_cast<void\ *>(std::uniform\_int\_distribution<intptr\_t>(0x100000000000UL,\ 0x700000000000UL)(thread\_local\_rng));}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_a2e4223e7158b40f4e4c5cc08216f0a56}{get\_mmap\_hint}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00341\ \};}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00345\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Base,\ \textcolor{keywordtype}{size\_t}\ N,\ \textcolor{keywordtype}{size\_t}\ Alignment>}
+\DoxyCodeLine{00346\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\ :\ \textcolor{keyword}{private}\ Base\ \{}
+\DoxyCodeLine{00347\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keyword}{alignas}(Alignment)\ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}}[\mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}}];}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00354\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_ae1822af8c87c095c93be0bb9ef8e9c2f}{AllocatorWithStackMemory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00355\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&\ \mbox{\hyperlink{class_allocator_with_stack_memory_af46e0aa11d7e89dcf009280bcb2900e2}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_allocator_with_stack_memory}{AllocatorWithStackMemory}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00356\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_a2bbc19291e48947d679679145d4421c7}{AllocatorWithStackMemory}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00357\ \ \ \ \ \mbox{\hyperlink{class_allocator_with_stack_memory_ac8fc1bae7c79a91a88b9a106e61da9eb}{\string~AllocatorWithStackMemory}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_with_stack_memory_a0997a6135a02d99f2efb706b1f654586}{alloc}}(\textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ <=\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (Base::clear\_memory)\ memset(\mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}},\ 0,\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a778202d7708a646fc66d7b0c71de0884}{stack\_memory}};}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Base::alloc(size,\ Alignment);}
+\DoxyCodeLine{00366\ \ \ \ \ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a82e090801fb5ae0c014e85fc401bca47}{free}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ size)\ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ >\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ Base::free(buf,\ size);}
+\DoxyCodeLine{00370\ \ \ \ \ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{class_allocator_with_stack_memory_ae6410ea7c6f87ec7b52bc2cff84d0192}{realloc}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ old\_size,\ \textcolor{keywordtype}{size\_t}\ new\_size)\ \{}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_size\ <=\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \textcolor{keywordflow}{return}\ buf;}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_size\ >\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \textcolor{keywordflow}{return}\ Base::realloc(buf,\ old\_size,\ new\_size,\ Alignment);}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ new\_buf\ =\ Base::alloc(new\_size,\ Alignment);}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(new\_buf,\ buf,\ old\_size);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_buf;}
+\DoxyCodeLine{00383\ \ \ \ \ \}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{class_allocator_with_stack_memory_a60b3b47bca967c70d89d5bda6d5c50c0}{get\_stack\_threshold}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{exp_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \}}
+\DoxyCodeLine{00387\ \};}
 
 \end{DoxyCode}

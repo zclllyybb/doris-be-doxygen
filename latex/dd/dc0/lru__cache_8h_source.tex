@@ -1,5 +1,5 @@
 \hypertarget{lru__cache_8h_source}{}\doxysection{lru\+\_\+cache.\+h}
-\label{lru__cache_8h_source}\index{/Users/dabowang/be\_all/olap/lru\_cache.h@{/Users/dabowang/be\_all/olap/lru\_cache.h}}
+\label{lru__cache_8h_source}\index{/Users/dabowang/doris/be/src/olap/lru\_cache.h@{/Users/dabowang/doris/be/src/olap/lru\_cache.h}}
 \mbox{\hyperlink{lru__cache_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2011\ The\ LevelDB\ Authors.\ All\ rights\ reserved.}}
@@ -21,414 +21,432 @@
 \DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{olap_2olap__common_8h}{olap/olap\_common.h}}"{}}}
 \DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mem__tracker_8h}{runtime/memory/mem\_tracker.h}}"{}}}
 \DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{thread__context_8h}{runtime/thread\_context.h}}"{}}}
-\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{metrics_8h}{util/metrics.h}}"{}}}
-\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
-\DoxyCodeLine{00022\ }
-\DoxyCodeLine{00023\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{doris__metrics_8h}{util/doris\_metrics.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{lock_8h}{util/lock.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{metrics_8h}{util/metrics.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{slice_8h}{util/slice.h}}"{}}}
 \DoxyCodeLine{00024\ }
-\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ OLAP\_CACHE\_STRING\_TO\_BUF(cur,\ str,\ r\_len)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00027\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (r\_len\ >\ str.size())\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ memcpy(cur,\ str.c\_str(),\ str.size());\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ r\_len\ -\/=\ str.size();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ cur\ +=\ str.size();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ "{}construct\ cache\ key\ buf\ not\ enough."{}};\ \(\backslash\)}
-\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ return\ CacheKey(nullptr,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{00035\ \ \ \ \ \}\ while\ (0)}
-\DoxyCodeLine{00036\ }
-\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ OLAP\_CACHE\_NUMERIC\_TO\_BUF(cur,\ numeric,\ r\_len)\ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (r\_len\ >\ sizeof(numeric))\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ memcpy(cur,\ \&numeric,\ sizeof(numeric));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ r\_len\ -\/=\ sizeof(numeric);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ cur\ +=\ sizeof(numeric);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ "{}construct\ cache\ key\ buf\ not\ enough."{}};\ \(\backslash\)}
-\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ return\ CacheKey(nullptr,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{00047\ \ \ \ \ \}\ while\ (0)}
-\DoxyCodeLine{00048\ }
-\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }Cache;}
-\DoxyCodeLine{00050\ \textcolor{keyword}{class\ }CacheKey;}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ \{}
-\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a4aa71180778b711338785695df5d7c52}{SIZE}},\ \ \textcolor{comment}{//\ The\ capacity\ of\ cache\ is\ based\ on\ the\ size\ of\ cache\ entry.}}
-\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a12a90dfe20486bbe3e075afcd19ef2d0}{NUMBER}}\ \textcolor{comment}{//\ The\ capacity\ of\ cache\ is\ based\ on\ the\ number\ of\ cache\ entry.}}
-\DoxyCodeLine{00055\ \};}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \textcolor{comment}{//\ Create\ a\ new\ cache\ with\ a\ specified\ name\ and\ capacity.}}
-\DoxyCodeLine{00058\ \textcolor{comment}{//\ This\ implementation\ of\ Cache\ uses\ a\ least-\/recently-\/used\ eviction\ policy.}}
-\DoxyCodeLine{00059\ \textcolor{keyword}{extern}\ Cache*\ \mbox{\hyperlink{namespacedoris_a62b6fa8336b62746fe12620c18b8742b}{new\_lru\_cache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ capacity,}
-\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type\ =\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a4aa71180778b711338785695df5d7c52}{LRUCacheType::SIZE}},\ uint32\_t\ num\_shards\ =\ 16);}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\ \{}
-\DoxyCodeLine{00063\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_aa4a7e0903b99b59bbc6826c07d8d7f9d}{CacheKey}}()\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(nullptr),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(0)\ \{\}}
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ d[0,n-\/1].}}
-\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a14b0940b1452e01555790d2d841653bf}{CacheKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ d,\ \textcolor{keywordtype}{size\_t}\ n)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(d),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(n)\ \{\}}
-\DoxyCodeLine{00067\ }
-\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ the\ contents\ of\ "{}s"{}}}
-\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ab9f7dbfd58df6ce1c949fda9463b1c10}{CacheKey}}(\textcolor{keyword}{const}\ std::string\&\ s)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(s.\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}()),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(s.\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ \{\}}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ s[0,strlen(s)-\/1]}}
-\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ace6b096facbd1856ea784f971c93e1fa}{CacheKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(s),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(strlen(s))\ \{\}}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a578a6e4ae76c2fde425b27b2c7ea686f}{\string~CacheKey}}()\ \{\}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ OLAP\_CACHE\_STRING\_TO\_BUF(cur,\ str,\ r\_len)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (r\_len\ >\ str.size())\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ memcpy(cur,\ str.c\_str(),\ str.size());\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ r\_len\ -\/=\ str.size();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ cur\ +=\ str.size();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ "{}construct\ cache\ key\ buf\ not\ enough."{}};\ \(\backslash\)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ return\ CacheKey(nullptr,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00037\ \ \ \ \ \}\ while\ (0)}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ OLAP\_CACHE\_NUMERIC\_TO\_BUF(cur,\ numeric,\ r\_len)\ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ if\ (r\_len\ >\ sizeof(numeric))\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ memcpy(cur,\ \&numeric,\ sizeof(numeric));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ r\_len\ -\/=\ sizeof(numeric);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ cur\ +=\ sizeof(numeric);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \}\ else\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ LOG(WARNING)\ <<\ "{}construct\ cache\ key\ buf\ not\ enough."{}};\ \(\backslash\)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ return\ CacheKey(nullptr,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{00049\ \ \ \ \ \}\ while\ (0)}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }Cache;}
+\DoxyCodeLine{00052\ \textcolor{keyword}{class\ }CacheKey;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a4aa71180778b711338785695df5d7c52}{SIZE}},\ \ \textcolor{comment}{//\ The\ capacity\ of\ cache\ is\ based\ on\ the\ size\ of\ cache\ entry.}}
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a12a90dfe20486bbe3e075afcd19ef2d0}{NUMBER}}\ \textcolor{comment}{//\ The\ capacity\ of\ cache\ is\ based\ on\ the\ number\ of\ cache\ entry.}}
+\DoxyCodeLine{00057\ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ Create\ a\ new\ cache\ with\ a\ specified\ name\ and\ capacity.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ This\ implementation\ of\ Cache\ uses\ a\ least-\/recently-\/used\ eviction\ policy.}}
+\DoxyCodeLine{00061\ \textcolor{keyword}{extern}\ Cache*\ \mbox{\hyperlink{namespacedoris_a62b6fa8336b62746fe12620c18b8742b}{new\_lru\_cache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ capacity,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type\ =\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954a4aa71180778b711338785695df5d7c52}{LRUCacheType::SIZE}},\ uint32\_t\ num\_shards\ =\ 16);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\ \{}
+\DoxyCodeLine{00065\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_aa4a7e0903b99b59bbc6826c07d8d7f9d}{CacheKey}}()\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(nullptr),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(0)\ \{\}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ d[0,n-\/1].}}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a14b0940b1452e01555790d2d841653bf}{CacheKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ d,\ \textcolor{keywordtype}{size\_t}\ n)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(d),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(n)\ \{\}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ the\ contents\ of\ "{}s"{}}}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ab9f7dbfd58df6ce1c949fda9463b1c10}{CacheKey}}(\textcolor{keyword}{const}\ std::string\&\ s)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(s.\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}()),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(s.\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ \{\}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ slice\ that\ refers\ to\ s[0,strlen(s)-\/1]}}
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ace6b096facbd1856ea784f971c93e1fa}{CacheKey}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s)\ :\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}(s),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}(strlen(s))\ \{\}}
 \DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ pointer\ to\ the\ beginning\ of\ the\ referenced\ data}}
-\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}};\ \}}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ length\ (in\ bytes)\ of\ the\ referenced\ data}}
-\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};\ \}}
-\DoxyCodeLine{00081\ }
-\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ the\ length\ of\ the\ referenced\ data\ is\ zero}}
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a644718bb2fb240de962dc3c9a1fdf0dc}{empty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ ==\ 0;\ \}}
-\DoxyCodeLine{00084\ }
-\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ ith\ byte\ in\ the\ referenced\ data.}}
-\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ n\ <\ size()}}
-\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ac1a0dc45505ee062a1d5527af7981ac5}{operator[]}}(\textcolor{keywordtype}{size\_t}\ n)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ assert(n\ <\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}());}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}[n];}
-\DoxyCodeLine{00090\ \ \ \ \ \}}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ Change\ this\ slice\ to\ refer\ to\ an\ empty\ array}}
-\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ac8bb3912a3ce86b15842e79d0b421204}{clear}}()\ \{}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ =\ 0;}
-\DoxyCodeLine{00096\ \ \ \ \ \}}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Drop\ the\ first\ "{}n"{}\ bytes\ from\ this\ slice.}}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ad51651afef0ae59bf122b1cd9df2facb}{remove\_prefix}}(\textcolor{keywordtype}{size\_t}\ n)\ \{}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ assert(n\ <=\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}());}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}\ +=\ n;}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ -\/=\ n;}
-\DoxyCodeLine{00103\ \ \ \ \ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ string\ that\ contains\ the\ copy\ of\ the\ referenced\ data.}}
-\DoxyCodeLine{00106\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_cache_key_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ std::string(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}});\ \}}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a4eeac1fd5b41a16678f29b6b2a6a150b}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\ ==\ other.\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ \&\&\ (memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}(),\ other.\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}(),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ ==\ 0));}
-\DoxyCodeLine{00110\ \ \ \ \ \}}
-\DoxyCodeLine{00111\ }
-\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ad08a86a2badc47e3e453b48dfe0a1bc8}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a578a6e4ae76c2fde425b27b2c7ea686f}{\string~CacheKey}}()\ \{\}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ pointer\ to\ the\ beginning\ of\ the\ referenced\ data}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}};\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ length\ (in\ bytes)\ of\ the\ referenced\ data}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ the\ length\ of\ the\ referenced\ data\ is\ zero}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a644718bb2fb240de962dc3c9a1fdf0dc}{empty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ ==\ 0;\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ ith\ byte\ in\ the\ referenced\ data.}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ n\ <\ size()}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ac1a0dc45505ee062a1d5527af7981ac5}{operator[]}}(\textcolor{keywordtype}{size\_t}\ n)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ assert(n\ <\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}());}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}[n];}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Change\ this\ slice\ to\ refer\ to\ an\ empty\ array}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ac8bb3912a3ce86b15842e79d0b421204}{clear}}()\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ =\ 0;}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ Drop\ the\ first\ "{}n"{}\ bytes\ from\ this\ slice.}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ad51651afef0ae59bf122b1cd9df2facb}{remove\_prefix}}(\textcolor{keywordtype}{size\_t}\ n)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ assert(n\ <=\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}());}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}}\ +=\ n;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ -\/=\ n;}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ string\ that\ contains\ the\ copy\ of\ the\ referenced\ data.}}
+\DoxyCodeLine{00108\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_cache_key_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ std::string(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}});\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a4eeac1fd5b41a16678f29b6b2a6a150b}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}()\ ==\ other.\mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ \&\&\ (memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}(),\ other.\mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}}(),\ \mbox{\hyperlink{classdoris_1_1_cache_key_a259cb5a711406a8c3e5d937eb9350cca}{size}}())\ ==\ 0));}
+\DoxyCodeLine{00112\ \ \ \ \ \}}
 \DoxyCodeLine{00113\ }
-\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a9fb838ac7eb3bab194528e9eb371644d}{compare}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ b)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ min\_len\ =\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ <\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ ?\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ :\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ min\_len);}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ <\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \{}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ -\/1;}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ >\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \{}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ +1;}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
-\DoxyCodeLine{00125\ \ \ \ \ \}}
-\DoxyCodeLine{00126\ }
-\DoxyCodeLine{00127\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_cache_key_acb03dc3faa34ae8e7b0497de5e3048c9}{hash}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}},\ \textcolor{keywordtype}{size\_t}\ n,\ uint32\_t\ seed)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_ad08a86a2badc47e3e453b48dfe0a1bc8}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a9fb838ac7eb3bab194528e9eb371644d}{compare}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ b)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ min\_len\ =\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ <\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ ?\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ :\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ min\_len);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ <\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ -\/1;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ >\ b.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ +1;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00127\ \ \ \ \ \}}
 \DoxyCodeLine{00128\ }
-\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ "{}x"{}\ is\ a\ prefix\ of\ "{}*this"{}}}
-\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a087a995480b6a64b1e9064b2f6ab8a2f}{starts\_with}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ x)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ >=\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \&\&\ (memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ ==\ 0));}
-\DoxyCodeLine{00132\ \ \ \ \ \}}
-\DoxyCodeLine{00133\ }
-\DoxyCodeLine{00134\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00135\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_cache_key_a63dca305a312a7974239d8f59338d4c3}{\_decode\_fixed32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ ptr)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ the\ raw\ bytes}}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ uint32\_t\ result;}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&result,\ ptr,\ \textcolor{keyword}{sizeof}(result));\ \textcolor{comment}{//\ gcc\ optimizes\ this\ to\ a\ plain\ load}}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00140\ \ \ \ \ \}}
-\DoxyCodeLine{00141\ }
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}};}
-\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};}
-\DoxyCodeLine{00144\ \};}
-\DoxyCodeLine{00145\ }
-\DoxyCodeLine{00146\ \textcolor{comment}{//\ The\ entry\ with\ smaller\ CachePriority\ will\ evict\ firstly}}
-\DoxyCodeLine{00147\ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ \{\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{NORMAL}}\ =\ 0,\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba339b2f19a3f2821963c7d2b0ca441bd2}{DURABLE}}\ =\ 1\ \};}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ =\ std::function<bool(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)>;}
-\DoxyCodeLine{00150\ \textcolor{comment}{//\ CacheValueTimeExtractor\ can\ extract\ timestamp}}
-\DoxyCodeLine{00151\ \textcolor{comment}{//\ in\ cache\ value\ through\ the\ specified\ function,}}
-\DoxyCodeLine{00152\ \textcolor{comment}{//\ such\ as\ last\_visit\_time\ in\ InvertedIndexSearcherCache::CacheValue}}
-\DoxyCodeLine{00153\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ =\ std::function<int64\_t(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)>;}
-\DoxyCodeLine{00154\ }
-\DoxyCodeLine{00155\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_cache}{Cache}}\ \{}
-\DoxyCodeLine{00156\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_ae1e6297c25b58d8c5a0f7dad45487c08}{Cache}}()\ \{\}}
-\DoxyCodeLine{00158\ }
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Destroys\ all\ existing\ entries\ by\ calling\ the\ "{}deleter"{}}}
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ function\ that\ was\ passed\ to\ the\ constructor.}}
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_cache_a899b8bf120ecc87b59e142f00b2987b0}{\string~Cache}}();}
-\DoxyCodeLine{00162\ }
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ Opaque\ handle\ to\ an\ entry\ stored\ in\ the\ cache.}}
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}\ \{\};}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Insert\ a\ mapping\ from\ key-\/>value\ into\ the\ cache\ and\ assign\ it}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ the\ specified\ charge\ against\ the\ total\ cache\ capacity.}}
-\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ handle\ that\ corresponds\ to\ the\ mapping.\ \ The\ caller}}
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ must\ call\ this-\/>release(handle)\ when\ the\ returned\ mapping\ is\ no}}
-\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ longer\ needed.}}
-\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ When\ the\ inserted\ entry\ is\ no\ longer\ needed,\ the\ key\ and}}
-\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//\ value\ will\ be\ passed\ to\ "{}deleter"{}.}}
-\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_cache_aed6e7c03d7d603f21a363033c32bd48a}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}})\ =\ 0;}
-\DoxyCodeLine{00178\ }
-\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ If\ the\ cache\ has\ no\ mapping\ for\ "{}key"{},\ returns\ nullptr.}}
-\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ Else\ return\ a\ handle\ that\ corresponds\ to\ the\ mapping.\ \ The\ caller}}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ must\ call\ this-\/>release(handle)\ when\ the\ returned\ mapping\ is\ no}}
-\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ longer\ needed.}}
-\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_cache_a50df2ff2b2b5e0be5477fc67df51a825}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ =\ 0;}
-\DoxyCodeLine{00185\ }
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{//\ Release\ a\ mapping\ returned\ by\ a\ previous\ Lookup().}}
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ not\ have\ been\ released\ yet.}}
-\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ have\ been\ returned\ by\ a\ method\ on\ *this.}}
-\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_a99ff5ff87dc624c6460076b6e6879011}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
-\DoxyCodeLine{00190\ }
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ value\ encapsulated\ in\ a\ handle\ returned\ by\ a}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ successful\ lookup().}}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ not\ have\ been\ released\ yet.}}
-\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ have\ been\ returned\ by\ a\ method\ on\ *this.}}
-\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris_1_1_cache_a138742ce948f24dedce1aea076df01e9}{value}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
-\DoxyCodeLine{00196\ }
-\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ value\ in\ Slice\ format\ encapsulated\ in\ the\ given\ handle}}
-\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ returned\ by\ a\ successful\ lookup()}}
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_cache_a1cedcec2a6e02e4762cca7a71d23c080}{value\_slice}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
-\DoxyCodeLine{00200\ }
-\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ If\ the\ cache\ contains\ entry\ for\ key,\ erase\ it.\ \ Note\ that\ the}}
-\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ underlying\ entry\ will\ be\ kept\ around\ until\ all\ existing\ handles}}
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ to\ it\ have\ been\ released.}}
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_aaa6381a74fbfe5daf3414e4f5940204c}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ =\ 0;}
-\DoxyCodeLine{00205\ }
-\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ new\ numeric\ id.\ \ May\ be\ used\ by\ multiple\ clients\ who\ are}}
-\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ sharing\ the\ same\ cache\ to\ partition\ the\ key\ space.\ \ Typically\ the}}
-\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ client\ will\ allocate\ a\ new\ id\ at\ startup\ and\ prepend\ the\ id\ to}}
-\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ its\ cache\ keys.}}
-\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_a5a60ccc065aaa79ab87ad65196cc854c}{new\_id}}()\ =\ 0;}
-\DoxyCodeLine{00211\ }
-\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ Remove\ all\ cache\ entries\ that\ are\ not\ actively\ in\ use.\ \ Memory-\/constrained}}
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ applications\ may\ wish\ to\ call\ this\ method\ to\ reduce\ memory\ usage.}}
-\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Default\ implementation\ of\ Prune()\ does\ nothing.\ \ Subclasses\ are\ strongly}}
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ encouraged\ to\ override\ the\ default\ implementation.\ \ A\ future\ release\ of}}
-\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ leveldb\ may\ change\ prune()\ to\ a\ pure\ abstract\ method.}}
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ return\ num\ of\ entries\ being\ pruned.}}
-\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_aa9c75c59d5c687eda6a7c2a9358aebf1}{prune}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
-\DoxyCodeLine{00219\ }
-\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ prune(),\ but\ the\ entry\ will\ only\ be\ pruned\ if\ the\ predicate\ matched.}}
-\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ NOTICE:\ the\ predicate\ should\ be\ simple\ enough,\ or\ the\ prune\_if()\ function}}
-\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ may\ hold\ lock\ for\ a\ long\ time\ to\ execute\ predicate.}}
-\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_afd391f887d4fb858a90249c3499aa868}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred)\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
-\DoxyCodeLine{00224\ }
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_a71cd3003c3860c26c42ffc18f7a41bdb}{mem\_consumption}}()\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_cache_key_acb03dc3faa34ae8e7b0497de5e3048c9}{hash}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_aa3affb1becdd976aba1036a161a3134d}{data}},\ \textcolor{keywordtype}{size\_t}\ n,\ uint32\_t\ seed)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ "{}x"{}\ is\ a\ prefix\ of\ "{}*this"{}}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a087a995480b6a64b1e9064b2f6ab8a2f}{starts\_with}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ x)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}}\ >=\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ \&\&\ (memcmp(\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}},\ x.\mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}})\ ==\ 0));}
+\DoxyCodeLine{00134\ \ \ \ \ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00137\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_cache_key_a63dca305a312a7974239d8f59338d4c3}{\_decode\_fixed32}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ ptr)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ the\ raw\ bytes}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ uint32\_t\ result;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{memcpy__aarch64_8cpp_a156c5821f16ed93be8c7d315303f7b2a}{memcpy}}(\&result,\ ptr,\ \textcolor{keyword}{sizeof}(result));\ \textcolor{comment}{//\ gcc\ optimizes\ this\ to\ a\ plain\ load}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00142\ \ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris_1_1_cache_key_ae672a880bbf1fa586869f1c837bd013a}{\_data}};}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_cache_key_a3cce90d52cb7e47b6c17d3a0e1c94842}{\_size}};}
+\DoxyCodeLine{00146\ \};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ The\ entry\ with\ smaller\ CachePriority\ will\ evict\ firstly}}
+\DoxyCodeLine{00149\ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ \{\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{NORMAL}}\ =\ 0,\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba339b2f19a3f2821963c7d2b0ca441bd2}{DURABLE}}\ =\ 1\ \};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ =\ std::function<bool(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)>;}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ CacheValueTimeExtractor\ can\ extract\ timestamp}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ in\ cache\ value\ through\ the\ specified\ function,}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ such\ as\ last\_visit\_time\ in\ InvertedIndexSearcherCache::CacheValue}}
+\DoxyCodeLine{00155\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ =\ std::function<int64\_t(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)>;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_cache}{Cache}}\ \{}
+\DoxyCodeLine{00158\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_ae1e6297c25b58d8c5a0f7dad45487c08}{Cache}}()\ \{\}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ Destroys\ all\ existing\ entries\ by\ calling\ the\ "{}deleter"{}}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ function\ that\ was\ passed\ to\ the\ constructor.}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_cache_a899b8bf120ecc87b59e142f00b2987b0}{\string~Cache}}();}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Opaque\ handle\ to\ an\ entry\ stored\ in\ the\ cache.}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}\ \{\};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ Insert\ a\ mapping\ from\ key-\/>value\ into\ the\ cache\ and\ assign\ it}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ the\ specified\ charge\ against\ the\ total\ cache\ capacity.}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ handle\ that\ corresponds\ to\ the\ mapping.\ \ The\ caller}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ must\ call\ this-\/>release(handle)\ when\ the\ returned\ mapping\ is\ no}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ longer\ needed.}}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ When\ the\ inserted\ entry\ is\ no\ longer\ needed,\ the\ key\ and}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ value\ will\ be\ passed\ to\ "{}deleter"{}.}}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_cache_ac920d58e558a2fe069acf00f61b645f0}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}},\ \textcolor{keywordtype}{size\_t}\ bytes\ =\ -\/1)\ =\ 0;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ If\ the\ cache\ has\ no\ mapping\ for\ "{}key"{},\ returns\ nullptr.}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ Else\ return\ a\ handle\ that\ corresponds\ to\ the\ mapping.\ \ The\ caller}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{comment}{//\ must\ call\ this-\/>release(handle)\ when\ the\ returned\ mapping\ is\ no}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ longer\ needed.}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_cache_a50df2ff2b2b5e0be5477fc67df51a825}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ =\ 0;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Release\ a\ mapping\ returned\ by\ a\ previous\ Lookup().}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ not\ have\ been\ released\ yet.}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ have\ been\ returned\ by\ a\ method\ on\ *this.}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_a99ff5ff87dc624c6460076b6e6879011}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ value\ encapsulated\ in\ a\ handle\ returned\ by\ a}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ successful\ lookup().}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ not\ have\ been\ released\ yet.}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ REQUIRES:\ handle\ must\ have\ been\ returned\ by\ a\ method\ on\ *this.}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris_1_1_cache_a138742ce948f24dedce1aea076df01e9}{value}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ Return\ the\ value\ in\ Slice\ format\ encapsulated\ in\ the\ given\ handle}}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ returned\ by\ a\ successful\ lookup()}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_cache_a1cedcec2a6e02e4762cca7a71d23c080}{value\_slice}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ =\ 0;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ If\ the\ cache\ contains\ entry\ for\ key,\ erase\ it.\ \ Note\ that\ the}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ underlying\ entry\ will\ be\ kept\ around\ until\ all\ existing\ handles}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{//\ to\ it\ have\ been\ released.}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_cache_aaa6381a74fbfe5daf3414e4f5940204c}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ =\ 0;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ new\ numeric\ id.\ \ May\ be\ used\ by\ multiple\ clients\ who\ are}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ sharing\ the\ same\ cache\ to\ partition\ the\ key\ space.\ \ Typically\ the}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ client\ will\ allocate\ a\ new\ id\ at\ startup\ and\ prepend\ the\ id\ to}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{//\ its\ cache\ keys.}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_a5a60ccc065aaa79ab87ad65196cc854c}{new\_id}}()\ =\ 0;}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Remove\ all\ cache\ entries\ that\ are\ not\ actively\ in\ use.\ \ Memory-\/constrained}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ applications\ may\ wish\ to\ call\ this\ method\ to\ reduce\ memory\ usage.}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Default\ implementation\ of\ Prune()\ does\ nothing.\ \ Subclasses\ are\ strongly}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ encouraged\ to\ override\ the\ default\ implementation.\ \ A\ future\ release\ of}}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ leveldb\ may\ change\ prune()\ to\ a\ pure\ abstract\ method.}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ return\ num\ of\ entries\ being\ pruned.}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_aa9c75c59d5c687eda6a7c2a9358aebf1}{prune}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ Same\ as\ prune(),\ but\ the\ entry\ will\ only\ be\ pruned\ if\ the\ predicate\ matched.}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ NOTICE:\ the\ predicate\ should\ be\ simple\ enough,\ or\ the\ prune\_if()\ function}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ may\ hold\ lock\ for\ a\ long\ time\ to\ execute\ predicate.}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_a3e2c89ed4a7561c069cf48c1b762ddd3}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred,\ \textcolor{keywordtype}{bool}\ lazy\_mode\ =\ \textcolor{keyword}{false})\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
 \DoxyCodeLine{00226\ }
-\DoxyCodeLine{00227\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_a418ce063b275e4bd5ff4021054f2f29f}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_cache}{Cache}});}
-\DoxyCodeLine{00229\ \};}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_a71cd3003c3860c26c42ffc18f7a41bdb}{mem\_consumption}}()\ =\ 0;}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_cache_afa699196e1a878042e9750cd44fa3503}{get\_usage}}()\ =\ 0;}
 \DoxyCodeLine{00230\ }
-\DoxyCodeLine{00231\ \textcolor{comment}{//\ An\ entry\ is\ a\ variable\ length\ heap-\/allocated\ structure.\ \ Entries}}
-\DoxyCodeLine{00232\ \textcolor{comment}{//\ are\ kept\ in\ a\ circular\ doubly\ linked\ list\ ordered\ by\ access\ time.}}
-\DoxyCodeLine{00233\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \{}
-\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{struct_l_r_u_handle_a0f61d63b009d0880a89c843bd50d8d76}{value}};}
-\DoxyCodeLine{00235\ \ \ \ \ void\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
-\DoxyCodeLine{00236\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ next\_hash\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ next\ entry\ in\ hash\ table}}
-\DoxyCodeLine{00237\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ \textcolor{keyword}{nullptr};\ \ \ \ \ \ \textcolor{comment}{//\ next\ entry\ in\ lru\ list}}
-\DoxyCodeLine{00238\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ prev\ =\ \textcolor{keyword}{nullptr};\ \ \ \ \ \ \textcolor{comment}{//\ previous\ entry\ in\ lru\ list}}
-\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_a7476acc4f60747f9d9032e9cbdf5eb79}{charge}};}
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_ab8d33547e1ef26613cc6d92a7909d99a}{key\_length}};}
-\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_afca1a070ccd72ea11e4b6f83db3b6f46}{total\_size}};\ \textcolor{comment}{//\ including\ key\ length}}
-\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_l_r_u_handle_ab825942178dab8e3721650a48b1e0d24}{in\_cache}};\ \ \ \ \ \textcolor{comment}{//\ Whether\ entry\ is\ in\ the\ cache.}}
-\DoxyCodeLine{00243\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{struct_l_r_u_handle_a630e1e65f274486cd91266b349e043fa}{refs}};}
-\DoxyCodeLine{00244\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{struct_l_r_u_handle_a11ecb029164e055f28f4123ce3748862}{hash}};\ \textcolor{comment}{//\ Hash\ of\ key();\ used\ for\ fast\ sharding\ and\ comparisons}}
-\DoxyCodeLine{00245\ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ CachePriority::NORMAL;}
-\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ \mbox{\hyperlink{struct_l_r_u_handle_ae15e693c5ac7718244fce39aed1f4eea}{mem\_tracker}};}
-\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{char}\ key\_data[1];\ \textcolor{comment}{//\ Beginning\ of\ key}}
-\DoxyCodeLine{00248\ }
-\DoxyCodeLine{00249\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\ \mbox{\hyperlink{struct_l_r_u_handle_a826edb8aab27a1cf60242cbac02d926e}{key}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ cheaper\ lookups,\ we\ allow\ a\ temporary\ Handle\ object}}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ store\ a\ pointer\ to\ a\ key\ in\ "{}value"{}.}}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{this})\ \{}
-\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(\textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}*\textcolor{keyword}{>}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
-\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}(key\_data,\ key\_length);}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00257\ \ \ \ \ \}}
-\DoxyCodeLine{00258\ }
-\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_l_r_u_handle_aafde19f7d36ca163a143579c1b125b6d}{free}}()\ \{}
-\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ (*deleter)(key(),\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_abf5729fd5a398c306a98854a0490035d}{THREAD\_MEM\_TRACKER\_TRANSFER\_FROM}}(total\_size,\ mem\_tracker);}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jemalloc__hook_8cpp_a3c12ec6b8e8368e804827d604b2979d7}{::free}}(\textcolor{keyword}{this});}
-\DoxyCodeLine{00263\ \ \ \ \ \}}
-\DoxyCodeLine{00264\ }
-\DoxyCodeLine{00265\ \}\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}};}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_cache_abcc8157e3ca705a389461ddb8d9a3724}{get\_total\_capacity}}()\ =\ 0;}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_cache_a418ce063b275e4bd5ff4021054f2f29f}{DISALLOW\_COPY\_AND\_ASSIGN}}(\mbox{\hyperlink{classdoris_1_1_cache}{Cache}});}
+\DoxyCodeLine{00235\ \};}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \textcolor{comment}{//\ An\ entry\ is\ a\ variable\ length\ heap-\/allocated\ structure.\ \ Entries}}
+\DoxyCodeLine{00238\ \textcolor{comment}{//\ are\ kept\ in\ a\ circular\ doubly\ linked\ list\ ordered\ by\ access\ time.}}
+\DoxyCodeLine{00239\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{struct_l_r_u_handle_a0f61d63b009d0880a89c843bd50d8d76}{value}};}
+\DoxyCodeLine{00241\ \ \ \ \ void\ (*deleter)(\textcolor{keyword}{const}\ CacheKey\&,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00242\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ next\_hash\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ next\ entry\ in\ hash\ table}}
+\DoxyCodeLine{00243\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ =\ \textcolor{keyword}{nullptr};\ \ \ \ \ \ \textcolor{comment}{//\ next\ entry\ in\ lru\ list}}
+\DoxyCodeLine{00244\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ prev\ =\ \textcolor{keyword}{nullptr};\ \ \ \ \ \ \textcolor{comment}{//\ previous\ entry\ in\ lru\ list}}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_a7476acc4f60747f9d9032e9cbdf5eb79}{charge}};}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_ab8d33547e1ef26613cc6d92a7909d99a}{key\_length}};}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_afca1a070ccd72ea11e4b6f83db3b6f46}{total\_size}};\ \textcolor{comment}{//\ including\ key\ length}}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{struct_l_r_u_handle_ad85da8142cdb13f7b5eaf889a527f3dd}{bytes}};\ \ \ \ \ \ \textcolor{comment}{//\ Used\ by\ LRUCacheType::NUMBER,\ LRUCacheType::SIZE\ equal\ to\ total\_size.}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_l_r_u_handle_ab825942178dab8e3721650a48b1e0d24}{in\_cache}};\ \ \ \ \ \textcolor{comment}{//\ Whether\ entry\ is\ in\ the\ cache.}}
+\DoxyCodeLine{00250\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{struct_l_r_u_handle_a630e1e65f274486cd91266b349e043fa}{refs}};}
+\DoxyCodeLine{00251\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{struct_l_r_u_handle_a11ecb029164e055f28f4123ce3748862}{hash}};\ \textcolor{comment}{//\ Hash\ of\ key();\ used\ for\ fast\ sharding\ and\ comparisons}}
+\DoxyCodeLine{00252\ \ \ \ \ CachePriority\ priority\ =\ CachePriority::NORMAL;}
+\DoxyCodeLine{00253\ \ \ \ \ MemTrackerLimiter*\ \mbox{\hyperlink{struct_l_r_u_handle_ae15e693c5ac7718244fce39aed1f4eea}{mem\_tracker}};}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{char}\ key\_data[1];\ \textcolor{comment}{//\ Beginning\ of\ key}}
+\DoxyCodeLine{00255\ \ \ \ \ LRUCacheType\ \mbox{\hyperlink{struct_l_r_u_handle_ac690fbbdae660e6e98ae3114ba8087c0}{type}};}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ CacheKey\ \mbox{\hyperlink{struct_l_r_u_handle_a826edb8aab27a1cf60242cbac02d926e}{key}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ cheaper\ lookups,\ we\ allow\ a\ temporary\ Handle\ object}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ store\ a\ pointer\ to\ a\ key\ in\ "{}value"{}.}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{threadlocal_8cc_a6ce3ddf2a70a9a8f5f94ce52c188ec6c}{next}}\ ==\ \textcolor{keyword}{this})\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(\textcolor{keyword}{reinterpret\_cast<}CacheKey*\textcolor{keyword}{>}(\mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}));}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheKey(key\_data,\ key\_length);}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \ \ \}}
 \DoxyCodeLine{00266\ }
-\DoxyCodeLine{00267\ \textcolor{comment}{//\ We\ provide\ our\ own\ simple\ hash\ tablet\ since\ it\ removes\ a\ whole\ bunch}}
-\DoxyCodeLine{00268\ \textcolor{comment}{//\ of\ porting\ hacks\ and\ is\ also\ faster\ than\ some\ of\ the\ built-\/in\ hash}}
-\DoxyCodeLine{00269\ \textcolor{comment}{//\ tablet\ implementations\ in\ some\ of\ the\ compiler/runtime\ combinations}}
-\DoxyCodeLine{00270\ \textcolor{comment}{//\ we\ have\ tested.\ \ E.g.,\ readrandom\ speeds\ up\ by\ \string~5\%\ over\ the\ g++}}
-\DoxyCodeLine{00271\ \textcolor{comment}{//\ 4.4.3's\ builtin\ hashtable.}}
-\DoxyCodeLine{00272\ }
-\DoxyCodeLine{00273\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_handle_table}{HandleTable}}\ \{}
-\DoxyCodeLine{00274\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_a9f08502dd3b9affd265f27bba6480695}{HandleTable}}()\ :\ \mbox{\hyperlink{classdoris_1_1_handle_table_a018617c847f6bf1cb1081457cc2f4579}{\_length}}(0),\ \mbox{\hyperlink{classdoris_1_1_handle_table_a7caba48afc0980603b55384bcfc7ada0}{\_elems}}(0),\ \mbox{\hyperlink{classdoris_1_1_handle_table_abb8893296a7feb99893206cdcaf81d91}{\_list}}(nullptr)\ \{\ \mbox{\hyperlink{classdoris_1_1_handle_table_a6f81b25d30c39cf0e5f262f4e63027a3}{\_resize}}();\ \}}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_acd2843e2822a2ee8ab68a79b634ef2c5}{\string~HandleTable}}();}
-\DoxyCodeLine{00278\ }
-\DoxyCodeLine{00279\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a3dc6aa7084b9543ef896a747d37f849a}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
-\DoxyCodeLine{00280\ }
-\DoxyCodeLine{00281\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a41858091acbd5f213d5a4d656a466fd1}{insert}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ h);}
-\DoxyCodeLine{00282\ }
-\DoxyCodeLine{00283\ \ \ \ \ \textcolor{comment}{//\ Remove\ element\ from\ hash\ table\ by\ "{}key"{}\ and\ "{}hash"{}.}}
-\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a471476600b28d5304187efe625632653}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_l_r_u_handle_aafde19f7d36ca163a143579c1b125b6d}{free}}()\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ (*deleter)(key(),\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}});}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{thread__context_8h_abf5729fd5a398c306a98854a0490035d}{THREAD\_MEM\_TRACKER\_TRANSFER\_FROM}}(bytes,\ mem\_tracker);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ DorisMetrics::instance()-\/>lru\_cache\_memory\_bytes-\/>increment(-\/bytes);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{jemalloc__hook_8cpp_a3c12ec6b8e8368e804827d604b2979d7}{::free}}(\textcolor{keyword}{this});}
+\DoxyCodeLine{00272\ \ \ \ \ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \}\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}};}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \textcolor{comment}{//\ We\ provide\ our\ own\ simple\ hash\ tablet\ since\ it\ removes\ a\ whole\ bunch}}
+\DoxyCodeLine{00277\ \textcolor{comment}{//\ of\ porting\ hacks\ and\ is\ also\ faster\ than\ some\ of\ the\ built-\/in\ hash}}
+\DoxyCodeLine{00278\ \textcolor{comment}{//\ tablet\ implementations\ in\ some\ of\ the\ compiler/runtime\ combinations}}
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ we\ have\ tested.\ \ E.g.,\ readrandom\ speeds\ up\ by\ \string~5\%\ over\ the\ g++}}
+\DoxyCodeLine{00280\ \textcolor{comment}{//\ 4.4.3's\ builtin\ hashtable.}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_handle_table}{HandleTable}}\ \{}
+\DoxyCodeLine{00283\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_a9f08502dd3b9affd265f27bba6480695}{HandleTable}}()\ :\ \mbox{\hyperlink{classdoris_1_1_handle_table_a018617c847f6bf1cb1081457cc2f4579}{\_length}}(0),\ \mbox{\hyperlink{classdoris_1_1_handle_table_a7caba48afc0980603b55384bcfc7ada0}{\_elems}}(0),\ \mbox{\hyperlink{classdoris_1_1_handle_table_abb8893296a7feb99893206cdcaf81d91}{\_list}}(nullptr)\ \{\ \mbox{\hyperlink{classdoris_1_1_handle_table_a6f81b25d30c39cf0e5f262f4e63027a3}{\_resize}}();\ \}}
 \DoxyCodeLine{00285\ }
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{comment}{//\ Remove\ element\ from\ hash\ table\ by\ "{}h"{},\ it\ would\ be\ faster}}
-\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ than\ the\ function\ above.}}
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//\ Return\ whether\ h\ is\ found\ and\ removed.}}
-\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_handle_table_a471476600b28d5304187efe625632653}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ h);}
-\DoxyCodeLine{00290\ }
-\DoxyCodeLine{00291\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00292\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_a14c5fe738b8b3b320eee6a93c9d7d9b4}{FRIEND\_TEST}}(CacheTest,\ HandleTableTest);}
-\DoxyCodeLine{00293\ }
-\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//\ The\ tablet\ consists\ of\ an\ array\ of\ buckets\ where\ each\ bucket\ is}}
-\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ a\ linked\ list\ of\ cache\ entries\ that\ hash\ into\ the\ bucket.}}
-\DoxyCodeLine{00296\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_handle_table_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
-\DoxyCodeLine{00297\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_handle_table_a7caba48afc0980603b55384bcfc7ada0}{\_elems}};}
-\DoxyCodeLine{00298\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ \mbox{\hyperlink{classdoris_1_1_handle_table_abb8893296a7feb99893206cdcaf81d91}{\_list}};}
+\DoxyCodeLine{00286\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_acd2843e2822a2ee8ab68a79b634ef2c5}{\string~HandleTable}}();}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a3dc6aa7084b9543ef896a747d37f849a}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a41858091acbd5f213d5a4d656a466fd1}{insert}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ h);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{comment}{//\ Remove\ element\ from\ hash\ table\ by\ "{}key"{}\ and\ "{}hash"{}.}}
+\DoxyCodeLine{00293\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ \mbox{\hyperlink{classdoris_1_1_handle_table_a471476600b28d5304187efe625632653}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ Remove\ element\ from\ hash\ table\ by\ "{}h"{},\ it\ would\ be\ faster}}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ than\ the\ function\ above.}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{//\ Return\ whether\ h\ is\ found\ and\ removed.}}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_handle_table_a471476600b28d5304187efe625632653}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ h);}
 \DoxyCodeLine{00299\ }
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ pointer\ to\ slot\ that\ points\ to\ a\ cache\ entry\ that}}
-\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ matches\ key/hash.\ \ If\ there\ is\ no\ such\ cache\ entry,\ return\ a}}
-\DoxyCodeLine{00302\ \ \ \ \ \textcolor{comment}{//\ pointer\ to\ the\ trailing\ slot\ in\ the\ corresponding\ linked\ list.}}
-\DoxyCodeLine{00303\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ \mbox{\hyperlink{classdoris_1_1_handle_table_a3d3bcf00098d6ab356b201741668160b}{\_find\_pointer}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00300\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_handle_table_af6574354eb58276114b046b874b4bbbc}{element\_count}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00303\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table_a14c5fe738b8b3b320eee6a93c9d7d9b4}{FRIEND\_TEST}}(CacheTest,\ HandleTableTest);}
 \DoxyCodeLine{00304\ }
-\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_handle_table_a6f81b25d30c39cf0e5f262f4e63027a3}{\_resize}}();}
-\DoxyCodeLine{00306\ \};}
-\DoxyCodeLine{00307\ }
-\DoxyCodeLine{00308\ \textcolor{comment}{//\ pair\ first\ is\ timestatmp,\ put\ <timestatmp,\ LRUHandle*>\ into\ asc\ priority\_queue,}}
-\DoxyCodeLine{00309\ \textcolor{comment}{//\ when\ need\ to\ free\ space,\ can\ first\ evict\ the\ top\ of\ the\ LRUHandleHeap,}}
-\DoxyCodeLine{00310\ \textcolor{comment}{//\ because\ the\ top\ element's\ timestamp\ is\ the\ oldest.}}
-\DoxyCodeLine{00311\ \textcolor{keyword}{typedef}\ std::priority\_queue<std::pair<int64\_t,\ LRUHandle*>,}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::pair<int64\_t,\ LRUHandle*>>,}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::greater<std::pair<int64\_t,\ LRUHandle*>>>}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8374741f5eb3f952296a65c7c7a7b8a9}{LRUHandleHeap}};}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{comment}{//\ The\ tablet\ consists\ of\ an\ array\ of\ buckets\ where\ each\ bucket\ is}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ a\ linked\ list\ of\ cache\ entries\ that\ hash\ into\ the\ bucket.}}
+\DoxyCodeLine{00307\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_handle_table_a018617c847f6bf1cb1081457cc2f4579}{\_length}};}
+\DoxyCodeLine{00308\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_handle_table_a7caba48afc0980603b55384bcfc7ada0}{\_elems}};}
+\DoxyCodeLine{00309\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ \mbox{\hyperlink{classdoris_1_1_handle_table_abb8893296a7feb99893206cdcaf81d91}{\_list}};}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{comment}{//\ Return\ a\ pointer\ to\ slot\ that\ points\ to\ a\ cache\ entry\ that}}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ matches\ key/hash.\ \ If\ there\ is\ no\ such\ cache\ entry,\ return\ a}}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{//\ pointer\ to\ the\ trailing\ slot\ in\ the\ corresponding\ linked\ list.}}
+\DoxyCodeLine{00314\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ \mbox{\hyperlink{classdoris_1_1_handle_table_a3d3bcf00098d6ab356b201741668160b}{\_find\_pointer}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
 \DoxyCodeLine{00315\ }
-\DoxyCodeLine{00316\ \textcolor{comment}{//\ A\ single\ shard\ of\ sharded\ cache.}}
-\DoxyCodeLine{00317\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}\ \{}
-\DoxyCodeLine{00318\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00319\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}(\mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type);}
-\DoxyCodeLine{00320\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aa08b45eec5b206669cd41058a6b02b65}{\string~LRUCache}}();}
-\DoxyCodeLine{00321\ }
-\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{//\ Separate\ from\ constructor\ so\ caller\ can\ easily\ make\ an\ array\ of\ LRUCache}}
-\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ad6cb1246ba4c730fb94ae77e2b2f2d59}{set\_capacity}}(\textcolor{keywordtype}{size\_t}\ capacity)\ \{\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}}\ =\ capacity;\ \}}
-\DoxyCodeLine{00324\ }
-\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ Like\ Cache\ methods,\ but\ with\ an\ extra\ "{}hash"{}\ parameter.}}
-\DoxyCodeLine{00326\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af13db549df10203d11bc8168862a2485}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ tracker,}
-\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}});}
-\DoxyCodeLine{00330\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a0e06471a798162dfda1e0c3c98dcc5ab}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
-\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a259c3a850640c2c3cf0c29ab1cc54f52}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ handle);}
-\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a42a352841da0c65c3b1459045eaf0c2c}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
-\DoxyCodeLine{00333\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a3ebb147a273559e367282cef58c02197}{prune}}();}
-\DoxyCodeLine{00334\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a5095dda236f9e861dfb7044d9acc5461}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred);}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_handle_table_a6f81b25d30c39cf0e5f262f4e63027a3}{\_resize}}();}
+\DoxyCodeLine{00317\ \};}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ pair\ first\ is\ timestatmp,\ put\ <timestatmp,\ LRUHandle*>\ into\ asc\ set,}}
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ when\ need\ to\ free\ space,\ can\ first\ evict\ the\ begin\ of\ the\ set,}}
+\DoxyCodeLine{00321\ \textcolor{comment}{//\ because\ the\ begin\ element's\ timestamp\ is\ the\ oldest.}}
+\DoxyCodeLine{00322\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacedoris_acb52a5e81758b8a6864a722794d712a0}{LRUHandleSortedSet}}\ =\ std::set<std::pair<int64\_t,\ LRUHandle*>>;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \textcolor{comment}{//\ A\ single\ shard\ of\ sharded\ cache.}}
+\DoxyCodeLine{00325\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}\ \{}
+\DoxyCodeLine{00326\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00327\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}(\mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type);}
+\DoxyCodeLine{00328\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aa08b45eec5b206669cd41058a6b02b65}{\string~LRUCache}}();}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ Separate\ from\ constructor\ so\ caller\ can\ easily\ make\ an\ array\ of\ LRUCache}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ad6cb1246ba4c730fb94ae77e2b2f2d59}{set\_capacity}}(\textcolor{keywordtype}{size\_t}\ capacity)\ \{\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}}\ =\ capacity;\ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a0b518f1c9ce33ee9b6f238cb586579a6}{set\_element\_count\_capacity}}(uint32\_t\ element\_count\_capacity)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a13a6d0083062f9c5198626799ad397d7}{\_element\_count\_capacity}}\ =\ element\_count\_capacity;}
+\DoxyCodeLine{00334\ \ \ \ \ \}}
 \DoxyCodeLine{00335\ }
-\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ae63af9972c6ee91a42de00461aec77f6}{set\_cache\_value\_time\_extractor}}(\mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ cache\_value\_time\_extractor);}
-\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a136b8a5d795240aa7e290f2c25d7d00c}{set\_cache\_value\_check\_timestamp}}(\textcolor{keywordtype}{bool}\ cache\_value\_check\_timestamp);}
-\DoxyCodeLine{00338\ }
-\DoxyCodeLine{00339\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ac500d83f2fd467be8f2bc196c9ef6c5d}{get\_lookup\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1d80a0ffc54e419c5c5e396f42d69f24}{\_lookup\_count}};\ \}}
-\DoxyCodeLine{00340\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a7ff52d98278b397a1aa13de2bd512095}{get\_hit\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af60a5a01c443058492622b43b2d14b9c}{\_hit\_count}};\ \}}
-\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af2d6c4ea9191f5518219f38e6453681d}{get\_usage}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aceedfcf96477262254916c0e27949f29}{\_usage}};\ \}}
-\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a96b58d340696a8a71e2344b45ba8ebc0}{get\_capacity}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}};\ \}}
-\DoxyCodeLine{00343\ }
-\DoxyCodeLine{00344\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a556607c1165a96590ea0ec2db9f1790c}{\_lru\_remove}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
-\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a258e62e0d8f1396a1fa54a2eb5b36fe1}{\_lru\_append}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ list,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
-\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a4d60849dd14fa488336eb61472d48e8d}{\_unref}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
-\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a21bbccb9dc80b9c32cc6af816e5d4c05}{\_evict\_from\_lru}}(\textcolor{keywordtype}{size\_t}\ total\_size,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ to\_remove\_head);}
-\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aa6772fdd26c8f37f02e17c2827170a68}{\_evict\_from\_lru\_with\_time}}(\textcolor{keywordtype}{size\_t}\ total\_size,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ to\_remove\_head);}
-\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a79139423a2f7dcb66587788b46a8d924}{\_evict\_one\_entry}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
-\DoxyCodeLine{00351\ }
-\DoxyCodeLine{00352\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00353\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1b7e1cf155c0f33d03062d6d2d1621c8}{\_type}};}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ Like\ Cache\ methods,\ but\ with\ an\ extra\ "{}hash"{}\ parameter.}}
+\DoxyCodeLine{00337\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a740c90a45826932ff560351984aa422e}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_mem_tracker_limiter}{MemTrackerLimiter}}*\ tracker,}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}},\ \textcolor{keywordtype}{size\_t}\ bytes\ =\ -\/1);}
+\DoxyCodeLine{00341\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a0e06471a798162dfda1e0c3c98dcc5ab}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a259c3a850640c2c3cf0c29ab1cc54f52}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Cache::Handle}}*\ handle);}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a42a352841da0c65c3b1459045eaf0c2c}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ uint32\_t\ hash);}
+\DoxyCodeLine{00344\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a3ebb147a273559e367282cef58c02197}{prune}}();}
+\DoxyCodeLine{00345\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a9425a680eb0dda36666c2d8532ad9b92}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred,\ \textcolor{keywordtype}{bool}\ lazy\_mode\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ae63af9972c6ee91a42de00461aec77f6}{set\_cache\_value\_time\_extractor}}(\mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ cache\_value\_time\_extractor);}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a136b8a5d795240aa7e290f2c25d7d00c}{set\_cache\_value\_check\_timestamp}}(\textcolor{keywordtype}{bool}\ cache\_value\_check\_timestamp);}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_ac500d83f2fd467be8f2bc196c9ef6c5d}{get\_lookup\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1d80a0ffc54e419c5c5e396f42d69f24}{\_lookup\_count}};\ \}}
+\DoxyCodeLine{00351\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a7ff52d98278b397a1aa13de2bd512095}{get\_hit\_count}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af60a5a01c443058492622b43b2d14b9c}{\_hit\_count}};\ \}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af2d6c4ea9191f5518219f38e6453681d}{get\_usage}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aceedfcf96477262254916c0e27949f29}{\_usage}};\ \}}
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a96b58d340696a8a71e2344b45ba8ebc0}{get\_capacity}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}};\ \}}
 \DoxyCodeLine{00354\ }
-\DoxyCodeLine{00355\ \ \ \ \ \textcolor{comment}{//\ Initialized\ before\ use.}}
-\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}}\ =\ 0;}
-\DoxyCodeLine{00357\ }
-\DoxyCodeLine{00358\ \ \ \ \ \textcolor{comment}{//\ \_mutex\ protects\ the\ following\ state.}}
-\DoxyCodeLine{00359\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a3f0b4c278cb19f9c2b2dbdb065f51e14}{\_mutex}};}
-\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aceedfcf96477262254916c0e27949f29}{\_usage}}\ =\ 0;}
-\DoxyCodeLine{00361\ }
-\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ Dummy\ head\ of\ LRU\ list.}}
-\DoxyCodeLine{00363\ \ \ \ \ \textcolor{comment}{//\ Entries\ have\ refs==1\ and\ in\_cache==true.}}
-\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ \_lru\_normal.prev\ is\ newest\ entry,\ \_lru\_normal.next\ is\ oldest\ entry.}}
-\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_afbe69ec717e7e26a2e3602a3540e3ded}{\_lru\_normal}};}
-\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ \_lru\_durable.prev\ is\ newest\ entry,\ \_lru\_durable.next\ is\ oldest\ entry.}}
-\DoxyCodeLine{00367\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a77535f46390b52a692945bd309c2b172}{\_lru\_durable}};}
-\DoxyCodeLine{00368\ }
-\DoxyCodeLine{00369\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table}{HandleTable}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a9393a53f9e60e886da6349453552c7f6}{\_table}};}
-\DoxyCodeLine{00370\ }
-\DoxyCodeLine{00371\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1d80a0ffc54e419c5c5e396f42d69f24}{\_lookup\_count}}\ =\ 0;\ \textcolor{comment}{//\ cache查找总次数}}
-\DoxyCodeLine{00372\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af60a5a01c443058492622b43b2d14b9c}{\_hit\_count}}\ =\ 0;\ \ \ \ \textcolor{comment}{//\ 命中cache的总次数}}
+\DoxyCodeLine{00355\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a556607c1165a96590ea0ec2db9f1790c}{\_lru\_remove}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a258e62e0d8f1396a1fa54a2eb5b36fe1}{\_lru\_append}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ list,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a4d60849dd14fa488336eb61472d48e8d}{\_unref}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a21bbccb9dc80b9c32cc6af816e5d4c05}{\_evict\_from\_lru}}(\textcolor{keywordtype}{size\_t}\ total\_size,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ to\_remove\_head);}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aa6772fdd26c8f37f02e17c2827170a68}{\_evict\_from\_lru\_with\_time}}(\textcolor{keywordtype}{size\_t}\ total\_size,\ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}**\ to\_remove\_head);}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a79139423a2f7dcb66587788b46a8d924}{\_evict\_one\_entry}}(\mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}*\ e);}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a22e3bc0cd17a127e73f41e152846bf60}{\_check\_element\_count\_limit}}();}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1b7e1cf155c0f33d03062d6d2d1621c8}{\_type}};}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{//\ Initialized\ before\ use.}}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1ab19118d95ead89c86cc27bd950d34a}{\_capacity}}\ =\ 0;}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ \_mutex\ protects\ the\ following\ state.}}
+\DoxyCodeLine{00371\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acded863dbfdd730829d4188d67eefcf0}{doris::Mutex}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a5df90f3cc35aa02b328bcb919b851c22}{\_mutex}};}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_aceedfcf96477262254916c0e27949f29}{\_usage}}\ =\ 0;}
 \DoxyCodeLine{00373\ }
-\DoxyCodeLine{00374\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a8cbb272d8f57f54997cea772b4ab865d}{\_cache\_value\_time\_extractor}};}
-\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a0dc7a71d90240fd9d52f2fed567fddea}{\_cache\_value\_check\_timestamp}}\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00376\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8374741f5eb3f952296a65c7c7a7b8a9}{LRUHandleHeap}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a9189205e63329dfc6a015e69dd6dd5d1}{\_sorted\_normal\_entries\_with\_timestamp}};}
-\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a8374741f5eb3f952296a65c7c7a7b8a9}{LRUHandleHeap}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a05bd9fda44c4d85fa5681c32ee38acd0}{\_sorted\_durable\_entries\_with\_timestamp}};}
-\DoxyCodeLine{00378\ \};}
-\DoxyCodeLine{00379\ }
-\DoxyCodeLine{00380\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_cache}{Cache}}\ \{}
-\DoxyCodeLine{00381\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ total\_capacity,\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type,}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ num\_shards);}
-\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ total\_capacity,\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type,}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ num\_shards,}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ cache\_value\_time\_extractor,}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ cache\_value\_check\_timestamp);}
-\DoxyCodeLine{00388\ \ \ \ \ \textcolor{comment}{//\ TODO(fdy):\ 析构时清除所有cache元素}}
-\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af04856a246544eb7710f23678bf227ea}{\string~ShardedLRUCache}}();}
-\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a4a0d0e149c592b87845cb6b1f2353cd6}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
-\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
-\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}})\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a94752127d1ce829f38600b0220d5c013}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a1a6a4d13cd8d63519987dd19991cde04}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae8127331996978306563941f911bba30}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00397\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_acb9cad3a8ce80e51ef85b18626817fd8}{value\_slice}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae61403bbe774818b3487c68ccf272471}{new\_id}}()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a36ca8b19b2044533d834ff1548265bc9}{prune}}()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a9cac95e07017160735b43b9dc4040abc}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00401\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af87811179c7d7720dae855bbb0cfecec}{mem\_consumption}}()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00402\ }
-\DoxyCodeLine{00403\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac9889851a976cb754095da2b2a288e7b}{update\_cache\_metrics}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00405\ }
-\DoxyCodeLine{00406\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af3d762887628213f220f6dc278edfc2d}{\_hash\_slice}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ s);}
-\DoxyCodeLine{00408\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a738246028ff8bf3b6e7de66b618b5301}{\_shard}}(uint32\_t\ hash)\ \{}
-\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}}\ >\ 0\ ?\ (hash\ >>\ (32\ -\/\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}}))\ :\ 0;}
-\DoxyCodeLine{00410\ \ \ \ \ \}}
-\DoxyCodeLine{00411\ }
-\DoxyCodeLine{00412\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
-\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}};}
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac5f32197c7bbecfe34cd5776e61b3d1c}{\_num\_shards}};}
-\DoxyCodeLine{00415\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}**\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac97db6cb5ca411045b825ad572e6fad0}{\_shards}};}
-\DoxyCodeLine{00416\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a113e17ce1cec10eac827837af24cd008}{\_last\_id}};}
-\DoxyCodeLine{00417\ }
-\DoxyCodeLine{00418\ \ \ \ \ std::unique\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a31d4888710271b589237f5995336ebd5}{\_mem\_tracker}};}
-\DoxyCodeLine{00419\ \ \ \ \ std::shared\_ptr<MetricEntity>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af45816ac82b41b7a8f35fc06da19e2cc}{\_entity}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00420\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a858e81330d485a888390797f8ce879f7}{cache\_capacity}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00421\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac06005a84adda21d51a6b5a551644cac}{cache\_usage}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00422\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lock_gauge}{DoubleGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a579d365a9cd21bc9d64c38a8da9c0d53}{cache\_usage\_ratio}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00423\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_counter}{IntAtomicCounter}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a8167778bbabc27b03f26cfe3cad9a5d5}{cache\_lookup\_count}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00424\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_counter}{IntAtomicCounter}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a88ef09e52a0f34a4f491edda807cc1d4}{cache\_hit\_count}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00425\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lock_gauge}{DoubleGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a8f802c8c4875e08388792645118db5e0}{cache\_hit\_ratio}}\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00426\ \};}
-\DoxyCodeLine{00427\ }
-\DoxyCodeLine{00428\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{comment}{//\ Dummy\ head\ of\ LRU\ list.}}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{comment}{//\ Entries\ have\ refs==1\ and\ in\_cache==true.}}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{comment}{//\ \_lru\_normal.prev\ is\ newest\ entry,\ \_lru\_normal.next\ is\ oldest\ entry.}}
+\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_afbe69ec717e7e26a2e3602a3540e3ded}{\_lru\_normal}};}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{comment}{//\ \_lru\_durable.prev\ is\ newest\ entry,\ \_lru\_durable.next\ is\ oldest\ entry.}}
+\DoxyCodeLine{00379\ \ \ \ \ \mbox{\hyperlink{struct_l_r_u_handle}{LRUHandle}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a77535f46390b52a692945bd309c2b172}{\_lru\_durable}};}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_handle_table}{HandleTable}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a9393a53f9e60e886da6349453552c7f6}{\_table}};}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a1d80a0ffc54e419c5c5e396f42d69f24}{\_lookup\_count}}\ =\ 0;\ \textcolor{comment}{//\ cache查找总次数}}
+\DoxyCodeLine{00384\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_af60a5a01c443058492622b43b2d14b9c}{\_hit\_count}}\ =\ 0;\ \ \ \ \textcolor{comment}{//\ 命中cache的总次数}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a8cbb272d8f57f54997cea772b4ab865d}{\_cache\_value\_time\_extractor}};}
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a0dc7a71d90240fd9d52f2fed567fddea}{\_cache\_value\_check\_timestamp}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00388\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acb52a5e81758b8a6864a722794d712a0}{LRUHandleSortedSet}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a48781357d8be591a1dba36e006b50859}{\_sorted\_normal\_entries\_with\_timestamp}};}
+\DoxyCodeLine{00389\ \ \ \ \ \mbox{\hyperlink{namespacedoris_acb52a5e81758b8a6864a722794d712a0}{LRUHandleSortedSet}}\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a778cc072c2026f59000513c83d40e305}{\_sorted\_durable\_entries\_with\_timestamp}};}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache_a13a6d0083062f9c5198626799ad397d7}{\_element\_count\_capacity}}\ =\ 0;}
+\DoxyCodeLine{00392\ \};}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1_cache}{Cache}}\ \{}
+\DoxyCodeLine{00395\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ total\_capacity,\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type,}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ num\_shards,\ uint32\_t\ element\_count\_capacity\ =\ 0);}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache}{ShardedLRUCache}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespacedoris_a8ccf841cb59e451791bcb2e1ac4f1edc}{name}},\ \textcolor{keywordtype}{size\_t}\ total\_capacity,\ \mbox{\hyperlink{namespacedoris_a97c7f452860b02163e386723e586c954}{LRUCacheType}}\ type,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ num\_shards,}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_a727f9da52f88c99a0cefb11aaae0f126}{CacheValueTimeExtractor}}\ cache\_value\_time\_extractor,}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ cache\_value\_check\_timestamp,\ uint32\_t\ element\_count\_capacity\ =\ 0);}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{comment}{//\ TODO(fdy):\ 析构时清除所有cache元素}}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af04856a246544eb7710f23678bf227ea}{\string~ShardedLRUCache}}();}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a9227f6317b1405045190c98f65978616}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}},\ \textcolor{keywordtype}{size\_t}\ charge,}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ (*deleter)(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}),}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372b}{CachePriority}}\ priority\ =\ \mbox{\hyperlink{namespacedoris_afb029ea18bce8f55247344803ffe372ba1e23852820b9154316c7c06e2b7ba051}{CachePriority::NORMAL}},}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bytes\ =\ -\/1)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a94752127d1ce829f38600b0220d5c013}{lookup}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a1a6a4d13cd8d63519987dd19991cde04}{release}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae8127331996978306563941f911bba30}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ key)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{util_2types_8h_adae7202c63102b0934c3ac5be41b0dae}{value}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00412\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_slice}{Slice}}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_acb9cad3a8ce80e51ef85b18626817fd8}{value\_slice}}(\mbox{\hyperlink{structdoris_1_1_cache_1_1_handle}{Handle}}*\ handle)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae61403bbe774818b3487c68ccf272471}{new\_id}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keyword}{virtual}\ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a36ca8b19b2044533d834ff1548265bc9}{prune}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00415\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af045a319508afb898ad5e8339d0f53d7}{prune\_if}}(\mbox{\hyperlink{namespacedoris_a95cb627707aff70ffb60b6e50a436237}{CacheValuePredicate}}\ pred,\ \textcolor{keywordtype}{bool}\ lazy\_mode\ =\ \textcolor{keyword}{false})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00416\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af87811179c7d7720dae855bbb0cfecec}{mem\_consumption}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00417\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a1bb80fa3fa37105afadeaa8fe1884ffb}{get\_usage}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a10f1856609fe1769d154e99b44b5460b}{get\_total\_capacity}}()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae4df13f083cbc180154e48d0aaf78066}{\_total\_capacity}};\ \};}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac9889851a976cb754095da2b2a288e7b}{update\_cache\_metrics}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af3d762887628213f220f6dc278edfc2d}{\_hash\_slice}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_cache_key}{CacheKey}}\&\ s);}
+\DoxyCodeLine{00425\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a738246028ff8bf3b6e7de66b618b5301}{\_shard}}(uint32\_t\ hash)\ \{}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}}\ >\ 0\ ?\ (hash\ >>\ (32\ -\/\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}}))\ :\ 0;}
+\DoxyCodeLine{00427\ \ \ \ \ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aaf2ed934b37cbbd236fdd1b01a5f5005}{\_name}};}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_aa1c7312e10520981793be2d6e84ac96f}{\_num\_shard\_bits}};}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac5f32197c7bbecfe34cd5776e61b3d1c}{\_num\_shards}};}
+\DoxyCodeLine{00432\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_l_r_u_cache}{LRUCache}}**\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac97db6cb5ca411045b825ad572e6fad0}{\_shards}};}
+\DoxyCodeLine{00433\ \ \ \ \ std::atomic<uint64\_t>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a113e17ce1cec10eac827837af24cd008}{\_last\_id}};}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ae4df13f083cbc180154e48d0aaf78066}{\_total\_capacity}};}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ std::unique\_ptr<MemTrackerLimiter>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a31d4888710271b589237f5995336ebd5}{\_mem\_tracker}};}
+\DoxyCodeLine{00437\ \ \ \ \ std::shared\_ptr<MetricEntity>\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_af45816ac82b41b7a8f35fc06da19e2cc}{\_entity}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00438\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a858e81330d485a888390797f8ce879f7}{cache\_capacity}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00439\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_gauge}{IntGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_ac06005a84adda21d51a6b5a551644cac}{cache\_usage}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00440\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lock_gauge}{DoubleGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a579d365a9cd21bc9d64c38a8da9c0d53}{cache\_usage\_ratio}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00441\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_counter}{IntAtomicCounter}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a8167778bbabc27b03f26cfe3cad9a5d5}{cache\_lookup\_count}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00442\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_atomic_counter}{IntAtomicCounter}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a88ef09e52a0f34a4f491edda807cc1d4}{cache\_hit\_count}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00443\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_lock_gauge}{DoubleGauge}}*\ \mbox{\hyperlink{classdoris_1_1_sharded_l_r_u_cache_a8f802c8c4875e08388792645118db5e0}{cache\_hit\_ratio}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00444\ \};}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

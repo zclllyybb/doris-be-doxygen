@@ -1,5 +1,5 @@
-\hypertarget{tablet_8cpp}{}\doxysection{/\+Users/dabowang/be\+\_\+all/olap/tablet.cpp 文件参考}
-\label{tablet_8cpp}\index{/Users/dabowang/be\_all/olap/tablet.cpp@{/Users/dabowang/be\_all/olap/tablet.cpp}}
+\hypertarget{tablet_8cpp}{}\doxysection{/\+Users/dabowang/doris/be/src/olap/tablet.cpp 文件参考}
+\label{tablet_8cpp}\index{/Users/dabowang/doris/be/src/olap/tablet.cpp@{/Users/dabowang/doris/be/src/olap/tablet.cpp}}
 {\ttfamily \#include \char`\"{}olap/tablet.\+h\char`\"{}}\newline
 {\ttfamily \#include $<$bvar/reducer.\+h$>$}\newline
 {\ttfamily \#include $<$bvar/window.\+h$>$}\newline
@@ -13,6 +13,7 @@
 {\ttfamily \#include $<$stdio.\+h$>$}\newline
 {\ttfamily \#include $<$sys/stat.\+h$>$}\newline
 {\ttfamily \#include $<$algorithm$>$}\newline
+{\ttfamily \#include $<$atomic$>$}\newline
 {\ttfamily \#include $<$cstdint$>$}\newline
 {\ttfamily \#include $<$map$>$}\newline
 {\ttfamily \#include $<$memory$>$}\newline
@@ -20,9 +21,12 @@
 {\ttfamily \#include $<$set$>$}\newline
 {\ttfamily \#include $<$shared\+\_\+mutex$>$}\newline
 {\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$unordered\+\_\+set$>$}\newline
+{\ttfamily \#include \char`\"{}agent/utils.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}common/config.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}common/logging.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}common/status.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}gutil/strings/stringpiece.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}io/fs/path.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}io/fs/remote\+\_\+file\+\_\+system.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/base\+\_\+compaction.\+h\char`\"{}}\newline
@@ -43,6 +47,7 @@
 {\ttfamily \#include \char`\"{}olap/tablet\+\_\+meta.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/tablet\+\_\+meta\+\_\+manager.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}olap/tablet\+\_\+schema.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}olap/txn\+\_\+manager.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}segment\+\_\+loader.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}service/point\+\_\+query\+\_\+executor.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}util/defer\+\_\+op.\+h\char`\"{}}\newline
@@ -51,6 +56,7 @@
 {\ttfamily \#include \char`\"{}util/scoped\+\_\+cleanup.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}util/time.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}util/trace.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}util/uid\+\_\+util.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/data\+\_\+types/data\+\_\+type\+\_\+factory.\+hpp\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}vec/jsonb/serialize.\+h\char`\"{}}\newline
 tablet.\+cpp 的引用(Include)关系图\+:
@@ -61,6 +67,11 @@ tablet.\+cpp 的引用(Include)关系图\+:
 \includegraphics[width=350pt]{da/dfa/tablet_8cpp__incl}
 \end{center}
 \end{figure}
+\doxysubsection*{类}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structdoris_1_1_write_cooldown_meta_executors}{Write\+Cooldown\+Meta\+Executors}}
+\end{DoxyCompactItemize}
 \doxysubsection*{命名空间}
 \begin{DoxyCompactItemize}
 \item 
@@ -72,9 +83,15 @@ namespace \mbox{\hyperlink{namespacedoris}{doris}}
 \mbox{\hyperlink{namespacedoris_a3b6b13080b3381fc0718ec72112b3860}{DEFINE\+\_\+\+COUNTER\+\_\+\+METRIC\+\_\+\+PROTOTYPE\+\_\+2\+ARG}} (flush\+\_\+bytes, Metric\+Unit\+::\+BYTES)
 \item 
 \mbox{\hyperlink{namespacedoris_a5ae7126aba681732bd65d1d02bdf1cde}{DEFINE\+\_\+\+COUNTER\+\_\+\+METRIC\+\_\+\+PROTOTYPE\+\_\+2\+ARG}} (flush\+\_\+finish\+\_\+count, Metric\+Unit\+::\+OPERATIONS)
+\item 
+Status \mbox{\hyperlink{namespacedoris_abafbadc9df93c07f2199e511a71e1bda}{check\+\_\+version\+\_\+continuity}} (const std\+::vector$<$ Rowset\+Meta\+Shared\+Ptr $>$ \&rs\+\_\+metas)
 \end{DoxyCompactItemize}
 \doxysubsection*{变量}
 \begin{DoxyCompactItemize}
 \item 
 bvar\+::\+Adder$<$ uint64\+\_\+t $>$ \mbox{\hyperlink{namespacedoris_ae0042778193321f3d8d1de98ba28e7eb}{exceed\+\_\+version\+\_\+limit\+\_\+counter}}
+\item 
+static std\+::unordered\+\_\+set$<$ std\+::string $>$ \mbox{\hyperlink{namespacedoris_a77f04e4ce4ff5203f744c128943afc5f}{s\+\_\+pending\+\_\+remote\+\_\+rowsets}}
+\item 
+static std\+::mutex \mbox{\hyperlink{namespacedoris_a0f4574c0c6cd4bb08e920b763361228d}{s\+\_\+pending\+\_\+remote\+\_\+rowsets\+\_\+mtx}}
 \end{DoxyCompactItemize}

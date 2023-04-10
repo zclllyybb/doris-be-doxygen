@@ -15,10 +15,8 @@ var searchData=
   ['windowfunnelstate_12',['WindowFunnelState',['../d8/da4/structdoris_1_1vectorized_1_1_window_funnel_state.html',1,'doris::vectorized']]],
   ['wktparse_13',['WktParse',['../d6/db1/classdoris_1_1_wkt_parse.html',1,'doris']]],
   ['wktparsecontext_14',['WktParseContext',['../dc/d76/struct_wkt_parse_context.html',1,'']]],
-  ['worktaskqueue_15',['WorkTaskQueue',['../d9/d2e/classdoris_1_1pipeline_1_1_work_task_queue.html',1,'doris::pipeline']]],
-  ['wrapperfield_16',['WrapperField',['../d9/dfb/classdoris_1_1_wrapper_field.html',1,'doris']]],
-  ['writablefile_17',['WritableFile',['../de/dec/classdoris_1_1_writable_file.html',1,'doris']]],
-  ['writablefileoptions_18',['WritableFileOptions',['../d2/daf/structdoris_1_1_writable_file_options.html',1,'doris']]],
-  ['writeinfo_19',['WriteInfo',['../da/d97/structdoris_1_1_jsonb_writer_t_1_1_write_info.html',1,'doris::JsonbWriterT']]],
-  ['writerequest_20',['WriteRequest',['../da/db5/structdoris_1_1_write_request.html',1,'doris']]]
+  ['wrapperfield_15',['WrapperField',['../d9/dfb/classdoris_1_1_wrapper_field.html',1,'doris']]],
+  ['writecooldownmetaexecutors_16',['WriteCooldownMetaExecutors',['../dc/dd9/structdoris_1_1_write_cooldown_meta_executors.html',1,'doris']]],
+  ['writeinfo_17',['WriteInfo',['../da/d97/structdoris_1_1_jsonb_writer_t_1_1_write_info.html',1,'doris::JsonbWriterT']]],
+  ['writerequest_18',['WriteRequest',['../da/db5/structdoris_1_1_write_request.html',1,'doris']]]
 ];

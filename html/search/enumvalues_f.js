@@ -45,8 +45,8 @@ var searchData=
   ['olap_5ffield_5ftype_5funsigned_5fsmallint_42',['OLAP_FIELD_TYPE_UNSIGNED_SMALLINT',['../d6/d94/namespacedoris.html#aa01498a3ceb2fa74dc9536c16caef1daa200976c6fd453901ca79aa7f5bcdc109',1,'doris']]],
   ['olap_5ffield_5ftype_5funsigned_5ftinyint_43',['OLAP_FIELD_TYPE_UNSIGNED_TINYINT',['../d6/d94/namespacedoris.html#aa01498a3ceb2fa74dc9536c16caef1daa3ac5676a1e36da4a58b69530699c5df7',1,'doris']]],
   ['olap_5ffield_5ftype_5fvarchar_44',['OLAP_FIELD_TYPE_VARCHAR',['../d6/d94/namespacedoris.html#aa01498a3ceb2fa74dc9536c16caef1daae6974dbd443985ccd653599ed8101e25',1,'doris']]],
-  ['olap_5fv1_45',['OLAP_V1',['../d6/d94/namespacedoris.html#adb2321f205c5bc2792139985d25c7fd5afdaf31ac3a971f26be8a04f2f4bb3be6',1,'doris']]],
-  ['one_5flevel_46',['ONE_LEVEL',['../d5/dae/namespacedoris__udf.html#a93bf3792d1006a8555209db39ee4895baf903fa02276fd31c3c41b458fa3a95b5',1,'doris_udf']]],
+  ['olap_5ffield_5ftype_5fvariant_45',['OLAP_FIELD_TYPE_VARIANT',['../d6/d94/namespacedoris.html#aa01498a3ceb2fa74dc9536c16caef1daa1120574fa92004d70e3f9180fddd4189',1,'doris']]],
+  ['olap_5fv1_46',['OLAP_V1',['../d6/d94/namespacedoris.html#adb2321f205c5bc2792139985d25c7fd5afdaf31ac3a971f26be8a04f2f4bb3be6',1,'doris']]],
   ['operations_47',['OPERATIONS',['../d6/d94/namespacedoris.html#adc4ead501e401e40d5a4d1fa5cc647f3a8381fcacb5d3660664e60f8c139d37d3',1,'doris']]],
   ['options_48',['OPTIONS',['../d6/d94/namespacedoris.html#a4353a75834bb35c4acd80b51434eef59a1b20f1b4adb6ff9778b284fb46f6f99d',1,'doris']]]
 ];

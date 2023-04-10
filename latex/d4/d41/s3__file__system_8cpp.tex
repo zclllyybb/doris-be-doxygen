@@ -1,5 +1,5 @@
-\hypertarget{s3__file__system_8cpp}{}\doxysection{/\+Users/dabowang/be\+\_\+all/io/fs/s3\+\_\+file\+\_\+system.cpp 文件参考}
-\label{s3__file__system_8cpp}\index{/Users/dabowang/be\_all/io/fs/s3\_file\_system.cpp@{/Users/dabowang/be\_all/io/fs/s3\_file\_system.cpp}}
+\hypertarget{s3__file__system_8cpp}{}\doxysection{/\+Users/dabowang/doris/be/src/io/fs/s3\+\_\+file\+\_\+system.cpp 文件参考}
+\label{s3__file__system_8cpp}\index{/Users/dabowang/doris/be/src/io/fs/s3\_file\_system.cpp@{/Users/dabowang/doris/be/src/io/fs/s3\_file\_system.cpp}}
 {\ttfamily \#include \char`\"{}io/fs/s3\+\_\+file\+\_\+system.\+h\char`\"{}}\newline
 {\ttfamily \#include $<$aws/core/utils/threading/\+Executor.\+h$>$}\newline
 {\ttfamily \#include $<$aws/s3/\+S3\+Client.\+h$>$}\newline
@@ -10,6 +10,7 @@
 {\ttfamily \#include $<$aws/s3/model/\+List\+Objects\+V2\+Request.\+h$>$}\newline
 {\ttfamily \#include $<$aws/s3/model/\+Put\+Object\+Request.\+h$>$}\newline
 {\ttfamily \#include $<$aws/transfer/\+Transfer\+Manager.\+h$>$}\newline
+{\ttfamily \#include $<$opentelemetry/common/threadlocal.\+h$>$}\newline
 {\ttfamily \#include $<$filesystem$>$}\newline
 {\ttfamily \#include $<$fstream$>$}\newline
 {\ttfamily \#include $<$memory$>$}\newline
@@ -20,6 +21,8 @@
 {\ttfamily \#include \char`\"{}io/fs/remote\+\_\+file\+\_\+system.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}io/fs/s3\+\_\+file\+\_\+reader.\+h\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}io/fs/s3\+\_\+file\+\_\+writer.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}util/s3\+\_\+uri.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}util/s3\+\_\+util.\+h\char`\"{}}\newline
 s3\+\_\+file\+\_\+system.\+cpp 的引用(Include)关系图\+:
 \nopagebreak
 \begin{figure}[H]
@@ -39,6 +42,10 @@ namespace \mbox{\hyperlink{namespacedoris_1_1io}{doris\+::io}}
 \begin{DoxyCompactItemize}
 \item 
 \#define \mbox{\hyperlink{s3__file__system_8cpp_adf1e9b077b70f8cd43d21e57162f33f7}{CHECK\+\_\+\+S3\+\_\+\+CLIENT}}(client)
+\item 
+\#define \mbox{\hyperlink{s3__file__system_8cpp_afe130f292a42cbefc53d99be37ff462a}{CHECK\+\_\+\+S3\+\_\+\+PATH}}(uri,  path)
+\item 
+\#define \mbox{\hyperlink{s3__file__system_8cpp_abf5e62c88a9c18a2c15f62b5c745f2a1}{GET\+\_\+\+KEY}}(key,  path)
 \end{DoxyCompactItemize}
 
 
@@ -51,8 +58,32 @@ namespace \mbox{\hyperlink{namespacedoris_1_1io}{doris\+::io}}
 
 {\bfseries 值\+:}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (!client)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
-\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::InternalError(\textcolor{stringliteral}{"{}init\ s3\ client\ error"{}});\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (!client)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Status::IOError(\textcolor{stringliteral}{"{}init\ s3\ client\ error"{}});\ \(\backslash\)}
 \DoxyCodeLine{\ \ \ \ \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{s3__file__system_8cpp_afe130f292a42cbefc53d99be37ff462a}\label{s3__file__system_8cpp_afe130f292a42cbefc53d99be37ff462a}} 
+\index{s3\_file\_system.cpp@{s3\_file\_system.cpp}!CHECK\_S3\_PATH@{CHECK\_S3\_PATH}}
+\index{CHECK\_S3\_PATH@{CHECK\_S3\_PATH}!s3\_file\_system.cpp@{s3\_file\_system.cpp}}
+\doxysubsubsection{\texorpdfstring{CHECK\_S3\_PATH}{CHECK\_S3\_PATH}}
+{\footnotesize\ttfamily \#define CHECK\+\_\+\+S3\+\_\+\+PATH(\begin{DoxyParamCaption}\item[{}]{uri,  }\item[{}]{path }\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ S3URI\ uri(path.string());\ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ RETURN\_IF\_ERROR(uri.parse());}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{s3__file__system_8cpp_abf5e62c88a9c18a2c15f62b5c745f2a1}\label{s3__file__system_8cpp_abf5e62c88a9c18a2c15f62b5c745f2a1}} 
+\index{s3\_file\_system.cpp@{s3\_file\_system.cpp}!GET\_KEY@{GET\_KEY}}
+\index{GET\_KEY@{GET\_KEY}!s3\_file\_system.cpp@{s3\_file\_system.cpp}}
+\doxysubsubsection{\texorpdfstring{GET\_KEY}{GET\_KEY}}
+{\footnotesize\ttfamily \#define GET\+\_\+\+KEY(\begin{DoxyParamCaption}\item[{}]{key,  }\item[{}]{path }\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ std::string\ key;\ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ RETURN\_IF\_ERROR(get\_key(path,\ \&key));}
 
 \end{DoxyCode}

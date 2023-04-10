@@ -1,5 +1,5 @@
 \hypertarget{s3__file__system_8h_source}{}\doxysection{s3\+\_\+file\+\_\+system.\+h}
-\label{s3__file__system_8h_source}\index{/Users/dabowang/be\_all/io/fs/s3\_file\_system.h@{/Users/dabowang/be\_all/io/fs/s3\_file\_system.h}}
+\label{s3__file__system_8h_source}\index{/Users/dabowang/doris/be/src/io/fs/s3\_file\_system.h@{/Users/dabowang/doris/be/src/io/fs/s3\_file\_system.h}}
 \mbox{\hyperlink{s3__file__system_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -36,63 +36,84 @@
 \DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
 \DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }io\ \{}
 \DoxyCodeLine{00034\ }
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.(Except\ `set\_xxx`\ method)}}
-\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system}{S3FileSystem}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1io_1_1_remote_file_system}{RemoteFileSystem}}\ \{}
-\DoxyCodeLine{00037\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{static}\ std::shared\_ptr<S3FileSystem>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ab53c7bf8a306d7765b73a19d81087d86}{create}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ s3\_conf,\ std::string\ \textcolor{keywordtype}{id});}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a5e44ade24bb1ab1526211cc4c91d6164}{\string~S3FileSystem}}()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a3e5d8c5e578102d7515053cccd4b93af}{create\_file}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ \mbox{\hyperlink{namespacedoris_1_1io_ac505400cb71777f308922cad6f8dc59c}{FileWriterPtr}}*\ writer)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00043\ }
-\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a7b46c1935bb6442ba8a3f51a3d4f9c3b}{open\_file}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ \mbox{\hyperlink{namespacedoris_1_1io_a4fab59e5f39ac7c318b993fa0c5265ee}{FileReaderSPtr}}*\ reader,\ \mbox{\hyperlink{structdoris_1_1_i_o_context}{IOContext}}*\ io\_ctx)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a5645284b88bae1688d89452b5d23c4c4}{delete\_file}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a8a6518f7d9ca9eb7ffcaef3a0e343fd4}{create\_directory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Delete\ all\ objects\ start\ with\ path.}}
-\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a81f3aed3aeb4ce811c5ebf6baac12e33}{delete\_directory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ File\ system\ for\ S3\ compatible\ object\ storage}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ When\ creating\ S3FileSystem,\ all\ required\ info\ should\ be\ set\ in\ S3Conf,}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ such\ as\ ak,\ sk,\ region,\ endpoint,\ bucket.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ And\ the\ root\_path\ of\ S3FileSystem\ is\ s3\_conf.prefix.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ When\ using\ S3FileSystem,\ it\ accepts\ 2\ kinds\ of\ path:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ 1.\ Full\ path:\ s3://bucket/path/to/file.txt}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ \ \ In\ this\ case,\ the\ root\_path\ is\ not\ used.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ 2.\ only\ key:\ path/to/file.txt}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ In\ this\ case,\ the\ final\ key\ will\ be\ "{}prefix\ +\ path/to/file.txt"{}}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ This\ class\ is\ thread-\/safe.(Except\ `set\_xxx`\ method)}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system}{S3FileSystem}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classdoris_1_1io_1_1_remote_file_system}{RemoteFileSystem}}\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ae5a142954f35e6cb5be80e37789475bb}{create}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ s3\_conf,\ std::string\ \textcolor{keywordtype}{id},\ std::shared\_ptr<S3FileSystem>*\ fs);}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a5e44ade24bb1ab1526211cc4c91d6164}{\string~S3FileSystem}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Guarded\ by\ external\ lock.}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a801c7e2970849034414dba6bc18f436c}{set\_conf}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ s3\_conf)\ \{\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0220c235a85f728817e8e74c08c5be8e}{\_s3\_conf}}\ =\ std::move(s3\_conf);\ \}}
 \DoxyCodeLine{00052\ }
-\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0043ecfd9f63f510752a898ef4c605ef}{link\_file}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dest)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00054\ }
-\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ad382022cc5337b07835a83e91852f7be}{exists}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ \textcolor{keywordtype}{bool}*\ res)\ \textcolor{keyword}{const\ override};}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ae5152883a3cad0a4808571544dc989e3}{file\_size}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ \textcolor{keywordtype}{size\_t}*\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ae5152883a3cad0a4808571544dc989e3}{file\_size}})\ \textcolor{keyword}{const\ override};}
-\DoxyCodeLine{00058\ }
-\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a8f5f2effc672db0c838d3946c11a5614}{list}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ std::vector<Path>*\ files)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00060\ }
-\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_af857fc593d85e508e005500659e7eb0a}{upload}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ local\_path,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dest\_path)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00062\ }
-\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a7a5bc7075f6847e928b18c57acc89c2b}{batch\_upload}}(\textcolor{keyword}{const}\ std::vector<Path>\&\ local\_paths,}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<Path>\&\ dest\_paths)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00065\ }
-\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aee923f6114e09bad475b24dfb3e08982}{connect}}()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00067\ }
-\DoxyCodeLine{00068\ \ \ \ \ std::shared\_ptr<Aws::S3::S3Client>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ac6f1dc10dcae5522c4b7335ad7dcdead}{get\_client}}()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ std::lock\_guard\ lock(\mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_adefb3cb7672e1c60e2afa925b6b4b162}{\_client\_mu}});}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaecd6b779def39569db466473bd76dc1}{\_client}};}
-\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \ std::shared\_ptr<Aws::S3::S3Client>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ac6f1dc10dcae5522c4b7335ad7dcdead}{get\_client}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ std::lock\_guard\ lock(\mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_adefb3cb7672e1c60e2afa925b6b4b162}{\_client\_mu}});}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaecd6b779def39569db466473bd76dc1}{\_client}};}
+\DoxyCodeLine{00056\ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a055c5d37effb160acdb7b3f2807ed49b}{connect\_impl}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_af4b8c33dc15f37dda1533bf29ea45d66}{create\_file\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ file,\ \mbox{\hyperlink{namespacedoris_1_1io_ac505400cb71777f308922cad6f8dc59c}{FileWriterPtr}}*\ writer)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a1f91dd34e7fd5d5cb2a26eabfd27affc}{open\_file\_internal}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ file,\ int64\_t\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_system_a0b996a6494349d05dc1783d3907290f4}{file\_size}},\ \mbox{\hyperlink{namespacedoris_1_1io_a4fab59e5f39ac7c318b993fa0c5265ee}{FileReaderSPtr}}*\ reader)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a06ed965f7e1887360621836527f79106}{create\_directory\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dir,\ \textcolor{keywordtype}{bool}\ failed\_if\_exists\ =\ \textcolor{keyword}{false})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a30aebeaa1d5ad73394f1d9a1be075daf}{delete\_file\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ file)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a870c399f9026569d0fc455f16fdc2a84}{delete\_directory\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dir)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a6fca3c8c8d3351f6cd79fbf114dd60b6}{batch\_delete\_impl}}(\textcolor{keyword}{const}\ std::vector<Path>\&\ files)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a3f9baad056b13dec0e1cef0ea0314e17}{exists\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ \textcolor{keywordtype}{bool}*\ res)\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a874c5bad3e8f19caf3530a42e3aa96eb}{file\_size\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ file,\ int64\_t*\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_system_a0b996a6494349d05dc1783d3907290f4}{file\_size}})\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a3ec90cef2ef7a71bf79ba0d46fde7e9d}{list\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dir,\ \textcolor{keywordtype}{bool}\ only\_file,\ std::vector<FileInfo>*\ files,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_system_adcd6a0d87d352bcb1f85703e09bf445e}{exists}})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a7c0d350249c20c15bc00db0e6e6a9c7e}{rename\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ orig\_name,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ new\_name)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a85574eb33c3ffa44fdf1cc91049f5654}{rename\_dir\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ orig\_name,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ new\_name)\ \textcolor{keyword}{override};}
 \DoxyCodeLine{00072\ }
-\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ Guarded\ by\ external\ lock.}}
-\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a801c7e2970849034414dba6bc18f436c}{set\_conf}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ s3\_conf)\ \{\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0220c235a85f728817e8e74c08c5be8e}{\_s3\_conf}}\ =\ std::move(s3\_conf);\ \}}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a72db69b6bdcad26a71e0162c5e706037}{get\_key}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00077\ }
-\DoxyCodeLine{00078\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system}{S3FileSystem}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\&\&\ s3\_conf,\ std::string\&\&\ \textcolor{keywordtype}{id});}
-\DoxyCodeLine{00080\ }
-\DoxyCodeLine{00081\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0220c235a85f728817e8e74c08c5be8e}{\_s3\_conf}};}
-\DoxyCodeLine{00083\ }
-\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ FIXME(cyx):\ We\ can\ use\ std::atomic<std::shared\_ptr>\ since\ c++20.}}
-\DoxyCodeLine{00085\ \ \ \ \ std::shared\_ptr<Aws::S3::S3Client>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaecd6b779def39569db466473bd76dc1}{\_client}};}
-\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_adefb3cb7672e1c60e2afa925b6b4b162}{\_client\_mu}};}
-\DoxyCodeLine{00087\ }
-\DoxyCodeLine{00088\ \ \ \ \ std::shared\_ptr<Aws::Utils::Threading::PooledThreadExecutor>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aa2ec57da61b4f87686ef31cf50869572}{\_executor}};}
-\DoxyCodeLine{00089\ \};}
-\DoxyCodeLine{00090\ }
-\DoxyCodeLine{00091\ \}\ \textcolor{comment}{//\ namespace\ io}}
-\DoxyCodeLine{00092\ \}\ \textcolor{comment}{//\ namespace\ doris}}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a19f6fc2b68c63121292fec50c8af85ed}{upload\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ local\_file,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ remote\_file)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_ac855aba81b691711ae3825bdd8bffd9c}{batch\_upload\_impl}}(\textcolor{keyword}{const}\ std::vector<Path>\&\ local\_files,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<Path>\&\ remote\_files)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aa26eba4c75fc10907699f364da94c142}{direct\_upload\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ remote\_file,\ \textcolor{keyword}{const}\ std::string\&\ content)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0fd7a99f67fd949f3f076406a7aeae25}{upload\_with\_checksum\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ local\_file,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ remote\_file,}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{file__header_8h_aa482bc33779a87f57ab8efc2c1680c48}{checksum}})\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a3154f5c1e96ea9634b25bc5c17538834}{download\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ remote\_file,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ local\_file)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a8f9be53f6b6f1bfd3470f221ae5c9e34}{direct\_download\_impl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ remote\_file,\ std::string*\ content)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aba36879eeb395aa42c7eb6f9d5008e49}{absolute\_path}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (path.string().find(\textcolor{stringliteral}{"{}://"{}})\ !=\ std::string::npos)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ path\ is\ with\ schema,\ which\ means\ this\ is\ a\ full\ path\ like:}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ s3://bucket/path/to/file.txt}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ no\ need\ to\ concat\ with\ prefix}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ path\ with\ no\ schema}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1io_1_1_file_system_aac9643a45e9680934e41c57cb7ebfa49}{\_root\_path}}\ /\ path;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system}{S3FileSystem}}(\mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\&\&\ s3\_conf,\ std::string\&\&\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ AwsOutcome>}
+\DoxyCodeLine{00098\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaafa5288bda56a4f88afb6ada90f64b2}{error\_msg}}(\textcolor{keyword}{const}\ std::string\&\ key,\ \textcolor{keyword}{const}\ AwsOutcome\&\ outcome)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00099\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaafa5288bda56a4f88afb6ada90f64b2}{error\_msg}}(\textcolor{keyword}{const}\ std::string\&\ key,\ \textcolor{keyword}{const}\ std::string\&\ err)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ copy(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dst);}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_abc8f48b37185da2c2b026a84882de125}{copy\_dir}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ dst);}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_status}{Status}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a97a1ce011cc8def081367826852d80b1}{get\_key}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacedoris_1_1io_a43a47abff5619d41ebe5fc4c3a3ff4f6}{Path}}\&\ path,\ std::string*\ key)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_s3_conf}{S3Conf}}\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_a0220c235a85f728817e8e74c08c5be8e}{\_s3\_conf}};}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{//\ TODO(cyx):\ We\ can\ use\ std::atomic<std::shared\_ptr>\ since\ c++20.}}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_adefb3cb7672e1c60e2afa925b6b4b162}{\_client\_mu}};}
+\DoxyCodeLine{00110\ \ \ \ \ std::shared\_ptr<Aws::S3::S3Client>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aaecd6b779def39569db466473bd76dc1}{\_client}};}
+\DoxyCodeLine{00111\ \ \ \ \ std::shared\_ptr<Aws::Utils::Threading::PooledThreadExecutor>\ \mbox{\hyperlink{classdoris_1_1io_1_1_s3_file_system_aa2ec57da61b4f87686ef31cf50869572}{\_executor}};}
+\DoxyCodeLine{00112\ \};}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \}\ \textcolor{comment}{//\ namespace\ io}}
+\DoxyCodeLine{00115\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}

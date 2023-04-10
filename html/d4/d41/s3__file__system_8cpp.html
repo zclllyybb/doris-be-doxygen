@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.6"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ppl_util: /Users/dabowang/be_all/io/fs/s3_file_system.cpp 文件参考</title>
+<title>be_all: /Users/dabowang/doris/be/src/io/fs/s3_file_system.cpp 文件参考</title>
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ppl_util
+   <div id="projectname">be_all
    </div>
   </td>
  </tr>
@@ -69,7 +69,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="../../dir_8eac97cde2fee0634bdd38dda0a21780.html">be_all</a></li><li class="navelem"><a class="el" href="../../dir_b08b707028a4a4484b403932c4ae9f53.html">io</a></li><li class="navelem"><a class="el" href="../../dir_fdb462a84646f40d83d50a4af7a5474e.html">fs</a></li>  </ul>
+<li class="navelem"><a class="el" href="../../dir_b08de747208093f820e51238c25d3efa.html">doris</a></li><li class="navelem"><a class="el" href="../../dir_787e83bab9583898d4b4b77c9e19718a.html">be</a></li><li class="navelem"><a class="el" href="../../dir_b680d7e4fd62afc6a08788ccb1c35ea0.html">src</a></li><li class="navelem"><a class="el" href="../../dir_9741823110a255a8a185ba36b778f84d.html">io</a></li><li class="navelem"><a class="el" href="../../dir_50ee4d6a138ae5d9aa16ee7d43b08e71.html">fs</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -89,6 +89,7 @@ $(function() {
 <code>#include &lt;aws/s3/model/ListObjectsV2Request.h&gt;</code><br />
 <code>#include &lt;aws/s3/model/PutObjectRequest.h&gt;</code><br />
 <code>#include &lt;aws/transfer/TransferManager.h&gt;</code><br />
+<code>#include &lt;opentelemetry/common/threadlocal.h&gt;</code><br />
 <code>#include &lt;filesystem&gt;</code><br />
 <code>#include &lt;fstream&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
@@ -99,6 +100,8 @@ $(function() {
 <code>#include &quot;<a class="el" href="../../d6/d90/remote__file__system_8h_source.html">io/fs/remote_file_system.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/dc9/s3__file__reader_8h_source.html">io/fs/s3_file_reader.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d6/d6d/s3__file__writer_8h_source.html">io/fs/s3_file_writer.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dc/dfb/s3__uri_8h_source.html">util/s3_uri.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/d70/s3__util_8h_source.html">util/s3_util.h</a>&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 s3_file_system.cpp 的引用(Include)关系图:</div>
 <div class="dyncontent">
@@ -118,6 +121,10 @@ s3_file_system.cpp 的引用(Include)关系图:</div>
 宏定义</h2></td></tr>
 <tr class="memitem:adf1e9b077b70f8cd43d21e57162f33f7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d41/s3__file__system_8cpp.html#adf1e9b077b70f8cd43d21e57162f33f7">CHECK_S3_CLIENT</a>(client)</td></tr>
 <tr class="separator:adf1e9b077b70f8cd43d21e57162f33f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe130f292a42cbefc53d99be37ff462a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d41/s3__file__system_8cpp.html#afe130f292a42cbefc53d99be37ff462a">CHECK_S3_PATH</a>(uri,  path)</td></tr>
+<tr class="separator:afe130f292a42cbefc53d99be37ff462a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf5e62c88a9c18a2c15f62b5c745f2a1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d41/s3__file__system_8cpp.html#abf5e62c88a9c18a2c15f62b5c745f2a1">GET_KEY</a>(key,  path)</td></tr>
+<tr class="separator:abf5e62c88a9c18a2c15f62b5c745f2a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">宏定义说明</h2>
 <a id="adf1e9b077b70f8cd43d21e57162f33f7" name="adf1e9b077b70f8cd43d21e57162f33f7"></a>
@@ -135,9 +142,69 @@ s3_file_system.cpp 的引用(Include)关系图:</div>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>值:</b><div class="fragment"><div class="line">    <span class="keywordflow">if</span> (!client) {                                            \</div>
-<div class="line">        <span class="keywordflow">return</span> Status::InternalError(<span class="stringliteral">&quot;init s3 client error&quot;</span>); \</div>
+<b>值:</b><div class="fragment"><div class="line">    <span class="keywordflow">if</span> (!client) {                                      \</div>
+<div class="line">        <span class="keywordflow">return</span> Status::IOError(<span class="stringliteral">&quot;init s3 client error&quot;</span>); \</div>
 <div class="line">    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="afe130f292a42cbefc53d99be37ff462a" name="afe130f292a42cbefc53d99be37ff462a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe130f292a42cbefc53d99be37ff462a">&#9670;&#160;</a></span>CHECK_S3_PATH</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CHECK_S3_PATH</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">uri, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">path&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>值:</b><div class="fragment"><div class="line">    S3URI uri(path.string());    \</div>
+<div class="line">    RETURN_IF_ERROR(uri.parse());</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="abf5e62c88a9c18a2c15f62b5c745f2a1" name="abf5e62c88a9c18a2c15f62b5c745f2a1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf5e62c88a9c18a2c15f62b5c745f2a1">&#9670;&#160;</a></span>GET_KEY</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define GET_KEY</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">key, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">path&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>值:</b><div class="fragment"><div class="line">    std::string key;       \</div>
+<div class="line">    RETURN_IF_ERROR(get_key(path, &amp;key));</div>
 </div><!-- fragment -->
 </div>
 </div>

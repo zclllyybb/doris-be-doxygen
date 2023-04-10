@@ -1,5 +1,5 @@
 \hypertarget{udf_8h_source}{}\doxysection{udf.\+h}
-\label{udf_8h_source}\index{/Users/dabowang/be\_all/udf/udf.h@{/Users/dabowang/be\_all/udf/udf.h}}
+\label{udf_8h_source}\index{/Users/dabowang/doris/be/src/udf/udf.h@{/Users/dabowang/doris/be/src/udf/udf.h}}
 \mbox{\hyperlink{udf_8h}{浏览该文件的文档.}}
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{comment}{//\ Licensed\ to\ the\ Apache\ Software\ Foundation\ (ASF)\ under\ one}}
@@ -29,457 +29,135 @@
 \DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <cstdint>}}
 \DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <functional>}}
 \DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00029\ }
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ This\ is\ the\ only\ Doris\ header\ required\ to\ develop\ UDFs\ and\ UDAs.\ This\ header}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ contains\ the\ types\ that\ need\ to\ be\ used\ and\ the\ FunctionContext\ object.\ The\ context}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//\ object\ serves\ as\ the\ interface\ object\ between\ the\ UDF/UDA\ and\ the\ doris\ process.}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runtime_2types_8h}{runtime/types.h}}"{}}}
+\DoxyCodeLine{00032\ }
 \DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris}{doris}}\ \{}
-\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }FunctionContextImpl;}
+\DoxyCodeLine{00034\ }
 \DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }ColumnPtrWrapper;}
 \DoxyCodeLine{00036\ \textcolor{keyword}{struct\ }StringRef;}
 \DoxyCodeLine{00037\ \textcolor{keyword}{class\ }BitmapValue;}
 \DoxyCodeLine{00038\ \textcolor{keyword}{class\ }DecimalV2Value;}
-\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }DateTimeValue;}
-\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }CollectionValue;}
-\DoxyCodeLine{00041\ \}\ \textcolor{comment}{//\ namespace\ doris}}
-\DoxyCodeLine{00042\ }
-\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedoris__udf}{doris\_udf}}\ \{}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{comment}{//\ All\ input\ and\ output\ values\ will\ be\ one\ of\ the\ structs\ below.\ The\ struct\ is\ a\ simple}}
-\DoxyCodeLine{00046\ \textcolor{comment}{//\ object\ containing\ a\ boolean\ to\ store\ if\ the\ value\ is\ nullptr\ and\ the\ value\ itself.\ The}}
-\DoxyCodeLine{00047\ \textcolor{comment}{//\ value\ is\ unspecified\ if\ the\ nullptr\ boolean\ is\ set.}}
-\DoxyCodeLine{00048\ \textcolor{keyword}{struct\ }AnyVal;}
-\DoxyCodeLine{00049\ \textcolor{keyword}{struct\ }StringVal;}
-\DoxyCodeLine{00050\ \textcolor{keyword}{struct\ }DateTimeVal;}
-\DoxyCodeLine{00051\ \textcolor{keyword}{struct\ }DecimalV2Val;}
-\DoxyCodeLine{00052\ }
-\DoxyCodeLine{00053\ \textcolor{comment}{//\ The\ FunctionContext\ is\ passed\ to\ every\ UDF/UDA\ and\ is\ the\ interface\ for\ the\ UDF\ to\ the}}
-\DoxyCodeLine{00054\ \textcolor{comment}{//\ rest\ of\ the\ system.\ It\ contains\ APIs\ to\ examine\ the\ system\ state,\ report\ errors}}
-\DoxyCodeLine{00055\ \textcolor{comment}{//\ and\ manage\ memory.}}
-\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}\ \{}
-\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a6a9e453bbd2bc4162de539637baf7fea}{DorisVersion}}\ \{}
-\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a6a9e453bbd2bc4162de539637baf7feaaab8d08e69ae68f69dc8fff4492a18d71}{V2\_0}},}
-\DoxyCodeLine{00060\ \ \ \ \ \};}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7}{Type}}\ \{}
-\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a7314b0d0e4638eaaeb8690b8555a6546}{INVALID\_TYPE}}\ =\ 0,}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a174c14bf485cb83d7bb06493dc9c4eef}{TYPE\_NULL}},}
-\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a61df052a75508047ab6c53699222718a}{TYPE\_BOOLEAN}},}
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7af7df611e83f5611650a9d9c6a41cf6a9}{TYPE\_TINYINT}},}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a1c5dfb60cd19ac0f31ac8cae787d5311}{TYPE\_SMALLINT}},}
-\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a4fcd4421533bb21c827865bdbac4fef9}{TYPE\_INT}},}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ac33c441c39ef5f0859bf8468c286a393}{TYPE\_BIGINT}},}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a75c3d161f2985b658259ddaa5e2592c8}{TYPE\_LARGEINT}},}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a19a0a402d33a2e049e91ea9e37e90c2f}{TYPE\_FLOAT}},}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a019d94f7c571e36215cc1a41e825de0c}{TYPE\_DOUBLE}},}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ac80ed02ff29fa334158b601181f5ae28}{TYPE\_DECIMAL}}\ [[deprecated]],}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7abee4b8bf9a35792598bc9f3e286341e9}{TYPE\_DATE}},}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a1f4a72362c30b890547f3fdc2f85a506}{TYPE\_DATETIME}},}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a2c8735de6cf799483eefed0e90a386f5}{TYPE\_CHAR}},}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a15f033692a37f9224d09a64c34ede12e}{TYPE\_VARCHAR}},}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ad2acd421437428d1521b51f4081e7bf7}{TYPE\_HLL}},}
-\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7addb4be6b1cc25112defabef75f73427a}{TYPE\_STRING}},}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7aa19f1c1d9d546fac17d172b3b00b08ce}{TYPE\_FIXED\_BUFFER}},}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a65cb0fcd0127e62c9296f5fdb88c5dd5}{TYPE\_DECIMALV2}},}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a43aef6302e2b8ee4efdd9ca87636d7c8}{TYPE\_OBJECT}},}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ad189c0a53681ec74eeea1f56d08d741f}{TYPE\_ARRAY}},}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7aad664c581c8f087b3440c662e6476e55}{TYPE\_QUANTILE\_STATE}},}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a97540e5c2c2392e65583859cfc00190a}{TYPE\_DATEV2}},}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a2fcff03f0d42e4cd86dcbefb1fba38bd}{TYPE\_DATETIMEV2}},}
-\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7abe86033411fce573a2ab31c9ac01069d}{TYPE\_TIMEV2}},}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a449da3c1bac18ee97fa7c922330f1cc2}{TYPE\_DECIMAL32}},}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7a530c228ef71cfba79bae20817da7c364}{TYPE\_DECIMAL64}},}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ab1b6cc074010fcf6eddb346ffe994e8a}{TYPE\_DECIMAL128I}},}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7ae0d174bd27d19d50d8a22afe1752b390}{TYPE\_JSONB}},}
-\DoxyCodeLine{00092\ \ \ \ \ \};}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }CollectionValue;}
+\DoxyCodeLine{00040\ \textcolor{keyword}{struct\ }TypeDescriptor;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }RuntimeState;}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ All\ input\ and\ output\ values\ will\ be\ one\ of\ the\ structs\ below.\ The\ struct\ is\ a\ simple}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ object\ containing\ a\ boolean\ to\ store\ if\ the\ value\ is\ nullptr\ and\ the\ value\ itself.\ The}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ value\ is\ unspecified\ if\ the\ nullptr\ boolean\ is\ set.}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{struct\ }AnyVal;}
+\DoxyCodeLine{00047\ \textcolor{keyword}{struct\ }StringRef;}
+\DoxyCodeLine{00048\ \textcolor{keyword}{struct\ }DateTimeVal;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ The\ FunctionContext\ is\ passed\ to\ every\ UDF/UDA\ and\ is\ the\ interface\ for\ the\ UDF\ to\ the}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ rest\ of\ the\ system.\ It\ contains\ APIs\ to\ examine\ the\ system\ state,\ report\ errors}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ and\ manage\ memory.}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_function_context}{FunctionContext}}\ \{}
+\DoxyCodeLine{00054\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_a3a7d67806e854776e57e0c17010049c8a51d674090d436415a094bc6f9ff4445e}{FRAGMENT\_LOCAL}},}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_a3a7d67806e854776e57e0c17010049c8aeb57713cdb26cd1156550ee6b9c9d687}{THREAD\_LOCAL}},}
+\DoxyCodeLine{00075\ \ \ \ \ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{static}\ std::unique\_ptr<doris::FunctionContext>\ \mbox{\hyperlink{classdoris_1_1_function_context_a53203aaef0ecff9cf44540405c1abd2c}{create\_context}}(}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a2ccf49be12555d373b883be1aa7b6709}{state}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{doris::TypeDescriptor}}\&\ return\_type,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<doris::TypeDescriptor>\&\ arg\_types);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00084\ \ \ \ \ std::unique\_ptr<doris::FunctionContext>\ \mbox{\hyperlink{classdoris_1_1_function_context_af9235212446f8aea2bbecf9377914a11}{clone}}();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_function_context_a3f38bab0b99eeda15e1049f11a63e3a5}{set\_constant\_cols}}(\textcolor{keyword}{const}\ std::vector<std::shared\_ptr<doris::ColumnPtrWrapper>>\&\ cols);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a2ccf49be12555d373b883be1aa7b6709}{state}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_function_context_a91f2150e84757ffe2be5129f52c9e85a}{\_state}};\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ std::string\&\ \mbox{\hyperlink{classdoris_1_1_function_context_a3e488c85b4af1122fcc0eb583945455d}{string\_result}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_function_context_ad6ca2ca2326f9091846ccb69ac6c4658}{\_string\_result}};\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_a12e3df0da9295f368acc4ba30d5740d7}{check\_overflow\_for\_decimal}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_function_context_ad7c6f1ecda2684f3ae8cdac6f0b37730}{\_check\_overflow\_for\_decimal}};\ \}}
 \DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc}{TypeDesc}}\ \{}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1d1cfd8ffb84e947f82999c682b666a7}{Type}}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc_ab6f4e6d3fde00ce906e46494f60dfe7a}{type}};}
-\DoxyCodeLine{00096\ }
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc_aa95455ed52a8459fad69509a4a0411b5}{precision}};}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc_a418e7934b5363ecde8269070181b3cef}{scale}};}
-\DoxyCodeLine{00100\ }
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc_afed088663f8704004425cdae2120b9b3}{len}};}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_a25e5d60866fe28fb67a03b4d83ac3609}{set\_check\_overflow\_for\_decimal}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_a12e3df0da9295f368acc4ba30d5740d7}{check\_overflow\_for\_decimal}})\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris_1_1_function_context_ad7c6f1ecda2684f3ae8cdac6f0b37730}{\_check\_overflow\_for\_decimal}}\ =\ \mbox{\hyperlink{classdoris_1_1_function_context_a12e3df0da9295f368acc4ba30d5740d7}{check\_overflow\_for\_decimal}};}
+\DoxyCodeLine{00096\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Sets\ an\ error\ for\ this\ UDF.\ If\ this\ is\ called,\ this\ will\ trigger\ the}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ query\ to\ fail.}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ Note:\ when\ you\ set\ error\ for\ the\ UDFs\ used\ in\ Data\ Load,\ you\ should}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ ensure\ the\ function\ return\ value\ is\ null.}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_function_context_a79faa371b6a0babcbd966b52b5e38b60}{set\_error}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ error\_msg);}
 \DoxyCodeLine{00103\ }
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ valid\ if\ type\ ==\ TYPE\_ARRAY}}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ std::vector<TypeDesc>\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc_ae4b956116743eeb8af9dacea7b72dfea}{children}};}
-\DoxyCodeLine{00106\ \ \ \ \ \};}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_unique_id}{UniqueId}}\ \{}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_unique_id_a94ebb4c22130c6225e4853bda2afdede}{hi}};}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_unique_id_a02d2e758b56a585c38f9b055ddc6038a}{lo}};}
-\DoxyCodeLine{00111\ \ \ \ \ \};}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ \{}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8a51d674090d436415a094bc6f9ff4445e}{FRAGMENT\_LOCAL}},}
-\DoxyCodeLine{00125\ }
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8aeb57713cdb26cd1156550ee6b9c9d687}{THREAD\_LOCAL}},}
-\DoxyCodeLine{00133\ \ \ \ \ \};}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ Adds\ a\ warning\ that\ is\ returned\ to\ the\ user.\ This\ can\ include\ things\ like}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ overflow\ or\ other\ recoverable\ error\ conditions.}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ Warnings\ are\ capped\ at\ a\ maximum\ number.\ Returns\ true\ if\ the\ warning\ was}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{//\ added\ and\ false\ if\ it\ was\ ignored\ due\ to\ the\ cap.}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_a9fca47c3c5aae9d85d5f9318f5bf8868}{add\_warning}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ warning\_msg);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris_1_1_function_context_a6f89a11f37957876fef15282a0287909}{set\_function\_state}}(\mbox{\hyperlink{classdoris_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ scope,\ std::shared\_ptr<void>\ ptr);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a88b0c2646bde9832e4260569f63b8993}{get\_function\_state}}(\mbox{\hyperlink{classdoris_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ scope)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ return\ type\ information\ of\ this\ function.\ For\ UDAs,\ this\ is\ the\ final}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ return\ type\ of\ the\ UDA\ (e.g.,\ the\ type\ returned\ by\ the\ finalize\ function).}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{doris::TypeDescriptor}}\&\ \mbox{\hyperlink{classdoris_1_1_function_context_a116025f46614c157f7bf211decd3c023}{get\_return\_type}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ number\ of\ arguments\ to\ this\ function\ (not\ including\ the\ FunctionContext*}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ argument).}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris_1_1_function_context_a2909e30284261f5cf9c9fd7dd2d92a76}{get\_num\_args}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ type\ information\ for\ the\ arg\_idx-\/th\ argument\ (0-\/indexed,\ not\ including}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ the\ FunctionContext*\ argument).\ Returns\ nullptr\ if\ arg\_idx\ is\ invalid.}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{doris::TypeDescriptor}}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a8de477de865452c10b555febb0a6e26c}{get\_arg\_type}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ the\ arg\_idx-\/th\ input\ argument\ (0\ indexed,\ not\ including\ the}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ FunctionContext*\ argument)\ is\ a\ constant\ (e.g.\ 5,\ "{}string"{},\ 1\ +\ 1).}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_a08592065ff966a5520fd4fc0e5e44ddd}{is\_col\_constant}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
 \DoxyCodeLine{00134\ }
-\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ version\ of\ Doris\ that's\ currently\ running.}}
-\DoxyCodeLine{00136\ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a6a9e453bbd2bc4162de539637baf7fea}{DorisVersion}}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a104cd9819d8a97595b44b697367c9c44}{version}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00137\ }
-\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ user\ that\ is\ running\ the\ query.\ Returns\ nullptr\ if\ it\ is\ not}}
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ available.}}
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a213f7ed0d83967412e2466a6a66b3bcd}{user}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00141\ }
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ query\_id\ for\ the\ current\ query.}}
-\DoxyCodeLine{00143\ \ \ \ \ UniqueId\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ae75cf1d629a3e849b7e23e36e2f02378}{query\_id}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00144\ }
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ Sets\ an\ error\ for\ this\ UDF.\ If\ this\ is\ called,\ this\ will\ trigger\ the}}
-\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ query\ to\ fail.}}
-\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ Note:\ when\ you\ set\ error\ for\ the\ UDFs\ used\ in\ Data\ Load,\ you\ should}}
-\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//\ ensure\ the\ function\ return\ value\ is\ null.}}
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a79faa371b6a0babcbd966b52b5e38b60}{set\_error}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_aaba06601d28da1302d565e9b37959609}{error\_msg}});}
-\DoxyCodeLine{00150\ }
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ when\ you\ reused\ this\ FunctionContext,\ you\ maybe\ need\ clear\ the\ error\ status\ and\ message.}}
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ae740845021e158dab3064772f3b4a968}{clear\_error\_msg}}();}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ pointer\ to\ the\ value\ of\ the\ arg\_idx-\/th\ input\ argument\ (0\ indexed,\ not}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ including\ the\ FunctionContext*\ argument).\ Returns\ nullptr\ if\ the\ argument\ is\ not}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ constant.\ This\ function\ can\ be\ used\ to\ obtain\ user-\/specified\ constants\ in\ a\ UDF's}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ Init()\ or\ Close()\ functions.}}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_column_ptr_wrapper}{doris::ColumnPtrWrapper}}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a89d38b1887e6dbafa511a6eb9a3ec887}{get\_constant\_col}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ StringRef,\ which\ memory\ is\ available\ when\ this\ function\ context\ is\ used\ next\ time}}
+\DoxyCodeLine{00142\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_string_ref}{StringRef}}\ \mbox{\hyperlink{classdoris_1_1_function_context_a0b7169fc70410321f9ab7b3c90ba08a1}{create\_temp\_string\_val}}(int64\_t\ len);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_a60209598802d95b9d00c230cf638dae5}{\string~FunctionContext}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_a9e4c31a9ed2f1230f88275f4873dd1d3}{FunctionContext}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ ctor\ and\ assignment\ operator}}
+\DoxyCodeLine{00150\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_ab618676e9c9f7476d9c9c56dba630a0a}{FunctionContext}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_function_context}{FunctionContext}}\&\ other);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context}{FunctionContext}}\&\ \mbox{\hyperlink{classdoris_1_1_function_context_ac9a38d40d459c99d133cc14620877515}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris_1_1_function_context}{FunctionContext}}\&\ other);}
 \DoxyCodeLine{00153\ }
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ Adds\ a\ warning\ that\ is\ returned\ to\ the\ user.\ This\ can\ include\ things\ like}}
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ overflow\ or\ other\ recoverable\ error\ conditions.}}
-\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ Warnings\ are\ capped\ at\ a\ maximum\ number.\ Returns\ true\ if\ the\ warning\ was}}
-\DoxyCodeLine{00157\ \ \ \ \ \textcolor{comment}{//\ added\ and\ false\ if\ it\ was\ ignored\ due\ to\ the\ cap.}}
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a9fca47c3c5aae9d85d5f9318f5bf8868}{add\_warning}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ warning\_msg);}
-\DoxyCodeLine{00159\ }
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ there's\ been\ an\ error\ set.}}
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a1638ad74ba770725108c9e3b0ff88e08}{has\_error}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00162\ }
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ current\ error\ message.\ Returns\ nullptr\ if\ there\ is\ no\ error.}}
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_aaba06601d28da1302d565e9b37959609}{error\_msg}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Allocates\ memory\ for\ UDAs.\ All\ UDA\ allocations\ should\ use\ this\ if\ possible\ instead\ of}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ malloc/new.\ The\ UDA\ is\ responsible\ for\ calling\ Free()\ on\ all\ buffers\ returned}}
-\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ by\ Allocate().}}
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ If\ this\ Allocate\ causes\ the\ memory\ limit\ to\ be\ exceeded,\ the\ error\ will\ be\ set}}
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//\ in\ this\ object\ causing\ the\ query\ to\ fail.}}
-\DoxyCodeLine{00171\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a986ff7a4fcb23fedc92f454c23e02fd9}{allocate}}(\textcolor{keywordtype}{int}\ byte\_size);}
-\DoxyCodeLine{00172\ }
-\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ Allocate\ and\ align\ memory\ for\ UDAs.\ All\ UDA\ allocations\ should\ use\ this\ if\ possible\ instead\ of}}
-\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//\ malloc/new.\ The\ UDA\ is\ responsible\ for\ calling\ Free()\ on\ all\ buffers\ returned}}
-\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{//\ by\ Allocate().}}
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ If\ this\ Allocate\ causes\ the\ memory\ limit\ to\ be\ exceeded,\ the\ error\ will\ be\ set}}
-\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ in\ this\ object\ causing\ the\ query\ to\ fail.}}
-\DoxyCodeLine{00178\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ae179efcb481d71b78a00b3c441e21c51}{aligned\_allocate}}(\textcolor{keywordtype}{int}\ alignment,\ \textcolor{keywordtype}{int}\ byte\_size);}
-\DoxyCodeLine{00179\ }
-\DoxyCodeLine{00180\ \ \ \ \ \textcolor{comment}{//\ Reallocates\ 'ptr'\ to\ the\ new\ byte\_size.\ If\ the\ currently\ underlying\ allocation}}
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ is\ big\ enough,\ the\ original\ ptr\ will\ be\ returned.\ If\ the\ allocation\ needs\ to}}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ grow,\ a\ new\ allocation\ is\ made\ that\ is\ at\ least\ 'byte\_size'\ and\ the\ contents}}
-\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ of\ 'ptr'\ will\ be\ copied\ into\ it.}}
-\DoxyCodeLine{00184\ \ \ \ \ \textcolor{comment}{//\ This\ should\ be\ used\ for\ buffers\ that\ constantly\ get\ appended\ to.}}
-\DoxyCodeLine{00185\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a11d9561f86f82de83105615d0f90a3be}{reallocate}}(uint8\_t*\ ptr,\ \textcolor{keywordtype}{int}\ byte\_size);}
-\DoxyCodeLine{00186\ }
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ Frees\ a\ buffer\ returned\ from\ Allocate()\ or\ Reallocate()}}
-\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a35096dd27b070d2e3d912cbc2cc34182}{free}}(uint8\_t*\ buffer);}
-\DoxyCodeLine{00189\ }
-\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ For\ allocations\ that\ cannot\ use\ the\ Allocate()\ API\ provided\ by\ this}}
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ object,\ TrackAllocation()/Free()\ can\ be\ used\ to\ just\ keep\ count\ of\ the}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ byte\ sizes.\ For\ each\ call\ to\ TrackAllocation(),\ the\ UDF/UDA\ must\ call}}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ the\ corresponding\ Free().}}
-\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a9cbef10ae1a5028a651a977829765d0e}{track\_allocation}}(int64\_t\ byte\_size);}
-\DoxyCodeLine{00195\ }
-\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a35096dd27b070d2e3d912cbc2cc34182}{free}}(int64\_t\ byte\_size);}
-\DoxyCodeLine{00197\ }
-\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Do\ we\ need\ to\ add\ arbitrary\ key/value\ metadata.\ This\ would\ be\ plumbed}}
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{//\ through\ the\ query.\ E.g.\ "{}select\ UDA(col,\ 'sample=true')\ from\ tbl"{}.}}
-\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ const\ char*\ GetMetadata(const\ char*)\ const;}}
-\DoxyCodeLine{00201\ }
-\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Add\ mechanism\ for\ UDAs\ to\ update\ stats\ similar\ to\ runtime\ profile\ counters}}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Add\ mechanism\ to\ query\ for\ table/column\ stats}}
-\DoxyCodeLine{00205\ }
-\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ underlying\ opaque\ implementation\ object.\ The\ UDF/UDA\ should\ not}}
-\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ use\ this.\ This\ is\ used\ internally.}}
-\DoxyCodeLine{00208\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_impl}{doris::FunctionContextImpl}}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a2f99439b2b338f042ef7ea16325a96e8}{impl}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_adde32e461b1edf2a0fad25b91fd372d0}{\_impl}};\ \}}
-\DoxyCodeLine{00209\ }
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a05c26d96c364d2537783822760a99a9a}{set\_function\_state}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ scope,\ \textcolor{keywordtype}{void}*\ ptr);}
-\DoxyCodeLine{00216\ }
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a88b0c2646bde9832e4260569f63b8993}{get\_function\_state}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context_a3a7d67806e854776e57e0c17010049c8}{FunctionStateScope}}\ scope)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00218\ }
-\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ return\ type\ information\ of\ this\ function.\ For\ UDAs,\ this\ is\ the\ final}}
-\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ return\ type\ of\ the\ UDA\ (e.g.,\ the\ type\ returned\ by\ the\ finalize\ function).}}
-\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{const}\ TypeDesc\&\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a618b9b28b8410b52c125c35391c4ce66}{get\_return\_type}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ intermediate\ type\ for\ UDAs,\ i.e.,\ the\ one\ returned\ by}}
-\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ update\ and\ merge\ functions.\ Returns\ INVALID\_TYPE\ for\ UDFs.}}
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc}{TypeDesc}}\&\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ab0ad08684599bc9d64d9f066ac9f76b0}{get\_intermediate\_type}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00226\ }
-\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ number\ of\ arguments\ to\ this\ function\ (not\ including\ the\ FunctionContext*}}
-\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ argument).}}
-\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a2909e30284261f5cf9c9fd7dd2d92a76}{get\_num\_args}}()\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00230\ }
-\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ Returns\ the\ type\ information\ for\ the\ arg\_idx-\/th\ argument\ (0-\/indexed,\ not\ including}}
-\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ the\ FunctionContext*\ argument).\ Returns\ nullptr\ if\ arg\_idx\ is\ invalid.}}
-\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_function_context_1_1_type_desc}{TypeDesc}}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a4e1236043fd84c97ebb1dc03a3c86d25}{get\_arg\_type}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00234\ }
-\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ Returns\ true\ if\ the\ arg\_idx-\/th\ input\ argument\ (0\ indexed,\ not\ including\ the}}
-\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{//\ FunctionContext*\ argument)\ is\ a\ constant\ (e.g.\ 5,\ "{}string"{},\ 1\ +\ 1).}}
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a0c9d28c7abc4307dfc2ec5e9e2575bb8}{is\_arg\_constant}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00238\ }
-\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a08592065ff966a5520fd4fc0e5e44ddd}{is\_col\_constant}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00240\ }
-\DoxyCodeLine{00241\ \ \ \ \ \textcolor{comment}{//\ Returns\ a\ pointer\ to\ the\ value\ of\ the\ arg\_idx-\/th\ input\ argument\ (0\ indexed,\ not}}
-\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ including\ the\ FunctionContext*\ argument).\ Returns\ nullptr\ if\ the\ argument\ is\ not}}
-\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ constant.\ This\ function\ can\ be\ used\ to\ obtain\ user-\/specified\ constants\ in\ a\ UDF's}}
-\DoxyCodeLine{00244\ \ \ \ \ \textcolor{comment}{//\ Init()\ or\ Close()\ functions.}}
-\DoxyCodeLine{00245\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ad20b29c83a7ca8dc7b97925ca59a120f}{get\_constant\_arg}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00246\ }
-\DoxyCodeLine{00247\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_column_ptr_wrapper}{doris::ColumnPtrWrapper}}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a89d38b1887e6dbafa511a6eb9a3ec887}{get\_constant\_col}}(\textcolor{keywordtype}{int}\ arg\_idx)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{00248\ }
-\DoxyCodeLine{00249\ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_aad1395493c190c93541b77d2742416e0}{\string~FunctionContext}}();}
-\DoxyCodeLine{00250\ }
-\DoxyCodeLine{00251\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classdoris_1_1_function_context_impl}{doris::FunctionContextImpl}};}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00254\ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_a7cd0e0f61d0478d7c0888e8fc15bcd39}{FunctionContext}}();}
-\DoxyCodeLine{00255\ }
-\DoxyCodeLine{00256\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ ctor\ and\ assignment\ operator}}
-\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ab618676e9c9f7476d9c9c56dba630a0a}{FunctionContext}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}\&\ other);}
-\DoxyCodeLine{00258\ }
-\DoxyCodeLine{00259\ \ \ \ \ \mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}\&\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_ac9a38d40d459c99d133cc14620877515}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}\&\ other);}
-\DoxyCodeLine{00260\ }
-\DoxyCodeLine{00261\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_function_context_impl}{doris::FunctionContextImpl}}*\ \mbox{\hyperlink{classdoris__udf_1_1_function_context_adde32e461b1edf2a0fad25b91fd372d0}{\_impl}};\ \textcolor{comment}{//\ Owned\ by\ this\ object.}}
-\DoxyCodeLine{00262\ \};}
-\DoxyCodeLine{00263\ }
-\DoxyCodeLine{00264\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00265\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/Implementation\ of\ the\ *Val\ structs\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00266\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00267\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}};}
-\DoxyCodeLine{00269\ }
-\DoxyCodeLine{00270\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_any_val_a060a4365aca8e2b6ed9eb862604fd353}{AnyVal}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}(false)\ \{\}}
-\DoxyCodeLine{00271\ }
-\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_any_val_aa18b2f61af9a31ee920ccb5435c2515f}{AnyVal}}(\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}(\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{\}}
-\DoxyCodeLine{00273\ \};}
-\DoxyCodeLine{00274\ }
-\DoxyCodeLine{00275\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{BigIntVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00276\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}};}
-\DoxyCodeLine{00277\ }
-\DoxyCodeLine{00278\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_a9bab03abf3d87e554704093a4b87bbf7}{BigIntVal}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}}(0)\ \{\}}
-\DoxyCodeLine{00279\ }
-\DoxyCodeLine{00280\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_a98ae871faf80313019aa40d5be8a813b}{BigIntVal}}(int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}}(\mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}})\ \{\}}
-\DoxyCodeLine{00281\ }
-\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{BigIntVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ac3687eb36f89e5b589c3f3dc7d3ab18e}{null}}()\ \{}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{BigIntVal}}\ result;}
-\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00286\ \ \ \ \ \}}
-\DoxyCodeLine{00287\ }
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_a83126254bacab4bf4474ba377d493c1c}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{BigIntVal}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ \&\&\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00292\ }
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ ||\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00296\ }
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_big_int_val_ad5c09b0737feeb0dba50339870fa9f66}{val}};}
-\DoxyCodeLine{00298\ \ \ \ \ \}}
-\DoxyCodeLine{00299\ }
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val_a52ccb76868940dc6d55d17ec63b851d1}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{BigIntVal}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00301\ \};}
-\DoxyCodeLine{00302\ }
-\DoxyCodeLine{00303\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_double_val}{DoubleVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}};}
-\DoxyCodeLine{00305\ }
-\DoxyCodeLine{00306\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a823babd4791fcc6b1b4eb8bbedd84b22}{DoubleVal}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}}(0.0)\ \{\}}
-\DoxyCodeLine{00307\ }
-\DoxyCodeLine{00308\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a5e7551617b977f474044fc529403adb3}{DoubleVal}}(\textcolor{keywordtype}{double}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}}(\mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}})\ \{\}}
-\DoxyCodeLine{00309\ }
-\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val}{DoubleVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a24536fb4c7f36a5b93ab177374df58aa}{null}}()\ \{}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_double_val}{DoubleVal}}\ result;}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00314\ \ \ \ \ \}}
-\DoxyCodeLine{00315\ }
-\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a86ec779732f514d1402d4b3c37e9ad70}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val}{DoubleVal}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ \&\&\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00320\ }
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ ||\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00324\ }
-\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_double_val_a3c8bc0bb4f045bfe78d1196cb786792c}{val}};}
-\DoxyCodeLine{00326\ \ \ \ \ \}}
-\DoxyCodeLine{00327\ }
-\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val_a30bf5212bc2da2150335a6ef95031022}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_double_val}{DoubleVal}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00329\ \};}
-\DoxyCodeLine{00330\ }
-\DoxyCodeLine{00331\ \textcolor{comment}{//\ This\ object\ has\ a\ compatible\ storage\ format\ with\ boost::ptime.}}
-\DoxyCodeLine{00332\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{//\ MySQL\ packet\ time}}
-\DoxyCodeLine{00334\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a775f9b0fd1c15647b691864d2a9030c0}{packed\_time}};}
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ Indicate\ which\ type\ of\ this\ value.}}
-\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_ac765329451135abec74c45e1897abf26}{type}};}
-\DoxyCodeLine{00337\ }
-\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ Type\ 3\ is\ TIME\_DATETIME\ in\ runtime/datetime\_value.h}}
-\DoxyCodeLine{00339\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_af23b0375f311036f44e9064275a881ed}{DateTimeVal}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a775f9b0fd1c15647b691864d2a9030c0}{packed\_time}}(0),\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_ac765329451135abec74c45e1897abf26}{type}}(3)\ \{\}}
-\DoxyCodeLine{00340\ }
-\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a745cdd2d5741af32a727e8a4cbe807ee}{null}}()\ \{}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\ result;}
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00345\ \ \ \ \ \}}
-\DoxyCodeLine{00346\ }
-\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a302ef1ec28f69d9f6c6bfa24eacaad4f}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ \&\&\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00351\ }
-\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ ||\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00355\ }
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a775f9b0fd1c15647b691864d2a9030c0}{packed\_time}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a775f9b0fd1c15647b691864d2a9030c0}{packed\_time}};}
-\DoxyCodeLine{00357\ \ \ \ \ \}}
-\DoxyCodeLine{00358\ }
-\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val_a74a62d97112805050696a74ecba20072}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{DateTimeVal}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00360\ \};}
-\DoxyCodeLine{00361\ }
-\DoxyCodeLine{00362\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val}{DateTimeV2Val}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00363\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad06862484238d43ed198fa73a990e6b5}{datetimev2\_value}};}
-\DoxyCodeLine{00364\ }
-\DoxyCodeLine{00365\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_a7be963f1d85ef660c6b971bcac48de5e}{DateTimeV2Val}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad06862484238d43ed198fa73a990e6b5}{datetimev2\_value}}(0)\ \{\}}
-\DoxyCodeLine{00366\ }
-\DoxyCodeLine{00367\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_aeb57d25f5a81741546519910ea43dbc1}{DateTimeV2Val}}(uint64\_t\ val)\ :\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad06862484238d43ed198fa73a990e6b5}{datetimev2\_value}}(val)\ \{\}}
-\DoxyCodeLine{00368\ }
-\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val}{DateTimeV2Val}}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad5d40507ea951b4604e2a0e504074b0a}{null}}()\ \{}
-\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val}{DateTimeV2Val}}\ result;}
-\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00373\ \ \ \ \ \}}
-\DoxyCodeLine{00374\ }
-\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_a70cb84c674720c4d1c890c159bd14c3e}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val}{DateTimeV2Val}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ \&\&\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00379\ }
-\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ ||\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00383\ }
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad06862484238d43ed198fa73a990e6b5}{datetimev2\_value}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_ad06862484238d43ed198fa73a990e6b5}{datetimev2\_value}};}
-\DoxyCodeLine{00385\ \ \ \ \ \}}
-\DoxyCodeLine{00386\ }
-\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val_a677610765f17f6d9fb211b7f688cc8a8}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_date_time_v2_val}{DateTimeV2Val}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00388\ \};}
-\DoxyCodeLine{00389\ }
-\DoxyCodeLine{00390\ \textcolor{comment}{//\ TODO:\ need\ to\ set\ explicit\ align?}}
-\DoxyCodeLine{00391\ \textcolor{comment}{//\ Note:\ there\ is\ a\ difference\ between\ a\ nullptr\ string\ (is\_null\ ==\ true)\ and\ an}}
-\DoxyCodeLine{00392\ \textcolor{comment}{//\ empty\ string\ (len\ ==\ 0).}}
-\DoxyCodeLine{00393\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a9078d077f94a0e8f71ec446abe515d4f}{MAX\_LENGTH}}\ =\ (1\ <<\ 30);}
-\DoxyCodeLine{00395\ }
-\DoxyCodeLine{00396\ \ \ \ \ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}};}
-\DoxyCodeLine{00397\ \ \ \ \ uint8\_t*\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}};}
-\DoxyCodeLine{00398\ }
-\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{//\ Construct\ a\ StringVal\ from\ ptr/len.\ Note:\ this\ does\ not\ make\ a\ copy\ of\ ptr}}
-\DoxyCodeLine{00400\ \ \ \ \ \textcolor{comment}{//\ so\ the\ buffer\ must\ exist\ as\ long\ as\ this\ StringVal\ does.}}
-\DoxyCodeLine{00401\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a88d5788c5e770610d473242187059807}{StringVal}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}(0),\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}(nullptr)\ \{\}}
-\DoxyCodeLine{00402\ }
-\DoxyCodeLine{00403\ \ \ \ \ \textcolor{comment}{//\ Construct\ a\ StringVal\ from\ ptr/len.\ Note:\ this\ does\ not\ make\ a\ copy\ of\ ptr}}
-\DoxyCodeLine{00404\ \ \ \ \ \textcolor{comment}{//\ so\ the\ buffer\ must\ exist\ as\ long\ as\ this\ StringVal\ does.}}
-\DoxyCodeLine{00405\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a42bce6c0611189b20c2ac9e3cd19cbf4}{StringVal}}(uint8\_t*\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}},\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}(\mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}),\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}(\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}})\ \{\}}
-\DoxyCodeLine{00406\ }
-\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ Construct\ a\ StringVal\ from\ nullptr-\/terminated\ c-\/string.\ Note:\ this\ does\ not\ make\ a}}
-\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ copy\ of\ ptr\ so\ the\ underlying\ string\ must\ exist\ as\ long\ as\ this\ StringVal\ does.}}
-\DoxyCodeLine{00409\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a2d6debc8ae7bcf07652a3593f3f471ad}{StringVal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}(strlen(\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}})),\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}((uint8\_t*)\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}})\ \{\}}
-\DoxyCodeLine{00410\ }
-\DoxyCodeLine{00411\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a6f47830e2b809ccd57e61660e80addfa}{StringVal}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}},\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}(\mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}),\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}((uint8\_t*)\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}})\ \{\}}
-\DoxyCodeLine{00412\ }
-\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a9b232d9566052f08dc6c529318f05aab}{null}}()\ \{}
-\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\ sv;}
-\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ sv.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sv;}
-\DoxyCodeLine{00417\ \ \ \ \ \}}
-\DoxyCodeLine{00418\ }
-\DoxyCodeLine{00419\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ StringVal,\ allocating\ a\ new\ buffer\ with\ 'len'.\ This\ should}}
-\DoxyCodeLine{00420\ \ \ \ \ \textcolor{comment}{//\ be\ used\ to\ return\ StringVal\ objects\ in\ UDF/UDAs\ that\ need\ to\ allocate\ new}}
-\DoxyCodeLine{00421\ \ \ \ \ \textcolor{comment}{//\ string\ memory.}}
-\DoxyCodeLine{00422\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a88d5788c5e770610d473242187059807}{StringVal}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});}
-\DoxyCodeLine{00423\ }
-\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//\ Creates\ a\ StringVal,\ which\ memory\ is\ available\ when\ this\ function\ context\ is\ used\ next\ time}}
-\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a26a4342dff3f4ecb14583fe64831cbae}{create\_temp\_string\_val}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ ctx,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});}
-\DoxyCodeLine{00426\ }
-\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afa6a952ebf4a6b3fa8a59d1075a68045}{resize}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ context,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});}
-\DoxyCodeLine{00428\ }
-\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_af1ed3f4b3fcc612ba2890c8e0d189ad7}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ !=\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00433\ }
-\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00437\ }
-\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}\ !=\ other.\mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}})\ \{}
-\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00441\ }
-\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}}\ ==\ 0\ ||\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}}\ ||\ memcmp(\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}},\ other.\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}},\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}})\ ==\ 0;}
-\DoxyCodeLine{00443\ \ \ \ \ \}}
-\DoxyCodeLine{00444\ }
-\DoxyCodeLine{00445\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a0e007d491eb84f34f7b32ebd0dbd5b1a}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00446\ }
-\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val}{StringVal}}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_a6544f2d5fb7ba58f3a1b838bf8399bd6}{copy\_from}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ ctx,\ \textcolor{keyword}{const}\ uint8\_t*\ buf,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});}
-\DoxyCodeLine{00451\ }
-\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd5ddfb927ae1e2ce2ef1938df0de2db}{append}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ ctx,\ \textcolor{keyword}{const}\ uint8\_t*\ buf,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});}
-\DoxyCodeLine{00456\ }
-\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd5ddfb927ae1e2ce2ef1938df0de2db}{append}}(\mbox{\hyperlink{classdoris__udf_1_1_function_context}{FunctionContext}}*\ ctx,\ \textcolor{keyword}{const}\ uint8\_t*\ buf,\ int64\_t\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}},\ \textcolor{keyword}{const}\ uint8\_t*\ buf2,}
-\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ buf2\_len);}
-\DoxyCodeLine{00459\ }
-\DoxyCodeLine{00460\ \ \ \ \ std::string\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_aac993ecccd3d88aafefb6b8e3caa1dee}{to\_string}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ std::string((\textcolor{keywordtype}{char}*)\mbox{\hyperlink{structdoris__udf_1_1_string_val_aaa8222c604b0b520bc2205ddcc42d855}{ptr}},\ \mbox{\hyperlink{structdoris__udf_1_1_string_val_afd163bc9bdb9ed66148f87e6017e8712}{len}});\ \}}
-\DoxyCodeLine{00461\ \};}
-\DoxyCodeLine{00462\ }
-\DoxyCodeLine{00463\ std::ostream\&\ operator<<(std::ostream\&\ os,\ \textcolor{keyword}{const}\ StringVal\&\ string\_val);}
-\DoxyCodeLine{00464\ }
-\DoxyCodeLine{00465\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{DecimalV2Val}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structdoris__udf_1_1_any_val}{AnyVal}}\ \{}
-\DoxyCodeLine{00466\ \ \ \ \ \_\_int128\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}};}
-\DoxyCodeLine{00467\ }
-\DoxyCodeLine{00468\ \ \ \ \ \textcolor{comment}{//\ Default\ value\ is\ zero}}
-\DoxyCodeLine{00469\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_a494a8f72e4b502546725381111f722c2}{DecimalV2Val}}()\ :\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}(0)\ \{\}}
-\DoxyCodeLine{00470\ }
-\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keyword}{const}\ \_\_int128\&\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_ab3e476229b77fdafc0f9794b410e8fc6}{value}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}};\ \}}
-\DoxyCodeLine{00472\ }
-\DoxyCodeLine{00473\ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_a305db0ec66a4a7a2b3e96455b02806e9}{DecimalV2Val}}(\_\_int128\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_ab3e476229b77fdafc0f9794b410e8fc6}{value}})\ :\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}(\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_ab3e476229b77fdafc0f9794b410e8fc6}{value}})\ \{\}}
-\DoxyCodeLine{00474\ }
-\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{DecimalV2Val}}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_aee61cc98902c986c615cffd066944bbc}{null}}()\ \{}
-\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{DecimalV2Val}}\ result;}
-\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ result.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
-\DoxyCodeLine{00479\ \ \ \ \ \}}
-\DoxyCodeLine{00480\ }
-\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_a903aa67a8f3b6541b8f7d83464a881e4}{set\_to\_zero}}()\ \{\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}\ =\ 0;\ \}}
-\DoxyCodeLine{00482\ }
-\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_aeca5fbe3ce96b042493580848684ea86}{set\_to\_abs\_value}}()\ \{}
-\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}\ <\ 0)\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}\ =\ -\/\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}};}
-\DoxyCodeLine{00485\ \ \ \ \ \}}
-\DoxyCodeLine{00486\ }
-\DoxyCodeLine{00487\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_a6f55dbe56716cd388b8b5c3fd230592e}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{DecimalV2Val}}\&\ other)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ \&\&\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00491\ }
-\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}}\ ||\ other.\mbox{\hyperlink{structdoris__udf_1_1_any_val_acf9d169b4bd3c066e3696495e7b2f874}{is\_null}})\ \{}
-\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00495\ }
-\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}}\ ==\ other.\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_af87ee52712eef658033d3b1a2c0ed0aa}{val}};}
-\DoxyCodeLine{00497\ \ \ \ \ \}}
-\DoxyCodeLine{00498\ }
-\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val_a68ef368a63f49b9f6ef510abd38e3d66}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{DecimalV2Val}}\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !(*\textcolor{keyword}{this}\ ==\ other);\ \}}
-\DoxyCodeLine{00500\ \};}
-\DoxyCodeLine{00501\ }
-\DoxyCodeLine{00502\ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris__udf_1_1_big_int_val}{doris\_udf::BigIntVal}};}
-\DoxyCodeLine{00503\ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris__udf_1_1_double_val}{doris\_udf::DoubleVal}};}
-\DoxyCodeLine{00504\ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris__udf_1_1_string_val}{doris\_udf::StringVal}};}
-\DoxyCodeLine{00505\ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris__udf_1_1_decimal_v2_val}{doris\_udf::DecimalV2Val}};}
-\DoxyCodeLine{00506\ \textcolor{keyword}{using\ }\mbox{\hyperlink{structdoris__udf_1_1_date_time_val}{doris\_udf::DateTimeVal}};}
-\DoxyCodeLine{00507\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris__udf_1_1_function_context}{doris\_udf::FunctionContext}};}
-\DoxyCodeLine{00508\ \}\ \textcolor{comment}{//\ namespace\ doris\_udf}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ We\ use\ the\ query's\ runtime\ state\ to\ report\ errors\ and\ warnings.\ nullptr\ for\ test}}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ contexts.}}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{classdoris_1_1_runtime_state}{RuntimeState}}*\ \mbox{\hyperlink{classdoris_1_1_function_context_a91f2150e84757ffe2be5129f52c9e85a}{\_state}};}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{comment}{//\ Empty\ if\ there's\ no\ error}}
+\DoxyCodeLine{00159\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_function_context_a39a03621f91d77541a5f89806d11b35f}{\_error\_msg}};}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ The\ number\ of\ warnings\ reported.}}
+\DoxyCodeLine{00162\ \ \ \ \ int64\_t\ \mbox{\hyperlink{classdoris_1_1_function_context_a64f729e6e4fcaa46fa727b3cdcbf6c26}{\_num\_warnings}};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00165\ \ \ \ \ std::shared\_ptr<void>\ \mbox{\hyperlink{classdoris_1_1_function_context_aafdebef8588b11d5c76e1ffad8fcd9b7}{\_thread\_local\_fn\_state}};}
+\DoxyCodeLine{00166\ \ \ \ \ std::shared\_ptr<void>\ \mbox{\hyperlink{classdoris_1_1_function_context_a57e5c976123e91fbe1f41eb96a948b88}{\_fragment\_local\_fn\_state}};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ Type\ descriptor\ for\ the\ return\ type\ of\ the\ function.}}
+\DoxyCodeLine{00169\ \ \ \ \ \mbox{\hyperlink{structdoris_1_1_type_descriptor}{doris::TypeDescriptor}}\ \mbox{\hyperlink{classdoris_1_1_function_context_a642f9e505170d6aab5eaebaa265011e7}{\_return\_type}};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Type\ descriptors\ for\ each\ argument\ of\ the\ function.}}
+\DoxyCodeLine{00172\ \ \ \ \ std::vector<doris::TypeDescriptor>\ \mbox{\hyperlink{classdoris_1_1_function_context_aff7d5dbfda0987aaa5bdb1bac7ac33c7}{\_arg\_types}};}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ std::vector<std::shared\_ptr<doris::ColumnPtrWrapper>>\ \mbox{\hyperlink{classdoris_1_1_function_context_a0375e3733e001070934289e3c3d43e66}{\_constant\_cols}};}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classdoris_1_1_function_context_ad7c6f1ecda2684f3ae8cdac6f0b37730}{\_check\_overflow\_for\_decimal}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ std::string\ \mbox{\hyperlink{classdoris_1_1_function_context_ad6ca2ca2326f9091846ccb69ac6c4658}{\_string\_result}};}
+\DoxyCodeLine{00179\ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{keyword}{using\ }\mbox{\hyperlink{classdoris_1_1_function_context}{doris::FunctionContext}};}
+\DoxyCodeLine{00182\ \}\ \textcolor{comment}{//\ namespace\ doris}}
 
 \end{DoxyCode}
